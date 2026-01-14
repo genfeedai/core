@@ -1,0 +1,37 @@
+{
+  "name": "@content-workflow/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --webpack --port 3000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@content-workflow/types": "workspace:*",
+    "@xyflow/react": "^12.10.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.475.0",
+    "nanoid": "^5.1.6",
+    "next": "16",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "replicate": "^1.0.0",
+    "sass": "^1.97.2",
+    "tailwind-merge": "^3.0.2",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/node": "^22.15.3",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "autoprefixer": "^10.4.23",
+    "eslint": "^9.24.0",
+    "eslint-config-next": "^15.3.0",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.8.2"
+  }
+}

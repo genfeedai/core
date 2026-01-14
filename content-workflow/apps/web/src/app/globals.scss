@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --card: #141414;
+  --card-foreground: #ededed;
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+  --secondary: #262626;
+  --secondary-foreground: #a1a1aa;
+  --border: #262626;
+  --ring: #6366f1;
+  --muted: #262626;
+  --muted-foreground: #a1a1aa;
+  --accent: #10b981;
+  --destructive: #ef4444;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  height: 100%;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// React Flow custom styles
+.react-flow {
+  &__node {
+    font-size: 12px;
+  }
+
+  &__handle {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 2px solid var(--background);
+
+    &-left {
+      left: -5px;
+    }
+
+    &-right {
+      right: -5px;
+    }
+
+    &-top {
+      top: -5px;
+    }
+
+    &-bottom {
+      bottom: -5px;
+    }
+  }
+
+  &__edge-path {
+    stroke: var(--border);
+    stroke-width: 2;
+  }
+
+  &__edge.selected .react-flow__edge-path {
+    stroke: var(--primary);
+  }
+
+  &__background {
+    background-color: var(--background);
+  }
+
+  &__minimap {
+    background-color: var(--card);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  &__controls {
+    background: var(--card);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+
+    &-button {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      color: var(--foreground);
+
+      &:hover {
+        background: var(--secondary);
+      }
+    }
+  }
+}
+
+// Custom scrollbar
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+
+  &:hover {
+    background: var(--muted-foreground);
+  }
+}
+
+// Handle type colors
+.handle-image {
+  background: #f59e0b !important;
+}
+
+.handle-video {
+  background: #8b5cf6 !important;
+}
+
+.handle-text {
+  background: #10b981 !important;
+}
+
+.handle-number {
+  background: #3b82f6 !important;
+}
