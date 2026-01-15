@@ -1,6 +1,6 @@
 'use client';
 
-import type { TranscribeLanguage, TranscribeNodeData } from '@content-workflow/types';
+import type { TranscribeLanguage, TranscribeNodeData } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { FileText, RefreshCw } from 'lucide-react';
 import { memo, useCallback } from 'react';

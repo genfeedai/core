@@ -1,12 +1,7 @@
 'use client';
 
-import type {
-  HandleDefinition,
-  NodeStatus,
-  NodeType,
-  WorkflowNodeData,
-} from '@content-workflow/types';
-import { NODE_DEFINITIONS } from '@content-workflow/types';
+import type { HandleDefinition, NodeStatus, NodeType, WorkflowNodeData } from '@genfeedai/types';
+import { NODE_DEFINITIONS } from '@genfeedai/types';
 import { Handle, type NodeProps, Position } from '@xyflow/react';
 import { clsx } from 'clsx';
 import {
@@ -15,6 +10,7 @@ import {
   Brain,
   CheckCircle,
   CheckCircle2,
+  Crop,
   Download,
   Eye,
   FileText,
@@ -23,6 +19,7 @@ import {
   Layers,
   Loader2,
   Lock,
+  Maximize,
   Maximize2,
   MessageSquare,
   RefreshCw,
@@ -56,6 +53,8 @@ const ICON_MAP: Record<string, typeof Image> = {
   Download,
   AtSign,
   RefreshCw,
+  Crop,
+  Maximize,
 };
 
 // Handle color classes

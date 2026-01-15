@@ -35,13 +35,11 @@ describe('WorkflowsController', () => {
     findOne: vi.fn().mockResolvedValue(mockWorkflow),
     update: vi.fn().mockResolvedValue(mockWorkflow),
     remove: vi.fn().mockResolvedValue({ ...mockWorkflow, isDeleted: true }),
-    duplicate: vi
-      .fn()
-      .mockResolvedValue({
-        ...mockWorkflow,
-        _id: new Types.ObjectId(),
-        name: 'Test Workflow (Copy)',
-      }),
+    duplicate: vi.fn().mockResolvedValue({
+      ...mockWorkflow,
+      _id: new Types.ObjectId(),
+      name: 'Test Workflow (Copy)',
+    }),
   };
 
   const mockCostCalculatorService = {

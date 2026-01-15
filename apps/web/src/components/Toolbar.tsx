@@ -1,15 +1,22 @@
 'use client';
 
-import type { WorkflowFile } from '@content-workflow/types';
+import type { WorkflowFile } from '@genfeedai/types';
 import {
   AlertCircle,
   BookMarked,
+  Check,
+  Cloud,
+  CloudOff,
+  DollarSign,
   FolderOpen,
   LayoutTemplate,
+  Loader2,
   PanelLeftClose,
   PanelRightClose,
   Play,
   Save,
+  Settings,
+  Sparkles,
   Square,
   X,
 } from 'lucide-react';
@@ -19,6 +26,58 @@ import { logger } from '@/lib/logger';
 import { useExecutionStore } from '@/store/executionStore';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
+
+/**
+ * Auto-save status indicator
+ */
+function SaveIndicator() {
+  const isDirty = useWorkflowStore((state) => state.isDirty);
+  const isSaving = useWorkflowStore((state) => state.isSaving);
+  const autoSaveEnabled = useUIStore((state) => state.autoSaveEnabled);
+  const toggleAutoSave = useUIStore((state) => state.toggleAutoSave);
+
+  if (!autoSaveEnabled) {
+    return (
+      <button
+        onClick={toggleAutoSave}
+        className="flex items-center gap-1.5 text-muted-foreground text-xs hover:text-foreground transition-colors"
+        title="Click to enable auto-save"
+      >
+        <CloudOff className="h-3.5 w-3.5" />
+        <span>Auto-save off</span>
+      </button>
+    );
+  }
+
+  if (isSaving) {
+    return (
+      <div className="flex items-center gap-1.5 text-blue-500 text-xs">
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        <span>Saving...</span>
+      </div>
+    );
+  }
+
+  if (isDirty) {
+    return (
+      <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
+        <Cloud className="h-3.5 w-3.5" />
+        <span>Unsaved</span>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={toggleAutoSave}
+      className="flex items-center gap-1.5 text-green-500 text-xs hover:text-green-400 transition-colors"
+      title="Click to disable auto-save"
+    >
+      <Check className="h-3.5 w-3.5" />
+      <span>Saved</span>
+    </button>
+  );
+}
 
 /**
  * Validates workflow JSON structure before loading
@@ -56,10 +115,24 @@ function isValidWorkflow(data: unknown): data is WorkflowFile {
 
 export function Toolbar() {
   const { workflowName, isDirty, exportWorkflow, clearWorkflow } = useWorkflowStore();
-  const { isRunning, executeWorkflow, stopExecution, validationErrors, clearValidationErrors } =
-    useExecutionStore();
-  const { showPalette, showConfigPanel, togglePalette, toggleConfigPanel, openModal } =
-    useUIStore();
+  const {
+    isRunning,
+    executeWorkflow,
+    stopExecution,
+    validationErrors,
+    clearValidationErrors,
+    estimatedCost,
+    actualCost,
+  } = useExecutionStore();
+  const {
+    showPalette,
+    showConfigPanel,
+    showAIGenerator,
+    togglePalette,
+    toggleConfigPanel,
+    toggleAIGenerator,
+    openModal,
+  } = useUIStore();
 
   // Memoize deduped error messages
   const uniqueErrorMessages = useMemo(() => {
@@ -187,7 +260,47 @@ export function Toolbar() {
         >
           <BookMarked className="h-4 w-4" />
         </Button>
+        <Button
+          variant={showAIGenerator ? 'secondary' : 'ghost'}
+          size="icon-sm"
+          onClick={toggleAIGenerator}
+          title="AI Workflow Generator"
+        >
+          <Sparkles className="h-4 w-4" />
+        </Button>
       </div>
+
+      {/* Divider */}
+      <div className="h-8 w-px bg-border" />
+
+      {/* Settings */}
+      <Button variant="ghost" size="icon-sm" onClick={() => openModal('settings')} title="Settings">
+        <Settings className="h-4 w-4" />
+      </Button>
+
+      {/* Divider */}
+      <div className="h-8 w-px bg-border" />
+
+      {/* Cost Indicator */}
+      <button
+        onClick={() => openModal('cost')}
+        className="flex items-center gap-1.5 rounded-md px-2 py-1 text-sm transition hover:bg-secondary"
+        title="View cost breakdown"
+      >
+        <DollarSign className="h-4 w-4 text-chart-2" />
+        <span className="font-medium tabular-nums">
+          {actualCost > 0 ? actualCost.toFixed(2) : estimatedCost.toFixed(2)}
+        </span>
+        {actualCost > 0 && estimatedCost > 0 && actualCost !== estimatedCost && (
+          <span className="text-xs text-muted-foreground">(est. {estimatedCost.toFixed(2)})</span>
+        )}
+      </button>
+
+      {/* Divider */}
+      <div className="h-8 w-px bg-border" />
+
+      {/* Auto-Save Indicator */}
+      <SaveIndicator />
 
       {/* Spacer */}
       <div className="flex-1" />

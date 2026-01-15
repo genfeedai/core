@@ -50,7 +50,7 @@ export function useContextMenu() {
   const unlockNode = useCallback(
     (nodeId: string) => {
       const node = nodes.find((n) => n.id === nodeId);
-      if (node && node.data.locked) {
+      if (node?.data.locked) {
         toggleNodeLock(nodeId);
       }
     },
@@ -82,7 +82,7 @@ export function useContextMenu() {
     (nodeIds: string[]) => {
       for (const nodeId of nodeIds) {
         const node = nodes.find((n) => n.id === nodeId);
-        if (node && node.data.locked) {
+        if (node?.data.locked) {
           toggleNodeLock(nodeId);
         }
       }

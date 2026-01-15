@@ -4,7 +4,7 @@ import {
   type TemplateEntity,
   type WorkflowEdgeEntity,
   type WorkflowNodeEntity,
-} from '@content-workflow/storage';
+} from '@genfeedai/storage';
 import { Inject, Injectable, Logger, NotFoundException, type OnModuleInit } from '@nestjs/common';
 import type { CreateTemplateDto } from './dto/create-template.dto';
 import { SYSTEM_TEMPLATES } from './templates.seed';

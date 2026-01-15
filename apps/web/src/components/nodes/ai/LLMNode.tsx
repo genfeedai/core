@@ -1,6 +1,6 @@
 'use client';
 
-import type { LLMNodeData } from '@content-workflow/types';
+import type { LLMNodeData } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { RefreshCw, Sparkles } from 'lucide-react';
 import { memo, useCallback } from 'react';

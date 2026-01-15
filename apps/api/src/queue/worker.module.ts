@@ -11,6 +11,7 @@ import { WorkflowsModule } from '../workflows/workflows.module';
 import { WorkflowsService } from '../workflows/workflows.service';
 import { ImageProcessor } from './processors/image.processor';
 import { LLMProcessor } from './processors/llm.processor';
+import { ProcessingProcessor } from './processors/processing.processor';
 import { VideoProcessor } from './processors/video.processor';
 import { DEFAULT_JOB_OPTIONS, QUEUE_NAMES } from './queue.constants';
 import { QueueJob, QueueJobSchema } from './schemas/queue-job.schema';
@@ -85,6 +86,10 @@ import { QueueManagerService } from './services/queue-manager.service';
       {
         name: QUEUE_NAMES.LLM_GENERATION,
         defaultJobOptions: DEFAULT_JOB_OPTIONS[QUEUE_NAMES.LLM_GENERATION],
+      },
+      {
+        name: QUEUE_NAMES.PROCESSING,
+        defaultJobOptions: DEFAULT_JOB_OPTIONS[QUEUE_NAMES.PROCESSING],
       }
     ),
 
@@ -105,6 +110,7 @@ import { QueueManagerService } from './services/queue-manager.service';
     ImageProcessor,
     VideoProcessor,
     LLMProcessor,
+    ProcessingProcessor,
 
     // Aliased providers for injection
     {

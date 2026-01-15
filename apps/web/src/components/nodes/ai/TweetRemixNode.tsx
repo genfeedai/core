@@ -1,6 +1,6 @@
 'use client';
 
-import type { TweetRemixNodeData, TweetTone } from '@content-workflow/types';
+import type { TweetRemixNodeData, TweetTone } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { Check, RefreshCw, Sparkles } from 'lucide-react';
 import { memo, useCallback } from 'react';

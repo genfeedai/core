@@ -13,11 +13,12 @@ import {
 import { useCallback, useEffect } from 'react';
 import '@xyflow/react/dist/style.css';
 
-import type { NodeType, WorkflowEdge, WorkflowNode } from '@content-workflow/types';
+import type { NodeType, WorkflowEdge, WorkflowNode } from '@genfeedai/types';
 import { GroupOverlay } from '@/components/canvas/GroupOverlay';
 import { ContextMenu } from '@/components/context-menu';
 import { nodeTypes } from '@/components/nodes';
 import { useContextMenu } from '@/hooks/useContextMenu';
+import { useSettingsStore } from '@/store/settingsStore';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
 
@@ -40,6 +41,7 @@ export function WorkflowCanvas() {
   } = useWorkflowStore();
 
   const { showMinimap, selectNode } = useUIStore();
+  const { edgeStyle } = useSettingsStore();
 
   const {
     isOpen: isContextMenuOpen,
@@ -225,7 +227,7 @@ export function WorkflowCanvas() {
         panOnDrag={[1, 2]} // Middle/right mouse for pan
         deleteKeyCode={['Backspace', 'Delete']}
         defaultEdgeOptions={{
-          type: 'smoothstep',
+          type: edgeStyle,
           animated: false,
         }}
         edgesFocusable

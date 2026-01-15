@@ -1,4 +1,4 @@
-import type { CubicBezier, EasingPreset } from '@content-workflow/types';
+import type { CubicBezier, EasingPreset } from '@genfeedai/types';
 import { describe, expect, it } from 'vitest';
 import { applySpeedCurve, EASING_PRESETS, evaluateBezier, getEasingDisplayName } from './presets';
 

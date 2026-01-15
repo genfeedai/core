@@ -2,7 +2,7 @@ import {
   EXECUTION_REPOSITORY,
   type ExecutionEntity,
   type IExecutionRepository,
-} from '@content-workflow/storage';
+} from '@genfeedai/storage';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';

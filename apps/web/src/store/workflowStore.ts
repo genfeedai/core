@@ -7,8 +7,8 @@ import type {
   WorkflowFile,
   WorkflowNode,
   WorkflowNodeData,
-} from '@content-workflow/types';
-import { CONNECTION_RULES, NODE_DEFINITIONS } from '@content-workflow/types';
+} from '@genfeedai/types';
+import { CONNECTION_RULES, NODE_DEFINITIONS } from '@genfeedai/types';
 import type { Connection, EdgeChange, NodeChange, XYPosition } from '@xyflow/react';
 import { applyEdgeChanges, applyNodeChanges, addEdge as rfAddEdge } from '@xyflow/react';
 import { nanoid } from 'nanoid';
@@ -78,6 +78,7 @@ interface WorkflowStore {
   setEdgeStyle: (style: EdgeStyle) => void;
 
   // Node locking operations
+  _setNodeLockState: (predicate: (nodeId: string) => boolean, lock: boolean) => void;
   toggleNodeLock: (nodeId: string) => void;
   lockNode: (nodeId: string) => void;
   unlockNode: (nodeId: string) => void;
@@ -266,121 +267,54 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
     }));
   },
 
-  // Node locking operations
-  toggleNodeLock: (nodeId) => {
-    const node = get().getNodeById(nodeId);
-    if (!node) return;
-
-    const isCurrentlyLocked = node.data.isLocked ?? false;
-
+  // Node locking operations - internal helper
+  // Updates lock state for nodes matching the predicate
+  _setNodeLockState: (predicate: (nodeId: string) => boolean, lock: boolean) => {
     set((state) => ({
       nodes: state.nodes.map((n) =>
-        n.id === nodeId
+        predicate(n.id)
           ? {
               ...n,
               data: {
                 ...n.data,
-                isLocked: !isCurrentlyLocked,
-                lockTimestamp: !isCurrentlyLocked ? Date.now() : undefined,
-                // Preserve cached output when locking
-                cachedOutput: !isCurrentlyLocked ? getNodeOutput(n) : n.data.cachedOutput,
+                isLocked: lock,
+                lockTimestamp: lock ? Date.now() : undefined,
+                ...(lock && { cachedOutput: getNodeOutput(n) }),
               },
             }
           : n
       ),
       isDirty: true,
     }));
+  },
+
+  toggleNodeLock: (nodeId) => {
+    const node = get().getNodeById(nodeId);
+    if (!node) return;
+    const shouldLock = !(node.data.isLocked ?? false);
+    get()._setNodeLockState((id) => id === nodeId, shouldLock);
   },
 
   lockNode: (nodeId) => {
     const node = get().getNodeById(nodeId);
     if (!node || node.data.isLocked) return;
-
-    set((state) => ({
-      nodes: state.nodes.map((n) =>
-        n.id === nodeId
-          ? {
-              ...n,
-              data: {
-                ...n.data,
-                isLocked: true,
-                lockTimestamp: Date.now(),
-                cachedOutput: getNodeOutput(n),
-              },
-            }
-          : n
-      ),
-      isDirty: true,
-    }));
+    get()._setNodeLockState((id) => id === nodeId, true);
   },
 
   unlockNode: (nodeId) => {
-    set((state) => ({
-      nodes: state.nodes.map((n) =>
-        n.id === nodeId
-          ? {
-              ...n,
-              data: {
-                ...n.data,
-                isLocked: false,
-                lockTimestamp: undefined,
-              },
-            }
-          : n
-      ),
-      isDirty: true,
-    }));
+    get()._setNodeLockState((id) => id === nodeId, false);
   },
 
   lockMultipleNodes: (nodeIds) => {
-    set((state) => ({
-      nodes: state.nodes.map((n) =>
-        nodeIds.includes(n.id)
-          ? {
-              ...n,
-              data: {
-                ...n.data,
-                isLocked: true,
-                lockTimestamp: Date.now(),
-                cachedOutput: getNodeOutput(n),
-              },
-            }
-          : n
-      ),
-      isDirty: true,
-    }));
+    get()._setNodeLockState((id) => nodeIds.includes(id), true);
   },
 
   unlockMultipleNodes: (nodeIds) => {
-    set((state) => ({
-      nodes: state.nodes.map((n) =>
-        nodeIds.includes(n.id)
-          ? {
-              ...n,
-              data: {
-                ...n.data,
-                isLocked: false,
-                lockTimestamp: undefined,
-              },
-            }
-          : n
-      ),
-      isDirty: true,
-    }));
+    get()._setNodeLockState((id) => nodeIds.includes(id), false);
   },
 
   unlockAllNodes: () => {
-    set((state) => ({
-      nodes: state.nodes.map((n) => ({
-        ...n,
-        data: {
-          ...n.data,
-          isLocked: false,
-          lockTimestamp: undefined,
-        },
-      })),
-      isDirty: true,
-    }));
+    get()._setNodeLockState(() => true, false);
   },
 
   isNodeLocked: (nodeId) => {

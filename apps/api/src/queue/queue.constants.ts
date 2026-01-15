@@ -6,11 +6,13 @@ export const QUEUE_NAMES = {
   IMAGE_GENERATION: 'image-generation',
   VIDEO_GENERATION: 'video-generation',
   LLM_GENERATION: 'llm-generation',
+  PROCESSING: 'processing',
   // Dead letter queues
   DLQ_WORKFLOW: 'dlq-workflow-orchestrator',
   DLQ_IMAGE: 'dlq-image-generation',
   DLQ_VIDEO: 'dlq-video-generation',
   DLQ_LLM: 'dlq-llm-generation',
+  DLQ_PROCESSING: 'dlq-processing',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -26,6 +28,11 @@ export const JOB_TYPES = {
   GENERATE_IMAGE: 'generate-image',
   GENERATE_VIDEO: 'generate-video',
   GENERATE_TEXT: 'generate-text',
+  // Processing jobs
+  REFRAME_IMAGE: 'reframe-image',
+  REFRAME_VIDEO: 'reframe-video',
+  UPSCALE_IMAGE: 'upscale-image',
+  UPSCALE_VIDEO: 'upscale-video',
 } as const;
 
 export type JobType = (typeof JOB_TYPES)[keyof typeof JOB_TYPES];
@@ -68,6 +75,12 @@ export const DEFAULT_JOB_OPTIONS = {
     removeOnComplete: { age: 3600, count: 2000 },
     removeOnFail: { age: 86400, count: 5000 },
   },
+  [QUEUE_NAMES.PROCESSING]: {
+    attempts: 3,
+    backoff: { type: 'exponential' as const, delay: 2000 },
+    removeOnComplete: { age: 3600, count: 500 },
+    removeOnFail: { age: 86400, count: 2000 },
+  },
 } as const;
 
 /**
@@ -78,6 +91,7 @@ export const QUEUE_CONCURRENCY = {
   [QUEUE_NAMES.IMAGE_GENERATION]: 5,
   [QUEUE_NAMES.VIDEO_GENERATION]: 2,
   [QUEUE_NAMES.LLM_GENERATION]: 10,
+  [QUEUE_NAMES.PROCESSING]: 3,
 } as const;
 
 /**
@@ -87,6 +101,10 @@ export const NODE_TYPE_TO_QUEUE: Record<string, QueueName> = {
   imageGen: QUEUE_NAMES.IMAGE_GENERATION,
   videoGen: QUEUE_NAMES.VIDEO_GENERATION,
   llm: QUEUE_NAMES.LLM_GENERATION,
+  lumaReframeImage: QUEUE_NAMES.PROCESSING,
+  lumaReframeVideo: QUEUE_NAMES.PROCESSING,
+  topazImageUpscale: QUEUE_NAMES.PROCESSING,
+  topazVideoUpscale: QUEUE_NAMES.PROCESSING,
 };
 
 /**

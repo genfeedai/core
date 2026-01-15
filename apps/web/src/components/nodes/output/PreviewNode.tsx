@@ -1,6 +1,6 @@
 'use client';
 
-import type { PreviewNodeData } from '@content-workflow/types';
+import type { PreviewNodeData } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { Pause, Play, Volume2, VolumeX } from 'lucide-react';
 import Image from 'next/image';

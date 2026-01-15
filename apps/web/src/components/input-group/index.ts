@@ -25,7 +25,7 @@ export type {
   ToolbarOrientation,
   ToolbarSize,
   ToolbarVisibility,
-} from '@content-workflow/types';
+} from '@genfeedai/types';
 // Action components
 export { ActionMenu, ActionToolbar } from './actions';
 // Composite components

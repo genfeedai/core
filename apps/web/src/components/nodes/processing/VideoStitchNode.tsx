@@ -1,6 +1,6 @@
 'use client';
 
-import type { TransitionType, VideoStitchNodeData } from '@content-workflow/types';
+import type { TransitionType, VideoStitchNodeData } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { Layers, RefreshCw } from 'lucide-react';
 import { memo, useCallback } from 'react';

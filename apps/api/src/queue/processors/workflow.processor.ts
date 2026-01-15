@@ -1,4 +1,4 @@
-import { buildDependencyMap, detectCycles, topologicalSort } from '@content-workflow/core';
+import { buildDependencyMap, detectCycles, topologicalSort } from '@genfeedai/core';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { forwardRef, Inject, Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';

@@ -2,11 +2,11 @@
 
 import { useReactFlow } from '@xyflow/react';
 import { clsx } from 'clsx';
-import { Lock, Trash2, Unlock } from 'lucide-react';
-import { memo, useMemo } from 'react';
+import { Lock, Palette, Trash2, Unlock } from 'lucide-react';
+import { memo, useMemo, useState } from 'react';
 import { useWorkflowStore } from '@/store/workflowStore';
-import type { NodeGroup } from '@/types/groups';
-import { GROUP_COLORS } from '@/types/groups';
+import type { GroupColor, NodeGroup } from '@/types/groups';
+import { DEFAULT_GROUP_COLORS, GROUP_COLORS } from '@/types/groups';
 
 interface GroupBounds {
   x: number;
@@ -60,7 +60,8 @@ interface GroupOverlayItemProps {
 
 function GroupOverlayItem({ group }: GroupOverlayItemProps) {
   const { getNode } = useReactFlow();
-  const { toggleGroupLock, deleteGroup } = useWorkflowStore();
+  const { toggleGroupLock, deleteGroup, setGroupColor } = useWorkflowStore();
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
   const bounds = useMemo(
     () => calculateGroupBounds(group.nodeIds, getNode),
@@ -70,6 +71,11 @@ function GroupOverlayItem({ group }: GroupOverlayItemProps) {
   if (!bounds) return null;
 
   const colors = GROUP_COLORS[group.color ?? 'purple'];
+
+  const handleColorSelect = (color: GroupColor) => {
+    setGroupColor(group.id, color);
+    setShowColorPicker(false);
+  };
 
   return (
     <div
@@ -95,6 +101,32 @@ function GroupOverlayItem({ group }: GroupOverlayItemProps) {
       >
         <span className={clsx('text-sm font-medium truncate', colors.text)}>{group.name}</span>
         <div className="flex items-center gap-1">
+          {/* Color Picker */}
+          <div className="relative">
+            <button
+              onClick={() => setShowColorPicker(!showColorPicker)}
+              className={clsx('p-1 rounded hover:bg-white/10 transition-colors', colors.text)}
+              title="Change group color"
+            >
+              <Palette className="w-4 h-4" />
+            </button>
+            {showColorPicker && (
+              <div className="absolute top-8 right-0 z-50 bg-card border border-border rounded-lg shadow-lg p-2 flex gap-1 flex-wrap w-[120px]">
+                {DEFAULT_GROUP_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => handleColorSelect(color)}
+                    className={clsx(
+                      'w-6 h-6 rounded-md border-2 transition-transform hover:scale-110',
+                      GROUP_COLORS[color].bg,
+                      color === group.color ? 'border-white' : 'border-transparent'
+                    )}
+                    title={color}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
           <button
             onClick={() => toggleGroupLock(group.id)}
             className={clsx('p-1 rounded hover:bg-white/10 transition-colors', colors.text)}

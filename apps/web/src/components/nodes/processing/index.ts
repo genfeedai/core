@@ -1,3 +1,9 @@
 export { AnimationNode } from './AnimationNode';
+export { AnnotationNode } from './AnnotationNode';
+export { ImageGridSplitNode } from './ImageGridSplitNode';
+export { LumaReframeImageNode } from './LumaReframeImageNode';
+export { LumaReframeVideoNode } from './LumaReframeVideoNode';
+export { TopazImageUpscaleNode } from './TopazImageUpscaleNode';
+export { TopazVideoUpscaleNode } from './TopazVideoUpscaleNode';
 export { VideoStitchNode } from './VideoStitchNode';
 export { VideoTrimNode } from './VideoTrimNode';

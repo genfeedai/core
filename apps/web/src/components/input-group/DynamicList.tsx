@@ -1,6 +1,6 @@
 'use client';
 
-import type { ActionConfig, RowHelpers } from '@content-workflow/types';
+import type { ActionConfig, RowHelpers } from '@genfeedai/types';
 import { clsx } from 'clsx';
 import { Plus } from 'lucide-react';
 import { nanoid } from 'nanoid';

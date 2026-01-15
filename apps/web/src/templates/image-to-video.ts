@@ -1,4 +1,4 @@
-import type { WorkflowFile } from '@content-workflow/types';
+import type { WorkflowFile } from '@genfeedai/types';
 
 export const IMAGE_TO_VIDEO_TEMPLATE: WorkflowFile = {
   version: 1,

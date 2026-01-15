@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { server } from '@/test/mocks/server';
 import { replicateApi } from './replicate';
 

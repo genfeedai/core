@@ -1,14 +1,125 @@
-import { topologicalSort } from '@content-workflow/core';
-import type {
-  NodeStatus,
-  NodeType,
-  TweetInputNodeData,
-  TweetRemixNodeData,
-  ValidationResult,
-} from '@content-workflow/types';
+import { topologicalSort } from '@genfeedai/core';
+import {
+  type ImageGridSplitNodeData,
+  NODE_STATUS,
+  type NodeType,
+  type TweetInputNodeData,
+  type TweetRemixNodeData,
+  type ValidationResult,
+  type WorkflowNode,
+} from '@genfeedai/types';
 import { create } from 'zustand';
 import { logger } from '@/lib/logger';
 import { useWorkflowStore } from './workflowStore';
+
+// Node types grouped by execution pattern
+const INPUT_NODES = ['prompt', 'imageInput', 'template', 'videoInput', 'audioInput'];
+const OUTPUT_NODES = ['output', 'preview', 'download'];
+const AI_NODES = ['imageGen', 'videoGen', 'llm'];
+const PROCESSING_NODES = ['animation', 'videoStitch', 'resize', 'videoTrim'];
+const REPLICATE_PROCESSING_NODES = [
+  'lumaReframeImage',
+  'lumaReframeVideo',
+  'topazImageUpscale',
+  'topazVideoUpscale',
+];
+
+// Helper to call API with JSON body
+async function callJsonApi(
+  url: string,
+  body: Record<string, unknown>
+): Promise<{ ok: boolean; data: Record<string, unknown>; error?: string }> {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    return { ok: false, data: {}, error: response.statusText };
+  }
+  const data = await response.json();
+  return { ok: true, data };
+}
+
+// Handle special node types with unique logic
+async function executeSpecialNode(
+  nodeType: string,
+  node: WorkflowNode,
+  inputs: Map<string, string | string[]>,
+  workflowStore: ReturnType<typeof useWorkflowStore.getState>
+): Promise<void> {
+  const nodeId = node.id;
+
+  switch (nodeType) {
+    case 'tweetInput': {
+      const tweetData = node.data as TweetInputNodeData;
+      if (tweetData.inputMode === 'url' && tweetData.tweetUrl) {
+        const { ok, data } = await callJsonApi('/api/tweet/fetch', { url: tweetData.tweetUrl });
+        if (!ok) throw new Error('Failed to fetch tweet');
+        workflowStore.updateNodeData(nodeId, {
+          extractedTweet: data.text,
+          authorHandle: data.authorHandle,
+          status: NODE_STATUS.complete,
+        });
+      } else {
+        workflowStore.updateNodeData(nodeId, {
+          extractedTweet: tweetData.rawText,
+          status: NODE_STATUS.complete,
+        });
+      }
+      break;
+    }
+
+    case 'tweetRemix': {
+      const inputTweet = inputs.get('tweet') as string;
+      const remixConfig = node.data as TweetRemixNodeData;
+      workflowStore.updateNodeData(nodeId, { inputTweet });
+      const { ok, data } = await callJsonApi('/api/tweet/remix', {
+        originalTweet: inputTweet,
+        tone: remixConfig.tone,
+        maxLength: remixConfig.maxLength,
+      });
+      if (!ok) throw new Error('Failed to generate variations');
+      workflowStore.updateNodeData(nodeId, {
+        variations: data.variations,
+        status: NODE_STATUS.complete,
+      });
+      break;
+    }
+
+    case 'imageGridSplit': {
+      const inputImage = inputs.get('image') as string;
+      if (!inputImage) throw new Error('No input image connected');
+      const gridData = node.data as ImageGridSplitNodeData;
+      workflowStore.updateNodeData(nodeId, { inputImage });
+
+      const formData = new FormData();
+      formData.append('image', inputImage);
+      formData.append('gridRows', String(gridData.gridRows ?? 2));
+      formData.append('gridCols', String(gridData.gridCols ?? 3));
+      formData.append('borderInset', String(gridData.borderInset ?? 10));
+      formData.append('outputFormat', gridData.outputFormat ?? 'jpg');
+      formData.append('quality', String(gridData.quality ?? 95));
+
+      const response = await fetch('/api/tools/grid-split', { method: 'POST', body: formData });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error ?? `Grid split error: ${response.statusText}`);
+      }
+      const result = await response.json();
+      if (!result.success || !result.images) throw new Error('Grid split failed');
+      workflowStore.updateNodeData(nodeId, {
+        outputImages: result.images.map((img: { data: string }) => img.data),
+        status: NODE_STATUS.complete,
+      });
+      break;
+    }
+
+    default:
+      // Unknown node type - just mark complete
+      workflowStore.updateNodeData(nodeId, { status: NODE_STATUS.complete });
+  }
+}
 
 export interface Job {
   nodeId: string;
@@ -97,7 +208,7 @@ export const useExecutionStore = create<ExecutionStore>((set, get) => ({
         if (node?.data.cachedOutput) {
           // Use cached output for locked node
           workflowStore.updateNodeData(nodeId, {
-            status: 'complete' as NodeStatus,
+            status: NODE_STATUS.complete,
           });
           set((state) => ({
             completedNodes: new Set([...state.completedNodes, nodeId]),
@@ -126,7 +237,7 @@ export const useExecutionStore = create<ExecutionStore>((set, get) => ({
     set({ currentNodeId: nodeId });
 
     // Update node status to processing
-    workflowStore.updateNodeData(nodeId, { status: 'processing' as NodeStatus });
+    workflowStore.updateNodeData(nodeId, { status: NODE_STATUS.processing });
 
     try {
       // Get connected inputs
@@ -134,138 +245,64 @@ export const useExecutionStore = create<ExecutionStore>((set, get) => ({
 
       // Execute based on node type
       const nodeType = node.type as NodeType;
+      const inputsObj = Object.fromEntries(inputs);
 
-      switch (nodeType) {
-        case 'imageGen':
-        case 'videoGen':
-        case 'llm': {
-          // These require API calls - handled separately
-          const response = await fetch(`/api/replicate/${nodeType}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              nodeId,
-              inputs: Object.fromEntries(inputs),
-              config: node.data,
-            }),
-          });
-
-          if (!response.ok) {
-            throw new Error(`API error: ${response.statusText}`);
-          }
-
-          const result = await response.json();
-
-          if (result.predictionId) {
-            // Async job - poll for completion
-            get().addJob(nodeId, result.predictionId);
-            await pollJob(result.predictionId, nodeId, workflowStore, get());
-          } else if (result.output) {
-            // Sync result
-            updateNodeOutput(nodeId, nodeType, result.output, workflowStore);
-          }
-          break;
+      // Input nodes - just mark complete
+      if (INPUT_NODES.includes(nodeType)) {
+        workflowStore.updateNodeData(nodeId, { status: NODE_STATUS.complete });
+      }
+      // Output nodes - receive media input and mark complete
+      else if (OUTPUT_NODES.includes(nodeType)) {
+        workflowStore.updateNodeData(nodeId, {
+          inputMedia: inputs.get('media') as string,
+          status: NODE_STATUS.complete,
+        });
+      }
+      // AI nodes (imageGen, videoGen, llm) - may have async jobs
+      else if (AI_NODES.includes(nodeType)) {
+        const { ok, data, error } = await callJsonApi(`/api/replicate/${nodeType}`, {
+          nodeId,
+          inputs: inputsObj,
+          config: node.data,
+        });
+        if (!ok) throw new Error(`API error: ${error}`);
+        if (data.predictionId) {
+          get().addJob(nodeId, data.predictionId as string);
+          await pollJob(data.predictionId as string, nodeId, workflowStore, get());
+        } else if (data.output) {
+          updateNodeOutput(nodeId, nodeType, data.output, workflowStore);
         }
-
-        case 'prompt':
-        case 'imageInput':
-        case 'template': {
-          // Input nodes don't need processing, just mark complete
-          workflowStore.updateNodeData(nodeId, {
-            status: 'complete' as NodeStatus,
-          });
-          break;
+      }
+      // Replicate processing nodes (Luma/Topaz) - may have async jobs
+      else if (REPLICATE_PROCESSING_NODES.includes(nodeType)) {
+        const { ok, data, error } = await callJsonApi('/api/replicate/processing', {
+          nodeId,
+          nodeType,
+          inputs: inputsObj,
+          config: node.data,
+        });
+        if (!ok) throw new Error(`API error: ${error}`);
+        if (data.predictionId) {
+          get().addJob(nodeId, data.predictionId as string);
+          await pollJob(data.predictionId as string, nodeId, workflowStore, get());
+        } else if (data.output) {
+          updateNodeOutput(nodeId, nodeType, data.output, workflowStore);
         }
-
-        case 'tweetInput': {
-          const tweetData = node.data as TweetInputNodeData;
-          if (tweetData.inputMode === 'url' && tweetData.tweetUrl) {
-            const response = await fetch('/api/tweet/fetch', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ url: tweetData.tweetUrl }),
-            });
-            if (!response.ok) {
-              throw new Error('Failed to fetch tweet');
-            }
-            const { text, authorHandle } = await response.json();
-            workflowStore.updateNodeData(nodeId, {
-              extractedTweet: text,
-              authorHandle,
-              status: 'complete' as NodeStatus,
-            });
-          } else {
-            workflowStore.updateNodeData(nodeId, {
-              extractedTweet: tweetData.rawText,
-              status: 'complete' as NodeStatus,
-            });
-          }
-          break;
-        }
-
-        case 'tweetRemix': {
-          const inputTweet = inputs.get('tweet') as string;
-          const remixConfig = node.data as TweetRemixNodeData;
-
-          workflowStore.updateNodeData(nodeId, { inputTweet });
-
-          const response = await fetch('/api/tweet/remix', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              originalTweet: inputTweet,
-              tone: remixConfig.tone,
-              maxLength: remixConfig.maxLength,
-            }),
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to generate variations');
-          }
-
-          const { variations } = await response.json();
-          workflowStore.updateNodeData(nodeId, {
-            variations,
-            status: 'complete' as NodeStatus,
-          });
-          break;
-        }
-
-        case 'animation':
-        case 'videoStitch':
-        case 'resize': {
-          // Processing nodes - call processing API
-          const response = await fetch(`/api/video/process`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              nodeId,
-              nodeType,
-              inputs: Object.fromEntries(inputs),
-              config: node.data,
-            }),
-          });
-
-          if (!response.ok) {
-            throw new Error(`Processing error: ${response.statusText}`);
-          }
-
-          const result = await response.json();
-          updateNodeOutput(nodeId, nodeType, result.output, workflowStore);
-          break;
-        }
-
-        case 'output':
-        case 'preview':
-        case 'download': {
-          // Output nodes just receive data from inputs
-          const inputMedia = inputs.get('media');
-          workflowStore.updateNodeData(nodeId, {
-            inputMedia: inputMedia as string,
-            status: 'complete' as NodeStatus,
-          });
-          break;
-        }
+      }
+      // Video processing nodes
+      else if (PROCESSING_NODES.includes(nodeType)) {
+        const { ok, data, error } = await callJsonApi('/api/video/process', {
+          nodeId,
+          nodeType,
+          inputs: inputsObj,
+          config: node.data,
+        });
+        if (!ok) throw new Error(`Processing error: ${error}`);
+        updateNodeOutput(nodeId, nodeType, data.output, workflowStore);
+      }
+      // Special case handlers
+      else {
+        await executeSpecialNode(nodeType, node, inputs, workflowStore);
       }
 
       set((state) => ({
@@ -274,7 +311,7 @@ export const useExecutionStore = create<ExecutionStore>((set, get) => ({
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       workflowStore.updateNodeData(nodeId, {
-        status: 'error' as NodeStatus,
+        status: NODE_STATUS.error,
         error: errorMessage,
       });
       throw error;
@@ -299,7 +336,7 @@ export const useExecutionStore = create<ExecutionStore>((set, get) => ({
 
     // Reset node status
     workflowStore.updateNodeData(nodeId, {
-      status: 'idle' as NodeStatus,
+      status: NODE_STATUS.idle,
       error: undefined,
     });
 
@@ -359,7 +396,7 @@ export const useExecutionStore = create<ExecutionStore>((set, get) => ({
     const workflowStore = useWorkflowStore.getState();
     for (const node of workflowStore.nodes) {
       workflowStore.updateNodeData(node.id, {
-        status: 'idle' as NodeStatus,
+        status: NODE_STATUS.idle,
         error: undefined,
         progress: undefined,
       });
@@ -396,7 +433,7 @@ async function pollJob(
     if (data.status === 'succeeded') {
       const node = workflowStore.getNodeById(nodeId);
       if (node) {
-        updateNodeOutput(nodeId, node.type as NodeType, data.output, workflowStore);
+        updateNodeOutput(nodeId, node.type, data.output, workflowStore);
       }
       return;
     }
@@ -411,32 +448,33 @@ async function pollJob(
   throw new Error('Job timed out');
 }
 
+// Output field mappings by node type
+const IMAGE_OUTPUT_NODES = ['imageGen', 'lumaReframeImage', 'topazImageUpscale'];
+const VIDEO_OUTPUT_NODES = [
+  'videoGen',
+  'animation',
+  'videoStitch',
+  'lumaReframeVideo',
+  'topazVideoUpscale',
+];
+
 // Helper function to update node output based on type
 function updateNodeOutput(
   nodeId: string,
-  nodeType: NodeType,
+  nodeType: string,
   output: unknown,
   workflowStore: ReturnType<typeof useWorkflowStore.getState>
 ): void {
-  const updates: Record<string, unknown> = {
-    status: 'complete' as NodeStatus,
-  };
+  const updates: Record<string, unknown> = { status: NODE_STATUS.complete };
 
-  switch (nodeType) {
-    case 'imageGen':
-      updates.outputImage = output;
-      break;
-    case 'videoGen':
-    case 'animation':
-    case 'videoStitch':
-      updates.outputVideo = output;
-      break;
-    case 'llm':
-      updates.outputText = output;
-      break;
-    case 'resize':
-      updates.outputMedia = output;
-      break;
+  if (IMAGE_OUTPUT_NODES.includes(nodeType)) {
+    updates.outputImage = output;
+  } else if (VIDEO_OUTPUT_NODES.includes(nodeType)) {
+    updates.outputVideo = output;
+  } else if (nodeType === 'llm') {
+    updates.outputText = output;
+  } else if (nodeType === 'resize') {
+    updates.outputMedia = output;
   }
 
   workflowStore.updateNodeData(nodeId, updates);

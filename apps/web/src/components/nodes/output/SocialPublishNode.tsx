@@ -1,10 +1,6 @@
 'use client';
 
-import type {
-  SocialPlatform,
-  SocialPublishNodeData,
-  SocialVisibility,
-} from '@content-workflow/types';
+import type { SocialPlatform, SocialPublishNodeData, SocialVisibility } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { ExternalLink, Share2 } from 'lucide-react';
 import { memo, useCallback } from 'react';

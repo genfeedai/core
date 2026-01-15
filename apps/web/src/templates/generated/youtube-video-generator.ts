@@ -1,4 +1,4 @@
-import type { WorkflowFile } from '@content-workflow/types';
+import type { WorkflowFile } from '@genfeedai/types';
 
 // NOTE: This template uses placeholder node types (subtitle, youtubeUpload)
 // that need to be implemented in apps/web/src/types/nodes.ts before use.

@@ -1,4 +1,4 @@
-import { type IPromptLibraryItem, PromptCategory } from '@content-workflow/types';
+import { type IPromptLibraryItem, PromptCategory } from '@genfeedai/types';
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { apiClient } from './client';
 import { promptLibraryApi } from './prompt-library';

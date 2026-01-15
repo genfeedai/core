@@ -1,6 +1,6 @@
 'use client';
 
-import type { KeyValuePair, RowHelpers } from '@content-workflow/types';
+import type { KeyValuePair, RowHelpers } from '@genfeedai/types';
 import { clsx } from 'clsx';
 import { nanoid } from 'nanoid';
 import { memo, useCallback } from 'react';

@@ -1,6 +1,6 @@
 'use client';
 
-import type { IPromptLibraryItem, PromptNodeData } from '@content-workflow/types';
+import type { IPromptLibraryItem, PromptNodeData } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { Save } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';

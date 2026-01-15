@@ -1,5 +1,5 @@
 import { type DynamicModule, Global, Logger, Module, type Provider } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import type Database from 'better-sqlite3';
 import { ExecutionMongoRepository } from '../adapters/mongodb/execution.mongodb';
 import { PromptLibraryMongoRepository } from '../adapters/mongodb/prompt-library.mongodb';

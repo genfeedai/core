@@ -76,6 +76,70 @@ export interface LLMJobData extends NodeJobData {
 }
 
 /**
+ * Luma Reframe Image job data
+ */
+export interface LumaReframeImageJobData extends NodeJobData {
+  nodeType: 'lumaReframeImage';
+  nodeData: {
+    image: string;
+    aspectRatio: string;
+    model?: 'photon-flash-1' | 'photon-1';
+    prompt?: string;
+    gridPosition?: { x: number; y: number };
+  };
+}
+
+/**
+ * Luma Reframe Video job data
+ */
+export interface LumaReframeVideoJobData extends NodeJobData {
+  nodeType: 'lumaReframeVideo';
+  nodeData: {
+    video: string;
+    aspectRatio: string;
+    prompt?: string;
+    gridPosition?: { x: number; y: number };
+  };
+}
+
+/**
+ * Topaz Image Upscale job data
+ */
+export interface TopazImageUpscaleJobData extends NodeJobData {
+  nodeType: 'topazImageUpscale';
+  nodeData: {
+    image: string;
+    enhanceModel: string;
+    upscaleFactor: string;
+    outputFormat: string;
+    faceEnhancement?: boolean;
+    faceEnhancementStrength?: number;
+    faceEnhancementCreativity?: number;
+  };
+}
+
+/**
+ * Topaz Video Upscale job data
+ */
+export interface TopazVideoUpscaleJobData extends NodeJobData {
+  nodeType: 'topazVideoUpscale';
+  nodeData: {
+    video: string;
+    targetResolution: string;
+    targetFps: number;
+  };
+}
+
+/**
+ * Union type for all processing job data
+ */
+export type ProcessingJobData =
+  | LumaReframeImageJobData
+  | LumaReframeVideoJobData
+  | TopazImageUpscaleJobData
+  | TopazVideoUpscaleJobData;
+
+/**
  * Job result interface
  */
 export interface JobResult {

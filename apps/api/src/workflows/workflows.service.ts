@@ -2,7 +2,7 @@ import {
   type IWorkflowRepository,
   WORKFLOW_REPOSITORY,
   type WorkflowEntity,
-} from '@content-workflow/storage';
+} from '@genfeedai/storage';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { CreateWorkflowDto } from './dto/create-workflow.dto';
 import type { UpdateWorkflowDto } from './dto/update-workflow.dto';

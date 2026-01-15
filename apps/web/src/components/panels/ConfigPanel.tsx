@@ -1,7 +1,7 @@
 'use client';
 
-import type { AnimationNodeData, CubicBezier } from '@content-workflow/types';
-import { NODE_DEFINITIONS, type NodeType } from '@content-workflow/types';
+import type { AnimationNodeData, CubicBezier } from '@genfeedai/types';
+import { NODE_DEFINITIONS, type NodeType } from '@genfeedai/types';
 import { X } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';

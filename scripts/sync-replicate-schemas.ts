@@ -352,7 +352,7 @@ function generateTypesFile(schemas: ModelSchema[]): string {
 function generateIndexFile(): string {
   return `/**
  * Replicate model types - auto-generated
- * @module @content-workflow/types/replicate
+ * @module @genfeedai/types/replicate
  */
 
 export * from './models';
@@ -464,8 +464,8 @@ async function main() {
   }
 
   console.log('');
-  console.log('💡 Usage: Import types from @content-workflow/types/replicate');
-  console.log("   import type { NanoBananaProInput, Veo31FastInput } from '@content-workflow/types/replicate';");
+  console.log('💡 Usage: Import types from @genfeedai/types/replicate');
+  console.log("   import type { NanoBananaProInput, Veo31FastInput } from '@genfeedai/types/replicate';");
 }
 
 main().catch((error) => {

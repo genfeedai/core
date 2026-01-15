@@ -2,7 +2,7 @@ import {
   type IPromptLibraryRepository,
   PROMPT_LIBRARY_REPOSITORY,
   type PromptLibraryItemEntity,
-} from '@content-workflow/storage';
+} from '@genfeedai/storage';
 import { NotFoundException } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  CATEGORY_LABELS,
-  type IPromptLibraryItem,
-  type PromptCategory,
-} from '@content-workflow/types';
+import { CATEGORY_LABELS, type IPromptLibraryItem, type PromptCategory } from '@genfeedai/types';
 import { BookMarked, Copy, MoreVertical, Plus, Search, Sparkles, Trash2, X } from 'lucide-react';
 import Image from 'next/image';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';

@@ -1,3 +1,12 @@
+import type { ImageModel, VideoModel } from '@genfeedai/core';
+import {
+  DEFAULT_VIDEO_DURATION,
+  IMAGE_NODE_TYPES,
+  LUMA_NODE_TYPES,
+  PRICING,
+  TOPAZ_NODE_TYPES,
+  VIDEO_NODE_TYPES,
+} from '@genfeedai/core';
 import { Injectable } from '@nestjs/common';
 import type {
   CostBreakdownItem,
@@ -5,41 +14,6 @@ import type {
   JobCostBreakdown,
   WorkflowNodeForCost,
 } from './interfaces/cost.interface';
-
-// Model pricing - Source: replicate.com/pricing (Jan 2026)
-// Image models: per output image (flat rate)
-// Video models: per second of output video
-// LLM models: per token
-const PRICING = {
-  // Image generation (per image)
-  'nano-banana': 0.039,
-  'nano-banana-pro': {
-    '1K': 0.15,
-    '2K': 0.15,
-    '4K': 0.3,
-  },
-  // Legacy aliases
-  'imagen-4-fast': 0.039,
-  'imagen-4': 0.15,
-  // Video generation (per second)
-  'veo-3.1-fast': { withAudio: 0.15, withoutAudio: 0.1 },
-  'veo-3.1': { withAudio: 0.4, withoutAudio: 0.2 },
-  // Legacy aliases
-  'veo-3-fast': { withAudio: 0.15, withoutAudio: 0.1 },
-  'veo-3': { withAudio: 0.4, withoutAudio: 0.2 },
-  // LLM (per token, derived from $9.50/million)
-  llama: 0.0000095,
-} as const;
-
-type ImageModel = 'nano-banana' | 'nano-banana-pro' | 'imagen-4-fast' | 'imagen-4';
-type VideoModel = 'veo-3.1-fast' | 'veo-3.1' | 'veo-3-fast' | 'veo-3';
-
-// Node types that incur costs
-const IMAGE_NODE_TYPES = ['imageGen', 'image-gen', 'ImageGenNode'];
-const VIDEO_NODE_TYPES = ['videoGen', 'video-gen', 'VideoGenNode'];
-
-// Default video duration (seconds)
-const DEFAULT_VIDEO_DURATION = 8;
 
 @Injectable()
 export class CostCalculatorService {
@@ -83,20 +57,28 @@ export class CostCalculatorService {
     const { type, data } = node;
     const model = data.model;
 
-    if (!model) {
-      return 0;
-    }
-
     // Image generation nodes
     if (this.isImageNode(type)) {
+      if (!model) return 0;
       return this.calculateImageCost(model, data.resolution);
     }
 
     // Video generation nodes
     if (this.isVideoNode(type)) {
+      if (!model) return 0;
       const duration = data.duration ?? DEFAULT_VIDEO_DURATION;
       const withAudio = data.generateAudio ?? true;
       return this.calculateVideoCost(model, duration, withAudio);
+    }
+
+    // Luma Reframe nodes
+    if (this.isLumaNode(type)) {
+      return this.calculateLumaReframeCost(type, data.model, data.duration);
+    }
+
+    // Topaz Upscale nodes
+    if (this.isTopazNode(type)) {
+      return this.calculateTopazCost(type, data as unknown as Record<string, unknown>);
     }
 
     return 0;
@@ -189,6 +171,106 @@ export class CostCalculatorService {
   }
 
   /**
+   * Calculate Luma Reframe cost
+   */
+  calculateLumaReframeCost(nodeType: string, model?: string, videoDuration?: number): number {
+    if (nodeType === 'lumaReframeImage') {
+      const pricing = PRICING['luma-reframe-image'];
+      const modelKey = (model ?? 'photon-flash-1') as keyof typeof pricing;
+      return pricing[modelKey] ?? pricing['photon-flash-1'];
+    }
+
+    if (nodeType === 'lumaReframeVideo') {
+      // Default to 5 seconds if duration unknown
+      const duration = videoDuration ?? 5;
+      return duration * PRICING['luma-reframe-video'];
+    }
+
+    return 0;
+  }
+
+  /**
+   * Calculate Topaz Upscale cost
+   */
+  calculateTopazCost(nodeType: string, data: Record<string, unknown>): number {
+    if (nodeType === 'topazImageUpscale') {
+      // Estimate output megapixels based on upscale factor
+      // Assume 2MP input as baseline
+      const baseMP = 2;
+      const factor = this.getUpscaleMultiplier(data.upscaleFactor as string);
+      const outputMP = baseMP * factor;
+      return this.calculateTopazImageCost(outputMP);
+    }
+
+    if (nodeType === 'topazVideoUpscale') {
+      const resolution = (data.targetResolution as string) ?? '1080p';
+      const fps = (data.targetFps as number) ?? 30;
+      const duration = (data.duration as number) ?? 10;
+      return this.calculateTopazVideoCost(resolution, fps, duration);
+    }
+
+    return 0;
+  }
+
+  /**
+   * Calculate Topaz image upscale cost based on output megapixels
+   */
+  private calculateTopazImageCost(outputMegapixels: number): number {
+    const tiers = PRICING['topaz-image-upscale'];
+    for (const tier of tiers) {
+      if (outputMegapixels <= tier.maxMP) {
+        return tier.price;
+      }
+    }
+    return tiers[tiers.length - 1].price;
+  }
+
+  /**
+   * Calculate Topaz video upscale cost
+   */
+  private calculateTopazVideoCost(
+    resolution: string,
+    fps: number,
+    durationSeconds: number
+  ): number {
+    const pricing = PRICING['topaz-video-upscale'];
+    const key = `${resolution}-${fps}` as keyof typeof pricing;
+    const perFiveSeconds = pricing[key] ?? pricing['1080p-30'];
+    const segments = Math.ceil(durationSeconds / 5);
+    return segments * perFiveSeconds;
+  }
+
+  /**
+   * Get upscale multiplier for Topaz
+   */
+  private getUpscaleMultiplier(factor?: string): number {
+    switch (factor) {
+      case '2x':
+        return 4;
+      case '4x':
+        return 16;
+      case '6x':
+        return 36;
+      default:
+        return 1;
+    }
+  }
+
+  /**
+   * Check if node type is a Luma reframe node
+   */
+  private isLumaNode(type: string): boolean {
+    return (LUMA_NODE_TYPES as readonly string[]).includes(type);
+  }
+
+  /**
+   * Check if node type is a Topaz upscale node
+   */
+  private isTopazNode(type: string): boolean {
+    return (TOPAZ_NODE_TYPES as readonly string[]).includes(type);
+  }
+
+  /**
    * Get unit price for a node (for display purposes)
    */
   private getUnitPrice(node: WorkflowNodeForCost): number {
@@ -245,13 +327,13 @@ export class CostCalculatorService {
    * Check if node type is an image generation node
    */
   private isImageNode(type: string): boolean {
-    return IMAGE_NODE_TYPES.includes(type);
+    return (IMAGE_NODE_TYPES as readonly string[]).includes(type);
   }
 
   /**
    * Check if node type is a video generation node
    */
   private isVideoNode(type: string): boolean {
-    return VIDEO_NODE_TYPES.includes(type);
+    return (VIDEO_NODE_TYPES as readonly string[]).includes(type);
   }
 }

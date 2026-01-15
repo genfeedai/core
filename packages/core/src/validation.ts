@@ -4,8 +4,8 @@ import type {
   NodeType,
   ValidationError,
   ValidationResult,
-} from '@content-workflow/types';
-import { CONNECTION_RULES, NODE_DEFINITIONS } from '@content-workflow/types';
+} from '@genfeedai/types';
+import { CONNECTION_RULES, NODE_DEFINITIONS } from '@genfeedai/types';
 
 export type { ValidationError, ValidationResult };
 

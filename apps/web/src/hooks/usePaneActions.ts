@@ -1,4 +1,4 @@
-import type { NodeType } from '@content-workflow/types';
+import type { NodeType } from '@genfeedai/types';
 import { useReactFlow } from '@xyflow/react';
 import { useCallback } from 'react';
 import { useWorkflowStore } from '@/store/workflowStore';

@@ -5,12 +5,14 @@ import type {
   ImageGenNodeData,
   ImageModel,
   OutputFormat,
+  ProviderModel,
   Resolution,
-} from '@content-workflow/types';
+} from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Search } from 'lucide-react';
 import Image from 'next/image';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useState } from 'react';
+import { ModelBrowserModal } from '@/components/models/ModelBrowserModal';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useExecutionStore } from '@/store/executionStore';
@@ -47,6 +49,32 @@ function ImageGenNodeComponent(props: NodeProps) {
   const nodeData = data as ImageGenNodeData;
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const executeNode = useExecutionStore((state) => state.executeNode);
+
+  const [isModelBrowserOpen, setIsModelBrowserOpen] = useState(false);
+
+  const handleModelSelect = useCallback(
+    (model: ProviderModel) => {
+      // Map provider model to our internal model format
+      const modelMap: Record<string, ImageModel> = {
+        'google/nano-banana': 'nano-banana',
+        'google/nano-banana-pro': 'nano-banana-pro',
+      };
+
+      const internalModel = modelMap[model.id];
+      if (internalModel) {
+        updateNodeData<ImageGenNodeData>(id, {
+          model: internalModel,
+          provider: model.provider,
+          selectedModel: {
+            provider: model.provider,
+            modelId: model.id,
+            displayName: model.displayName,
+          },
+        });
+      }
+    },
+    [id, updateNodeData]
+  );
 
   const handleModelChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -86,17 +114,27 @@ function ImageGenNodeComponent(props: NodeProps) {
         {/* Model Selection */}
         <div className="space-y-1.5">
           <Label className="text-xs">Model</Label>
-          <select
-            value={nodeData.model}
-            onChange={handleModelChange}
-            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          >
-            {MODELS.map((model) => (
-              <option key={model.value} value={model.value}>
-                {model.label} - {model.description}
-              </option>
-            ))}
-          </select>
+          <div className="flex gap-2">
+            <select
+              value={nodeData.model}
+              onChange={handleModelChange}
+              className="flex h-9 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              {MODELS.map((model) => (
+                <option key={model.value} value={model.value}>
+                  {model.label} - {model.description}
+                </option>
+              ))}
+            </select>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              onClick={() => setIsModelBrowserOpen(true)}
+              title="Browse models"
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Aspect Ratio */}
@@ -183,6 +221,15 @@ function ImageGenNodeComponent(props: NodeProps) {
           </button>
         )}
       </div>
+
+      {/* Model Browser Modal */}
+      <ModelBrowserModal
+        isOpen={isModelBrowserOpen}
+        onClose={() => setIsModelBrowserOpen(false)}
+        onSelect={handleModelSelect}
+        capabilities={['text-to-image', 'image-to-image']}
+        title="Select Image Model"
+      />
     </BaseNode>
   );
 }

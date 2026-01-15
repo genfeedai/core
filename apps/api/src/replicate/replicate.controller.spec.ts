@@ -5,7 +5,7 @@ import { ReplicateService } from './replicate.service';
 
 describe('ReplicateController', () => {
   let controller: ReplicateController;
-  let replicateService: ReplicateService;
+  let _replicateService: ReplicateService;
 
   const mockReplicateService = {
     generateImage: vi.fn().mockResolvedValue({
@@ -35,7 +35,7 @@ describe('ReplicateController', () => {
     }).compile();
 
     controller = module.get<ReplicateController>(ReplicateController);
-    replicateService = module.get<ReplicateService>(ReplicateService);
+    _replicateService = module.get<ReplicateService>(ReplicateService);
   });
 
   describe('POST /replicate/image', () => {

@@ -1,6 +1,6 @@
 'use client';
 
-import type { TweetInputNodeData } from '@content-workflow/types';
+import type { TweetInputNodeData } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { Link, Loader2, Type } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';

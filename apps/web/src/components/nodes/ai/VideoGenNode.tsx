@@ -2,14 +2,17 @@
 
 import type {
   AspectRatio,
+  ProviderModel,
   VideoDuration,
   VideoGenNodeData,
   VideoModel,
   VideoResolution,
-} from '@content-workflow/types';
+} from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { Play, RefreshCw } from 'lucide-react';
-import { memo, useCallback } from 'react';
+import { Play, RefreshCw, Search } from 'lucide-react';
+import { memo, useCallback, useState } from 'react';
+import { ModelBrowserModal } from '@/components/models/ModelBrowserModal';
+import { Button } from '@/components/ui/button';
 import { useExecutionStore } from '@/store/executionStore';
 import { useWorkflowStore } from '@/store/workflowStore';
 import { BaseNode } from '../BaseNode';
@@ -30,6 +33,32 @@ function VideoGenNodeComponent(props: NodeProps) {
   const nodeData = data as VideoGenNodeData;
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const executeNode = useExecutionStore((state) => state.executeNode);
+
+  const [isModelBrowserOpen, setIsModelBrowserOpen] = useState(false);
+
+  const handleModelSelect = useCallback(
+    (model: ProviderModel) => {
+      // Map provider model to our internal model format
+      const modelMap: Record<string, VideoModel> = {
+        'google/veo-3.1-fast': 'veo-3.1-fast',
+        'google/veo-3.1': 'veo-3.1',
+      };
+
+      const internalModel = modelMap[model.id];
+      if (internalModel) {
+        updateNodeData<VideoGenNodeData>(id, {
+          model: internalModel,
+          provider: model.provider,
+          selectedModel: {
+            provider: model.provider,
+            modelId: model.id,
+            displayName: model.displayName,
+          },
+        });
+      }
+    },
+    [id, updateNodeData]
+  );
 
   const handleModelChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -82,17 +111,27 @@ function VideoGenNodeComponent(props: NodeProps) {
         {/* Model Selection */}
         <div>
           <label className="text-xs text-[var(--muted-foreground)]">Model</label>
-          <select
-            value={nodeData.model}
-            onChange={handleModelChange}
-            className="w-full px-2 py-1.5 text-sm bg-[var(--background)] border border-[var(--border)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
-          >
-            {MODELS.map((model) => (
-              <option key={model.value} value={model.value}>
-                {model.label} - {model.description}
-              </option>
-            ))}
-          </select>
+          <div className="flex gap-2">
+            <select
+              value={nodeData.model}
+              onChange={handleModelChange}
+              className="flex-1 px-2 py-1.5 text-sm bg-[var(--background)] border border-[var(--border)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
+            >
+              {MODELS.map((model) => (
+                <option key={model.value} value={model.value}>
+                  {model.label} - {model.description}
+                </option>
+              ))}
+            </select>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              onClick={() => setIsModelBrowserOpen(true)}
+              title="Browse models"
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
@@ -197,6 +236,15 @@ function VideoGenNodeComponent(props: NodeProps) {
           </button>
         )}
       </div>
+
+      {/* Model Browser Modal */}
+      <ModelBrowserModal
+        isOpen={isModelBrowserOpen}
+        onClose={() => setIsModelBrowserOpen(false)}
+        onSelect={handleModelSelect}
+        capabilities={['text-to-video', 'image-to-video']}
+        title="Select Video Model"
+      />
     </BaseNode>
   );
 }

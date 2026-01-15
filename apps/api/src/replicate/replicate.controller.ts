@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestj
 import type { GenerateImageDto } from './dto/generate-image.dto';
 import type { GenerateTextDto } from './dto/generate-text.dto';
 import type { GenerateVideoDto } from './dto/generate-video.dto';
+import type { ProcessDto } from './dto/process.dto';
 import type { WebhookDto } from './dto/webhook.dto';
 import type { ReplicateService } from './replicate.service';
 
@@ -69,6 +70,57 @@ export class ReplicateController {
     return {
       output,
       status: 'succeeded',
+    };
+  }
+
+  @Post('processing')
+  async processMedia(@Body() dto: ProcessDto) {
+    let prediction: { id: string; status: string };
+
+    switch (dto.nodeType) {
+      case 'lumaReframeImage':
+        prediction = await this.replicateService.reframeImage(dto.executionId, dto.nodeId, {
+          image: dto.image!,
+          aspectRatio: dto.aspectRatio!,
+          model: dto.model,
+          prompt: dto.prompt,
+          gridPosition: dto.gridPosition,
+        });
+        break;
+
+      case 'lumaReframeVideo':
+        prediction = await this.replicateService.reframeVideo(dto.executionId, dto.nodeId, {
+          video: dto.video!,
+          aspectRatio: dto.aspectRatio!,
+          prompt: dto.prompt,
+          gridPosition: dto.gridPosition,
+        });
+        break;
+
+      case 'topazImageUpscale':
+        prediction = await this.replicateService.upscaleImage(dto.executionId, dto.nodeId, {
+          image: dto.image!,
+          enhanceModel: dto.enhanceModel!,
+          upscaleFactor: dto.upscaleFactor!,
+          outputFormat: dto.outputFormat!,
+          faceEnhancement: dto.faceEnhancement,
+          faceEnhancementStrength: dto.faceEnhancementStrength,
+          faceEnhancementCreativity: dto.faceEnhancementCreativity,
+        });
+        break;
+
+      case 'topazVideoUpscale':
+        prediction = await this.replicateService.upscaleVideo(dto.executionId, dto.nodeId, {
+          video: dto.video!,
+          targetResolution: dto.targetResolution!,
+          targetFps: dto.targetFps!,
+        });
+        break;
+    }
+
+    return {
+      predictionId: prediction.id,
+      status: prediction.status,
     };
   }
 

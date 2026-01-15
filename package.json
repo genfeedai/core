@@ -11,17 +11,17 @@
       "bunx biome check --write"
     ]
   },
-  "name": "content-workflow-monorepo",
+  "name": "genfeed",
   "private": true,
   "scripts": {
     "build": "bun run --filter '*' build",
-    "build:api": "bun run --filter @content-workflow/api build",
-    "build:web": "bun run --filter @content-workflow/web build",
+    "build:api": "bun run --filter @genfeedai/api build",
+    "build:web": "bun run --filter @genfeedai/web build",
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "dev": "bunx concurrently \"bun run dev:api\" \"bun run dev:web\"",
-    "dev:api": "bun run --filter @content-workflow/api start:dev",
-    "dev:web": "bun run --filter @content-workflow/web dev",
+    "dev:api": "bun run --filter @genfeedai/api start:dev",
+    "dev:web": "bun run --filter @genfeedai/web dev",
     "format": "biome format --write .",
     "format:check": "biome format .",
     "lint": "biome lint .",
@@ -30,10 +30,11 @@
     "prepare": "husky",
     "sync:replicate": "bun run scripts/sync-replicate-schemas.ts",
     "test": "bun run --filter '*' test",
-    "test:api": "bun run --filter @content-workflow/api test",
-    "test:web": "bun run --filter @content-workflow/web test",
+    "test:api": "bun run --filter @genfeedai/api test",
+    "test:web": "bun run --filter @genfeedai/web test",
     "test:coverage": "bun run --filter '*' test:coverage"
   },
+  "license": "AGPL-3.0",
   "version": "0.1.0",
   "workspaces": [
     "apps/*",

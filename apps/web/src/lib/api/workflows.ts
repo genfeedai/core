@@ -1,4 +1,4 @@
-import type { WorkflowEdge, WorkflowNode } from '@content-workflow/types';
+import type { WorkflowEdge, WorkflowNode } from '@genfeedai/types';
 import type { NodeGroup } from '@/types/groups';
 import { apiClient } from './client';
 

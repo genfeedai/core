@@ -10,6 +10,7 @@ import {
   PromptLibraryItem,
   PromptLibraryItemSchema,
 } from './prompt-library/schemas/prompt-library-item.schema';
+import { ProvidersModule } from './providers/providers.module';
 import { QueueModule } from './queue/queue.module';
 import { ReplicateModule } from './replicate/replicate.module';
 import { StorageSetupModule } from './storage/storage-setup.module';
@@ -72,6 +73,7 @@ import { WorkflowsModule } from './workflows/workflows.module';
     ExecutionsModule,
     ReplicateModule,
     PromptLibraryModule,
+    ProvidersModule,
 
     // Queue Management (BullMQ + Redis)
     QueueModule,

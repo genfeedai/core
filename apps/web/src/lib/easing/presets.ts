@@ -1,4 +1,4 @@
-import type { CubicBezier, EasingPreset } from '@content-workflow/types';
+import type { CubicBezier, EasingPreset } from '@genfeedai/types';
 
 /**
  * Easing presets based on easy-peasy-ease patterns

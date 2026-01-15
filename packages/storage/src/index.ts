@@ -1,12 +1,11 @@
-// Interfaces
-
-export * from './adapters/mongodb';
-// Adapters (for direct usage if needed)
-export * from './adapters/sqlite';
+// Adapters
+export * from './adapters/mongodb/index';
+export * from './adapters/sqlite/index';
 // Entities
-export * from './entities';
+export * from './entities/index';
 // Factory
-export * from './factory';
-export * from './interfaces';
+export * from './factory/index';
+// Interfaces
+export * from './interfaces/index';
 // Module
-export * from './module';
+export * from './module/index';

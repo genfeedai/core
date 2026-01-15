@@ -3,13 +3,15 @@ import type { CostCalculatorService } from '../cost/cost-calculator.service';
 import type { CostEstimate, WorkflowNodeForCost } from '../cost/interfaces/cost.interface';
 import type { CreateWorkflowDto } from './dto/create-workflow.dto';
 import type { UpdateWorkflowDto } from './dto/update-workflow.dto';
+import type { GenerateWorkflowDto, WorkflowGeneratorService } from './workflow-generator.service';
 import type { WorkflowsService } from './workflows.service';
 
 @Controller('workflows')
 export class WorkflowsController {
   constructor(
     private readonly workflowsService: WorkflowsService,
-    private readonly costCalculatorService: CostCalculatorService
+    private readonly costCalculatorService: CostCalculatorService,
+    private readonly workflowGeneratorService: WorkflowGeneratorService
   ) {}
 
   @Post()
@@ -47,5 +49,10 @@ export class WorkflowsController {
     const workflow = await this.workflowsService.findOne(id);
     const nodes = workflow.nodes as WorkflowNodeForCost[];
     return this.costCalculatorService.calculateWorkflowEstimate(nodes);
+  }
+
+  @Post('generate')
+  generate(@Body() generateDto: GenerateWorkflowDto) {
+    return this.workflowGeneratorService.generate(generateDto);
   }
 }

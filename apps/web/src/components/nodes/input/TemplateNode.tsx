@@ -1,6 +1,6 @@
 'use client';
 
-import type { TemplateNodeData } from '@content-workflow/types';
+import type { TemplateNodeData } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { memo, useCallback } from 'react';
 import { useWorkflowStore } from '@/store/workflowStore';

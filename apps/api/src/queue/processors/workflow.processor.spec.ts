@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { JOB_STATUS, QUEUE_NAMES } from '../queue.constants';
+import { JOB_STATUS } from '../queue.constants';
 import { WorkflowProcessor } from './workflow.processor';
 
 // Mock BullMQ WorkerHost
@@ -11,8 +11,8 @@ vi.mock('@nestjs/bullmq', () => ({
   OnWorkerEvent: () => vi.fn(),
 }));
 
-// Mock @content-workflow/core
-vi.mock('@content-workflow/core', () => ({
+// Mock @genfeedai/core
+vi.mock('@genfeedai/core', () => ({
   buildDependencyMap: vi.fn().mockReturnValue(
     new Map([
       ['node-2', ['node-1']],
@@ -23,7 +23,7 @@ vi.mock('@content-workflow/core', () => ({
   topologicalSort: vi.fn().mockReturnValue(['node-1', 'node-2', 'node-3']),
 }));
 
-import { buildDependencyMap, detectCycles, topologicalSort } from '@content-workflow/core';
+import { buildDependencyMap, detectCycles, topologicalSort } from '@genfeedai/core';
 
 describe('WorkflowProcessor', () => {
   let processor: WorkflowProcessor;

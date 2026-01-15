@@ -2,7 +2,7 @@ import {
   type IPromptLibraryRepository,
   PROMPT_LIBRARY_REPOSITORY,
   type PromptLibraryItemEntity,
-} from '@content-workflow/storage';
+} from '@genfeedai/storage';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { CreatePromptLibraryItemDto } from './dto/create-prompt-library-item.dto';
 import type { QueryPromptLibraryDto } from './dto/query-prompt-library.dto';

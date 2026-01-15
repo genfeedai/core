@@ -2,9 +2,9 @@
   "dependencies": {
     "@bull-board/api": "6.16.2",
     "@bull-board/express": "6.16.2",
-    "@content-workflow/core": "workspace:*",
-    "@content-workflow/storage": "workspace:*",
-    "@content-workflow/types": "workspace:*",
+    "@genfeedai/core": "workspace:*",
+    "@genfeedai/storage": "workspace:*",
+    "@genfeedai/types": "workspace:*",
     "@nestjs/bullmq": "11.0.4",
     "@nestjs/common": "11.0.1",
     "@nestjs/config": "4.0.0",
@@ -41,8 +41,8 @@
     "unplugin-swc": "1.5.2",
     "vitest": "3.0.4"
   },
-  "license": "UNLICENSED",
-  "name": "@content-workflow/api",
+  "license": "AGPL-3.0",
+  "name": "@genfeedai/api",
   "private": true,
   "scripts": {
     "build": "nest build",

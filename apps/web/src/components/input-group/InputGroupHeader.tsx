@@ -1,6 +1,6 @@
 'use client';
 
-import type { ActionConfig, ActionUIPattern } from '@content-workflow/types';
+import type { ActionConfig, ActionUIPattern } from '@genfeedai/types';
 import { clsx } from 'clsx';
 import { Check, ChevronDown, ChevronRight, X } from 'lucide-react';
 import { memo, type ReactNode } from 'react';

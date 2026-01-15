@@ -1,10 +1,11 @@
 {
   "dependencies": {
-    "@content-workflow/core": "workspace:*",
-    "@content-workflow/types": "workspace:*",
+    "@genfeedai/core": "workspace:*",
+    "@genfeedai/types": "workspace:*",
     "@radix-ui/react-label": "2.1.8",
     "@radix-ui/react-select": "2.2.6",
     "@radix-ui/react-slot": "1.2.4",
+    "@types/sharp": "^0.32.0",
     "@xyflow/react": "12.10.0",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
@@ -16,6 +17,7 @@
     "react-dom": "19.0.0",
     "replicate": "1.0.0",
     "sass": "1.97.2",
+    "sharp": "^0.34.5",
     "sonner": "2.0.7",
     "tailwind-merge": "3.4.0",
     "zustand": "5.0.3"
@@ -39,7 +41,8 @@
     "typescript": "5.8.2",
     "vitest": "3.0.4"
   },
-  "name": "@content-workflow/web",
+  "license": "AGPL-3.0",
+  "name": "@genfeedai/web",
   "private": true,
   "scripts": {
     "build": "next build --webpack",

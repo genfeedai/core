@@ -1,12 +1,20 @@
 import { create } from 'zustand';
 
-export type ModalType = 'templates' | 'cost' | 'welcome' | 'settings' | 'promptLibrary' | null;
+export type ModalType =
+  | 'templates'
+  | 'cost'
+  | 'welcome'
+  | 'settings'
+  | 'promptLibrary'
+  | 'modelBrowser'
+  | null;
 
 interface UIStore {
   // Panel visibility
   showPalette: boolean;
   showConfigPanel: boolean;
   showMinimap: boolean;
+  showAIGenerator: boolean;
 
   // Selection
   selectedNodeId: string | null;
@@ -18,10 +26,15 @@ interface UIStore {
   // Notifications
   notifications: Notification[];
 
+  // Auto-save
+  autoSaveEnabled: boolean;
+
   // Actions
   togglePalette: () => void;
   toggleConfigPanel: () => void;
   toggleMinimap: () => void;
+  toggleAIGenerator: () => void;
+  toggleAutoSave: () => void;
   selectNode: (nodeId: string | null) => void;
   selectEdge: (edgeId: string | null) => void;
   openModal: (modal: ModalType) => void;
@@ -44,10 +57,13 @@ export const useUIStore = create<UIStore>((set) => ({
   showPalette: true,
   showConfigPanel: true,
   showMinimap: true,
+  showAIGenerator: false,
   selectedNodeId: null,
   selectedEdgeId: null,
   activeModal: null,
   notifications: [],
+  autoSaveEnabled:
+    typeof window !== 'undefined' ? localStorage.getItem('autoSaveEnabled') !== 'false' : true,
 
   togglePalette: () => {
     set((state) => ({ showPalette: !state.showPalette }));
@@ -59,6 +75,20 @@ export const useUIStore = create<UIStore>((set) => ({
 
   toggleMinimap: () => {
     set((state) => ({ showMinimap: !state.showMinimap }));
+  },
+
+  toggleAIGenerator: () => {
+    set((state) => ({ showAIGenerator: !state.showAIGenerator }));
+  },
+
+  toggleAutoSave: () => {
+    set((state) => {
+      const newValue = !state.autoSaveEnabled;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('autoSaveEnabled', String(newValue));
+      }
+      return { autoSaveEnabled: newValue };
+    });
   },
 
   selectNode: (nodeId) => {

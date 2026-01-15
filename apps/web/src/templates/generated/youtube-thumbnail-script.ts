@@ -1,4 +1,4 @@
-import type { WorkflowFile } from '@content-workflow/types';
+import type { WorkflowFile } from '@genfeedai/types';
 
 export const YOUTUBE_THUMBNAIL_SCRIPT_TEMPLATE: WorkflowFile = {
   version: 1,

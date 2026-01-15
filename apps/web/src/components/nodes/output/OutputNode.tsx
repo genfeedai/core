@@ -1,6 +1,6 @@
 'use client';
 
-import type { OutputNodeData } from '@content-workflow/types';
+import type { OutputNodeData } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { CheckCircle, Download } from 'lucide-react';
 import Image from 'next/image';

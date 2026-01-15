@@ -1,6 +1,6 @@
 'use client';
 
-import type { ActionConfig, MenuAlign, MenuSide } from '@content-workflow/types';
+import type { ActionConfig, MenuAlign, MenuSide } from '@genfeedai/types';
 import { clsx } from 'clsx';
 import { MoreVertical } from 'lucide-react';
 import { memo, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';

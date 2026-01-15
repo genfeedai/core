@@ -2,7 +2,7 @@ import {
   EXECUTION_REPOSITORY,
   type ExecutionEntity,
   type IExecutionRepository,
-} from '@content-workflow/storage';
+} from '@genfeedai/storage';
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, type TestingModule } from '@nestjs/testing';

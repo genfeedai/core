@@ -1,6 +1,6 @@
 'use client';
 
-import type { IPromptLibraryItem } from '@content-workflow/types';
+import type { IPromptLibraryItem } from '@genfeedai/types';
 import { BookMarked, ChevronDown, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';

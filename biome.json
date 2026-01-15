@@ -1,5 +1,10 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.3.11/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
   "assist": {
     "actions": {
       "source": {
@@ -13,9 +18,13 @@
       "apps/**/*.tsx",
       "apps/**/*.js",
       "apps/**/*.jsx",
-      "apps/**/*.json",
       "packages/**/*.ts",
-      "packages/**/*.json"
+      "!!**/node_modules",
+      "!!**/.next",
+      "!!**/dist",
+      "!!**/build",
+      "!!**/.turbo",
+      "!!**/coverage"
     ]
   },
   "formatter": {
@@ -38,7 +47,8 @@
     "enabled": true,
     "rules": {
       "complexity": {
-        "noForEach": "off"
+        "noForEach": "off",
+        "noStaticOnlyClass": "off"
       },
       "correctness": {
         "noUnusedFunctionParameters": "off"

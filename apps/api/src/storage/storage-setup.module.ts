@@ -14,7 +14,7 @@ import {
   WORKFLOW_REPOSITORY,
   WorkflowMongoRepository,
   WorkflowSqliteRepository,
-} from '@content-workflow/storage';
+} from '@genfeedai/storage';
 import { type DynamicModule, Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { getModelToken } from '@nestjs/mongoose';

@@ -1,6 +1,6 @@
 'use client';
 
-import { getNodesByCategory, type NodeCategory, type NodeType } from '@content-workflow/types';
+import { getNodesByCategory, type NodeCategory, type NodeType } from '@genfeedai/types';
 import {
   Brain,
   CheckCircle,

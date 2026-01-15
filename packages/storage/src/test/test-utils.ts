@@ -1,5 +1,5 @@
+import { randomUUID } from 'node:crypto';
 import Database from 'better-sqlite3';
-import { randomUUID } from 'crypto';
 import type { Model } from 'mongoose';
 import { vi } from 'vitest';
 import type {

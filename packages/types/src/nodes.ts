@@ -24,6 +24,56 @@ export const CONNECTION_RULES: Record<HandleType, HandleType[]> = {
 };
 
 // =============================================================================
+// PROVIDER TYPES
+// =============================================================================
+
+export type ProviderType = 'replicate' | 'fal' | 'huggingface';
+
+export type ModelCapability =
+  | 'text-to-image'
+  | 'image-to-image'
+  | 'text-to-video'
+  | 'image-to-video';
+
+export interface ProviderModel {
+  id: string;
+  displayName: string;
+  provider: ProviderType;
+  capabilities: ModelCapability[];
+  description?: string;
+  thumbnail?: string;
+  pricing?: string;
+}
+
+export interface SelectedModel {
+  provider: ProviderType;
+  modelId: string;
+  displayName: string;
+}
+
+// =============================================================================
+// GROUP TYPES
+// =============================================================================
+
+export type GroupColor =
+  | 'purple'
+  | 'blue'
+  | 'green'
+  | 'yellow'
+  | 'orange'
+  | 'red'
+  | 'pink'
+  | 'gray';
+
+export interface NodeGroup {
+  id: string;
+  name: string;
+  nodeIds: string[];
+  color: GroupColor;
+  isLocked: boolean;
+}
+
+// =============================================================================
 // NODE TYPES
 // =============================================================================
 
@@ -48,6 +98,12 @@ export type NodeType =
   | 'animation'
   | 'videoStitch'
   | 'videoTrim'
+  | 'lumaReframeImage'
+  | 'lumaReframeVideo'
+  | 'topazImageUpscale'
+  | 'topazVideoUpscale'
+  | 'imageGridSplit'
+  | 'annotation'
   // Output nodes
   | 'output'
   | 'preview'
@@ -57,6 +113,15 @@ export type NodeType =
 export type NodeCategory = 'input' | 'ai' | 'processing' | 'output';
 
 export type NodeStatus = 'idle' | 'pending' | 'processing' | 'complete' | 'error';
+
+// NodeStatus constants to avoid 'as NodeStatus' assertions
+export const NODE_STATUS: Record<NodeStatus, NodeStatus> = {
+  idle: 'idle',
+  pending: 'pending',
+  processing: 'processing',
+  complete: 'complete',
+  error: 'error',
+} as const;
 
 // =============================================================================
 // BASE NODE DATA
@@ -144,6 +209,26 @@ export type VideoResolution = '720p' | '1080p';
 export type VideoDuration = 4 | 6 | 8;
 export type OutputFormat = 'jpg' | 'png' | 'webp';
 
+// Luma Reframe types
+export type LumaAspectRatio = '1:1' | '3:4' | '4:3' | '9:16' | '16:9' | '9:21' | '21:9';
+export type LumaReframeModel = 'photon-flash-1' | 'photon-1';
+
+export interface GridPosition {
+  x: number;
+  y: number;
+}
+
+// Topaz types
+export type TopazEnhanceModel =
+  | 'Standard V2'
+  | 'Low Resolution V2'
+  | 'CGI'
+  | 'High Fidelity V2'
+  | 'Text Refine';
+export type TopazUpscaleFactor = 'None' | '2x' | '4x' | '6x';
+export type TopazVideoResolution = '720p' | '1080p' | '4k';
+export type TopazVideoFPS = 15 | 24 | 30 | 60;
+
 export interface ImageGenNodeData extends BaseNodeData {
   // Inputs from connections
   inputImages: string[];
@@ -157,6 +242,10 @@ export interface ImageGenNodeData extends BaseNodeData {
   aspectRatio: AspectRatio;
   resolution: Resolution;
   outputFormat: OutputFormat;
+
+  // Provider (optional, defaults to replicate)
+  provider?: ProviderType;
+  selectedModel?: SelectedModel;
 
   // Job state
   jobId: string | null;
@@ -179,6 +268,10 @@ export interface VideoGenNodeData extends BaseNodeData {
   aspectRatio: AspectRatio;
   resolution: VideoResolution;
   generateAudio: boolean;
+
+  // Provider (optional, defaults to replicate)
+  provider?: ProviderType;
+  selectedModel?: SelectedModel;
 
   // Job state
   jobId: string | null;
@@ -371,6 +464,132 @@ export interface VideoTrimNodeData extends BaseNodeData {
 }
 
 // =============================================================================
+// LUMA REFRAME NODE DATA
+// =============================================================================
+
+export interface LumaReframeImageNodeData extends BaseNodeData {
+  // Inputs from connections
+  inputImage: string | null;
+
+  // Output
+  outputImage: string | null;
+
+  // Config
+  model: LumaReframeModel;
+  aspectRatio: LumaAspectRatio;
+  prompt: string;
+  gridPosition: GridPosition;
+
+  // Job state
+  jobId: string | null;
+}
+
+export interface LumaReframeVideoNodeData extends BaseNodeData {
+  // Inputs from connections
+  inputVideo: string | null;
+
+  // Output
+  outputVideo: string | null;
+
+  // Config
+  aspectRatio: LumaAspectRatio;
+  prompt: string;
+  gridPosition: GridPosition;
+
+  // Job state
+  jobId: string | null;
+}
+
+// =============================================================================
+// TOPAZ UPSCALE NODE DATA
+// =============================================================================
+
+export interface TopazImageUpscaleNodeData extends BaseNodeData {
+  // Inputs from connections
+  inputImage: string | null;
+
+  // Outputs
+  outputImage: string | null;
+  originalPreview: string | null;
+
+  // Config
+  enhanceModel: TopazEnhanceModel;
+  upscaleFactor: TopazUpscaleFactor;
+  outputFormat: 'jpg' | 'png';
+  faceEnhancement: boolean;
+  faceEnhancementStrength: number;
+  faceEnhancementCreativity: number;
+
+  // Comparison state
+  showComparison: boolean;
+  comparisonPosition: number;
+
+  // Job state
+  jobId: string | null;
+}
+
+export interface TopazVideoUpscaleNodeData extends BaseNodeData {
+  // Inputs from connections
+  inputVideo: string | null;
+
+  // Outputs
+  outputVideo: string | null;
+  originalPreview: string | null;
+  outputPreview: string | null;
+
+  // Config
+  targetResolution: TopazVideoResolution;
+  targetFps: TopazVideoFPS;
+
+  // Comparison state
+  showComparison: boolean;
+  comparisonPosition: number;
+
+  // Job state
+  jobId: string | null;
+}
+
+export type GridOutputFormat = 'jpg' | 'png' | 'webp';
+
+export interface ImageGridSplitNodeData extends BaseNodeData {
+  // Input from connection
+  inputImage: string | null;
+
+  // Outputs (multiple images)
+  outputImages: string[];
+
+  // Config
+  gridRows: number; // 1-10
+  gridCols: number; // 1-10
+  borderInset: number; // Pixels to crop from each cell edge (0-50)
+  outputFormat: GridOutputFormat;
+  quality: number; // 1-100
+}
+
+// Annotation shape types (simplified for node storage)
+export interface AnnotationShapeData {
+  id: string;
+  type: 'rectangle' | 'circle' | 'arrow' | 'freehand' | 'text';
+  strokeColor: string;
+  strokeWidth: number;
+  fillColor: string | null;
+  // Shape-specific properties stored as generic record
+  props: Record<string, unknown>;
+}
+
+export interface AnnotationNodeData extends BaseNodeData {
+  // Input from connection
+  inputImage: string | null;
+
+  // Output (image with annotations rendered)
+  outputImage: string | null;
+
+  // Annotations stored on the node
+  annotations: AnnotationShapeData[];
+  hasAnnotations: boolean;
+}
+
+// =============================================================================
 // OUTPUT NODE DATA
 // =============================================================================
 
@@ -447,6 +666,12 @@ export type WorkflowNodeData =
   | VideoStitchNodeData
   | ResizeNodeData
   | VideoTrimNodeData
+  | LumaReframeImageNodeData
+  | LumaReframeVideoNodeData
+  | TopazImageUpscaleNodeData
+  | TopazVideoUpscaleNodeData
+  | ImageGridSplitNodeData
+  | AnnotationNodeData
   | OutputNodeData
   | PreviewNodeData
   | DownloadNodeData
@@ -823,6 +1048,129 @@ export const NODE_DEFINITIONS: Record<NodeType, NodeDefinition> = {
       endTime: 60,
       duration: null,
       jobId: null,
+    },
+  },
+  lumaReframeImage: {
+    type: 'lumaReframeImage',
+    label: 'Luma Reframe Image',
+    description: 'Reframe images to different aspect ratios with AI-powered outpainting',
+    category: 'processing',
+    icon: 'Crop',
+    inputs: [{ id: 'image', type: 'image', label: 'Image', required: true }],
+    outputs: [{ id: 'image', type: 'image', label: 'Reframed Image' }],
+    defaultData: {
+      label: 'Luma Reframe Image',
+      status: 'idle',
+      inputImage: null,
+      outputImage: null,
+      model: 'photon-flash-1',
+      aspectRatio: '16:9',
+      prompt: '',
+      gridPosition: { x: 0.5, y: 0.5 },
+      jobId: null,
+    },
+  },
+  lumaReframeVideo: {
+    type: 'lumaReframeVideo',
+    label: 'Luma Reframe Video',
+    description: 'Reframe videos to different aspect ratios (max 10s, 100MB)',
+    category: 'processing',
+    icon: 'Crop',
+    inputs: [{ id: 'video', type: 'video', label: 'Video', required: true }],
+    outputs: [{ id: 'video', type: 'video', label: 'Reframed Video' }],
+    defaultData: {
+      label: 'Luma Reframe Video',
+      status: 'idle',
+      inputVideo: null,
+      outputVideo: null,
+      aspectRatio: '9:16',
+      prompt: '',
+      gridPosition: { x: 0.5, y: 0.5 },
+      jobId: null,
+    },
+  },
+  topazImageUpscale: {
+    type: 'topazImageUpscale',
+    label: 'Topaz Image Upscale',
+    description: 'AI-powered image upscaling with face enhancement',
+    category: 'processing',
+    icon: 'Maximize',
+    inputs: [{ id: 'image', type: 'image', label: 'Image', required: true }],
+    outputs: [{ id: 'image', type: 'image', label: 'Upscaled Image' }],
+    defaultData: {
+      label: 'Topaz Image Upscale',
+      status: 'idle',
+      inputImage: null,
+      outputImage: null,
+      originalPreview: null,
+      enhanceModel: 'Standard V2',
+      upscaleFactor: '2x',
+      outputFormat: 'png',
+      faceEnhancement: false,
+      faceEnhancementStrength: 80,
+      faceEnhancementCreativity: 0,
+      showComparison: true,
+      comparisonPosition: 50,
+      jobId: null,
+    },
+  },
+  topazVideoUpscale: {
+    type: 'topazVideoUpscale',
+    label: 'Topaz Video Upscale',
+    description: 'AI-powered video upscaling to 4K',
+    category: 'processing',
+    icon: 'Maximize',
+    inputs: [{ id: 'video', type: 'video', label: 'Video', required: true }],
+    outputs: [{ id: 'video', type: 'video', label: 'Upscaled Video' }],
+    defaultData: {
+      label: 'Topaz Video Upscale',
+      status: 'idle',
+      inputVideo: null,
+      outputVideo: null,
+      originalPreview: null,
+      outputPreview: null,
+      targetResolution: '1080p',
+      targetFps: 30,
+      showComparison: true,
+      comparisonPosition: 50,
+      jobId: null,
+    },
+  },
+  imageGridSplit: {
+    type: 'imageGridSplit',
+    label: 'Grid Split',
+    description: 'Split image into grid cells',
+    category: 'processing',
+    icon: 'Grid3X3',
+    inputs: [{ id: 'image', type: 'image', label: 'Image', required: true }],
+    outputs: [{ id: 'images', type: 'image', label: 'Split Images', multiple: true }],
+    defaultData: {
+      label: 'Grid Split',
+      status: 'idle',
+      inputImage: null,
+      outputImages: [],
+      gridRows: 2,
+      gridCols: 3,
+      borderInset: 10,
+      outputFormat: 'jpg',
+      quality: 95,
+    },
+  },
+  annotation: {
+    type: 'annotation',
+    label: 'Annotation',
+    description: 'Add shapes, arrows, and text to images',
+    category: 'processing',
+    icon: 'Pencil',
+    inputs: [{ id: 'image', type: 'image', label: 'Image', required: true }],
+    outputs: [{ id: 'image', type: 'image', label: 'Annotated Image' }],
+    defaultData: {
+      label: 'Annotation',
+      status: 'idle',
+      inputImage: null,
+      outputImage: null,
+      annotations: [],
+      hasAnnotations: false,
     },
   },
 

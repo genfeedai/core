@@ -4,9 +4,9 @@
  */
 
 // Re-export types from shared package
-export type { GroupColor, NodeGroup } from '@content-workflow/types';
+export type { GroupColor, NodeGroup } from '@genfeedai/types';
 
-import type { GroupColor } from '@content-workflow/types';
+import type { GroupColor } from '@genfeedai/types';
 
 export const GROUP_COLORS: Record<GroupColor, { bg: string; border: string; text: string }> = {
   purple: {

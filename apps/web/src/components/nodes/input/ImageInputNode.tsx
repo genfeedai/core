@@ -1,6 +1,6 @@
 'use client';
 
-import type { ImageInputNodeData } from '@content-workflow/types';
+import type { ImageInputNodeData } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { Upload, X } from 'lucide-react';
 import Image from 'next/image';

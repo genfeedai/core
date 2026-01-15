@@ -1,3 +1,4 @@
+import { PRICING } from '@genfeedai/core';
 import { Injectable, Logger } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
 import Replicate from 'replicate';
@@ -15,31 +16,12 @@ export const MODELS = {
   veo: 'google/veo-3.1',
   // LLM
   llama: 'meta/meta-llama-3.1-405b-instruct',
-} as const;
-
-// Pricing per unit (USD) - Source: replicate.com/pricing (Jan 2026)
-// Image models: per output image
-// Video models: per second of output video
-// LLM models: per token
-export const PRICING = {
-  // Image generation
-  'nano-banana': 0.039, // $0.039/image
-  'nano-banana-pro': {
-    '1K': 0.15, // $0.15/image
-    '2K': 0.15, // $0.15/image
-    '4K': 0.3, // $0.30/image
-  },
-  // Video generation
-  'veo-3.1-fast': {
-    withAudio: 0.15, // $0.15/sec
-    withoutAudio: 0.1, // $0.10/sec
-  },
-  'veo-3.1': {
-    withAudio: 0.4, // $0.40/sec
-    withoutAudio: 0.2, // $0.20/sec
-  },
-  // LLM (per token, derived from $9.50/million)
-  llama: 0.0000095, // $9.50/1M tokens
+  // Luma Reframe
+  lumaReframeImage: 'luma/reframe-image',
+  lumaReframeVideo: 'luma/reframe-video',
+  // Topaz Upscale
+  topazImageUpscale: 'topazlabs/image-upscale',
+  topazVideoUpscale: 'topazlabs/video-upscale',
 } as const;
 
 export interface ImageGenInput {
@@ -71,6 +53,37 @@ export interface LLMInput {
   topP?: number;
 }
 
+export interface LumaReframeImageInput {
+  image: string;
+  aspectRatio: string;
+  model?: 'photon-flash-1' | 'photon-1';
+  prompt?: string;
+  gridPosition?: { x: number; y: number };
+}
+
+export interface LumaReframeVideoInput {
+  video: string;
+  aspectRatio: string;
+  prompt?: string;
+  gridPosition?: { x: number; y: number };
+}
+
+export interface TopazImageUpscaleInput {
+  image: string;
+  enhanceModel: string;
+  upscaleFactor: string;
+  outputFormat: string;
+  faceEnhancement?: boolean;
+  faceEnhancementStrength?: number;
+  faceEnhancementCreativity?: number;
+}
+
+export interface TopazVideoUpscaleInput {
+  video: string;
+  targetResolution: string;
+  targetFps: number;
+}
+
 export interface PredictionResult {
   id: string;
   status: 'starting' | 'processing' | 'succeeded' | 'failed' | 'canceled';
@@ -100,6 +113,19 @@ export class ReplicateService {
   }
 
   /**
+   * Get webhook configuration for prediction requests
+   */
+  private getWebhookConfig():
+    | { webhook: string; webhook_events_filter: ('start' | 'output' | 'logs' | 'completed')[] }
+    | undefined {
+    if (!this.webhookBaseUrl) return undefined;
+    return {
+      webhook: `${this.webhookBaseUrl}/api/replicate/webhook`,
+      webhook_events_filter: ['completed'],
+    };
+  }
+
+  /**
    * Generate an image using nano-banana models
    */
   async generateImage(
@@ -109,10 +135,6 @@ export class ReplicateService {
     input: ImageGenInput
   ): Promise<PredictionResult> {
     const modelId = model === 'nano-banana' ? MODELS.nanoBanana : MODELS.nanoBananaPro;
-
-    const webhookUrl = this.webhookBaseUrl
-      ? `${this.webhookBaseUrl}/api/replicate/webhook`
-      : undefined;
 
     const prediction = await this.replicate.predictions.create({
       model: modelId,
@@ -125,10 +147,7 @@ export class ReplicateService {
           resolution: input.resolution ?? '2K',
         }),
       },
-      ...(webhookUrl && {
-        webhook: webhookUrl,
-        webhook_events_filter: ['completed'],
-      }),
+      ...this.getWebhookConfig(),
     });
 
     // Create job record in database
@@ -150,10 +169,6 @@ export class ReplicateService {
   ): Promise<PredictionResult> {
     const modelId = model === 'veo-3.1-fast' ? MODELS.veoFast : MODELS.veo;
 
-    const webhookUrl = this.webhookBaseUrl
-      ? `${this.webhookBaseUrl}/api/replicate/webhook`
-      : undefined;
-
     const prediction = await this.replicate.predictions.create({
       model: modelId,
       input: {
@@ -168,10 +183,7 @@ export class ReplicateService {
         negative_prompt: input.negativePrompt,
         seed: input.seed,
       },
-      ...(webhookUrl && {
-        webhook: webhookUrl,
-        webhook_events_filter: ['completed'],
-      }),
+      ...this.getWebhookConfig(),
     });
 
     // Create job record in database
@@ -202,6 +214,111 @@ export class ReplicateService {
     }
 
     return String(output);
+  }
+
+  /**
+   * Reframe an image using Luma AI
+   */
+  async reframeImage(
+    executionId: string,
+    nodeId: string,
+    input: LumaReframeImageInput
+  ): Promise<PredictionResult> {
+    const prediction = await this.replicate.predictions.create({
+      model: MODELS.lumaReframeImage,
+      input: {
+        image: input.image,
+        aspect_ratio: input.aspectRatio,
+        model: input.model ?? 'photon-flash-1',
+        prompt: input.prompt || undefined,
+        grid_position_x: input.gridPosition?.x ?? 0.5,
+        grid_position_y: input.gridPosition?.y ?? 0.5,
+      },
+      ...this.getWebhookConfig(),
+    });
+
+    await this.executionsService.createJob(executionId, nodeId, prediction.id);
+    this.logger.log(`Created Luma reframe image prediction ${prediction.id} for node ${nodeId}`);
+
+    return prediction as PredictionResult;
+  }
+
+  /**
+   * Reframe a video using Luma AI
+   */
+  async reframeVideo(
+    executionId: string,
+    nodeId: string,
+    input: LumaReframeVideoInput
+  ): Promise<PredictionResult> {
+    const prediction = await this.replicate.predictions.create({
+      model: MODELS.lumaReframeVideo,
+      input: {
+        video: input.video,
+        aspect_ratio: input.aspectRatio,
+        prompt: input.prompt || undefined,
+        grid_position_x: input.gridPosition?.x ?? 0.5,
+        grid_position_y: input.gridPosition?.y ?? 0.5,
+      },
+      ...this.getWebhookConfig(),
+    });
+
+    await this.executionsService.createJob(executionId, nodeId, prediction.id);
+    this.logger.log(`Created Luma reframe video prediction ${prediction.id} for node ${nodeId}`);
+
+    return prediction as PredictionResult;
+  }
+
+  /**
+   * Upscale an image using Topaz Labs
+   */
+  async upscaleImage(
+    executionId: string,
+    nodeId: string,
+    input: TopazImageUpscaleInput
+  ): Promise<PredictionResult> {
+    const prediction = await this.replicate.predictions.create({
+      model: MODELS.topazImageUpscale,
+      input: {
+        image: input.image,
+        enhance_model: input.enhanceModel,
+        upscale_factor: input.upscaleFactor,
+        output_format: input.outputFormat,
+        face_enhancement: input.faceEnhancement ?? false,
+        face_enhancement_strength: (input.faceEnhancementStrength ?? 80) / 100,
+        face_enhancement_creativity: (input.faceEnhancementCreativity ?? 0) / 100,
+      },
+      ...this.getWebhookConfig(),
+    });
+
+    await this.executionsService.createJob(executionId, nodeId, prediction.id);
+    this.logger.log(`Created Topaz image upscale prediction ${prediction.id} for node ${nodeId}`);
+
+    return prediction as PredictionResult;
+  }
+
+  /**
+   * Upscale a video using Topaz Labs
+   */
+  async upscaleVideo(
+    executionId: string,
+    nodeId: string,
+    input: TopazVideoUpscaleInput
+  ): Promise<PredictionResult> {
+    const prediction = await this.replicate.predictions.create({
+      model: MODELS.topazVideoUpscale,
+      input: {
+        video: input.video,
+        target_resolution: input.targetResolution,
+        target_fps: input.targetFps,
+      },
+      ...this.getWebhookConfig(),
+    });
+
+    await this.executionsService.createJob(executionId, nodeId, prediction.id);
+    this.logger.log(`Created Topaz video upscale prediction ${prediction.id} for node ${nodeId}`);
+
+    return prediction as PredictionResult;
   }
 
   /**

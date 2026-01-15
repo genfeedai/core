@@ -3,7 +3,7 @@ import type {
   IPromptLibraryItem,
   IQueryPromptLibrary,
   PromptCategory,
-} from '@content-workflow/types';
+} from '@genfeedai/types';
 import { create } from 'zustand';
 import { promptLibraryApi } from '@/lib/api';
 

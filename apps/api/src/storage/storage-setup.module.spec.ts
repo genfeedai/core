@@ -4,7 +4,7 @@ import {
   SQLITE_DATABASE,
   TEMPLATE_REPOSITORY,
   WORKFLOW_REPOSITORY,
-} from '@content-workflow/storage';
+} from '@genfeedai/storage';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { describe, expect, it, vi } from 'vitest';

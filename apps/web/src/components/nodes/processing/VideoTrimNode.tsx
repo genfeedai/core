@@ -1,6 +1,6 @@
 'use client';
 
-import type { VideoTrimNodeData } from '@content-workflow/types';
+import type { VideoTrimNodeData } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { RefreshCw, Scissors } from 'lucide-react';
 import { memo, useCallback } from 'react';

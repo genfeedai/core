@@ -1,6 +1,6 @@
 'use client';
 
-import type { ActionConfig, ActionUIPattern, FieldWidth } from '@content-workflow/types';
+import type { ActionConfig, ActionUIPattern, FieldWidth } from '@genfeedai/types';
 import { clsx } from 'clsx';
 import { AlertCircle } from 'lucide-react';
 import { memo, type ReactNode } from 'react';

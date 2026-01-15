@@ -1,6 +1,6 @@
 'use client';
 
-import type { CubicBezier } from '@content-workflow/types';
+import type { CubicBezier } from '@genfeedai/types';
 import { useCallback, useRef, useState } from 'react';
 import { EASING_PRESETS } from '@/lib/easing/presets';
 

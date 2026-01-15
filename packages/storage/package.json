@@ -15,7 +15,8 @@
     "./interfaces": "./src/interfaces/index.ts"
   },
   "main": "./src/index.ts",
-  "name": "@content-workflow/storage",
+  "license": "AGPL-3.0",
+  "name": "@genfeedai/storage",
   "peerDependencies": {
     "@nestjs/common": "11.0.1",
     "@nestjs/config": "4.0.0",

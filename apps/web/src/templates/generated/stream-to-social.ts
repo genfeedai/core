@@ -1,4 +1,4 @@
-import type { WorkflowFile } from '@content-workflow/types';
+import type { WorkflowFile } from '@genfeedai/types';
 
 export const STREAM_TO_SOCIAL_TEMPLATE: WorkflowFile = {
   version: 1,

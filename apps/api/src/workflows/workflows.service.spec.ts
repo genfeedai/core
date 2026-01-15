@@ -2,7 +2,7 @@ import {
   type IWorkflowRepository,
   WORKFLOW_REPOSITORY,
   type WorkflowEntity,
-} from '@content-workflow/storage';
+} from '@genfeedai/storage';
 import { NotFoundException } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

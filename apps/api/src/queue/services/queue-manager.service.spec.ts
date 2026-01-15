@@ -47,12 +47,12 @@ describe('QueueManagerService', () => {
     service = Object.create(QueueManagerService.prototype);
 
     // Set up private properties using reflection
-    (service as unknown as Record<string, unknown>)['workflowQueue'] = mockWorkflowQueue;
-    (service as unknown as Record<string, unknown>)['imageQueue'] = mockImageQueue;
-    (service as unknown as Record<string, unknown>)['videoQueue'] = mockVideoQueue;
-    (service as unknown as Record<string, unknown>)['llmQueue'] = mockLlmQueue;
-    (service as unknown as Record<string, unknown>)['queueJobModel'] = mockQueueJobModel;
-    (service as unknown as Record<string, unknown>)['logger'] = {
+    (service as unknown as Record<string, unknown>).workflowQueue = mockWorkflowQueue;
+    (service as unknown as Record<string, unknown>).imageQueue = mockImageQueue;
+    (service as unknown as Record<string, unknown>).videoQueue = mockVideoQueue;
+    (service as unknown as Record<string, unknown>).llmQueue = mockLlmQueue;
+    (service as unknown as Record<string, unknown>).queueJobModel = mockQueueJobModel;
+    (service as unknown as Record<string, unknown>).logger = {
       log: vi.fn(),
       warn: vi.fn(),
       error: vi.fn(),
@@ -65,7 +65,7 @@ describe('QueueManagerService', () => {
       [QUEUE_NAMES.VIDEO_GENERATION, mockVideoQueue],
       [QUEUE_NAMES.LLM_GENERATION, mockLlmQueue],
     ]);
-    (service as unknown as Record<string, unknown>)['queues'] = queuesMap;
+    (service as unknown as Record<string, unknown>).queues = queuesMap;
   });
 
   describe('enqueueWorkflow', () => {
@@ -201,7 +201,7 @@ describe('QueueManagerService', () => {
     });
 
     it('should throw error for missing queue', async () => {
-      const queuesMap = (service as unknown as Record<string, unknown>)['queues'] as Map<
+      const queuesMap = (service as unknown as Record<string, unknown>).queues as Map<
         string,
         unknown
       >;

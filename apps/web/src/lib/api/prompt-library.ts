@@ -2,7 +2,7 @@ import type {
   ICreatePromptLibraryItem,
   IPromptLibraryItem,
   IQueryPromptLibrary,
-} from '@content-workflow/types';
+} from '@genfeedai/types';
 import { apiClient } from './client';
 
 /**

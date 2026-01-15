@@ -5,7 +5,7 @@ import type {
   ToolbarOrientation,
   ToolbarSize,
   ToolbarVisibility,
-} from '@content-workflow/types';
+} from '@genfeedai/types';
 import { clsx } from 'clsx';
 import { memo, type ReactNode } from 'react';
 

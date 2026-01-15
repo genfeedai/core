@@ -9,7 +9,7 @@ import {
   PromptCategory,
   SCENE_PRESETS,
   STYLE_PRESETS,
-} from '@content-workflow/types';
+} from '@genfeedai/types';
 import { X } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 import { usePromptLibraryStore } from '@/store/promptLibraryStore';

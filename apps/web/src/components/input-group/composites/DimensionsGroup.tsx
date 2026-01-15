@@ -1,6 +1,6 @@
 'use client';
 
-import type { DimensionsValue } from '@content-workflow/types';
+import type { DimensionsValue } from '@genfeedai/types';
 import { clsx } from 'clsx';
 import { Link, Unlink } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';

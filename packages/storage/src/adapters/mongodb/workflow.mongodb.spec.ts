@@ -175,7 +175,7 @@ describe('WorkflowMongoRepository', () => {
       await repository.create(createTestWorkflowData({ name: 'Unique Name' }));
 
       // Since our mock doesn't support complex filters, we verify the method is called
-      const result = await repository.findOne({ where: { name: 'Unique Name' } });
+      const _result = await repository.findOne({ where: { name: 'Unique Name' } });
 
       expect(mockModel.findOne).toHaveBeenCalled();
     });
@@ -232,7 +232,7 @@ describe('WorkflowMongoRepository', () => {
     it('should delegate to findAll', async () => {
       await repository.create(createTestWorkflowData());
 
-      const results = await repository.findAllActive();
+      const _results = await repository.findAllActive();
 
       expect(mockModel.find).toHaveBeenCalled();
     });
