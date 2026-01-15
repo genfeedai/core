@@ -20,7 +20,7 @@ describe('StorageFactory', () => {
   describe('getStorageConfig', () => {
     it('should return SQLite config when no env vars set', () => {
       mockConfigService.get.mockImplementation((key: string, defaultValue?: unknown) => {
-        if (key === 'SQLITE_PATH') return defaultValue ?? './data/content-workflow.db';
+        if (key === 'SQLITE_PATH') return defaultValue ?? './data/genfeed.db';
         if (key === 'STORAGE_DEBUG') return false;
         return undefined;
       });
@@ -28,7 +28,7 @@ describe('StorageFactory', () => {
       const config = factory.getStorageConfig();
 
       expect(config.type).toBe(StorageAdapterType.SQLITE);
-      expect(config.sqlitePath).toBe('./data/content-workflow.db');
+      expect(config.sqlitePath).toBe('./data/genfeed.db');
     });
 
     it('should return MongoDB config when MONGODB_URI is set', () => {

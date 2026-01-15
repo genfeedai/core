@@ -16,8 +16,8 @@ PRDs are stored as markdown files following the naming convention:
 - **[purchase-flow.md](purchase-flow.md)** - Checkout, Payment & Download Delivery
 - **[reviews-ratings.md](reviews-ratings.md)** - Reviews & Ratings System
 
-### Content Workflow Features
-- **[test-coverage.md](test-coverage.md)** - Comprehensive Test Coverage for Content Workflow
+### Genfeed Features
+- **[test-coverage.md](test-coverage.md)** - Comprehensive Test Coverage for Genfeed
 - **[workflow-cost-tracking.md](workflow-cost-tracking.md)** - Workflow Cost Tracking & Analytics
 - **[ai-quickstart-natural-language.md](ai-quickstart-natural-language.md)** - Natural Language Workflow Generation
 - **[right-click-context-menu.md](right-click-context-menu.md)** - Right-Click Context Menu

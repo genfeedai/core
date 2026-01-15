@@ -32,7 +32,7 @@ export class StorageFactory {
 
     return {
       type: StorageAdapterType.SQLITE,
-      sqlitePath: this.configService.get<string>('SQLITE_PATH', './data/content-workflow.db'),
+      sqlitePath: this.configService.get<string>('SQLITE_PATH', './data/genfeed.db'),
       debug: this.configService.get<boolean>('STORAGE_DEBUG', false),
     };
   }
@@ -49,7 +49,7 @@ export class StorageFactory {
       case StorageAdapterType.SQLITE:
         return {
           type: StorageAdapterType.SQLITE,
-          sqlitePath: this.configService.get<string>('SQLITE_PATH', './data/content-workflow.db'),
+          sqlitePath: this.configService.get<string>('SQLITE_PATH', './data/genfeed.db'),
           debug: this.configService.get<boolean>('STORAGE_DEBUG', false),
         };
 

@@ -1,4 +1,4 @@
-# Architecture - Content Workflow
+# Architecture - Genfeed
 
 **Purpose:** Document what IS implemented (not what WILL BE).
 **Last Updated:** 2026-01-14

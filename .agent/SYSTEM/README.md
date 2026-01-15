@@ -1,6 +1,6 @@
 # SYSTEM - Core Documentation
 
-This folder contains the core documentation for the Content Workflow project.
+This folder contains the core documentation for the Genfeed project.
 
 ## Contents
 

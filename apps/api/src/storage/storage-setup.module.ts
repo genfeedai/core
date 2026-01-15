@@ -50,10 +50,7 @@ export class StorageSetupModule {
           useFactory: (storageType: string, configService: ConfigService) => {
             if (storageType !== 'sqlite') return null;
 
-            const sqlitePath = configService.get<string>(
-              'SQLITE_PATH',
-              './data/content-workflow.db'
-            );
+            const sqlitePath = configService.get<string>('SQLITE_PATH', './data/genfeed.db');
             StorageSetupModule.logger.log(`Initializing SQLite database at: ${sqlitePath}`);
 
             return createSqliteDatabase({

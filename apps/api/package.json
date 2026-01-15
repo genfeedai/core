@@ -22,7 +22,7 @@
     "replicate": "1.0.0",
     "rxjs": "7.8.1"
   },
-  "description": "Content Workflow API - NestJS backend with MongoDB",
+  "description": "Genfeed API - NestJS backend with MongoDB",
   "devDependencies": {
     "@nestjs/cli": "11.0.0",
     "@nestjs/schematics": "11.0.0",

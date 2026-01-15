@@ -1,4 +1,4 @@
-# Content Workflow
+# Genfeed
 
 Codex-specific entry point. Documentation in `.agent/`.
 

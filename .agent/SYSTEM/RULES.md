@@ -1,4 +1,4 @@
-# Coding Rules - Content Workflow
+# Coding Rules - Genfeed
 
 **Purpose:** Coding standards and patterns for this project.
 **Last Updated:** 2026-01-14

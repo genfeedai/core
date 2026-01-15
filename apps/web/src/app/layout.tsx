@@ -3,7 +3,7 @@ import 'tw-animate-css';
 import './globals.scss';
 
 export const metadata: Metadata = {
-  title: 'Content Workflow - AI Content Generation',
+  title: 'Genfeed - AI Content Generation',
   description: 'Visual workflow editor for AI-powered content generation with Replicate',
 };
 

@@ -1,4 +1,4 @@
-# Project Summary - Content Workflow
+# Project Summary - Genfeed
 
 **Purpose:** Quick overview of current project state.
 **Last Updated:** 2026-01-14

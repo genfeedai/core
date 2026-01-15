@@ -1,6 +1,6 @@
-# Content Workflow - Agent Documentation Hub
+# Genfeed - Agent Documentation Hub
 
-**Welcome to the Content Workflow workspace!**
+**Welcome to the Genfeed workspace!**
 
 This is the `.agent/` folder containing AI agent documentation, session tracking, and project rules.
 

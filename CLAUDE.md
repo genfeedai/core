@@ -1,4 +1,4 @@
-# Content Workflow
+# Genfeed
 
 Claude-specific entry point. Documentation in `.agent/`.
 

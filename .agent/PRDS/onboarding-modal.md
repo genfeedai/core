@@ -326,7 +326,7 @@ Add commands to open templates:
 ```
 ┌───────────────────────────────────────────────────────────────────┐
 │                                                              ✕    │
-│   Welcome to Content Workflow                                     │
+│   Welcome to Genfeed                                              │
 │   Start with a template or create from scratch                    │
 │                                                                   │
 │   ┌──────────────┬──────────────┬──────────────┐                  │

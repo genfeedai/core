@@ -199,14 +199,14 @@ export function Toolbar() {
       {/* Logo / Title */}
       <div className="flex items-center gap-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-chart-4">
-          <span className="text-sm font-bold text-primary-foreground">CW</span>
+          <span className="text-sm font-bold text-primary-foreground">GF</span>
         </div>
         <div>
           <h1 className="text-sm font-semibold text-foreground">
             {workflowName}
             {isDirty && <span className="text-muted-foreground">*</span>}
           </h1>
-          <p className="text-xs text-muted-foreground">Content Workflow</p>
+          <p className="text-xs text-muted-foreground">Genfeed</p>
         </div>
       </div>
 

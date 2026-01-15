@@ -1,4 +1,4 @@
-# PRD: Comprehensive Test Coverage for Content Workflow
+# PRD: Comprehensive Test Coverage for Genfeed
 
 **Status:** Doing
 **Target Coverage:** 80-100%

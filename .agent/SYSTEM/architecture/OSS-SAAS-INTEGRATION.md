@@ -1,8 +1,8 @@
 # Architecture: OSS + SaaS Integration (Vercel Model)
 
 ## Goals
-1. **Community-first**: OSS is 100% standalone, self-hostable, no genfeed dependency
-2. **Genfeed uses OSS**: SaaS imports OSS as packages, adds platform features
+1. **Community-first**: OSS is 100% standalone, self-hostable, no genfeed.ai dependency
+2. **Genfeed.ai uses OSS**: SaaS imports OSS as packages, adds platform features
 3. **Marketplace**: Community sells prompts, workflows, templates on genfeed.ai
 
 ## The Vercel Model Applied
@@ -16,37 +16,37 @@
 └───────────┬─────────────┴─────────────────┬─────────────────────┘
             │                               │
             ▼                               ▼
-┌───────────────────────┐   ┌─────────────────────────────────────┐
-│  content-workflow     │   │  genfeed.ai (SaaS)                  │
-│  (OSS - shipshitdev)  │   │  (Private - genfeedai org)          │
-│                       │   │                                     │
-│  • Visual workflow    │   │  • Auth (users, orgs, teams)        │
-│    editor             │   │  • Billing (Stripe)                 │
-│  • Node system        │   │  • Marketplace (prompts, workflows) │
-│  • Execution engine   │   │  • Analytics & usage tracking       │
-│  • Local storage      │   │  • Cloud storage (S3, CDN)          │
-│  • CLI tools          │   │  • Collaboration features           │
-│                       │   │  • AI features (premium)            │
-│  npm: @cw/core        │◄──┤  • Hosting & deployment             │
-│  npm: @cw/types       │   │                                     │
-│  npm: @cw/cli         │   │  imports: @cw/core, @cw/types       │
-└───────────────────────┘   └─────────────────────────────────────┘
+┌───────────────────────────┐   ┌─────────────────────────────────────┐
+│  genfeed                  │   │  genfeed.ai (SaaS)                  │
+│  (OSS - genfeedai org)    │   │  (Private - genfeedai org)          │
+│                           │   │                                     │
+│  • Visual workflow        │   │  • Auth (users, orgs, teams)        │
+│    editor                 │   │  • Billing (Stripe)                 │
+│  • Node system            │   │  • Marketplace (prompts, workflows) │
+│  • Execution engine       │   │  • Analytics & usage tracking       │
+│  • Local storage          │   │  • Cloud storage (S3, CDN)          │
+│  • CLI tools              │   │  • Collaboration features           │
+│                           │   │  • AI features (premium)            │
+│  npm: @genfeedai/core     │◄──┤  • Hosting & deployment             │
+│  npm: @genfeedai/types    │   │                                     │
+│  npm: @genfeedai/cli      │   │  imports: @genfeedai/core, types    │
+└───────────────────────────┘   └─────────────────────────────────────┘
 ```
 
 ## Repository Structure
 
-### Repo 1: `shipshitdev/content-workflow` (Public OSS)
+### Repo 1: `genfeedai/genfeed` (Public OSS)
 ```
-content-workflow/
+genfeed/
 ├── apps/
 │   ├── web/              # Standalone editor (Next.js)
 │   ├── api/              # Local API server (NestJS)
 │   └── cli/              # CLI tool
 ├── packages/
-│   ├── core/             # → npm: @content-workflow/core
-│   ├── types/            # → npm: @content-workflow/types
-│   ├── nodes/            # → npm: @content-workflow/nodes
-│   └── ui/               # → npm: @content-workflow/ui
+│   ├── core/             # → npm: @genfeedai/core
+│   ├── types/            # → npm: @genfeedai/types
+│   ├── nodes/            # → npm: @genfeedai/nodes
+│   └── ui/               # → npm: @genfeedai/ui
 ├── docker-compose.yml    # Self-host in 1 command
 └── README.md             # "Deploy to Vercel" button
 ```
@@ -55,15 +55,15 @@ content-workflow/
 ```
 genfeedai/
 ├── apps/
-│   ├── web/              # genfeed.ai frontend (imports @cw/ui)
-│   ├── api/              # genfeed.ai API (imports @cw/core)
+│   ├── web/              # genfeed.ai frontend (imports @genfeedai/ui)
+│   ├── api/              # genfeed.ai API (imports @genfeedai/core)
 │   └── workers/          # Background jobs
 ├── packages/
 │   ├── auth/             # Auth system (SaaS-only)
 │   ├── billing/          # Stripe integration (SaaS-only)
 │   ├── marketplace/      # Marketplace features (SaaS-only)
 │   └── analytics/        # Usage tracking (SaaS-only)
-└── package.json          # depends on @content-workflow/*
+└── package.json          # depends on @genfeedai/*
 ```
 
 ## Integration Points
@@ -73,9 +73,9 @@ genfeedai/
 // genfeedai/package.json
 {
   "dependencies": {
-    "@content-workflow/core": "^1.0.0",
-    "@content-workflow/types": "^1.0.0",
-    "@content-workflow/ui": "^1.0.0"
+    "@genfeedai/core": "^1.0.0",
+    "@genfeedai/types": "^1.0.0",
+    "@genfeedai/ui": "^1.0.0"
   }
 }
 ```
@@ -84,7 +84,7 @@ genfeedai/
 Design the OSS with extension hooks that SaaS can use:
 
 ```typescript
-// @content-workflow/core
+// @genfeedai/core
 export interface WorkflowEngine {
   // Core functionality
   execute(workflow: Workflow): Promise<Result>;
@@ -127,17 +127,17 @@ class GenfeedStorageAdapter implements StorageAdapter {
 ## Publishing Workflow
 
 ```bash
-# In content-workflow repo
+# In genfeed repo
 bun run build
 bun run publish  # Publishes to npm
 
-# In genfeedai repo
-bun update @content-workflow/core  # Get latest OSS
+# In genfeedai platform repo
+bun update @genfeedai/core  # Get latest OSS
 ```
 
 ## Key Principles
 
-1. **OSS is complete** - Users can run everything locally without genfeed
+1. **OSS is complete** - Users can run everything locally without genfeed.ai
 2. **No feature crippling** - OSS has full functionality, SaaS adds convenience
 3. **Clean boundaries** - SaaS never forks, only imports and extends
 4. **Upstream contributions** - Bug fixes go to OSS, not private patches
@@ -154,3 +154,4 @@ bun update @content-workflow/core  # Get latest OSS
 
 ---
 **Created:** 2026-01-14
+**Updated:** 2026-01-15
