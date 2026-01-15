@@ -1,5 +1,10 @@
 'use client';
 
+import {
+  VIDEO_VIDEO_ASPECT_RATIOS,
+  VIDEO_VIDEO_DURATIONS,
+  VIDEO_VIDEO_RESOLUTIONS,
+} from '@genfeedai/core';
 import type {
   AspectRatio,
   ProviderModel,
@@ -21,12 +26,6 @@ const MODELS: { value: VideoModel; label: string; description: string }[] = [
   { value: 'veo-3.1-fast', label: 'Veo 3.1 Fast', description: 'Fast, $0.10-0.15/sec' },
   { value: 'veo-3.1', label: 'Veo 3.1', description: 'High quality, $0.20-0.40/sec' },
 ];
-
-const ASPECT_RATIOS: AspectRatio[] = ['16:9', '9:16'];
-
-const RESOLUTIONS: VideoResolution[] = ['720p', '1080p'];
-
-const DURATIONS: VideoDuration[] = [4, 6, 8];
 
 function VideoGenNodeComponent(props: NodeProps) {
   const { id, data } = props;
@@ -143,7 +142,7 @@ function VideoGenNodeComponent(props: NodeProps) {
               onChange={handleDurationChange}
               className="w-full px-2 py-1.5 text-sm bg-[var(--background)] border border-[var(--border)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
             >
-              {DURATIONS.map((d) => (
+              {VIDEO_DURATIONS.map((d) => (
                 <option key={d} value={d}>
                   {d}s
                 </option>
@@ -159,7 +158,7 @@ function VideoGenNodeComponent(props: NodeProps) {
               onChange={handleResolutionChange}
               className="w-full px-2 py-1.5 text-sm bg-[var(--background)] border border-[var(--border)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
             >
-              {RESOLUTIONS.map((res) => (
+              {VIDEO_RESOLUTIONS.map((res) => (
                 <option key={res} value={res}>
                   {res}
                 </option>
@@ -176,7 +175,7 @@ function VideoGenNodeComponent(props: NodeProps) {
             onChange={handleAspectRatioChange}
             className="w-full px-2 py-1.5 text-sm bg-[var(--background)] border border-[var(--border)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
           >
-            {ASPECT_RATIOS.map((ratio) => (
+            {VIDEO_ASPECT_RATIOS.map((ratio) => (
               <option key={ratio} value={ratio}>
                 {ratio}
               </option>

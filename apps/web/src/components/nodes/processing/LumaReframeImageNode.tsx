@@ -1,5 +1,6 @@
 'use client';
 
+import { LUMA_ASPECT_RATIOS } from '@genfeedai/core';
 import type {
   GridPosition,
   LumaAspectRatio,
@@ -20,8 +21,6 @@ const MODELS: { value: LumaReframeModel; label: string; price: string }[] = [
   { value: 'photon-flash-1', label: 'Photon Flash', price: '$0.01' },
   { value: 'photon-1', label: 'Photon', price: '$0.03' },
 ];
-
-const ASPECT_RATIOS: LumaAspectRatio[] = ['1:1', '3:4', '4:3', '9:16', '16:9', '9:21', '21:9'];
 
 function LumaReframeImageNodeComponent(props: NodeProps) {
   const { id, data } = props;
@@ -92,7 +91,7 @@ function LumaReframeImageNodeComponent(props: NodeProps) {
             onChange={handleAspectRatioChange}
             className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           >
-            {ASPECT_RATIOS.map((ratio) => (
+            {LUMA_ASPECT_RATIOS.map((ratio) => (
               <option key={ratio} value={ratio}>
                 {ratio}
               </option>

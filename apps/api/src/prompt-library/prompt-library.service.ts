@@ -3,7 +3,8 @@ import {
   PROMPT_LIBRARY_REPOSITORY,
   type PromptLibraryItemEntity,
 } from '@genfeedai/storage';
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { throwIfNotFound } from '../common/utils';
 import type { CreatePromptLibraryItemDto } from './dto/create-prompt-library-item.dto';
 import type { QueryPromptLibraryDto } from './dto/query-prompt-library.dto';
 
@@ -47,12 +48,7 @@ export class PromptLibraryService {
 
   async findOne(id: string): Promise<PromptLibraryItemEntity> {
     const item = await this.promptRepository.findById(id);
-
-    if (!item) {
-      throw new NotFoundException(`Prompt library item with ID ${id} not found`);
-    }
-
-    return item;
+    return throwIfNotFound(item, 'Prompt library item', id);
   }
 
   async update(
@@ -60,32 +56,17 @@ export class PromptLibraryService {
     updateDto: Partial<CreatePromptLibraryItemDto>
   ): Promise<PromptLibraryItemEntity> {
     const item = await this.promptRepository.update(id, updateDto);
-
-    if (!item) {
-      throw new NotFoundException(`Prompt library item with ID ${id} not found`);
-    }
-
-    return item;
+    return throwIfNotFound(item, 'Prompt library item', id);
   }
 
   async remove(id: string): Promise<PromptLibraryItemEntity> {
     const item = await this.promptRepository.softDelete(id);
-
-    if (!item) {
-      throw new NotFoundException(`Prompt library item with ID ${id} not found`);
-    }
-
-    return item;
+    return throwIfNotFound(item, 'Prompt library item', id);
   }
 
   async incrementUseCount(id: string): Promise<PromptLibraryItemEntity> {
     const item = await this.promptRepository.incrementUseCount(id);
-
-    if (!item) {
-      throw new NotFoundException(`Prompt library item with ID ${id} not found`);
-    }
-
-    return item;
+    return throwIfNotFound(item, 'Prompt library item', id);
   }
 
   async duplicate(id: string): Promise<PromptLibraryItemEntity> {

@@ -1,11 +1,26 @@
 'use client';
 
-import type { AnimationNodeData, CubicBezier } from '@genfeedai/types';
+import type { AnimationNodeData, CubicBezier, NodeStatus } from '@genfeedai/types';
 import { NODE_DEFINITIONS, type NodeType } from '@genfeedai/types';
 import { X } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
 import { BezierCurveEditor } from './BezierCurveEditor';
+
+const STATUS_COLORS: Record<NodeStatus, string> = {
+  idle: 'bg-gray-500',
+  pending: 'bg-gray-500',
+  processing: 'bg-blue-500 animate-pulse',
+  complete: 'bg-green-500',
+  error: 'bg-red-500',
+};
+
+const HANDLE_TYPE_COLORS: Record<string, string> = {
+  image: 'bg-amber-500',
+  video: 'bg-purple-500',
+  text: 'bg-emerald-500',
+  audio: 'bg-blue-500',
+};
 
 export function ConfigPanel() {
   const { selectedNodeId, toggleConfigPanel } = useUIStore();
@@ -69,15 +84,7 @@ export function ConfigPanel() {
           <label className="text-xs text-[var(--muted-foreground)] block mb-1">Status</label>
           <div className="flex items-center gap-2">
             <div
-              className={`w-2 h-2 rounded-full ${
-                nodeData.status === 'complete'
-                  ? 'bg-green-500'
-                  : nodeData.status === 'processing'
-                    ? 'bg-blue-500 animate-pulse'
-                    : nodeData.status === 'error'
-                      ? 'bg-red-500'
-                      : 'bg-gray-500'
-              }`}
+              className={`w-2 h-2 rounded-full ${STATUS_COLORS[nodeData.status] ?? 'bg-gray-500'}`}
             />
             <span className="text-sm capitalize">{nodeData.status}</span>
           </div>
@@ -111,15 +118,7 @@ export function ConfigPanel() {
               {nodeDef.inputs.map((input) => (
                 <div key={input.id} className="flex items-center gap-2 text-xs py-1">
                   <div
-                    className={`w-2 h-2 rounded-full ${
-                      input.type === 'image'
-                        ? 'bg-amber-500'
-                        : input.type === 'video'
-                          ? 'bg-purple-500'
-                          : input.type === 'text'
-                            ? 'bg-emerald-500'
-                            : 'bg-blue-500'
-                    }`}
+                    className={`w-2 h-2 rounded-full ${HANDLE_TYPE_COLORS[input.type] ?? 'bg-blue-500'}`}
                   />
                   <span className="text-[var(--foreground)]">{input.label}</span>
                   <span className="text-[var(--muted-foreground)]">({input.type})</span>
@@ -135,15 +134,7 @@ export function ConfigPanel() {
               {nodeDef.outputs.map((output) => (
                 <div key={output.id} className="flex items-center gap-2 text-xs py-1">
                   <div
-                    className={`w-2 h-2 rounded-full ${
-                      output.type === 'image'
-                        ? 'bg-amber-500'
-                        : output.type === 'video'
-                          ? 'bg-purple-500'
-                          : output.type === 'text'
-                            ? 'bg-emerald-500'
-                            : 'bg-blue-500'
-                    }`}
+                    className={`w-2 h-2 rounded-full ${HANDLE_TYPE_COLORS[output.type] ?? 'bg-blue-500'}`}
                   />
                   <span className="text-[var(--foreground)]">{output.label}</span>
                   <span className="text-[var(--muted-foreground)]">({output.type})</span>

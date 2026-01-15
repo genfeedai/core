@@ -67,3 +67,30 @@ export const TOPAZ_NODE_TYPES = ['topazImageUpscale', 'topazVideoUpscale'] as co
 
 // Default video duration (seconds)
 export const DEFAULT_VIDEO_DURATION = 8;
+
+// Shared option arrays for UI dropdowns
+// These derive from the types in packages/types but provide runtime arrays
+export const ASPECT_RATIOS = [
+  '1:1',
+  '16:9',
+  '9:16',
+  '4:3',
+  '3:4',
+  '4:5',
+  '5:4',
+  '2:3',
+  '3:2',
+  '21:9',
+] as const;
+
+export const VIDEO_ASPECT_RATIOS = ['16:9', '9:16'] as const;
+
+export const RESOLUTIONS = ['1K', '2K', '4K'] as const;
+
+export const VIDEO_RESOLUTIONS = ['720p', '1080p'] as const;
+
+export const VIDEO_DURATIONS = [4, 6, 8] as const;
+
+export const OUTPUT_FORMATS = ['jpg', 'png', 'webp'] as const;
+
+export const LUMA_ASPECT_RATIOS = ['1:1', '3:4', '4:3', '9:16', '16:9', '9:21', '21:9'] as const;

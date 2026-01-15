@@ -3,7 +3,8 @@ import {
   WORKFLOW_REPOSITORY,
   type WorkflowEntity,
 } from '@genfeedai/storage';
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { throwIfNotFound } from '../common/utils';
 import type { CreateWorkflowDto } from './dto/create-workflow.dto';
 import type { UpdateWorkflowDto } from './dto/update-workflow.dto';
 
@@ -31,32 +32,17 @@ export class WorkflowsService {
 
   async findOne(id: string): Promise<WorkflowEntity> {
     const workflow = await this.workflowRepository.findById(id);
-
-    if (!workflow) {
-      throw new NotFoundException(`Workflow with ID ${id} not found`);
-    }
-
-    return workflow;
+    return throwIfNotFound(workflow, 'Workflow', id);
   }
 
   async update(id: string, updateWorkflowDto: UpdateWorkflowDto): Promise<WorkflowEntity> {
     const workflow = await this.workflowRepository.update(id, updateWorkflowDto);
-
-    if (!workflow) {
-      throw new NotFoundException(`Workflow with ID ${id} not found`);
-    }
-
-    return workflow;
+    return throwIfNotFound(workflow, 'Workflow', id);
   }
 
   async remove(id: string): Promise<WorkflowEntity> {
     const workflow = await this.workflowRepository.softDelete(id);
-
-    if (!workflow) {
-      throw new NotFoundException(`Workflow with ID ${id} not found`);
-    }
-
-    return workflow;
+    return throwIfNotFound(workflow, 'Workflow', id);
   }
 
   async duplicate(id: string): Promise<WorkflowEntity> {

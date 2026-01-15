@@ -5,7 +5,8 @@ import {
   type WorkflowEdgeEntity,
   type WorkflowNodeEntity,
 } from '@genfeedai/storage';
-import { Inject, Injectable, Logger, NotFoundException, type OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
+import { throwIfNotFound } from '../common/utils';
 import type { CreateTemplateDto } from './dto/create-template.dto';
 import { SYSTEM_TEMPLATES } from './templates.seed';
 
@@ -58,12 +59,7 @@ export class TemplatesService implements OnModuleInit {
 
   async findOne(id: string): Promise<TemplateEntity> {
     const template = await this.templateRepository.findById(id);
-
-    if (!template) {
-      throw new NotFoundException(`Template with ID ${id} not found`);
-    }
-
-    return template;
+    return throwIfNotFound(template, 'Template', id);
   }
 
   async update(id: string, updateTemplateDto: Partial<CreateTemplateDto>): Promise<TemplateEntity> {
@@ -78,21 +74,11 @@ export class TemplatesService implements OnModuleInit {
     };
 
     const template = await this.templateRepository.update(id, updateData);
-
-    if (!template) {
-      throw new NotFoundException(`Template with ID ${id} not found`);
-    }
-
-    return template;
+    return throwIfNotFound(template, 'Template', id);
   }
 
   async remove(id: string): Promise<TemplateEntity> {
     const template = await this.templateRepository.softDelete(id);
-
-    if (!template) {
-      throw new NotFoundException(`Template with ID ${id} not found`);
-    }
-
-    return template;
+    return throwIfNotFound(template, 'Template', id);
   }
 }

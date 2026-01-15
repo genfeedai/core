@@ -1,5 +1,6 @@
 'use client';
 
+import { ASPECT_RATIOS, OUTPUT_FORMATS, RESOLUTIONS } from '@genfeedai/core';
 import type {
   AspectRatio,
   ImageGenNodeData,
@@ -27,22 +28,6 @@ const MODELS: { value: ImageModel; label: string; description: string }[] = [
     description: 'High quality, $0.15-0.30/image',
   },
 ];
-
-const ASPECT_RATIOS: AspectRatio[] = [
-  '1:1',
-  '16:9',
-  '9:16',
-  '4:3',
-  '3:4',
-  '4:5',
-  '5:4',
-  '2:3',
-  '3:2',
-];
-
-const RESOLUTIONS: Resolution[] = ['1K', '2K', '4K'];
-
-const OUTPUT_FORMATS: OutputFormat[] = ['jpg', 'png', 'webp'];
 
 function ImageGenNodeComponent(props: NodeProps) {
   const { id, data } = props;

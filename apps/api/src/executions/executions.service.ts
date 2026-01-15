@@ -3,10 +3,11 @@ import {
   type ExecutionEntity,
   type IExecutionRepository,
 } from '@genfeedai/storage';
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
 import { Types } from 'mongoose';
+import { throwIfNotFound } from '../common/utils';
 import type {
   CostSummary,
   ExecutionCostDetails,
@@ -36,12 +37,7 @@ export class ExecutionsService {
 
   async findExecution(id: string): Promise<ExecutionEntity> {
     const execution = await this.executionRepository.findById(id);
-
-    if (!execution) {
-      throw new NotFoundException(`Execution with ID ${id} not found`);
-    }
-
-    return execution;
+    return throwIfNotFound(execution, 'Execution', id);
   }
 
   async updateExecutionStatus(
@@ -50,12 +46,7 @@ export class ExecutionsService {
     error?: string
   ): Promise<ExecutionEntity> {
     const execution = await this.executionRepository.updateStatus(id, status, error);
-
-    if (!execution) {
-      throw new NotFoundException(`Execution with ID ${id} not found`);
-    }
-
-    return execution;
+    return throwIfNotFound(execution, 'Execution', id);
   }
 
   async updateNodeResult(
@@ -77,12 +68,7 @@ export class ExecutionsService {
     };
 
     const execution = await this.executionRepository.updateNodeResult(executionId, nodeResult);
-
-    if (!execution) {
-      throw new NotFoundException(`Execution with ID ${executionId} not found`);
-    }
-
-    return execution;
+    return throwIfNotFound(execution, 'Execution', executionId);
   }
 
   // Job methods
@@ -115,12 +101,7 @@ export class ExecutionsService {
     const job = await this.jobModel
       .findOneAndUpdate({ predictionId }, { $set: updates }, { new: true })
       .exec();
-
-    if (!job) {
-      throw new NotFoundException(`Job with prediction ID ${predictionId} not found`);
-    }
-
-    return job;
+    return throwIfNotFound(job, 'Job', predictionId);
   }
 
   async findJobsByExecution(executionId: string): Promise<Job[]> {
