@@ -129,7 +129,7 @@ function BaseNodeComponent({ id, type, data, selected, children }: BaseNodeProps
       className={clsx(
         'relative min-w-[220px] rounded-lg border shadow-lg transition-all',
         categoryStyle.className,
-        isSelected && 'ring-2 ring-offset-2 ring-offset-background',
+        isSelected && 'ring-2',
         isLocked && 'opacity-60'
       )}
       style={

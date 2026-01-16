@@ -1,5 +1,6 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { QueueModule } from '../queue/queue.module';
 import { ExecutionsController } from './executions.controller';
 import { ExecutionsService } from './executions.service';
 import { Execution, ExecutionSchema } from './schemas/execution.schema';
@@ -11,6 +12,7 @@ import { Job, JobSchema } from './schemas/job.schema';
       { name: Execution.name, schema: ExecutionSchema },
       { name: Job.name, schema: JobSchema },
     ]),
+    forwardRef(() => QueueModule),
   ],
   controllers: [ExecutionsController],
   providers: [ExecutionsService],

@@ -1,6 +1,6 @@
 'use client';
 
-import { Settings, X } from 'lucide-react';
+import { BookOpen, HelpCircle, MessageCircle, Settings, Twitter, X } from 'lucide-react';
 import { memo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,7 +17,7 @@ import { useUIStore } from '@/store/uiStore';
 // TYPES
 // =============================================================================
 
-type TabId = 'defaults' | 'appearance';
+type TabId = 'defaults' | 'appearance' | 'help';
 
 interface Tab {
   id: TabId;
@@ -27,6 +27,7 @@ interface Tab {
 const TABS: Tab[] = [
   { id: 'defaults', label: 'Defaults' },
   { id: 'appearance', label: 'Appearance' },
+  { id: 'help', label: 'Help' },
 ];
 
 // =============================================================================
@@ -238,6 +239,93 @@ function AppearanceTab() {
 }
 
 // =============================================================================
+// HELP TAB
+// =============================================================================
+
+function HelpTab() {
+  const { openModal, closeModal } = useUIStore();
+
+  const handleShowWelcome = () => {
+    closeModal();
+    // Small delay to let the settings modal close first
+    setTimeout(() => openModal('welcome'), 100);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Welcome Screen */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium text-foreground">Getting Started</h3>
+        <button
+          onClick={handleShowWelcome}
+          className="flex w-full items-center gap-3 rounded-lg border border-border p-4 text-left transition hover:border-primary/50 hover:bg-secondary/30"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+            <HelpCircle className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <div className="font-medium text-foreground">Show Welcome Screen</div>
+            <p className="text-sm text-muted-foreground">
+              View the welcome modal with quick start options
+            </p>
+          </div>
+        </button>
+      </div>
+
+      {/* External Links */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium text-foreground">Resources</h3>
+        <div className="space-y-2">
+          <a
+            href="https://docs.genfeed.ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-lg border border-border p-3 transition hover:border-primary/50 hover:bg-secondary/30"
+          >
+            <BookOpen className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <div className="font-medium text-foreground">Documentation</div>
+              <p className="text-xs text-muted-foreground">Learn how to use Genfeed</p>
+            </div>
+          </a>
+          <a
+            href="https://discord.gg/genfeed"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-lg border border-border p-3 transition hover:border-primary/50 hover:bg-secondary/30"
+          >
+            <MessageCircle className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <div className="font-medium text-foreground">Discord Community</div>
+              <p className="text-xs text-muted-foreground">Get help and share workflows</p>
+            </div>
+          </a>
+          <a
+            href="https://twitter.com/genfeedai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-lg border border-border p-3 transition hover:border-primary/50 hover:bg-secondary/30"
+          >
+            <Twitter className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <div className="font-medium text-foreground">Twitter / X</div>
+              <p className="text-xs text-muted-foreground">Follow for updates</p>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      {/* Version Info */}
+      <div className="rounded-lg border border-border bg-secondary/30 p-4">
+        <div className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">Genfeed</span> v0.1.0
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
 // MAIN MODAL
 // =============================================================================
 
@@ -291,6 +379,7 @@ function SettingsModalComponent() {
         <div className="flex-1 overflow-auto p-6">
           {activeTab === 'defaults' && <DefaultsTab />}
           {activeTab === 'appearance' && <AppearanceTab />}
+          {activeTab === 'help' && <HelpTab />}
         </div>
       </div>
     </>

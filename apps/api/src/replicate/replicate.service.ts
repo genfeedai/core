@@ -1,5 +1,5 @@
 import { PRICING } from '@genfeedai/core';
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Replicate from 'replicate';
 import { CostCalculatorService } from '../cost/cost-calculator.service';
@@ -104,7 +104,9 @@ export class ReplicateService {
 
   constructor(
     private readonly configService: ConfigService,
+    @Inject(forwardRef(() => ExecutionsService))
     private readonly executionsService: ExecutionsService,
+    @Inject(forwardRef(() => WorkflowsService))
     private readonly workflowsService: WorkflowsService,
     private readonly costCalculatorService: CostCalculatorService
   ) {
