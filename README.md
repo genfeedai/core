@@ -82,10 +82,56 @@ See [.env.example](.env.example) for all options.
 
 ## Tech Stack
 
-- **Frontend**: Next.js 16, React 19, Tailwind CSS, React Flow
-- **Backend**: NestJS, MongoDB, Redis, BullMQ
-- **Runtime**: Bun
-- **AI**: Replicate, fal.ai, HuggingFace
+### Frontend
+| Technology | Version | Description |
+|------------|---------|-------------|
+| [Next.js](https://nextjs.org) | 16 | React framework with App Router |
+| [React](https://react.dev) | 19 | UI library |
+| [React Flow](https://reactflow.dev) | 12.10 | Visual workflow editor |
+| [Tailwind CSS](https://tailwindcss.com) | 4.1 | Utility-first CSS framework |
+| [Zustand](https://zustand-demo.pmnd.rs) | 5.0 | State management |
+| [Radix UI](https://radix-ui.com) | Latest | Accessible UI primitives |
+
+### Backend
+| Technology | Version | Description |
+|------------|---------|-------------|
+| [NestJS](https://nestjs.com) | 11 | Node.js framework |
+| [MongoDB](https://mongodb.com) / [MongoDB Atlas](https://www.mongodb.com/atlas) | 8.9 (Mongoose) | Document database (local or cloud) |
+| [Redis](https://redis.io) | 7 | In-memory data store |
+| [BullMQ](https://bullmq.io) | 5.66 | Job queue system |
+| [Replicate SDK](https://replicate.com) | 1.0 | AI model API client |
+
+### Infrastructure
+| Technology | Description |
+|------------|-------------|
+| [Bun](https://bun.sh) | JavaScript runtime & package manager |
+| [Docker](https://docker.com) | Containerization |
+| [Biome](https://biomejs.dev) | Linter & formatter |
+| [Vitest](https://vitest.dev) | Testing framework |
+| [Husky](https://typicode.github.io/husky) | Git hooks |
+
+### AI Providers
+| Provider | Use Case |
+|----------|----------|
+| [Replicate](https://replicate.com) | Image & video generation models |
+| [fal.ai](https://fal.ai) | Fast inference endpoints |
+| [HuggingFace](https://huggingface.co) | Open-source models |
+
+### Database Options
+
+**Local Development:**
+```bash
+# MongoDB local instance
+MONGODB_URI=mongodb://localhost:27017/genfeed
+```
+
+**Production with MongoDB Atlas:**
+```bash
+# MongoDB Atlas connection string
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/genfeed?retryWrites=true&w=majority
+```
+
+Get a free MongoDB Atlas cluster at [mongodb.com/atlas](https://www.mongodb.com/atlas/database)
 
 ## Commercial Offering
 
