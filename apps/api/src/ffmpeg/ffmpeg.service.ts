@@ -46,6 +46,19 @@ export interface SubtitleResult {
   videoUrl: string;
 }
 
+export interface StitchVideosInput {
+  videos: string[];
+  transitionType: 'cut' | 'crossfade' | 'wipe' | 'fade';
+  transitionDuration: number;
+  seamlessLoop: boolean;
+  audioCodec: 'aac' | 'mp3';
+  outputQuality: 'full' | 'draft';
+}
+
+export interface StitchVideosResult {
+  videoUrl: string;
+}
+
 @Injectable()
 export class FFmpegService {
   private readonly logger = new Logger(FFmpegService.name);
@@ -411,5 +424,157 @@ export class FFmpegService {
       boxcolor,
       yPosition,
     };
+  }
+
+  /**
+   * Stitch multiple videos together with transitions
+   * Inspired by easy-peasy-ease patterns
+   */
+  async stitchVideos(
+    executionId: string,
+    nodeId: string,
+    input: StitchVideosInput
+  ): Promise<StitchVideosResult> {
+    this.logger.log(
+      `Stitching ${input.videos.length} videos with ${input.transitionType} transition for node ${nodeId}`
+    );
+
+    const tempDir = join(tmpdir(), 'genfeed-ffmpeg');
+    const outputPath = join(tempDir, `stitch-${nodeId}-${Date.now()}.mp4`);
+    const concatFilePath = join(tempDir, `concat-${nodeId}-${Date.now()}.txt`);
+
+    try {
+      // Ensure temp directory exists
+      await mkdir(tempDir, { recursive: true });
+
+      // Quality settings (inspired by easy-peasy-ease preview mode)
+      const qualitySettings =
+        input.outputQuality === 'draft'
+          ? '-vf scale=1280:720:flags=lanczos -b:v 4M -maxrate 4M -bufsize 8M'
+          : '-vf scale=-2:1080:flags=lanczos -crf 18';
+
+      // Audio codec settings
+      const audioCodec = input.audioCodec === 'mp3' ? 'libmp3lame -q:a 2' : 'aac -b:a 192k';
+
+      // Frame rate cap (30fps for smoother playback, per easy-peasy-ease)
+      const frameRateSettings = input.outputQuality === 'draft' ? '-r 30' : '';
+
+      let ffmpegCmd: string;
+
+      if (input.transitionType === 'cut') {
+        // Simple concatenation without transitions
+        const { writeFile } = await import('node:fs/promises');
+        const concatContent = input.videos.map((v) => `file '${v}'`).join('\n');
+        await writeFile(concatFilePath, concatContent, 'utf-8');
+
+        ffmpegCmd = `ffmpeg -y -f concat -safe 0 -i "${concatFilePath}" ${qualitySettings} ${frameRateSettings} -c:a ${audioCodec} "${outputPath}"`;
+      } else {
+        // Build complex filter for transitions
+        const filterParts: string[] = [];
+        const videoCount = input.videos.length;
+        const transitionDur = input.transitionDuration;
+
+        // Input streams
+        const inputArgs = input.videos.map((v) => `-i "${v}"`).join(' ');
+
+        // Build xfade chain for transitions
+        // For seamless loop, we also need to transition last -> first
+        const totalTransitions = input.seamlessLoop ? videoCount : videoCount - 1;
+
+        for (let i = 0; i < totalTransitions; i++) {
+          const fromIdx = i;
+          const toIdx = input.seamlessLoop && i === videoCount - 1 ? 0 : i + 1;
+
+          // Select transition type
+          let xfadeTransition: string;
+          switch (input.transitionType) {
+            case 'crossfade':
+              xfadeTransition = 'fade';
+              break;
+            case 'fade':
+              xfadeTransition = 'fadeblack';
+              break;
+            case 'wipe':
+              xfadeTransition = 'wipeleft';
+              break;
+            default:
+              xfadeTransition = 'fade';
+          }
+
+          if (i === 0) {
+            // First transition: [0:v][1:v]
+            filterParts.push(
+              `[${fromIdx}:v][${toIdx}:v]xfade=transition=${xfadeTransition}:duration=${transitionDur}:offset=0[v${i}]`
+            );
+          } else if (i < totalTransitions - 1) {
+            // Middle transitions
+            filterParts.push(
+              `[v${i - 1}][${toIdx}:v]xfade=transition=${xfadeTransition}:duration=${transitionDur}:offset=0[v${i}]`
+            );
+          } else {
+            // Last transition
+            filterParts.push(
+              `[v${i - 1}][${toIdx}:v]xfade=transition=${xfadeTransition}:duration=${transitionDur}:offset=0[vout]`
+            );
+          }
+        }
+
+        // Audio mixing (concat all audio streams)
+        const audioInputs = input.videos.map((_, i) => `[${i}:a]`).join('');
+        filterParts.push(`${audioInputs}concat=n=${videoCount}:v=0:a=1[aout]`);
+
+        const filterComplex = filterParts.join(';');
+
+        ffmpegCmd = `ffmpeg -y ${inputArgs} -filter_complex "${filterComplex}" -map "[vout]" -map "[aout]" ${qualitySettings} ${frameRateSettings} -c:a ${audioCodec} "${outputPath}"`;
+      }
+
+      this.logger.debug(`Running FFmpeg stitch: ${ffmpegCmd}`);
+
+      // Execute FFmpeg with longer timeout for video processing
+      const { stderr } = await execAsync(ffmpegCmd, {
+        timeout: 600000, // 10 minute timeout
+      });
+
+      if (stderr?.includes('Error') && !stderr.includes('deprecated')) {
+        this.logger.warn(`FFmpeg stderr: ${stderr}`);
+      }
+
+      // Read the output file and convert to base64 data URL
+      const videoBuffer = await readFile(outputPath);
+      const videoBase64 = videoBuffer.toString('base64');
+      const videoDataUrl = `data:video/mp4;base64,${videoBase64}`;
+
+      // Update execution with result
+      await this.executionsService.updateNodeResult(executionId, nodeId, 'complete', {
+        video: videoDataUrl,
+      });
+
+      this.logger.log(`Videos stitched successfully for node ${nodeId}`);
+
+      // Clean up temp files
+      await unlink(outputPath).catch(() => {});
+      await unlink(concatFilePath).catch(() => {});
+
+      return {
+        videoUrl: videoDataUrl,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to stitch videos for node ${nodeId}: ${errorMessage}`);
+
+      // Clean up temp files on error
+      await unlink(outputPath).catch(() => {});
+      await unlink(concatFilePath).catch(() => {});
+
+      await this.executionsService.updateNodeResult(
+        executionId,
+        nodeId,
+        'error',
+        undefined,
+        errorMessage
+      );
+
+      throw error;
+    }
   }
 }

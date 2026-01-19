@@ -143,6 +143,8 @@ Focus on content that will hook viewers in the first 3 seconds.`,
         transitionType: 'crossfade',
         transitionDuration: 0.5,
         seamlessLoop: false,
+        audioCodec: 'aac',
+        outputQuality: 'full',
       },
     },
 

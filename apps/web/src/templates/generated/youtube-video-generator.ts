@@ -124,6 +124,8 @@ Ensure visual continuity between scenes. Total runtime: 10 minutes (20 × 30 sec
         transitionType: 'crossfade',
         transitionDuration: 0.5,
         seamlessLoop: false,
+        audioCodec: 'aac',
+        outputQuality: 'full',
       },
     },
 

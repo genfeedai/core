@@ -111,6 +111,8 @@ export const EXTENDED_VIDEO_TEMPLATE: WorkflowFile = {
         transitionType: 'crossfade',
         transitionDuration: 0.3,
         seamlessLoop: false,
+        audioCodec: 'aac',
+        outputQuality: 'full',
       },
     },
     // Output

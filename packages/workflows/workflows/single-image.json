@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "name": "Single Image",
+  "description": "Generate an AI image from a source image (img2img)",
+  "edgeStyle": "smoothstep",
+  "createdAt": "2025-01-19T00:00:00.000Z",
+  "updatedAt": "2025-01-19T00:00:00.000Z",
+  "nodes": [
+    {
+      "id": "imageInput-1",
+      "type": "imageInput",
+      "position": { "x": 50, "y": 150 },
+      "data": {
+        "label": "Source Image",
+        "status": "idle",
+        "image": null,
+        "filename": null,
+        "dimensions": null,
+        "source": "upload"
+      }
+    },
+    {
+      "id": "prompt-1",
+      "type": "prompt",
+      "position": { "x": 50, "y": 350 },
+      "data": {
+        "label": "Style Prompt",
+        "status": "idle",
+        "prompt": "A cinematic, detailed version of this image with enhanced lighting",
+        "variables": {}
+      }
+    },
+    {
+      "id": "imageGen-1",
+      "type": "imageGen",
+      "position": { "x": 400, "y": 200 },
+      "data": {
+        "label": "Image Generator",
+        "status": "idle",
+        "inputImages": [],
+        "inputPrompt": null,
+        "outputImage": null,
+        "model": "nano-banana-pro",
+        "aspectRatio": "1:1",
+        "resolution": "2K",
+        "outputFormat": "jpg",
+        "jobId": null
+      }
+    },
+    {
+      "id": "output-1",
+      "type": "output",
+      "position": { "x": 750, "y": 200 },
+      "data": {
+        "label": "Final Output",
+        "status": "idle",
+        "inputMedia": null,
+        "inputType": "image",
+        "outputName": "generated-image"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "imageInput-1",
+      "target": "imageGen-1",
+      "sourceHandle": "image",
+      "targetHandle": "images"
+    },
+    {
+      "id": "e2",
+      "source": "prompt-1",
+      "target": "imageGen-1",
+      "sourceHandle": "text",
+      "targetHandle": "prompt"
+    },
+    {
+      "id": "e3",
+      "source": "imageGen-1",
+      "target": "output-1",
+      "sourceHandle": "image",
+      "targetHandle": "media"
+    }
+  ]
+}

@@ -61,6 +61,53 @@ genfeed/
 │   └── storage/     # Database adapters (MongoDB, SQLite)
 ```
 
+## Video Generation Workflow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        GENFEED VIDEO GENERATION PIPELINE                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                  │
+│  │   WORKFLOW   │    │  EXECUTION   │    │ ORCHESTRATOR │                  │
+│  │   EDITOR     │───▶│   SERVICE    │───▶│    QUEUE     │                  │
+│  │  (React Flow)│    │   (NestJS)   │    │  (BullMQ)    │                  │
+│  └──────────────┘    └──────────────┘    └──────┬───────┘                  │
+│                                                  │                          │
+│                          ┌───────────────────────┼───────────────────────┐  │
+│                          │                       │                       │  │
+│                          ▼                       ▼                       ▼  │
+│               ┌──────────────────┐    ┌──────────────────┐    ┌────────────┐│
+│               │ VIDEO GENERATION │    │ IMAGE GENERATION │    │    LLM     ││
+│               │    Replicate     │    │    Replicate     │    │  OpenAI    ││
+│               │  • veo-3.1-fast  │    │  • flux-dev      │    │  • GPT-4o  ││
+│               │  • kling-v2.5    │    │  • sdxl          │    │  • Claude  ││
+│               └────────┬─────────┘    └────────┬─────────┘    └─────┬──────┘│
+│                        │                       │                     │      │
+│                        └───────────────────────┼─────────────────────┘      │
+│                                                ▼                            │
+│                                    ┌──────────────────┐                     │
+│                                    │  POST-PROCESSING │                     │
+│                                    │    (Optional)    │                     │
+│                                    │  • Frame Extract │                     │
+│                                    │  • Video Upscale │                     │
+│                                    │  • Lip Sync      │                     │
+│                                    │  • TTS (11Labs)  │                     │
+│                                    └────────┬─────────┘                     │
+│                                             │                               │
+│                                             ▼                               │
+│                                    ┌──────────────────┐                     │
+│                                    │     STORAGE      │                     │
+│                                    │    (MongoDB)     │                     │
+│                                    │  + Gallery View  │                     │
+│                                    └──────────────────┘                     │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  Queues: workflow-orchestrator │ video-generation │ image-generation │ llm  │
+│  Concurrency:       10         │        2         │        5         │  10  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
 ## Node Types
 
 | Category | Nodes |

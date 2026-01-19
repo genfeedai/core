@@ -1,5 +1,185 @@
 // System templates to seed on startup
 export const SYSTEM_TEMPLATES = [
+  // ============================================
+  // MINIMAL DEFAULT WORKFLOWS (Marketplace Core)
+  // ============================================
+  {
+    name: 'Single Image',
+    description: 'Generate an AI image from a source image (img2img)',
+    category: 'images',
+    version: 1,
+    edgeStyle: 'smoothstep',
+    nodes: [
+      {
+        id: 'imageInput-1',
+        type: 'imageInput',
+        position: { x: 50, y: 150 },
+        data: {
+          label: 'Source Image',
+          status: 'idle',
+          image: null,
+          filename: null,
+          dimensions: null,
+          source: 'upload',
+        },
+      },
+      {
+        id: 'prompt-1',
+        type: 'prompt',
+        position: { x: 50, y: 350 },
+        data: {
+          label: 'Style Prompt',
+          status: 'idle',
+          prompt: 'A cinematic, detailed version of this image with enhanced lighting',
+          variables: {},
+        },
+      },
+      {
+        id: 'imageGen-1',
+        type: 'imageGen',
+        position: { x: 400, y: 200 },
+        data: {
+          label: 'Image Generator',
+          status: 'idle',
+          inputImages: [],
+          inputPrompt: null,
+          outputImage: null,
+          model: 'nano-banana-pro',
+          aspectRatio: '1:1',
+          resolution: '2K',
+          outputFormat: 'jpg',
+          jobId: null,
+        },
+      },
+      {
+        id: 'output-1',
+        type: 'output',
+        position: { x: 750, y: 200 },
+        data: {
+          label: 'Final Output',
+          status: 'idle',
+          inputMedia: null,
+          inputType: 'image',
+          outputName: 'generated-image',
+        },
+      },
+    ],
+    edges: [
+      {
+        id: 'e1',
+        source: 'imageInput-1',
+        target: 'imageGen-1',
+        sourceHandle: 'image',
+        targetHandle: 'images',
+      },
+      {
+        id: 'e2',
+        source: 'prompt-1',
+        target: 'imageGen-1',
+        sourceHandle: 'text',
+        targetHandle: 'prompt',
+      },
+      {
+        id: 'e3',
+        source: 'imageGen-1',
+        target: 'output-1',
+        sourceHandle: 'image',
+        targetHandle: 'media',
+      },
+    ],
+  },
+  {
+    name: 'Single Video',
+    description: 'Generate an AI video from a source image (img2video)',
+    category: 'video',
+    version: 1,
+    edgeStyle: 'smoothstep',
+    nodes: [
+      {
+        id: 'imageInput-1',
+        type: 'imageInput',
+        position: { x: 50, y: 150 },
+        data: {
+          label: 'Starting Frame',
+          status: 'idle',
+          image: null,
+          filename: null,
+          dimensions: null,
+          source: 'upload',
+        },
+      },
+      {
+        id: 'prompt-1',
+        type: 'prompt',
+        position: { x: 50, y: 350 },
+        data: {
+          label: 'Motion Prompt',
+          status: 'idle',
+          prompt: 'Cinematic slow motion with subtle camera movement',
+          variables: {},
+        },
+      },
+      {
+        id: 'videoGen-1',
+        type: 'videoGen',
+        position: { x: 400, y: 200 },
+        data: {
+          label: 'Video Generator',
+          status: 'idle',
+          inputImage: null,
+          lastFrame: null,
+          referenceImages: [],
+          inputPrompt: null,
+          negativePrompt: 'blurry, distorted, artifacts',
+          outputVideo: null,
+          model: 'veo-3.1-fast',
+          duration: 8,
+          aspectRatio: '16:9',
+          resolution: '1080p',
+          generateAudio: false,
+          jobId: null,
+        },
+      },
+      {
+        id: 'output-1',
+        type: 'output',
+        position: { x: 750, y: 200 },
+        data: {
+          label: 'Final Output',
+          status: 'idle',
+          inputMedia: null,
+          inputType: 'video',
+          outputName: 'generated-video',
+        },
+      },
+    ],
+    edges: [
+      {
+        id: 'e1',
+        source: 'imageInput-1',
+        target: 'videoGen-1',
+        sourceHandle: 'image',
+        targetHandle: 'image',
+      },
+      {
+        id: 'e2',
+        source: 'prompt-1',
+        target: 'videoGen-1',
+        sourceHandle: 'text',
+        targetHandle: 'prompt',
+      },
+      {
+        id: 'e3',
+        source: 'videoGen-1',
+        target: 'output-1',
+        sourceHandle: 'video',
+        targetHandle: 'media',
+      },
+    ],
+  },
+  // ============================================
+  // ADVANCED WORKFLOWS
+  // ============================================
   {
     name: 'Image Series',
     description: 'Generate a series of related images from a concept prompt using LLM expansion',

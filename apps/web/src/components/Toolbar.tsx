@@ -21,6 +21,7 @@ import {
   Settings,
   Sparkles,
   Square,
+  Store,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -315,6 +316,22 @@ export function Toolbar() {
             tooltip="Templates"
             onClick={() => openModal('templates')}
           />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <a
+                href="https://marketplace.genfeed.ai/workflows"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button variant="ghost" size="icon-sm">
+                  <Store className="h-4 w-4" />
+                </Button>
+              </a>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <p>Marketplace</p>
+            </TooltipContent>
+          </Tooltip>
           <IconButton
             icon={<BookMarked className="h-4 w-4" />}
             tooltip="Prompt Library"

@@ -428,6 +428,16 @@ export interface AnimationNodeData extends BaseNodeData {
 
 export type TransitionType = 'cut' | 'crossfade' | 'wipe' | 'fade';
 
+// Audio codec options for social media compatibility
+// AAC: Best compatibility (Twitter, Instagram, TikTok)
+// MP3: Fallback for older players
+export type AudioCodec = 'aac' | 'mp3';
+
+// Output quality presets
+// full: Original quality, slower encoding
+// draft: 720p @ 4Mbps, faster preview (inspired by easy-peasy-ease)
+export type OutputQuality = 'full' | 'draft';
+
 export interface VideoStitchNodeData extends BaseNodeData {
   // Inputs from connections
   inputVideos: string[];
@@ -439,6 +449,10 @@ export interface VideoStitchNodeData extends BaseNodeData {
   transitionType: TransitionType;
   transitionDuration: number;
   seamlessLoop: boolean;
+
+  // Audio/quality settings (easy-peasy-ease inspired)
+  audioCodec: AudioCodec;
+  outputQuality: OutputQuality;
 }
 
 export interface ResizeNodeData extends BaseNodeData {

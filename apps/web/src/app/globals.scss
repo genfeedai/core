@@ -202,3 +202,17 @@
 .handle-text { background: var(--handle-text) !important; }
 .handle-number { background: var(--handle-number) !important; }
 .handle-audio { background: var(--handle-audio) !important; }
+
+// Processing node glow animation
+@keyframes processing-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px 2px var(--node-color, var(--primary));
+  }
+  50% {
+    box-shadow: 0 0 20px 6px var(--node-color, var(--primary));
+  }
+}
+
+.node-processing {
+  animation: processing-glow 1.5s ease-in-out infinite;
+}

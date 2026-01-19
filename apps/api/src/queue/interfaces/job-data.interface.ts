@@ -205,6 +205,21 @@ export interface SubtitleJobData extends NodeJobData {
 }
 
 /**
+ * Video Stitch job data (easy-peasy-ease inspired)
+ */
+export interface VideoStitchJobData extends NodeJobData {
+  nodeType: 'videoStitch';
+  nodeData: {
+    inputVideos: string[];
+    transitionType: 'cut' | 'crossfade' | 'wipe' | 'fade';
+    transitionDuration: number;
+    seamlessLoop: boolean;
+    audioCodec: 'aac' | 'mp3';
+    outputQuality: 'full' | 'draft';
+  };
+}
+
+/**
  * Union type for all processing job data
  */
 export type ProcessingJobData =
@@ -216,7 +231,8 @@ export type ProcessingJobData =
   | LipSyncJobData
   | VoiceChangeJobData
   | TextToSpeechJobData
-  | SubtitleJobData;
+  | SubtitleJobData
+  | VideoStitchJobData;
 
 /**
  * Job result interface

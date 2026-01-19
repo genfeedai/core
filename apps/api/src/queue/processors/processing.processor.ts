@@ -190,6 +190,29 @@ export class ProcessingProcessor extends WorkerHost {
           };
         }
 
+        case 'videoStitch': {
+          // Video stitching with transitions (easy-peasy-ease inspired)
+          const stitchResult = await this.ffmpegService.stitchVideos(executionId, nodeId, {
+            videos: nodeData.inputVideos,
+            transitionType: nodeData.transitionType,
+            transitionDuration: nodeData.transitionDuration,
+            seamlessLoop: nodeData.seamlessLoop,
+            audioCodec: nodeData.audioCodec ?? 'aac',
+            outputQuality: nodeData.outputQuality ?? 'full',
+          });
+
+          await job.updateProgress({ percent: 100, message: 'Completed' });
+          await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.COMPLETED, {
+            result: { videoUrl: stitchResult.videoUrl } as unknown as Record<string, unknown>,
+          });
+          await this.queueManager.addJobLog(job.id as string, `${nodeType} completed`);
+
+          return {
+            success: true,
+            output: { video: stitchResult.videoUrl } as Record<string, unknown>,
+          };
+        }
+
         default:
           throw new Error(`Unknown processing node type: ${nodeType}`);
       }

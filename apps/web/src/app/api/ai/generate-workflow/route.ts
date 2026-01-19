@@ -49,7 +49,7 @@ const SYSTEM_PROMPT = `You are a workflow generator for a visual node-based cont
 - videoStitch: Concatenate multiple videos
   - inputs: { videos (multiple, required) }
   - outputs: { video }
-  - defaultData: { label: "Video Stitch", status: "idle", inputVideos: [], outputVideo: null, transitionType: "crossfade", transitionDuration: 0.5, seamlessLoop: false }
+  - defaultData: { label: "Video Stitch", status: "idle", inputVideos: [], outputVideo: null, transitionType: "crossfade", transitionDuration: 0.5, seamlessLoop: false, audioCodec: "aac", outputQuality: "full" }
 
 - videoTrim: Trim video to time range
   - inputs: { video (required) }

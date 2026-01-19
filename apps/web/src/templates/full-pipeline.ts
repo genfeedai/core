@@ -178,6 +178,8 @@ export const FULL_PIPELINE_TEMPLATE: WorkflowFile = {
         transitionType: 'crossfade',
         transitionDuration: 0.5,
         seamlessLoop: true,
+        audioCodec: 'aac',
+        outputQuality: 'full',
       },
     },
 

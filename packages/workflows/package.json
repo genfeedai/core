@@ -1,0 +1,31 @@
+{
+  "name": "@genfeedai/workflows",
+  "version": "0.1.0",
+  "license": "AGPL-3.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./workflows/*": "./workflows/*"
+  },
+  "files": [
+    "dist",
+    "workflows"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@genfeedai/types": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "8.4.0",
+    "typescript": "5.9.3"
+  }
+}

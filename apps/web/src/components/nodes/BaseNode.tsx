@@ -133,13 +133,16 @@ function BaseNodeComponent({ id, type, data, selected, children }: BaseNodeProps
 
   const categoryStyle = categoryStyles[nodeDef.category] ?? categoryStyles.input;
 
+  const isProcessing = nodeData.status === 'processing';
+
   return (
     <div
       className={clsx(
         'relative min-w-[220px] rounded-lg border shadow-lg transition-all',
         categoryStyle.className,
         isSelected && 'ring-2',
-        isLocked && 'opacity-60'
+        isLocked && 'opacity-60',
+        isProcessing && 'node-processing'
       )}
       style={
         {

@@ -1,8 +1,13 @@
 'use client';
 
-import type { TransitionType, VideoStitchNodeData } from '@genfeedai/types';
+import type {
+  AudioCodec,
+  OutputQuality,
+  TransitionType,
+  VideoStitchNodeData,
+} from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { Layers, RefreshCw } from 'lucide-react';
+import { Layers, RefreshCw, Zap } from 'lucide-react';
 import { memo, useCallback } from 'react';
 import { useExecutionStore } from '@/store/executionStore';
 import { useWorkflowStore } from '@/store/workflowStore';
@@ -13,6 +18,11 @@ const TRANSITIONS: { value: TransitionType; label: string }[] = [
   { value: 'crossfade', label: 'Crossfade' },
   { value: 'fade', label: 'Fade to Black' },
   { value: 'wipe', label: 'Wipe' },
+];
+
+const AUDIO_CODECS: { value: AudioCodec; label: string; hint: string }[] = [
+  { value: 'aac', label: 'AAC', hint: 'Best compatibility' },
+  { value: 'mp3', label: 'MP3', hint: 'Legacy fallback' },
 ];
 
 function VideoStitchNodeComponent(props: NodeProps) {
@@ -44,6 +54,21 @@ function VideoStitchNodeComponent(props: NodeProps) {
       seamlessLoop: !nodeData.seamlessLoop,
     });
   }, [id, nodeData.seamlessLoop, updateNodeData]);
+
+  const handleAudioCodecChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      updateNodeData<VideoStitchNodeData>(id, {
+        audioCodec: e.target.value as AudioCodec,
+      });
+    },
+    [id, updateNodeData]
+  );
+
+  const handleQualityToggle = useCallback(() => {
+    updateNodeData<VideoStitchNodeData>(id, {
+      outputQuality: nodeData.outputQuality === 'draft' ? 'full' : 'draft',
+    });
+  }, [id, nodeData.outputQuality, updateNodeData]);
 
   const handleProcess = useCallback(() => {
     executeNode(id);
@@ -114,6 +139,39 @@ function VideoStitchNodeComponent(props: NodeProps) {
             className="w-4 h-4 rounded border-[var(--border)] bg-[var(--background)] text-[var(--primary)] focus:ring-[var(--primary)]"
           />
           <span className="text-sm text-[var(--foreground)]">Seamless Loop</span>
+        </label>
+
+        {/* Audio Codec */}
+        <div>
+          <label className="text-xs text-[var(--muted-foreground)]">Audio Codec</label>
+          <select
+            value={nodeData.audioCodec}
+            onChange={handleAudioCodecChange}
+            className="w-full px-2 py-1.5 text-sm bg-[var(--background)] border border-[var(--border)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
+          >
+            {AUDIO_CODECS.map((codec) => (
+              <option key={codec.value} value={codec.value}>
+                {codec.label} - {codec.hint}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Draft Quality Toggle */}
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={nodeData.outputQuality === 'draft'}
+            onChange={handleQualityToggle}
+            className="w-4 h-4 rounded border-[var(--border)] bg-[var(--background)] text-[var(--primary)] focus:ring-[var(--primary)]"
+          />
+          <span className="text-sm text-[var(--foreground)] flex items-center gap-1">
+            <Zap className="w-3 h-3" />
+            Draft Quality
+          </span>
+          {nodeData.outputQuality === 'draft' && (
+            <span className="text-xs text-[var(--muted-foreground)]">(720p, faster)</span>
+          )}
         </label>
 
         {/* Output Preview */}
