@@ -17,8 +17,8 @@ Open-source visual workflow editor for AI-powered content creation. Build automa
 
 ```bash
 # Clone the repo
-git clone https://github.com/genfeedai/genfeed.git
-cd genfeed
+git clone https://github.com/genfeedai/core.git
+cd core
 
 # Install dependencies
 bun install
@@ -26,14 +26,36 @@ bun install
 # Copy environment config
 cp .env.example .env
 
-# Add your Replicate API token to .env
-# REPLICATE_API_TOKEN=r8_your_token_here
+# Add your API tokens to .env (see Setup Guide below)
 
 # Start development servers
 bun dev
 ```
 
 Open http://localhost:3000 in your browser.
+
+## Prerequisites
+
+### ngrok (Required for webhooks)
+
+Replicate uses webhooks to notify when AI generations complete. In development, ngrok creates an HTTPS tunnel to your local machine.
+
+1. Sign up at [dashboard.ngrok.com/signup](https://dashboard.ngrok.com/signup)
+2. Get your authtoken at [dashboard.ngrok.com/get-started/your-authtoken](https://dashboard.ngrok.com/get-started/your-authtoken)
+3. Add to your environment:
+   ```bash
+   # Add to ~/.zshrc or ~/.bashrc
+   export NGROK_AUTHTOKEN=your_token_here
+
+   # Or add to .env.local in project root
+   NGROK_AUTHTOKEN=your_token_here
+   ```
+
+When you run `bun dev`, it will:
+1. Start ngrok tunnel → get HTTPS URL
+2. Update `apps/api/.env` with `WEBHOOK_BASE_URL`
+3. Start the API server
+4. Start the web frontend
 
 ## Self-Hosting with Docker
 
@@ -117,13 +139,90 @@ genfeed/
 | Processing | Animation, Video Stitch, Video Trim, Annotation |
 | Output | Output, Preview, Social Publish |
 
+## Setup Guide
+
+### 1. Replicate API Token (Required)
+
+Replicate hosts AI models for image/video generation.
+
+1. Go to [replicate.com](https://replicate.com) and sign up (GitHub login works)
+2. Navigate to [replicate.com/account/api-tokens](https://replicate.com/account/api-tokens)
+3. Click **Create token**, copy it
+4. Add to `.env`:
+   ```
+   REPLICATE_API_TOKEN=r8_your_token_here
+   ```
+
+> **Billing**: Replicate charges per prediction. New accounts get free credits. See [replicate.com/pricing](https://replicate.com/pricing).
+
+### 2. MongoDB Database
+
+#### Option A: Local (Development)
+
+```bash
+# macOS
+brew install mongodb-community && brew services start mongodb-community
+
+# Docker
+docker run -d -p 27017:27017 --name mongodb mongo:7
+```
+
+Add to `.env`:
+```
+MONGODB_URI=mongodb://localhost:27017/genfeed
+```
+
+#### Option B: MongoDB Atlas (Production)
+
+1. Go to [mongodb.com/atlas](https://www.mongodb.com/atlas/database) and create a free account
+2. Create a free M0 cluster (512MB, free forever)
+3. Click **Connect** → **Drivers** → Copy connection string
+4. Replace `<password>` with your database user password
+5. Add to `.env`:
+   ```
+   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/genfeed?retryWrites=true&w=majority
+   ```
+
+### 3. Redis (Required for job queues)
+
+#### Option A: Local
+
+```bash
+# macOS
+brew install redis && brew services start redis
+
+# Docker
+docker run -d -p 6379:6379 --name redis redis:7
+```
+
+Add to `.env`:
+```
+REDIS_HOST=localhost
+REDIS_PORT=6379
+```
+
+#### Option B: Upstash (Serverless)
+
+1. Go to [upstash.com](https://upstash.com) and create a free account
+2. Create a new Redis database
+3. Copy the connection details
+4. Add to `.env`:
+   ```
+   REDIS_HOST=your-endpoint.upstash.io
+   REDIS_PORT=6379
+   REDIS_PASSWORD=your_password
+   ```
+
 ## Environment Variables
 
 | Variable | Description |
 |----------|-------------|
+| `NGROK_AUTHTOKEN` | ngrok auth token (required for dev) |
 | `REPLICATE_API_TOKEN` | Replicate API key (required) |
 | `MONGODB_URI` | MongoDB connection string |
 | `REDIS_HOST` | Redis host for job queues |
+| `REDIS_PORT` | Redis port (default: 6379) |
+| `REDIS_PASSWORD` | Redis password (optional) |
 
 See [.env.example](.env.example) for all options.
 
@@ -153,6 +252,7 @@ See [.env.example](.env.example) for all options.
 |------------|-------------|
 | [Bun](https://bun.sh) | JavaScript runtime & package manager |
 | [Docker](https://docker.com) | Containerization |
+| [ngrok](https://ngrok.com) | HTTPS tunnels for webhooks (dev) |
 | [Biome](https://biomejs.dev) | Linter & formatter |
 | [Vitest](https://vitest.dev) | Testing framework |
 | [Husky](https://typicode.github.io/husky) | Git hooks |

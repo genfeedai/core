@@ -4,6 +4,7 @@ import { WorkflowsController } from '@/controllers/workflows.controller';
 import { CostModule } from '@/modules/cost.module';
 import { Workflow, WorkflowSchema } from '@/schemas/workflow.schema';
 import { WorkflowGeneratorService } from '@/services/workflow-generator.service';
+import { WorkflowInterfaceService } from '@/services/workflow-interface.service';
 import { WorkflowsService } from '@/services/workflows.service';
 
 @Module({
@@ -12,7 +13,7 @@ import { WorkflowsService } from '@/services/workflows.service';
     CostModule,
   ],
   controllers: [WorkflowsController],
-  providers: [WorkflowsService, WorkflowGeneratorService],
-  exports: [WorkflowsService],
+  providers: [WorkflowsService, WorkflowGeneratorService, WorkflowInterfaceService],
+  exports: [WorkflowsService, WorkflowInterfaceService],
 })
 export class WorkflowsModule {}

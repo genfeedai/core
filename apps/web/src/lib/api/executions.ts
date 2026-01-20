@@ -37,6 +37,14 @@ export interface JobData {
   updatedAt: string;
 }
 
+export interface ExecutionStats {
+  totalExecutions: number;
+  failedExecutions: number;
+  failureRate: number;
+  avgRunTimeMs: number;
+  totalCost: number;
+}
+
 export const executionsApi = {
   /**
    * Start a workflow execution
@@ -99,4 +107,10 @@ export const executionsApi = {
     apiClient.post<ExecutionData>(`/workflows/${workflowId}/execute/resume/${runId}`, undefined, {
       signal,
     }),
+
+  /**
+   * Get aggregated execution statistics
+   */
+  getStats: (signal?: AbortSignal): Promise<ExecutionStats> =>
+    apiClient.get<ExecutionStats>('/executions/stats', { signal }),
 };

@@ -119,7 +119,7 @@ Ideal for users who want to quickly enhance portrait photos for professional use
 
 ## Questions?
 
-Open an issue or reach out on [Discord](https://discord.gg/genfeed).
+Open an issue or reach out on [Discord](https://discord.gg/Qy867n83Z4).
 
 ## License
 

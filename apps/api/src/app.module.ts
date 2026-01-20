@@ -7,6 +7,7 @@ import { PromptLibraryModule } from '@/modules/prompt-library.module';
 import { ProvidersModule } from '@/modules/providers.module';
 import { QueueModule } from '@/modules/queue.module';
 import { ReplicateModule } from '@/modules/replicate.module';
+import { SettingsModule } from '@/modules/settings.module';
 import { TemplatesModule } from '@/modules/templates.module';
 import { TTSModule } from '@/modules/tts.module';
 import { WorkflowsModule } from '@/modules/workflows.module';
@@ -37,6 +38,7 @@ import { AppService } from '@/services/app.service';
     TTSModule,
     PromptLibraryModule,
     ProvidersModule,
+    SettingsModule,
 
     // Queue Management (BullMQ + Redis)
     QueueModule,

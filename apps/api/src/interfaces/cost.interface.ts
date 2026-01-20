@@ -68,6 +68,10 @@ export interface NodeDataForCost {
   duration?: number;
   generateAudio?: boolean;
   resolution?: string;
+  inputType?: 'image' | 'video';
+  targetResolution?: string;
+  targetFps?: number;
+  upscaleFactor?: string;
 }
 
 /**

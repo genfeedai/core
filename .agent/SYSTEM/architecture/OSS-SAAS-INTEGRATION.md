@@ -35,9 +35,9 @@
 
 ## Repository Structure
 
-### Repo 1: `genfeedai/genfeed` (Public OSS)
+### Repo 1: `genfeedai/core` (Public OSS)
 ```
-genfeed/
+core/
 ├── apps/
 │   ├── web/              # Standalone editor (Next.js)
 │   ├── api/              # Local API server (NestJS)

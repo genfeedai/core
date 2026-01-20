@@ -72,6 +72,45 @@ class NodeGroup {
   collapsed?: boolean;
 }
 
+// Workflow interface input (embedded document)
+@Schema({ _id: false })
+class WorkflowInterfaceInput {
+  @Prop({ required: true })
+  nodeId: string;
+
+  @Prop({ required: true })
+  name: string;
+
+  @Prop({ required: true, enum: ['image', 'video', 'text', 'audio', 'number'] })
+  type: string;
+
+  @Prop({ default: true })
+  required: boolean;
+}
+
+// Workflow interface output (embedded document)
+@Schema({ _id: false })
+class WorkflowInterfaceOutput {
+  @Prop({ required: true })
+  nodeId: string;
+
+  @Prop({ required: true })
+  name: string;
+
+  @Prop({ required: true, enum: ['image', 'video', 'text', 'audio', 'number'] })
+  type: string;
+}
+
+// Workflow interface (computed from boundary nodes)
+@Schema({ _id: false })
+class WorkflowInterfaceSchema {
+  @Prop({ type: [Object], default: [] })
+  inputs: WorkflowInterfaceInput[];
+
+  @Prop({ type: [Object], default: [] })
+  outputs: WorkflowInterfaceOutput[];
+}
+
 @Schema({ timestamps: true, collection: 'workflows' })
 export class Workflow extends Document {
   @Prop({ required: true })
@@ -98,6 +137,14 @@ export class Workflow extends Document {
   @Prop({ default: false })
   isDeleted: boolean;
 
+  // Composition: computed interface from WorkflowInput/WorkflowOutput boundary nodes
+  @Prop({ type: Object, default: { inputs: [], outputs: [] } })
+  interface: WorkflowInterfaceSchema;
+
+  // Composition: true if workflow has defined interface (inputs or outputs)
+  @Prop({ default: false })
+  isReusable: boolean;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -107,3 +154,4 @@ export const WorkflowSchema = SchemaFactory.createForClass(Workflow);
 // Indexes
 WorkflowSchema.index({ isDeleted: 1 });
 WorkflowSchema.index({ name: 'text', description: 'text' });
+WorkflowSchema.index({ isReusable: 1, isDeleted: 1 }); // For finding referencable workflows

@@ -83,9 +83,12 @@ export type NodeType =
   | 'subtitle'
   // Output nodes
   | 'output'
-  | 'preview';
+  // Composition nodes (workflow-as-node)
+  | 'workflowInput'
+  | 'workflowOutput'
+  | 'workflowRef';
 
-export type NodeCategory = 'input' | 'ai' | 'processing' | 'output';
+export type NodeCategory = 'input' | 'ai' | 'processing' | 'output' | 'composition';
 
 export type NodeStatus = 'idle' | 'pending' | 'processing' | 'complete' | 'error';
 
@@ -111,6 +114,8 @@ export interface BaseNodeData extends Record<string, unknown> {
   isLocked?: boolean;
   cachedOutput?: unknown;
   lockTimestamp?: number;
+  // Optional comment/note for the node (used for comment navigation)
+  comment?: string;
 }
 
 // =============================================================================
@@ -659,14 +664,63 @@ export interface OutputNodeData extends BaseNodeData {
   outputName: string;
 }
 
-export interface PreviewNodeData extends BaseNodeData {
-  // Inputs from connections
-  inputMedia: string | null;
-  inputType: 'image' | 'video' | null;
+// =============================================================================
+// COMPOSITION NODE DATA (workflow-as-node)
+// =============================================================================
 
-  // Preview state
-  isPlaying: boolean;
-  volume: number;
+export interface WorkflowInputNodeData extends BaseNodeData {
+  // Config for this input boundary
+  inputName: string;
+  inputType: HandleType;
+  required: boolean;
+  description?: string;
+}
+
+export interface WorkflowOutputNodeData extends BaseNodeData {
+  // Config for this output boundary
+  outputName: string;
+  outputType: HandleType;
+  description?: string;
+
+  // Input from connection (what gets returned when workflow completes)
+  inputValue: string | null;
+}
+
+// Cached interface from referenced workflow
+export interface WorkflowInterfaceInput {
+  nodeId: string;
+  name: string;
+  type: HandleType;
+  required: boolean;
+}
+
+export interface WorkflowInterfaceOutput {
+  nodeId: string;
+  name: string;
+  type: HandleType;
+}
+
+export interface WorkflowInterface {
+  inputs: WorkflowInterfaceInput[];
+  outputs: WorkflowInterfaceOutput[];
+}
+
+export interface WorkflowRefNodeData extends BaseNodeData {
+  // Reference to child workflow
+  referencedWorkflowId: string | null;
+  referencedWorkflowName: string | null;
+
+  // Cached interface (refreshed on save or manually)
+  cachedInterface: WorkflowInterface | null;
+
+  // Runtime: mapped inputs from parent connections
+  inputMappings: Record<string, string | null>;
+
+  // Runtime: outputs received from child execution
+  outputMappings: Record<string, string | null>;
+
+  // Child execution tracking
+  childExecutionId: string | null;
 }
 
 // =============================================================================
@@ -697,7 +751,10 @@ export type WorkflowNodeData =
   | AnnotationNodeData
   | SubtitleNodeData
   | OutputNodeData
-  | PreviewNodeData;
+  // Composition nodes
+  | WorkflowInputNodeData
+  | WorkflowOutputNodeData
+  | WorkflowRefNodeData;
 
 // =============================================================================
 // WORKFLOW NODE & EDGE
@@ -1222,21 +1279,59 @@ export const NODE_DEFINITIONS: Record<NodeType, NodeDefinition> = {
       outputName: 'output',
     },
   },
-  preview: {
-    type: 'preview',
-    label: 'Preview',
-    description: 'Preview media with playback controls',
-    category: 'output',
-    icon: 'Eye',
-    inputs: [{ id: 'media', type: 'image', label: 'Media', required: true }],
+
+  // Composition nodes (workflow-as-node)
+  workflowInput: {
+    type: 'workflowInput',
+    label: 'Workflow Input',
+    description: 'Define an input port for when this workflow is used as a subworkflow',
+    category: 'composition',
+    icon: 'ArrowRightToLine',
+    inputs: [],
+    outputs: [{ id: 'value', type: 'image', label: 'Value' }], // Type is dynamic based on inputType
+    defaultData: {
+      label: 'Workflow Input',
+      status: 'idle',
+      inputName: 'input',
+      inputType: 'image',
+      required: true,
+      description: '',
+    },
+  },
+  workflowOutput: {
+    type: 'workflowOutput',
+    label: 'Workflow Output',
+    description: 'Define an output port for when this workflow is used as a subworkflow',
+    category: 'composition',
+    icon: 'ArrowLeftFromLine',
+    inputs: [{ id: 'value', type: 'image', label: 'Value', required: true }], // Type is dynamic based on outputType
     outputs: [],
     defaultData: {
-      label: 'Preview',
+      label: 'Workflow Output',
       status: 'idle',
-      inputMedia: null,
-      inputType: null,
-      isPlaying: false,
-      volume: 1,
+      outputName: 'output',
+      outputType: 'image',
+      description: '',
+      inputValue: null,
+    },
+  },
+  workflowRef: {
+    type: 'workflowRef',
+    label: 'Subworkflow',
+    description: 'Reference another workflow as a subworkflow',
+    category: 'composition',
+    icon: 'GitBranch',
+    inputs: [], // Dynamic based on referenced workflow interface
+    outputs: [], // Dynamic based on referenced workflow interface
+    defaultData: {
+      label: 'Subworkflow',
+      status: 'idle',
+      referencedWorkflowId: null,
+      referencedWorkflowName: null,
+      cachedInterface: null,
+      inputMappings: {},
+      outputMappings: {},
+      childExecutionId: null,
     },
   },
 };
@@ -1257,7 +1352,8 @@ const NODE_ORDER: Record<NodeCategory, NodeType[]> = {
     'subtitle',
     'animation',
   ],
-  output: ['output', 'preview'],
+  output: ['output'],
+  composition: ['workflowRef', 'workflowInput', 'workflowOutput'],
 };
 
 // Helper to get nodes by category with explicit ordering
@@ -1267,6 +1363,7 @@ export function getNodesByCategory(): Record<NodeCategory, NodeDefinition[]> {
     ai: [],
     processing: [],
     output: [],
+    composition: [],
   };
 
   for (const category of Object.keys(NODE_ORDER) as NodeCategory[]) {

@@ -2,9 +2,10 @@
 
 import type { VideoInputNodeData } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { Upload, X } from 'lucide-react';
-import { memo, useCallback, useRef } from 'react';
+import { Link, Upload, Video, X } from 'lucide-react';
+import { memo, useCallback, useRef, useState } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
+import { Button } from '@/components/ui/button';
 import { useWorkflowStore } from '@/store/workflowStore';
 
 function VideoInputNodeComponent(props: NodeProps) {
@@ -12,6 +13,8 @@ function VideoInputNodeComponent(props: NodeProps) {
   const nodeData = data as VideoInputNodeData;
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [urlValue, setUrlValue] = useState(nodeData.url || '');
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,17 +46,53 @@ function VideoInputNodeComponent(props: NodeProps) {
       filename: null,
       duration: null,
       dimensions: null,
+      url: undefined,
     });
+    setUrlValue('');
   }, [id, updateNodeData]);
 
-  const handleUrlChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUrlSubmit = useCallback(() => {
+    if (!urlValue.trim()) return;
+
+    // Create a video to validate and get metadata
+    const video = document.createElement('video');
+    video.crossOrigin = 'anonymous';
+    video.onloadedmetadata = () => {
       updateNodeData<VideoInputNodeData>(id, {
-        url: e.target.value,
+        video: urlValue,
+        filename: urlValue.split('/').pop() || 'url-video',
+        duration: video.duration,
+        dimensions: { width: video.videoWidth, height: video.videoHeight },
         source: 'url',
+        url: urlValue,
       });
+      setShowUrlInput(false);
+    };
+    video.onerror = () => {
+      // Still set the URL even if we can't load it (might be CORS)
+      updateNodeData<VideoInputNodeData>(id, {
+        video: urlValue,
+        filename: urlValue.split('/').pop() || 'url-video',
+        duration: null,
+        dimensions: null,
+        source: 'url',
+        url: urlValue,
+      });
+      setShowUrlInput(false);
+    };
+    video.src = urlValue;
+  }, [id, updateNodeData, urlValue]);
+
+  const handleUrlKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        handleUrlSubmit();
+      } else if (e.key === 'Escape') {
+        setShowUrlInput(false);
+        setUrlValue(nodeData.url || '');
+      }
     },
-    [id, updateNodeData]
+    [handleUrlSubmit, nodeData.url]
   );
 
   const formatDuration = (seconds: number | null) => {
@@ -63,50 +102,94 @@ function VideoInputNodeComponent(props: NodeProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Header actions - Upload and Link buttons
+  const headerActions = (
+    <div className="flex items-center gap-1">
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={() => fileInputRef.current?.click()}
+        title="Upload video"
+        className="h-6 w-6"
+      >
+        <Upload className="h-3.5 w-3.5" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={() => setShowUrlInput(!showUrlInput)}
+        title="Paste URL"
+        className="h-6 w-6"
+      >
+        <Link className="h-3.5 w-3.5" />
+      </Button>
+    </div>
+  );
+
   return (
-    <BaseNode {...props}>
-      <div className="space-y-2">
-        {nodeData.video ? (
-          <div className="relative">
-            <video src={nodeData.video} className="w-full h-32 object-cover rounded" muted />
-            <button
-              onClick={handleRemoveVideo}
-              className="absolute top-1 right-1 p-1 bg-black/50 rounded-full hover:bg-black/70 transition"
-            >
-              <X className="w-3 h-3" />
-            </button>
-            <div className="absolute bottom-1 left-1 px-2 py-0.5 bg-black/50 rounded text-xs">
-              {nodeData.dimensions?.width}x{nodeData.dimensions?.height}
-              {nodeData.duration && ` • ${formatDuration(nodeData.duration)}`}
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full h-24 border-2 border-dashed border-[var(--border)] rounded flex flex-col items-center justify-center gap-1 hover:border-[var(--primary)] transition"
+    <BaseNode {...props} headerActions={headerActions}>
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="video/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
+      {/* URL Input (shown when link button clicked) */}
+      {showUrlInput && (
+        <div className="mb-3 flex gap-2">
+          <input
+            type="url"
+            value={urlValue}
+            onChange={(e) => setUrlValue(e.target.value)}
+            onKeyDown={handleUrlKeyDown}
+            placeholder="https://..."
+            className="flex-1 h-7 px-2 text-xs rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleUrlSubmit}
+            disabled={!urlValue.trim()}
+            className="h-7 px-2 text-xs"
           >
-            <Upload className="w-5 h-5 text-[var(--muted-foreground)]" />
-            <span className="text-xs text-[var(--muted-foreground)]">Upload Video</span>
-          </button>
-        )}
+            Load
+          </Button>
+        </div>
+      )}
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="video/*"
-          onChange={handleFileSelect}
-          className="hidden"
-        />
-
-        <div className="text-xs text-[var(--muted-foreground)]">Or paste URL:</div>
-        <input
-          type="url"
-          value={nodeData.url || ''}
-          onChange={handleUrlChange}
-          placeholder="https://..."
-          className="w-full px-2 py-1.5 text-xs bg-[var(--background)] border border-[var(--border)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
-        />
-      </div>
+      {/* Video Preview or Empty State */}
+      {nodeData.video ? (
+        <div className="relative">
+          <video
+            src={nodeData.video}
+            className="w-full h-20 object-cover rounded-md cursor-pointer"
+            muted
+          />
+          <Button
+            variant="secondary"
+            size="icon-sm"
+            onClick={handleRemoveVideo}
+            className="absolute right-1.5 top-1.5 h-5 w-5"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+          <div className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px]">
+            {nodeData.dimensions && `${nodeData.dimensions.width}x${nodeData.dimensions.height}`}
+            {nodeData.duration && ` • ${formatDuration(nodeData.duration)}`}
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="flex h-16 w-full flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border/50 bg-secondary/20 transition-colors hover:border-primary/50 hover:bg-secondary/40"
+        >
+          <Video className="h-5 w-5 text-muted-foreground/50" />
+          <span className="text-[10px] text-muted-foreground/70">Drop or click</span>
+        </button>
+      )}
     </BaseNode>
   );
 }

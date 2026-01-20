@@ -142,7 +142,7 @@ export interface PredictionResult {
 export class ReplicateService {
   private readonly logger = new Logger(ReplicateService.name);
   private readonly replicate: Replicate;
-  private readonly webhookBaseUrl: string | undefined;
+  private readonly webhookBaseUrl: string;
 
   constructor(
     private readonly configService: ConfigService,
@@ -155,16 +155,28 @@ export class ReplicateService {
     this.replicate = new Replicate({
       auth: this.configService.get<string>('REPLICATE_API_TOKEN'),
     });
-    this.webhookBaseUrl = this.configService.get<string>('WEBHOOK_BASE_URL');
+
+    const webhookUrl = this.configService.get<string>('WEBHOOK_BASE_URL');
+    if (!webhookUrl) {
+      throw new Error(
+        'WEBHOOK_BASE_URL is required. Run "bun run dev:tunnel" first to start ngrok tunnel.'
+      );
+    }
+    if (!webhookUrl.startsWith('https://')) {
+      throw new Error(
+        `WEBHOOK_BASE_URL must be HTTPS (got: ${webhookUrl}). Run "bun run dev:tunnel" first.`
+      );
+    }
+    this.webhookBaseUrl = webhookUrl;
   }
 
   /**
    * Get webhook configuration for prediction requests
    */
-  private getWebhookConfig():
-    | { webhook: string; webhook_events_filter: ('start' | 'output' | 'logs' | 'completed')[] }
-    | undefined {
-    if (!this.webhookBaseUrl) return undefined;
+  private getWebhookConfig(): {
+    webhook: string;
+    webhook_events_filter: ('start' | 'output' | 'logs' | 'completed')[];
+  } {
     return {
       webhook: `${this.webhookBaseUrl}/api/replicate/webhook`,
       webhook_events_filter: ['completed'],

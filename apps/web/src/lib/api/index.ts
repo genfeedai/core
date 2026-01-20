@@ -11,6 +11,13 @@ export type {
   VideoGenerationInput,
 } from './replicate';
 export { replicateApi } from './replicate';
+export type {
+  NodeDefaultsData,
+  RecentModelData,
+  SettingsData,
+  UiPreferencesData,
+} from './settings';
+export { settingsApi } from './settings';
 export type { CreateTemplateInput, TemplateData } from './templates';
 export { templatesApi } from './templates';
 export type { CreateWorkflowInput, UpdateWorkflowInput, WorkflowData } from './workflows';

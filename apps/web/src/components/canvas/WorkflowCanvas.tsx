@@ -11,7 +11,8 @@ import {
   ReactFlow,
   SelectionMode,
 } from '@xyflow/react';
-import { useCallback, useEffect } from 'react';
+import { PanelLeft } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import '@xyflow/react/dist/style.css';
 
 import type { NodeType, WorkflowEdge, WorkflowNode } from '@genfeedai/types';
@@ -19,6 +20,7 @@ import { NODE_DEFINITIONS } from '@genfeedai/types';
 import { GroupOverlay } from '@/components/canvas/GroupOverlay';
 import { ContextMenu } from '@/components/context-menu';
 import { nodeTypes } from '@/components/nodes';
+import { NodeDetailModal } from '@/components/nodes/NodeDetailModal';
 import { useContextMenu } from '@/hooks/useContextMenu';
 import { CATEGORY_COLORS, DEFAULT_NODE_COLOR } from '@/lib/constants/colors';
 import { useSettingsStore } from '@/store/settingsStore';
@@ -42,10 +44,23 @@ export function WorkflowCanvas() {
     deleteGroup,
     unlockAllNodes,
     groups,
+    getConnectedNodeIds,
   } = useWorkflowStore();
 
-  const { selectNode } = useUIStore();
+  const {
+    selectNode,
+    setHighlightedNodeIds,
+    highlightedNodeIds,
+    showPalette,
+    togglePalette,
+    openNodeDetailModal,
+  } = useUIStore();
   const { edgeStyle, showMinimap } = useSettingsStore();
+
+  // Minimap visibility on pan/zoom (n8n-style)
+  const [isMinimapVisible, setIsMinimapVisible] = useState(false);
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const MINIMAP_HIDE_DELAY = 1500; // ms after stopping movement
 
   const {
     isOpen: isContextMenuOpen,
@@ -67,6 +82,12 @@ export function WorkflowCanvas() {
       }
 
       const isMod = e.ctrlKey || e.metaKey;
+
+      // M - Toggle sidebar (Todoist style)
+      if (e.key === 'm' && !isMod && !e.shiftKey) {
+        e.preventDefault();
+        togglePalette();
+      }
 
       // L - Toggle lock on selected nodes
       if (e.key === 'l' && !isMod && !e.shiftKey) {
@@ -101,17 +122,87 @@ export function WorkflowCanvas() {
         e.preventDefault();
         unlockAllNodes();
       }
+
+      // Shift+I - Add image generator node at viewport center
+      if (e.key === 'I' && e.shiftKey && !isMod) {
+        e.preventDefault();
+        const position = { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 150 };
+        addNode('imageGen', position);
+      }
+
+      // Shift+V - Add video generator node at viewport center
+      if (e.key === 'V' && e.shiftKey && !isMod) {
+        e.preventDefault();
+        const position = { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 150 };
+        addNode('videoGen', position);
+      }
+
+      // Shift+P - Add prompt node at viewport center
+      if (e.key === 'P' && e.shiftKey && !isMod) {
+        e.preventDefault();
+        const position = { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 150 };
+        addNode('prompt', position);
+      }
+
+      // Shift+L - Add LLM node at viewport center
+      if ((e.key === 'L' || e.key === 'l') && e.shiftKey && !isMod) {
+        e.preventDefault();
+        const position = { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 150 };
+        addNode('llm', position);
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedNodeIds, toggleNodeLock, createGroup, deleteGroup, unlockAllNodes, groups]);
+  }, [
+    selectedNodeIds,
+    toggleNodeLock,
+    createGroup,
+    deleteGroup,
+    unlockAllNodes,
+    groups,
+    addNode,
+    togglePalette,
+  ]);
+
+  // Update highlighted nodes when selection changes
+  useEffect(() => {
+    if (selectedNodeIds.length === 0) {
+      setHighlightedNodeIds([]);
+    } else {
+      const connectedIds = getConnectedNodeIds(selectedNodeIds);
+      setHighlightedNodeIds(connectedIds);
+    }
+  }, [selectedNodeIds, getConnectedNodeIds, setHighlightedNodeIds]);
+
+  // Compute edges with highlight/dim classes
+  const styledEdges = useMemo(() => {
+    if (highlightedNodeIds.length === 0) {
+      return edges;
+    }
+
+    return edges.map((edge) => {
+      const isConnected =
+        highlightedNodeIds.includes(edge.source) && highlightedNodeIds.includes(edge.target);
+      return {
+        ...edge,
+        className: isConnected ? 'highlighted' : 'dimmed',
+      };
+    });
+  }, [edges, highlightedNodeIds]);
 
   const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: WorkflowNode) => {
       selectNode(node.id);
     },
     [selectNode]
+  );
+
+  const handleNodeDoubleClick = useCallback(
+    (_event: React.MouseEvent, node: WorkflowNode) => {
+      openNodeDetailModal(node.id);
+    },
+    [openNodeDetailModal]
   );
 
   const handlePaneClick = useCallback(() => {
@@ -245,16 +336,64 @@ export function WorkflowCanvas() {
     [isValidConnection]
   );
 
+  // Show minimap when panning/zooming starts
+  const handleMoveStart = useCallback(() => {
+    if (!showMinimap) return;
+
+    // Clear any pending hide timeout
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
+    setIsMinimapVisible(true);
+  }, [showMinimap]);
+
+  // Hide minimap after a delay when panning/zooming stops
+  const handleMoveEnd = useCallback(() => {
+    if (!showMinimap) return;
+
+    // Clear any existing timeout
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+    }
+
+    // Set timeout to hide minimap
+    hideTimeoutRef.current = setTimeout(() => {
+      setIsMinimapVisible(false);
+      hideTimeoutRef.current = null;
+    }, MINIMAP_HIDE_DELAY);
+  }, [showMinimap]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
-    <div className="w-full h-full" onDrop={handleDrop} onDragOver={handleDragOver}>
+    <div className="w-full h-full relative" onDrop={handleDrop} onDragOver={handleDragOver}>
+      {/* Sidebar toggle button - Todoist style */}
+      {!showPalette && (
+        <button
+          onClick={togglePalette}
+          className="absolute top-3 left-3 z-10 p-1.5 bg-[var(--background)] border border-[var(--border)] rounded-md hover:bg-[var(--secondary)] transition-colors group"
+          title="Open sidebar (M)"
+        >
+          <PanelLeft className="w-4 h-4 text-[var(--muted-foreground)] group-hover:text-[var(--foreground)]" />
+        </button>
+      )}
       <ReactFlow<WorkflowNode, WorkflowEdge>
         nodes={nodes}
-        edges={edges}
+        edges={styledEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onConnectEnd={handleConnectEnd as never}
         onNodeClick={handleNodeClick}
+        onNodeDoubleClick={handleNodeDoubleClick}
         onPaneClick={handlePaneClick}
         onSelectionChange={handleSelectionChange}
         onNodeContextMenu={handleNodeContextMenu}
@@ -270,6 +409,8 @@ export function WorkflowCanvas() {
         selectionMode={SelectionMode.Partial}
         selectionOnDrag
         panOnDrag={[1, 2]} // Middle/right mouse for pan
+        onMoveStart={handleMoveStart}
+        onMoveEnd={handleMoveEnd}
         deleteKeyCode={['Backspace', 'Delete']}
         defaultEdgeOptions={{
           type: edgeStyle,
@@ -280,7 +421,12 @@ export function WorkflowCanvas() {
         proOptions={{ hideAttribution: true }}
       >
         <GroupOverlay />
-        <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={16}
+          size={1}
+          color="rgba(255, 255, 255, 0.08)"
+        />
         <Controls />
         {showMinimap && (
           <MiniMap
@@ -293,7 +439,9 @@ export function WorkflowCanvas() {
             zoomable
             pannable
             maskColor="rgba(0, 0, 0, 0.8)"
-            className="!bg-transparent !border-[var(--border)] !rounded-lg"
+            className={`!bg-transparent !border-[var(--border)] !rounded-lg transition-opacity duration-300 ${
+              isMinimapVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            }`}
           />
         )}
       </ReactFlow>
@@ -305,6 +453,7 @@ export function WorkflowCanvas() {
           onClose={closeContextMenu}
         />
       )}
+      <NodeDetailModal />
     </div>
   );
 }

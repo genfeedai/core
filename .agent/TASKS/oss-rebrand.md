@@ -1,4 +1,4 @@
-## Task: OSS Rebrand to genfeedai/genfeed
+## Task: OSS Rebrand to genfeedai/core
 
 **ID:** oss-rebrand
 **Label:** Open Source Rebrand

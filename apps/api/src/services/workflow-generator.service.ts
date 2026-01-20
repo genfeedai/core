@@ -9,7 +9,38 @@ import Replicate from 'replicate';
 export interface GenerateWorkflowDto {
   description: string;
   contentLevel: 'empty' | 'minimal' | 'full';
+  model?: string;
 }
+
+// =============================================================================
+// MODEL CONFIGURATIONS
+// =============================================================================
+
+interface ModelConfig {
+  supportsSystemPrompt: boolean;
+  inputTokenPrice: number; // per million tokens
+  outputTokenPrice: number; // per million tokens
+}
+
+const MODEL_CONFIGS: Record<string, ModelConfig> = {
+  'meta/meta-llama-3.1-70b-instruct': {
+    supportsSystemPrompt: true,
+    inputTokenPrice: 0.64,
+    outputTokenPrice: 0.8,
+  },
+  'meta/meta-llama-3.3-70b-instruct': {
+    supportsSystemPrompt: true,
+    inputTokenPrice: 0.64,
+    outputTokenPrice: 0.8,
+  },
+  'deepseek-ai/deepseek-r1': {
+    supportsSystemPrompt: false,
+    inputTokenPrice: 3.75,
+    outputTokenPrice: 10.0,
+  },
+};
+
+const DEFAULT_MODEL = 'meta/meta-llama-3.1-70b-instruct';
 
 export interface GeneratedNode {
   id: string;
@@ -59,16 +90,13 @@ const SYSTEM_PROMPT = `You are a workflow generator for a visual content creatio
 - animation: Apply easing curves to video. Inputs: video (required). Outputs: video
 - videoStitch: Concatenate videos. Inputs: videos (video[], required). Outputs: video
 - videoTrim: Trim video to time range. Inputs: video (required). Outputs: video
-- lumaReframeImage: AI reframe images to different aspect ratios. Inputs: image (required). Outputs: image
-- lumaReframeVideo: AI reframe videos. Inputs: video (required). Outputs: video
-- topazImageUpscale: AI image upscaling. Inputs: image (required). Outputs: image
-- topazVideoUpscale: AI video upscaling. Inputs: video (required). Outputs: video
+- reframe: AI reframe images or videos to different aspect ratios. Set inputType to 'image' or 'video'. Inputs: image or video (required). Outputs: image or video (matching input)
+- upscale: AI upscaling for images or videos. Set inputType to 'image' or 'video'. Inputs: image or video (required). Outputs: image or video (matching input)
 - imageGridSplit: Split image into grid. Inputs: image (required). Outputs: images[]
 - annotation: Add shapes/text to images. Inputs: image (required). Outputs: image
 
 ### Output Nodes
 - output: Final workflow output. Inputs: media (required)
-- preview: Preview with playback. Inputs: media (required)
 - socialPublish: Publish to social platforms. Inputs: video (required)
 
 ## Connection Rules
@@ -185,7 +213,7 @@ export class WorkflowGeneratorService {
   }
 
   async generate(dto: GenerateWorkflowDto): Promise<GeneratedWorkflow> {
-    const { description, contentLevel } = dto;
+    const { description, contentLevel, model = DEFAULT_MODEL } = dto;
 
     if (!this.replicate) {
       throw new Error('Replicate API token not configured');
@@ -193,18 +221,28 @@ export class WorkflowGeneratorService {
 
     const userPrompt = this.buildUserPrompt(description, contentLevel);
 
-    this.logger.log(`Generating workflow from description: ${description.substring(0, 100)}...`);
+    this.logger.log(`Generating workflow with model ${model}: ${description.substring(0, 100)}...`);
 
     try {
-      // Use Llama for generation
-      const output = await this.replicate.run('meta/meta-llama-3.1-70b-instruct', {
-        input: {
-          prompt: userPrompt,
-          system_prompt: SYSTEM_PROMPT,
-          max_tokens: 4096,
-          temperature: 0.3,
-          top_p: 0.9,
-        },
+      const modelConfig = MODEL_CONFIGS[model] ?? MODEL_CONFIGS[DEFAULT_MODEL];
+
+      // Build input based on model capabilities
+      const input: Record<string, unknown> = {
+        max_tokens: 4096,
+        temperature: 0.3,
+        top_p: 0.9,
+      };
+
+      if (modelConfig.supportsSystemPrompt) {
+        input.prompt = userPrompt;
+        input.system_prompt = SYSTEM_PROMPT;
+      } else {
+        // For models without system_prompt, prepend it to the user prompt
+        input.prompt = `${SYSTEM_PROMPT}\n\n---\n\n${userPrompt}`;
+      }
+
+      const output = await this.replicate.run(model as `${string}/${string}`, {
+        input,
       });
 
       // Parse the response

@@ -49,43 +49,45 @@ export class ProcessingProcessor extends WorkerHost {
       let prediction;
 
       switch (nodeType) {
-        case 'lumaReframeImage':
-          prediction = await this.replicateService.reframeImage(executionId, nodeId, {
-            image: nodeData.image,
-            aspectRatio: nodeData.aspectRatio,
-            model: nodeData.model,
-            prompt: nodeData.prompt,
-            gridPosition: nodeData.gridPosition,
-          });
+        case 'reframe':
+          // Unified reframe node - detect input type
+          if (nodeData.inputType === 'video') {
+            prediction = await this.replicateService.reframeVideo(executionId, nodeId, {
+              video: nodeData.video as string,
+              aspectRatio: nodeData.aspectRatio,
+              prompt: nodeData.prompt,
+              gridPosition: nodeData.gridPosition,
+            });
+          } else {
+            prediction = await this.replicateService.reframeImage(executionId, nodeId, {
+              image: nodeData.image as string,
+              aspectRatio: nodeData.aspectRatio,
+              model: nodeData.model,
+              prompt: nodeData.prompt,
+              gridPosition: nodeData.gridPosition,
+            });
+          }
           break;
 
-        case 'lumaReframeVideo':
-          prediction = await this.replicateService.reframeVideo(executionId, nodeId, {
-            video: nodeData.video,
-            aspectRatio: nodeData.aspectRatio,
-            prompt: nodeData.prompt,
-            gridPosition: nodeData.gridPosition,
-          });
-          break;
-
-        case 'topazImageUpscale':
-          prediction = await this.replicateService.upscaleImage(executionId, nodeId, {
-            image: nodeData.image,
-            enhanceModel: nodeData.enhanceModel,
-            upscaleFactor: nodeData.upscaleFactor,
-            outputFormat: nodeData.outputFormat,
-            faceEnhancement: nodeData.faceEnhancement,
-            faceEnhancementStrength: nodeData.faceEnhancementStrength,
-            faceEnhancementCreativity: nodeData.faceEnhancementCreativity,
-          });
-          break;
-
-        case 'topazVideoUpscale':
-          prediction = await this.replicateService.upscaleVideo(executionId, nodeId, {
-            video: nodeData.video,
-            targetResolution: nodeData.targetResolution,
-            targetFps: nodeData.targetFps,
-          });
+        case 'upscale':
+          // Unified upscale node - detect input type
+          if (nodeData.inputType === 'video') {
+            prediction = await this.replicateService.upscaleVideo(executionId, nodeId, {
+              video: nodeData.video as string,
+              targetResolution: nodeData.targetResolution ?? '1080p',
+              targetFps: nodeData.targetFps ?? 30,
+            });
+          } else {
+            prediction = await this.replicateService.upscaleImage(executionId, nodeId, {
+              image: nodeData.image as string,
+              enhanceModel: nodeData.enhanceModel ?? 'Standard V2',
+              upscaleFactor: nodeData.upscaleFactor ?? '2x',
+              outputFormat: nodeData.outputFormat ?? 'png',
+              faceEnhancement: nodeData.faceEnhancement,
+              faceEnhancementStrength: nodeData.faceEnhancementStrength,
+              faceEnhancementCreativity: nodeData.faceEnhancementCreativity,
+            });
+          }
           break;
 
         case 'videoFrameExtract': {
@@ -269,9 +271,9 @@ export class ProcessingProcessor extends WorkerHost {
     job: Job<ProcessingJobData>
   ): Promise<JobResult> {
     const isVideoOperation =
-      job.data.nodeType === 'topazVideoUpscale' ||
-      job.data.nodeType === 'lumaReframeVideo' ||
-      job.data.nodeType === 'lipSync';
+      job.data.nodeType === 'lipSync' ||
+      ((job.data.nodeType === 'reframe' || job.data.nodeType === 'upscale') &&
+        job.data.nodeData.inputType === 'video');
 
     // Video: 30 minutes with 10s intervals, Image: 15 minutes with 5s intervals
     const maxAttempts = isVideoOperation ? 180 : 180;

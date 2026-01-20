@@ -62,8 +62,8 @@ export type LumaImageModel = 'photon-flash-1' | 'photon-1';
 // Node type classifications for cost calculation
 export const IMAGE_NODE_TYPES = ['imageGen', 'image-gen', 'ImageGenNode'] as const;
 export const VIDEO_NODE_TYPES = ['videoGen', 'video-gen', 'VideoGenNode'] as const;
-export const LUMA_NODE_TYPES = ['lumaReframeImage', 'lumaReframeVideo'] as const;
-export const TOPAZ_NODE_TYPES = ['topazImageUpscale', 'topazVideoUpscale'] as const;
+export const LUMA_NODE_TYPES = ['reframe'] as const;
+export const TOPAZ_NODE_TYPES = ['upscale'] as const;
 
 // Default video duration (seconds)
 export const DEFAULT_VIDEO_DURATION = 8;

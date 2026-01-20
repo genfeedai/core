@@ -4,20 +4,36 @@ import type { OutputNodeData } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { CheckCircle, Download } from 'lucide-react';
 import Image from 'next/image';
-import { memo } from 'react';
+import { memo, useCallback } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useWorkflowStore } from '@/store/workflowStore';
 
 function OutputNodeComponent(props: NodeProps) {
-  const { data } = props;
+  const { id, data } = props;
   const nodeData = data as OutputNodeData;
+  const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
+
+  const getFileExtension = () => {
+    if (nodeData.inputType === 'video') return 'mp4';
+    if (nodeData.inputType === 'image') return 'png';
+    return 'txt';
+  };
+
+  const handleFilenameChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      updateNodeData<OutputNodeData>(id, { outputName: e.target.value });
+    },
+    [id, updateNodeData]
+  );
 
   const handleDownload = () => {
     if (!nodeData.inputMedia) return;
 
     const link = document.createElement('a');
     link.href = nodeData.inputMedia;
-    link.download = `${nodeData.outputName || 'output'}.${nodeData.inputType === 'video' ? 'mp4' : 'png'}`;
+    link.download = `${nodeData.outputName || 'output'}.${getFileExtension()}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -32,28 +48,36 @@ function OutputNodeComponent(props: NodeProps) {
             {nodeData.inputType === 'video' ? (
               <video
                 src={nodeData.inputMedia}
-                className="h-32 w-full rounded-md object-cover"
-                controls
+                className="h-20 w-full rounded-md object-cover cursor-pointer"
+                autoPlay
+                muted
+                loop
+                playsInline
               />
             ) : nodeData.inputType === 'image' ? (
               <Image
                 src={nodeData.inputMedia}
                 alt="Output"
                 width={200}
-                height={128}
-                className="h-32 w-full rounded-md object-cover"
+                height={80}
+                className="h-20 w-full rounded-md object-cover cursor-pointer"
                 unoptimized
               />
             ) : (
-              <div className="max-h-32 overflow-y-auto rounded-md border border-border bg-background p-2 text-sm">
+              <div className="max-h-20 overflow-y-auto rounded-md border border-border bg-background p-2 text-sm">
                 {String(nodeData.inputMedia)}
               </div>
             )}
 
-            {/* Success indicator */}
-            <div className="flex items-center gap-2 text-chart-2">
-              <CheckCircle className="h-4 w-4" />
-              <span className="text-sm">Output Ready</span>
+            {/* Editable filename */}
+            <div className="flex items-center gap-1">
+              <Input
+                value={nodeData.outputName || 'output'}
+                onChange={handleFilenameChange}
+                className="h-8 flex-1 text-sm"
+                placeholder="filename"
+              />
+              <span className="text-xs text-muted-foreground">.{getFileExtension()}</span>
             </div>
 
             {/* Download button */}
@@ -63,9 +87,9 @@ function OutputNodeComponent(props: NodeProps) {
             </Button>
           </>
         ) : (
-          <div className="flex h-32 flex-col items-center justify-center text-muted-foreground">
-            <CheckCircle className="mb-2 h-8 w-8 opacity-30" />
-            <span className="text-sm">Waiting for input...</span>
+          <div className="flex h-20 flex-col items-center justify-center text-muted-foreground">
+            <CheckCircle className="mb-2 h-6 w-6 opacity-30" />
+            <span className="text-xs">Waiting for input...</span>
           </div>
         )}
       </div>

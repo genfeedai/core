@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { logger } from '@/lib/logger';
 import { useWorkflowStore } from '@/store/workflowStore';
 
-const AUTO_SAVE_DELAY = 5000; // 5 seconds
+const AUTO_SAVE_DELAY = 2500; // 2.5 seconds
 
 interface UseAutoSaveReturn {
   isSaving: boolean;
@@ -12,7 +12,7 @@ interface UseAutoSaveReturn {
 }
 
 /**
- * Auto-save workflow after 5 seconds of inactivity
+ * Auto-save workflow after 2.5 seconds of inactivity
  *
  * @param enabled - Whether auto-save is enabled
  * @returns Current save state
@@ -38,7 +38,7 @@ export function useAutoSave(enabled = true): UseAutoSaveReturn {
       clearTimeout(timeoutRef.current);
     }
 
-    // Schedule save after 5s of inactivity
+    // Schedule save after 2.5s of inactivity
     timeoutRef.current = setTimeout(async () => {
       abortControllerRef.current = new AbortController();
 

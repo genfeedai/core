@@ -1,5 +1,6 @@
 export * from './ai';
 export { BaseNode } from './BaseNode';
+export * from './composition';
 export * from './input';
 export * from './output';
 export * from './processing';
@@ -15,8 +16,9 @@ import {
   VideoGenNode,
   VoiceChangeNode,
 } from './ai';
+import { WorkflowInputNode, WorkflowOutputNode, WorkflowRefNode } from './composition';
 import { AudioInputNode, ImageInputNode, PromptNode, TemplateNode, VideoInputNode } from './input';
-import { OutputNode, PreviewNode } from './output';
+import { OutputNode } from './output';
 import {
   AnimationNode,
   AnnotationNode,
@@ -31,11 +33,13 @@ import {
 } from './processing';
 
 export const nodeTypes: NodeTypes = {
+  // Input nodes
   audioInput: AudioInputNode,
   imageInput: ImageInputNode,
   videoInput: VideoInputNode,
   prompt: PromptNode,
   template: TemplateNode,
+  // AI nodes
   imageGen: ImageGenNode,
   videoGen: VideoGenNode,
   llm: LLMNode,
@@ -43,6 +47,7 @@ export const nodeTypes: NodeTypes = {
   voiceChange: VoiceChangeNode,
   textToSpeech: TextToSpeechNode,
   transcribe: TranscribeNode,
+  // Processing nodes
   resize: ResizeNode,
   animation: AnimationNode,
   annotation: AnnotationNode,
@@ -53,6 +58,10 @@ export const nodeTypes: NodeTypes = {
   reframe: ReframeNode,
   upscale: UpscaleNode,
   subtitle: SubtitleNode,
+  // Output nodes
   output: OutputNode,
-  preview: PreviewNode,
+  // Composition nodes (workflow-as-node)
+  workflowInput: WorkflowInputNode,
+  workflowOutput: WorkflowOutputNode,
+  workflowRef: WorkflowRefNode,
 };

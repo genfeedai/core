@@ -1,4 +1,4 @@
-import type { WorkflowEdge, WorkflowNode } from '@genfeedai/types';
+import type { WorkflowEdge, WorkflowInterface, WorkflowNode } from '@genfeedai/types';
 import type { NodeGroup } from '@/types/groups';
 import { apiClient } from './client';
 
@@ -69,4 +69,39 @@ export const workflowsApi = {
    */
   duplicate: (id: string, signal?: AbortSignal): Promise<WorkflowData> =>
     apiClient.post<WorkflowData>(`/workflows/${id}/duplicate`, undefined, { signal }),
+
+  // Composition endpoints
+
+  /**
+   * Get the interface of a workflow (inputs/outputs defined by boundary nodes)
+   */
+  getInterface: (id: string, signal?: AbortSignal): Promise<WorkflowInterface> =>
+    apiClient.get<WorkflowInterface>(`/workflows/${id}/interface`, { signal }),
+
+  /**
+   * Get workflows that can be referenced as subworkflows (have defined interface)
+   */
+  getReferencable: (
+    excludeWorkflowId?: string,
+    signal?: AbortSignal
+  ): Promise<Array<WorkflowData & { interface: WorkflowInterface }>> =>
+    apiClient.get<Array<WorkflowData & { interface: WorkflowInterface }>>(
+      `/workflows/referencable${excludeWorkflowId ? `?exclude=${excludeWorkflowId}` : ''}`,
+      { signal }
+    ),
+
+  /**
+   * Validate a workflow reference (checks for circular references)
+   * Returns the child workflow's interface if valid
+   */
+  validateReference: (
+    parentWorkflowId: string,
+    childWorkflowId: string,
+    signal?: AbortSignal
+  ): Promise<WorkflowInterface> =>
+    apiClient.post<WorkflowInterface>(
+      `/workflows/${parentWorkflowId}/validate-reference`,
+      { childWorkflowId },
+      { signal }
+    ),
 };

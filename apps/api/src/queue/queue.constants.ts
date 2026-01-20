@@ -101,14 +101,14 @@ export const NODE_TYPE_TO_QUEUE: Record<string, QueueName> = {
   imageGen: QUEUE_NAMES.IMAGE_GENERATION,
   videoGen: QUEUE_NAMES.VIDEO_GENERATION,
   llm: QUEUE_NAMES.LLM_GENERATION,
-  lumaReframeImage: QUEUE_NAMES.PROCESSING,
-  lumaReframeVideo: QUEUE_NAMES.PROCESSING,
-  topazImageUpscale: QUEUE_NAMES.PROCESSING,
-  topazVideoUpscale: QUEUE_NAMES.PROCESSING,
+  reframe: QUEUE_NAMES.PROCESSING,
+  upscale: QUEUE_NAMES.PROCESSING,
   videoFrameExtract: QUEUE_NAMES.PROCESSING,
   lipSync: QUEUE_NAMES.PROCESSING,
   voiceChange: QUEUE_NAMES.PROCESSING,
   textToSpeech: QUEUE_NAMES.PROCESSING,
+  // Composition: workflowRef triggers nested workflow execution via orchestrator
+  workflowRef: QUEUE_NAMES.WORKFLOW_ORCHESTRATOR,
 };
 
 /**

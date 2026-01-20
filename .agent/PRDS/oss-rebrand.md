@@ -10,7 +10,7 @@
 ## Overview
 
 ### Problem Statement
-The project is currently named "content-workflow" with `@content-workflow/*` package scope. To open source this project and build the Genfeed brand, we need to rebrand to `genfeedai/genfeed` with `@genfeedai/*` package scope. This aligns with the Vercel/Next.js model where the OSS project builds brand awareness for the commercial SaaS offering.
+The project is currently named "content-workflow" with `@content-workflow/*` package scope. To open source this project and build the Genfeed brand, we need to rebrand to `genfeedai/core` with `@genfeedai/*` package scope. This aligns with the Vercel/Next.js model where the OSS project builds brand awareness for the commercial SaaS offering.
 
 ### Goals
 - Rebrand monorepo from `content-workflow` to `genfeed`

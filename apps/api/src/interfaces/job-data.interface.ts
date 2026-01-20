@@ -208,6 +208,25 @@ export interface VideoStitchJobData extends NodeJobData {
 }
 
 /**
+ * Workflow reference (subworkflow) job data
+ */
+export interface WorkflowRefJobData extends NodeJobData {
+  nodeType: 'workflowRef';
+  nodeData: {
+    referencedWorkflowId: string;
+    inputMappings: Record<string, string | null>; // Maps child input names to values from parent
+    cachedInterface: {
+      inputs: Array<{ nodeId: string; name: string; type: string; required: boolean }>;
+      outputs: Array<{ nodeId: string; name: string; type: string }>;
+    };
+  };
+  // Nested execution tracking
+  parentExecutionId: string;
+  parentNodeId: string;
+  depth: number;
+}
+
+/**
  * Union type for all processing job data
  */
 export type ProcessingJobData =
@@ -218,7 +237,8 @@ export type ProcessingJobData =
   | VoiceChangeJobData
   | TextToSpeechJobData
   | SubtitleJobData
-  | VideoStitchJobData;
+  | VideoStitchJobData
+  | WorkflowRefJobData;
 
 /**
  * Job result interface

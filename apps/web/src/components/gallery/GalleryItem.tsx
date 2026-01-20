@@ -28,7 +28,7 @@ export const GalleryItem = memo(function GalleryItem({ item, onSelect }: Gallery
   return (
     <div
       onClick={() => onSelect(item)}
-      className="group relative aspect-square rounded-lg overflow-hidden border border-[var(--border)] bg-[var(--card)] cursor-pointer hover:border-[var(--primary)] transition"
+      className="group relative aspect-square rounded-lg overflow-hidden border border-[var(--border)] bg-[var(--card)] cursor-pointer hover:border-white transition-all duration-200"
     >
       {/* Thumbnail */}
       {item.type === 'image' && (

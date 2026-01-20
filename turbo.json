@@ -1,0 +1,24 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "stream",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "build/**"],
+      "outputLogs": "full"
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "outputLogs": "full"
+    },
+    "lint": {
+      "dependsOn": ["^build"],
+      "outputLogs": "full"
+    },
+    "test": {
+      "dependsOn": ["build"],
+      "outputLogs": "full"
+    }
+  }
+}

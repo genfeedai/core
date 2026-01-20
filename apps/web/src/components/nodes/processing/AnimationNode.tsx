@@ -2,9 +2,10 @@
 
 import type { AnimationNodeData, EasingPreset } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { RefreshCw, Wand2 } from 'lucide-react';
+import { AlertCircle, RefreshCw, Wand2 } from 'lucide-react';
 import { memo, useCallback } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
+import { useRequiredInputs } from '@/hooks/useRequiredInputs';
 import { EASING_PRESETS } from '@/lib/easing/presets';
 import { useExecutionStore } from '@/store/executionStore';
 import { useWorkflowStore } from '@/store/workflowStore';
@@ -26,10 +27,11 @@ const PRESET_OPTIONS: { value: EasingPreset; label: string }[] = [
 ];
 
 function AnimationNodeComponent(props: NodeProps) {
-  const { id, data } = props;
+  const { id, type, data } = props;
   const nodeData = data as AnimationNodeData;
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const executeNode = useExecutionStore((state) => state.executeNode);
+  const { hasRequiredInputs } = useRequiredInputs(id, type as 'animation');
 
   const handleCurveTypeChange = useCallback(
     (type: 'preset' | 'custom') => {
@@ -174,12 +176,21 @@ function AnimationNodeComponent(props: NodeProps) {
         {!nodeData.outputVideo && nodeData.status !== 'processing' && (
           <button
             onClick={handleProcess}
-            className="w-full py-2 rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2"
+            disabled={!hasRequiredInputs}
+            className="w-full py-2 rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ backgroundColor: 'var(--node-color)', color: 'var(--background)' }}
           >
             <Wand2 className="w-4 h-4" />
             Apply Animation
           </button>
+        )}
+
+        {/* Help text for required inputs */}
+        {!hasRequiredInputs && nodeData.status !== 'processing' && (
+          <div className="text-xs text-[var(--muted-foreground)] flex items-center gap-1">
+            <AlertCircle className="w-3 h-3" />
+            Connect a video to animate
+          </div>
         )}
       </div>
     </BaseNode>

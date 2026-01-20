@@ -2,21 +2,25 @@
 
 import { getNodesByCategory, type NodeCategory, type NodeType } from '@genfeedai/types';
 import {
+  ArrowLeftFromLine,
+  ArrowRightToLine,
   Brain,
   CheckCircle,
   ChevronDown,
   ChevronRight,
   Eye,
   FileText,
+  GitBranch,
   Image,
   Layers,
   MessageSquare,
+  PanelLeftClose,
+  Search,
   Sparkles,
   Video,
   Wand2,
-  X,
 } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useUIStore } from '@/store/uiStore';
 
 // Icon mapping
@@ -33,6 +37,10 @@ const ICONS: Record<string, typeof Image> = {
   CheckCircle,
   Eye,
   Download: CheckCircle,
+  // Composition icons
+  ArrowRightToLine,
+  ArrowLeftFromLine,
+  GitBranch,
 };
 
 const CATEGORY_LABELS: Record<NodeCategory, string> = {
@@ -40,6 +48,7 @@ const CATEGORY_LABELS: Record<NodeCategory, string> = {
   ai: 'AI Generation',
   processing: 'Processing',
   output: 'Output',
+  composition: 'Composition',
 };
 
 const CATEGORY_COLORS: Record<NodeCategory, { icon: string; hover: string; cssVar: string }> = {
@@ -62,6 +71,11 @@ const CATEGORY_COLORS: Record<NodeCategory, { icon: string; hover: string; cssVa
     icon: 'bg-[var(--category-output)]/20 text-[var(--category-output)]',
     hover: 'hover:border-[var(--category-output)]',
     cssVar: 'var(--category-output)',
+  },
+  composition: {
+    icon: 'bg-[var(--category-composition)]/20 text-[var(--category-composition)]',
+    hover: 'hover:border-[var(--category-composition)]',
+    cssVar: 'var(--category-composition)',
   },
 };
 
@@ -153,9 +167,39 @@ function CategorySection({ category, isExpanded, onToggle }: CategorySectionProp
 
 export function NodePalette() {
   const { togglePalette } = useUIStore();
+  const [searchQuery, setSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<NodeCategory>>(
-    new Set(['input', 'ai'])
+    new Set(['input'])
   );
+
+  const nodesByCategory = useMemo(() => getNodesByCategory(), []);
+
+  // Filter nodes across all categories when searching
+  const filteredNodes = useMemo(() => {
+    if (!searchQuery.trim()) return null;
+
+    const query = searchQuery.toLowerCase();
+    const results: Array<{
+      type: NodeType;
+      label: string;
+      description: string;
+      icon: string;
+      category: NodeCategory;
+    }> = [];
+
+    for (const category of Object.keys(nodesByCategory) as NodeCategory[]) {
+      for (const node of nodesByCategory[category]) {
+        if (
+          node.label.toLowerCase().includes(query) ||
+          node.description.toLowerCase().includes(query)
+        ) {
+          results.push(node);
+        }
+      }
+    }
+
+    return results;
+  }, [searchQuery, nodesByCategory]);
 
   const toggleCategory = useCallback((category: NodeCategory) => {
     setExpandedCategories((prev) => {
@@ -169,32 +213,70 @@ export function NodePalette() {
     });
   }, []);
 
-  const categories: NodeCategory[] = ['input', 'ai', 'processing', 'output'];
+  const categories: NodeCategory[] = ['input', 'ai', 'processing', 'output', 'composition'];
 
   return (
-    <div className="w-64 h-full bg-[var(--background)] border-r border-[var(--border)] flex flex-col overflow-hidden">
-      <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
+    <div className="w-64 min-w-64 h-full bg-[var(--background)] border-r border-[var(--border)] flex flex-col overflow-hidden">
+      <div className="px-4 py-3 border-b border-[var(--border)] flex items-start justify-between gap-2">
         <div>
           <h2 className="font-semibold text-sm text-[var(--foreground)]">Nodes</h2>
-          <p className="text-xs text-[var(--muted-foreground)] mt-1">Drag nodes onto the canvas</p>
+          <p className="text-xs text-[var(--muted-foreground)] mt-1">Drag to canvas</p>
         </div>
         <button
           onClick={togglePalette}
-          className="p-1 hover:bg-[var(--secondary)] rounded transition"
+          className="p-1.5 hover:bg-[var(--secondary)] rounded-md transition-colors group"
+          title="Close sidebar (M)"
         >
-          <X className="w-4 h-4" />
+          <PanelLeftClose className="w-4 h-4 text-[var(--muted-foreground)] group-hover:text-[var(--foreground)]" />
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
-        {categories.map((category) => (
-          <CategorySection
-            key={category}
-            category={category}
-            isExpanded={expandedCategories.has(category)}
-            onToggle={() => toggleCategory(category)}
+      {/* Search bar */}
+      <div className="px-4 py-3 border-b border-[var(--border)]">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
+          <input
+            type="text"
+            placeholder="Search nodes..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 text-sm bg-[var(--secondary)] border border-[var(--border)] rounded-md placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--ring)]"
           />
-        ))}
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        {filteredNodes ? (
+          // Search results
+          <div className="px-4 py-3 space-y-2">
+            {filteredNodes.length === 0 ? (
+              <p className="text-sm text-[var(--muted-foreground)] text-center py-4">
+                No nodes found
+              </p>
+            ) : (
+              filteredNodes.map((node) => (
+                <NodeCard
+                  key={node.type}
+                  type={node.type}
+                  label={node.label}
+                  description={node.description}
+                  icon={node.icon}
+                  category={node.category}
+                />
+              ))
+            )}
+          </div>
+        ) : (
+          // Category view
+          categories.map((category) => (
+            <CategorySection
+              key={category}
+              category={category}
+              isExpanded={expandedCategories.has(category)}
+              onToggle={() => toggleCategory(category)}
+            />
+          ))
+        )}
       </div>
     </div>
   );

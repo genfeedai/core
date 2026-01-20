@@ -16,6 +16,15 @@ export class ExecutionsController {
     private readonly queueManager: QueueManagerService
   ) {}
 
+  /**
+   * Get aggregated execution statistics
+   * Static route must come before parameterized routes
+   */
+  @Get('executions/stats')
+  getStats() {
+    return this.executionsService.getStats();
+  }
+
   @Post('workflows/:workflowId/execute')
   async createExecution(@Param('workflowId') workflowId: string) {
     // Create execution record

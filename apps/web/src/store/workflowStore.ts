@@ -7,6 +7,7 @@ import type {
   WorkflowFile,
   WorkflowNode,
   WorkflowNodeData,
+  WorkflowRefNodeData,
 } from '@genfeedai/types';
 import { CONNECTION_RULES, NODE_DEFINITIONS } from '@genfeedai/types';
 import type { Connection, EdgeChange, NodeChange, XYPosition } from '@xyflow/react';
@@ -61,6 +62,9 @@ interface WorkflowStore {
   isLoading: boolean;
   groups: NodeGroup[];
   selectedNodeIds: string[];
+  // Comment navigation state
+  viewedCommentIds: Set<string>;
+  navigationTargetId: string | null;
 
   // Node operations
   addNode: (type: NodeType, position: XYPosition) => string;
@@ -121,6 +125,7 @@ interface WorkflowStore {
   // Helpers
   getNodeById: (id: string) => WorkflowNode | undefined;
   getConnectedInputs: (nodeId: string) => Map<string, string | string[]>;
+  getConnectedNodeIds: (nodeIds: string[]) => string[];
   validateWorkflow: () => ValidationResult;
   isValidConnection: (connection: Connection) => boolean;
   findCompatibleHandle: (
@@ -129,6 +134,12 @@ interface WorkflowStore {
     targetNodeId: string
   ) => string | null;
   setDirty: (dirty: boolean) => void;
+
+  // Comment navigation
+  getNodesWithComments: () => WorkflowNode[];
+  markCommentViewed: (nodeId: string) => void;
+  setNavigationTarget: (nodeId: string | null) => void;
+  getUnviewedCommentCount: () => number;
 }
 
 // Helper to get handle type from node type and handle id
@@ -157,6 +168,8 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
   isLoading: false,
   groups: [],
   selectedNodeIds: [],
+  viewedCommentIds: new Set<string>(),
+  navigationTargetId: null,
 
   addNode: (type, position) => {
     const nodeDef = NODE_DEFINITIONS[type];
@@ -544,6 +557,40 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
     return inputs;
   },
 
+  getConnectedNodeIds: (nodeIds) => {
+    const { edges } = get();
+    const connected = new Set<string>(nodeIds);
+    const visited = new Set<string>();
+
+    // BFS to find all connected nodes in both directions
+    const queue = [...nodeIds];
+    while (queue.length > 0) {
+      const currentId = queue.shift()!;
+      if (visited.has(currentId)) continue;
+      visited.add(currentId);
+
+      // Find upstream nodes (sources of edges where current is target)
+      const upstreamEdges = edges.filter((e) => e.target === currentId);
+      for (const edge of upstreamEdges) {
+        if (!connected.has(edge.source)) {
+          connected.add(edge.source);
+          queue.push(edge.source);
+        }
+      }
+
+      // Find downstream nodes (targets of edges where current is source)
+      const downstreamEdges = edges.filter((e) => e.source === currentId);
+      for (const edge of downstreamEdges) {
+        if (!connected.has(edge.target)) {
+          connected.add(edge.target);
+          queue.push(edge.target);
+        }
+      }
+    }
+
+    return Array.from(connected);
+  },
+
   validateWorkflow: () => {
     const { nodes, edges } = get();
     const errors: { nodeId: string; message: string; severity: 'error' | 'warning' }[] = [];
@@ -657,6 +704,26 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
           severity: 'error',
         });
         break;
+      }
+    }
+
+    // Check workflowRef nodes have a referenced workflow
+    for (const node of nodes) {
+      if (node.type === 'workflowRef') {
+        const refData = node.data as WorkflowRefNodeData;
+        if (!refData.referencedWorkflowId) {
+          errors.push({
+            nodeId: node.id,
+            message: 'Subworkflow node must reference a workflow',
+            severity: 'error',
+          });
+        } else if (!refData.cachedInterface) {
+          warnings.push({
+            nodeId: node.id,
+            message: 'Subworkflow interface not loaded - refresh to update handles',
+            severity: 'warning',
+          });
+        }
       }
     }
 
@@ -835,5 +902,42 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
     });
 
     return workflow._id;
+  },
+
+  // Comment navigation methods
+  getNodesWithComments: () => {
+    const { nodes } = get();
+    return nodes
+      .filter((node) => {
+        const data = node.data as WorkflowNodeData;
+        return data.comment?.trim();
+      })
+      .sort((a, b) => {
+        // Sort by Y position (top to bottom), then X position (left to right)
+        if (Math.abs(a.position.y - b.position.y) < 50) {
+          return a.position.x - b.position.x;
+        }
+        return a.position.y - b.position.y;
+      });
+  },
+
+  markCommentViewed: (nodeId: string) => {
+    set((state) => {
+      const newSet = new Set(state.viewedCommentIds);
+      newSet.add(nodeId);
+      return { viewedCommentIds: newSet };
+    });
+  },
+
+  setNavigationTarget: (nodeId: string | null) => {
+    set({ navigationTargetId: nodeId });
+  },
+
+  getUnviewedCommentCount: () => {
+    const { nodes, viewedCommentIds } = get();
+    return nodes.filter((node) => {
+      const data = node.data as WorkflowNodeData;
+      return data.comment?.trim() && !viewedCommentIds.has(node.id);
+    }).length;
   },
 }));

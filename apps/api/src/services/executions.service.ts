@@ -42,6 +42,44 @@ export class ExecutionsService {
     return execution;
   }
 
+  /**
+   * Alias for findExecution - used by workflow processor
+   */
+  async getExecution(id: string): Promise<ExecutionDocument> {
+    return this.findExecution(id);
+  }
+
+  /**
+   * Create a child execution for workflow composition
+   */
+  async createChildExecution(
+    workflowId: string,
+    parentExecutionId: string,
+    parentNodeId: string,
+    depth: number
+  ): Promise<ExecutionDocument> {
+    const execution = new this.executionModel({
+      workflowId: new Types.ObjectId(workflowId),
+      status: 'pending',
+      parentExecutionId: new Types.ObjectId(parentExecutionId),
+      parentNodeId,
+      depth,
+    });
+    return execution.save();
+  }
+
+  /**
+   * Add a child execution ID to parent's childExecutionIds array
+   */
+  async addChildExecution(
+    parentExecutionId: string,
+    childExecutionId: Types.ObjectId
+  ): Promise<void> {
+    await this.executionModel
+      .updateOne({ _id: parentExecutionId }, { $addToSet: { childExecutionIds: childExecutionId } })
+      .exec();
+  }
+
   async updateExecutionStatus(
     id: string,
     status: string,
@@ -194,6 +232,81 @@ export class ExecutionsService {
         breakdown: job.costBreakdown,
         predictTime: job.predictTime,
       })),
+    };
+  }
+
+  /**
+   * Get aggregated execution statistics
+   */
+  async getStats(): Promise<{
+    totalExecutions: number;
+    failedExecutions: number;
+    failureRate: number;
+    avgRunTimeMs: number;
+    totalCost: number;
+  }> {
+    const pipeline = [
+      { $match: { isDeleted: false } },
+      {
+        $group: {
+          _id: null,
+          totalExecutions: { $sum: 1 },
+          failedExecutions: {
+            $sum: { $cond: [{ $eq: ['$status', 'failed'] }, 1, 0] },
+          },
+          totalRunTimeMs: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [{ $ifNull: ['$startedAt', false] }, { $ifNull: ['$completedAt', false] }],
+                },
+                { $subtract: ['$completedAt', '$startedAt'] },
+                0,
+              ],
+            },
+          },
+          completedCount: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [{ $ifNull: ['$startedAt', false] }, { $ifNull: ['$completedAt', false] }],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          totalCost: { $sum: { $ifNull: ['$costSummary.actual', 0] } },
+        },
+      },
+    ];
+
+    const [result] = await this.executionModel.aggregate(pipeline).exec();
+
+    if (!result) {
+      return {
+        totalExecutions: 0,
+        failedExecutions: 0,
+        failureRate: 0,
+        avgRunTimeMs: 0,
+        totalCost: 0,
+      };
+    }
+
+    const failureRate =
+      result.totalExecutions > 0
+        ? Math.round((result.failedExecutions / result.totalExecutions) * 100)
+        : 0;
+
+    const avgRunTimeMs =
+      result.completedCount > 0 ? Math.round(result.totalRunTimeMs / result.completedCount) : 0;
+
+    return {
+      totalExecutions: result.totalExecutions,
+      failedExecutions: result.failedExecutions,
+      failureRate,
+      avgRunTimeMs,
+      totalCost: result.totalCost,
     };
   }
 }

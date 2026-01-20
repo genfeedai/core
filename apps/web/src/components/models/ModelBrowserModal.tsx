@@ -3,6 +3,7 @@
 import type { ModelCapability, ProviderModel, ProviderType } from '@genfeedai/types';
 import { Clock, ExternalLink, Search, Sparkles, X } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { logger } from '@/lib/logger';
@@ -241,7 +242,7 @@ function ModelBrowserModalComponent({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop */}
       <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose} />
@@ -370,7 +371,8 @@ function ModelBrowserModalComponent({
           </a>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 

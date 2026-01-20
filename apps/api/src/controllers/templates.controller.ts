@@ -12,8 +12,8 @@ export class TemplatesController {
   }
 
   @Get()
-  findAll(@Query('category') category?: string) {
-    return this.templatesService.findAll(category);
+  findAll(@Query('category') category?: string, @Query('search') search?: string) {
+    return this.templatesService.findAll({ category, search });
   }
 
   @Get(':id')

@@ -289,7 +289,7 @@ function HelpTab() {
             </div>
           </a>
           <a
-            href="https://discord.gg/genfeed"
+            href="https://discord.gg/Qy867n83Z4"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3 rounded-lg border border-border p-3 transition hover:border-primary/50 hover:bg-secondary/30"

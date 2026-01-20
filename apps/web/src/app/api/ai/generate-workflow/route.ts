@@ -61,10 +61,6 @@ const SYSTEM_PROMPT = `You are a workflow generator for a visual node-based cont
   - inputs: { media (image/video/text) }
   - defaultData: { label: "Output", status: "idle", inputMedia: null, inputType: null, outputName: "output" }
 
-- preview: Preview media
-  - inputs: { media (image/video) }
-  - defaultData: { label: "Preview", status: "idle", inputMedia: null, inputType: null, isPlaying: false, volume: 1 }
-
 ## Connection Rules (STRICT)
 - text output → text input ONLY (sourceHandle: "text", targetHandle: "prompt" or "tweet")
 - image output → image input ONLY (sourceHandle: "image", targetHandle: "image" or "images")

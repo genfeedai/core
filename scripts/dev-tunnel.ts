@@ -26,29 +26,78 @@ function updateEnvFile(url: string): void {
   console.log(`Updated ${ENV_FILE}`);
 }
 
+function waitForApi(): Promise<void> {
+  return new Promise((resolve) => {
+    const check = async () => {
+      try {
+        const res = await fetch(`http://localhost:${API_PORT}/api/health`);
+        if (res.ok) {
+          resolve();
+          return;
+        }
+      } catch {
+        // API not ready yet
+      }
+      setTimeout(check, 500);
+    };
+    check();
+  });
+}
+
 async function main(): Promise<void> {
+  const authtoken = process.env.NGROK_AUTHTOKEN;
+  if (!authtoken) {
+    console.error('\n✗ NGROK_AUTHTOKEN not set\n');
+    console.error('Setup:');
+    console.error('  1. Sign up at https://dashboard.ngrok.com/signup');
+    console.error('  2. Get your authtoken at https://dashboard.ngrok.com/get-started/your-authtoken');
+    console.error('  3. Add to your shell: export NGROK_AUTHTOKEN=your_token');
+    console.error('     Or add to .env.local: NGROK_AUTHTOKEN=your_token\n');
+    process.exit(1);
+  }
+
   console.log('Starting ngrok tunnel...');
 
-  const listener = await ngrok.forward({
-    addr: API_PORT,
-    authtoken_from_env: true,
-  });
+  let listener: Awaited<ReturnType<typeof ngrok.forward>>;
+  try {
+    listener = await ngrok.forward({
+      addr: API_PORT,
+      authtoken_from_env: true,
+    });
+  } catch (err) {
+    console.error('\n✗ Failed to start ngrok tunnel\n');
+    console.error((err as Error).message);
+    console.error('\nVerify your NGROK_AUTHTOKEN is valid at https://dashboard.ngrok.com/get-started/your-authtoken\n');
+    process.exit(1);
+  }
 
   const url = listener.url();
-  console.log(`\nNgrok tunnel: ${url}`);
-  console.log(`Webhook URL:  ${url}/api/replicate/webhook\n`);
+  console.log(`\n✓ Ngrok tunnel: ${url}`);
+  console.log(`  Webhook URL:  ${url}/api/replicate/webhook\n`);
 
   updateEnvFile(url!);
 
-  console.log('\nStarting dev server...\n');
+  console.log('Starting API...\n');
 
-  const dev = spawn('bun', ['run', 'dev'], {
+  const api = spawn('bun', ['run', 'dev:api'], {
+    stdio: 'inherit',
+    cwd: process.cwd(),
+  });
+
+  console.log('Waiting for API to be ready...');
+  await waitForApi();
+  console.log('✓ API ready\n');
+
+  console.log('Starting web...\n');
+
+  const web = spawn('bun', ['run', 'dev:web'], {
     stdio: 'inherit',
     cwd: process.cwd(),
   });
 
   process.on('SIGINT', () => {
-    dev.kill();
+    api.kill();
+    web.kill();
     ngrok.disconnect();
     process.exit();
   });

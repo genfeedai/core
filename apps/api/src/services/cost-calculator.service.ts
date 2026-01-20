@@ -73,7 +73,7 @@ export class CostCalculatorService {
 
     // Luma Reframe nodes
     if (this.isLumaNode(type)) {
-      return this.calculateLumaReframeCost(type, data.model, data.duration);
+      return this.calculateLumaReframeCost(type, data.model, data.duration, data.inputType);
     }
 
     // Topaz Upscale nodes
@@ -171,42 +171,46 @@ export class CostCalculatorService {
   }
 
   /**
-   * Calculate Luma Reframe cost
+   * Calculate Luma Reframe cost (unified node)
    */
-  calculateLumaReframeCost(nodeType: string, model?: string, videoDuration?: number): number {
-    if (nodeType === 'lumaReframeImage') {
+  calculateLumaReframeCost(
+    nodeType: string,
+    model?: string,
+    videoDuration?: number,
+    inputType?: string
+  ): number {
+    // For unified 'reframe' node, check inputType
+    if (nodeType === 'reframe') {
+      if (inputType === 'video') {
+        const duration = videoDuration ?? 5;
+        return duration * PRICING['luma-reframe-video'];
+      }
+      // Default to image
       const pricing = PRICING['luma-reframe-image'];
       const modelKey = (model ?? 'photon-flash-1') as keyof typeof pricing;
       return pricing[modelKey] ?? pricing['photon-flash-1'];
-    }
-
-    if (nodeType === 'lumaReframeVideo') {
-      // Default to 5 seconds if duration unknown
-      const duration = videoDuration ?? 5;
-      return duration * PRICING['luma-reframe-video'];
     }
 
     return 0;
   }
 
   /**
-   * Calculate Topaz Upscale cost
+   * Calculate Topaz Upscale cost (unified node)
    */
   calculateTopazCost(nodeType: string, data: Record<string, unknown>): number {
-    if (nodeType === 'topazImageUpscale') {
-      // Estimate output megapixels based on upscale factor
-      // Assume 2MP input as baseline
+    if (nodeType === 'upscale') {
+      const inputType = data.inputType as string;
+      if (inputType === 'video') {
+        const resolution = (data.targetResolution as string) ?? '1080p';
+        const fps = (data.targetFps as number) ?? 30;
+        const duration = (data.duration as number) ?? 10;
+        return this.calculateTopazVideoCost(resolution, fps, duration);
+      }
+      // Default to image
       const baseMP = 2;
       const factor = this.getUpscaleMultiplier(data.upscaleFactor as string);
       const outputMP = baseMP * factor;
       return this.calculateTopazImageCost(outputMP);
-    }
-
-    if (nodeType === 'topazVideoUpscale') {
-      const resolution = (data.targetResolution as string) ?? '1080p';
-      const fps = (data.targetFps as number) ?? 30;
-      const duration = (data.duration as number) ?? 10;
-      return this.calculateTopazVideoCost(resolution, fps, duration);
     }
 
     return 0;

@@ -29,11 +29,13 @@ function PreviewNodeComponent({ data }: PreviewNodeProps) {
 }
 
 const previewNodeTypes = {
+  // Input nodes
   audioInput: PreviewNodeComponent,
   imageInput: PreviewNodeComponent,
   videoInput: PreviewNodeComponent,
   prompt: PreviewNodeComponent,
   template: PreviewNodeComponent,
+  // AI nodes
   imageGen: PreviewNodeComponent,
   videoGen: PreviewNodeComponent,
   llm: PreviewNodeComponent,
@@ -41,6 +43,7 @@ const previewNodeTypes = {
   voiceChange: PreviewNodeComponent,
   textToSpeech: PreviewNodeComponent,
   transcribe: PreviewNodeComponent,
+  // Processing nodes
   resize: PreviewNodeComponent,
   animation: PreviewNodeComponent,
   annotation: PreviewNodeComponent,
@@ -48,13 +51,15 @@ const previewNodeTypes = {
   videoStitch: PreviewNodeComponent,
   videoTrim: PreviewNodeComponent,
   videoFrameExtract: PreviewNodeComponent,
-  lumaReframeImage: PreviewNodeComponent,
-  lumaReframeVideo: PreviewNodeComponent,
-  topazImageUpscale: PreviewNodeComponent,
-  topazVideoUpscale: PreviewNodeComponent,
+  reframe: PreviewNodeComponent,
+  upscale: PreviewNodeComponent,
   subtitle: PreviewNodeComponent,
+  // Output nodes
   output: PreviewNodeComponent,
-  preview: PreviewNodeComponent,
+  // Composition nodes
+  workflowInput: PreviewNodeComponent,
+  workflowOutput: PreviewNodeComponent,
+  workflowRef: PreviewNodeComponent,
 };
 
 interface WorkflowPreviewProps {
@@ -63,14 +68,66 @@ interface WorkflowPreviewProps {
 }
 
 function WorkflowPreviewInner({ nodes, edges }: WorkflowPreviewProps) {
-  const previewNodes = useMemo(
-    () =>
-      nodes.map((node) => ({
+  // Auto-layout nodes by depth (topological order)
+  const previewNodes = useMemo(() => {
+    if (nodes.length === 0) return [];
+
+    // Build adjacency map (target -> sources)
+    const incomingEdges = new Map<string, string[]>();
+    for (const edge of edges) {
+      const sources = incomingEdges.get(edge.target) ?? [];
+      sources.push(edge.source);
+      incomingEdges.set(edge.target, sources);
+    }
+
+    // Calculate depth for each node (0 = no incoming edges)
+    const depths = new Map<string, number>();
+    const getDepth = (nodeId: string, visited = new Set<string>()): number => {
+      if (visited.has(nodeId)) return 0; // Cycle protection
+      if (depths.has(nodeId)) return depths.get(nodeId)!;
+
+      visited.add(nodeId);
+      const sources = incomingEdges.get(nodeId) ?? [];
+      const depth =
+        sources.length === 0 ? 0 : Math.max(...sources.map((s) => getDepth(s, visited))) + 1;
+      depths.set(nodeId, depth);
+      return depth;
+    };
+
+    for (const n of nodes) {
+      getDepth(n.id);
+    }
+
+    // Group nodes by depth
+    const byDepth = new Map<number, typeof nodes>();
+    for (const node of nodes) {
+      const depth = depths.get(node.id) ?? 0;
+      const group = byDepth.get(depth) ?? [];
+      group.push(node);
+      byDepth.set(depth, group);
+    }
+
+    // Layout: horizontal spacing by depth, vertical spacing within depth
+    const NODE_WIDTH = 70;
+    const NODE_HEIGHT = 35;
+    const H_GAP = 20;
+    const V_GAP = 10;
+
+    return nodes.map((node) => {
+      const depth = depths.get(node.id) ?? 0;
+      const group = byDepth.get(depth) ?? [];
+      const indexInGroup = group.indexOf(node);
+
+      return {
         ...node,
+        position: {
+          x: depth * (NODE_WIDTH + H_GAP) + 10,
+          y: indexInGroup * (NODE_HEIGHT + V_GAP) + 10,
+        },
         data: { ...node.data, nodeType: node.type as NodeType },
-      })),
-    [nodes]
-  );
+      };
+    });
+  }, [nodes, edges]);
 
   const previewEdges = useMemo(
     () =>
@@ -95,7 +152,7 @@ function WorkflowPreviewInner({ nodes, edges }: WorkflowPreviewProps) {
       edges={previewEdges}
       nodeTypes={previewNodeTypes}
       fitView
-      fitViewOptions={{ padding: 0.2 }}
+      fitViewOptions={{ padding: 0.3, minZoom: 0.5, maxZoom: 1.5 }}
       nodesDraggable={false}
       nodesConnectable={false}
       nodesFocusable={false}

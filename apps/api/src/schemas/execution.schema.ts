@@ -84,6 +84,19 @@ export class Execution extends Document {
   @Prop()
   resumedFrom?: string; // For recovery - previous execution ID
 
+  // Composition: nested execution tracking
+  @Prop({ type: Types.ObjectId, ref: 'Execution' })
+  parentExecutionId?: Types.ObjectId; // If this is a child execution, reference to parent
+
+  @Prop()
+  parentNodeId?: string; // The workflowRef node ID in parent that triggered this execution
+
+  @Prop({ type: [Types.ObjectId], ref: 'Execution', default: [] })
+  childExecutionIds: Types.ObjectId[]; // Child executions spawned by workflowRef nodes
+
+  @Prop({ default: 0 })
+  depth: number; // Nesting level (0 = root execution)
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -94,3 +107,4 @@ export const ExecutionSchema = SchemaFactory.createForClass(Execution);
 ExecutionSchema.index({ workflowId: 1, isDeleted: 1 });
 ExecutionSchema.index({ status: 1 });
 ExecutionSchema.index({ createdAt: -1 });
+ExecutionSchema.index({ parentExecutionId: 1 }); // For finding child executions

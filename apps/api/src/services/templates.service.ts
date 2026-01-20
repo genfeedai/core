@@ -45,10 +45,13 @@ export class TemplatesService implements OnModuleInit {
     return template.save();
   }
 
-  async findAll(category?: string): Promise<TemplateDocument[]> {
+  async findAll(options?: { category?: string; search?: string }): Promise<TemplateDocument[]> {
     const filter: Record<string, unknown> = { isDeleted: false };
-    if (category && category !== 'all') {
-      filter.category = category;
+    if (options?.category && options.category !== 'all') {
+      filter.category = options.category;
+    }
+    if (options?.search) {
+      filter.$text = { $search: options.search };
     }
     return this.templateModel.find(filter).sort({ name: 1 }).exec();
   }

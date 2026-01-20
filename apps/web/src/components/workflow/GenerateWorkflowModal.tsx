@@ -13,6 +13,40 @@ import { useWorkflowStore } from '@/store/workflowStore';
 
 type ContentLevel = 'empty' | 'minimal' | 'full';
 
+interface GeneratorModel {
+  id: string;
+  name: string;
+  provider: string;
+  description: string;
+  pricing: string; // Display string for cost estimate
+}
+
+const GENERATOR_MODELS: GeneratorModel[] = [
+  {
+    id: 'meta/meta-llama-3.1-70b-instruct',
+    name: 'Llama 3.1 70B',
+    provider: 'Meta',
+    description: 'Fast and capable, good for most workflows',
+    pricing: '~$0.001/generation',
+  },
+  {
+    id: 'meta/meta-llama-3.3-70b-instruct',
+    name: 'Llama 3.3 70B',
+    provider: 'Meta',
+    description: 'Latest Llama model with improved reasoning',
+    pricing: '~$0.001/generation',
+  },
+  {
+    id: 'deepseek-ai/deepseek-r1',
+    name: 'DeepSeek R1',
+    provider: 'DeepSeek',
+    description: 'Strong reasoning for complex workflows',
+    pricing: '~$0.01/generation',
+  },
+];
+
+const DEFAULT_MODEL = GENERATOR_MODELS[0].id;
+
 interface GeneratedWorkflow {
   name: string;
   description: string;
@@ -74,6 +108,7 @@ function GenerateWorkflowModalComponent() {
   const { loadWorkflow } = useWorkflowStore();
 
   const [description, setDescription] = useState('');
+  const [model, setModel] = useState(DEFAULT_MODEL);
   const [contentLevel, setContentLevel] = useState<ContentLevel>('minimal');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,7 +128,7 @@ function GenerateWorkflowModalComponent() {
       const response = await fetch('/api/workflows/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description, contentLevel }),
+        body: JSON.stringify({ description, contentLevel, model }),
       });
 
       if (!response.ok) {
@@ -108,7 +143,7 @@ function GenerateWorkflowModalComponent() {
     } finally {
       setIsGenerating(false);
     }
-  }, [description, contentLevel]);
+  }, [description, contentLevel, model]);
 
   const handleApply = useCallback(() => {
     if (!generatedWorkflow) return;
@@ -166,6 +201,26 @@ function GenerateWorkflowModalComponent() {
             className="min-h-[120px] w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             disabled={isGenerating}
           />
+        </div>
+
+        {/* Model Selection */}
+        <div className="mt-4 space-y-2">
+          <label className="text-sm font-medium text-foreground">Model</label>
+          <select
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            disabled={isGenerating}
+          >
+            {GENERATOR_MODELS.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name} ({m.provider}) - {m.pricing}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">
+            {GENERATOR_MODELS.find((m) => m.id === model)?.description}
+          </p>
         </div>
 
         {/* Example Prompts */}

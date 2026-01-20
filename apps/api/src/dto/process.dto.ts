@@ -17,10 +17,16 @@ export class ProcessDto {
   nodeId: string;
 
   @IsString()
-  @IsIn(['lumaReframeImage', 'lumaReframeVideo', 'topazImageUpscale', 'topazVideoUpscale'])
-  nodeType: 'lumaReframeImage' | 'lumaReframeVideo' | 'topazImageUpscale' | 'topazVideoUpscale';
+  @IsIn(['reframe', 'upscale'])
+  nodeType: 'reframe' | 'upscale';
 
-  // Luma Reframe Image fields
+  // Input type for unified nodes
+  @IsOptional()
+  @IsString()
+  @IsIn(['image', 'video'])
+  inputType?: 'image' | 'video';
+
+  // Reframe fields
   @IsOptional()
   @IsString()
   image?: string;
@@ -44,12 +50,12 @@ export class ProcessDto {
   @Type(() => GridPositionDto)
   gridPosition?: GridPositionDto;
 
-  // Luma Reframe Video fields
+  // Video input (for reframe/upscale video mode)
   @IsOptional()
   @IsString()
   video?: string;
 
-  // Topaz Image Upscale fields
+  // Upscale image-specific fields
   @IsOptional()
   @IsString()
   @IsIn(['Standard V2', 'Low Resolution V2', 'CGI', 'High Fidelity V2', 'Text Refine'])
@@ -77,7 +83,7 @@ export class ProcessDto {
   @IsNumber()
   faceEnhancementCreativity?: number;
 
-  // Topaz Video Upscale fields
+  // Upscale video-specific fields
   @IsOptional()
   @IsString()
   @IsIn(['720p', '1080p', '4k'])

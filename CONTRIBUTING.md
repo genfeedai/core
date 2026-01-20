@@ -5,7 +5,7 @@ Thanks for your interest in contributing to Genfeed!
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/genfeed.git`
+2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/core.git`
 3. Install dependencies: `bun install`
 4. Create a branch: `git checkout -b feature/your-feature`
 
@@ -79,4 +79,4 @@ Open an issue describing:
 
 ## Questions?
 
-Open a discussion or reach out on [Discord](https://discord.gg/genfeed).
+Open a discussion or reach out on [Discord](https://discord.gg/Qy867n83Z4).

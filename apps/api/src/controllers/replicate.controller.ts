@@ -78,43 +78,45 @@ export class ReplicateController {
     let prediction: { id: string; status: string };
 
     switch (dto.nodeType) {
-      case 'lumaReframeImage':
-        prediction = await this.replicateService.reframeImage(dto.executionId, dto.nodeId, {
-          image: dto.image!,
-          aspectRatio: dto.aspectRatio!,
-          model: dto.model,
-          prompt: dto.prompt,
-          gridPosition: dto.gridPosition,
-        });
+      case 'reframe':
+        // Unified reframe node - detect input type
+        if (dto.inputType === 'video') {
+          prediction = await this.replicateService.reframeVideo(dto.executionId, dto.nodeId, {
+            video: dto.video!,
+            aspectRatio: dto.aspectRatio!,
+            prompt: dto.prompt,
+            gridPosition: dto.gridPosition,
+          });
+        } else {
+          prediction = await this.replicateService.reframeImage(dto.executionId, dto.nodeId, {
+            image: dto.image!,
+            aspectRatio: dto.aspectRatio!,
+            model: dto.model,
+            prompt: dto.prompt,
+            gridPosition: dto.gridPosition,
+          });
+        }
         break;
 
-      case 'lumaReframeVideo':
-        prediction = await this.replicateService.reframeVideo(dto.executionId, dto.nodeId, {
-          video: dto.video!,
-          aspectRatio: dto.aspectRatio!,
-          prompt: dto.prompt,
-          gridPosition: dto.gridPosition,
-        });
-        break;
-
-      case 'topazImageUpscale':
-        prediction = await this.replicateService.upscaleImage(dto.executionId, dto.nodeId, {
-          image: dto.image!,
-          enhanceModel: dto.enhanceModel!,
-          upscaleFactor: dto.upscaleFactor!,
-          outputFormat: dto.outputFormat!,
-          faceEnhancement: dto.faceEnhancement,
-          faceEnhancementStrength: dto.faceEnhancementStrength,
-          faceEnhancementCreativity: dto.faceEnhancementCreativity,
-        });
-        break;
-
-      case 'topazVideoUpscale':
-        prediction = await this.replicateService.upscaleVideo(dto.executionId, dto.nodeId, {
-          video: dto.video!,
-          targetResolution: dto.targetResolution!,
-          targetFps: dto.targetFps!,
-        });
+      case 'upscale':
+        // Unified upscale node - detect input type
+        if (dto.inputType === 'video') {
+          prediction = await this.replicateService.upscaleVideo(dto.executionId, dto.nodeId, {
+            video: dto.video!,
+            targetResolution: dto.targetResolution ?? '1080p',
+            targetFps: dto.targetFps ?? 30,
+          });
+        } else {
+          prediction = await this.replicateService.upscaleImage(dto.executionId, dto.nodeId, {
+            image: dto.image!,
+            enhanceModel: dto.enhanceModel ?? 'Standard V2',
+            upscaleFactor: dto.upscaleFactor ?? '2x',
+            outputFormat: dto.outputFormat ?? 'jpg',
+            faceEnhancement: dto.faceEnhancement,
+            faceEnhancementStrength: dto.faceEnhancementStrength,
+            faceEnhancementCreativity: dto.faceEnhancementCreativity,
+          });
+        }
         break;
     }
 

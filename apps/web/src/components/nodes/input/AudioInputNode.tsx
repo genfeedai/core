@@ -2,9 +2,10 @@
 
 import type { AudioInputNodeData } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { Upload, X } from 'lucide-react';
-import { memo, useCallback, useRef } from 'react';
+import { Link, Music, Upload, X } from 'lucide-react';
+import { memo, useCallback, useRef, useState } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
+import { Button } from '@/components/ui/button';
 import { useWorkflowStore } from '@/store/workflowStore';
 
 function AudioInputNodeComponent(props: NodeProps) {
@@ -12,6 +13,8 @@ function AudioInputNodeComponent(props: NodeProps) {
   const nodeData = data as AudioInputNodeData;
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [urlValue, setUrlValue] = useState(nodeData.url || '');
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,17 +44,51 @@ function AudioInputNodeComponent(props: NodeProps) {
       audio: null,
       filename: null,
       duration: null,
+      url: undefined,
     });
+    setUrlValue('');
   }, [id, updateNodeData]);
 
-  const handleUrlChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUrlSubmit = useCallback(() => {
+    if (!urlValue.trim()) return;
+
+    // Create an audio element to validate and get duration
+    const audio = document.createElement('audio');
+    audio.crossOrigin = 'anonymous';
+    audio.onloadedmetadata = () => {
       updateNodeData<AudioInputNodeData>(id, {
-        url: e.target.value,
+        audio: urlValue,
+        filename: urlValue.split('/').pop() || 'url-audio',
+        duration: audio.duration,
         source: 'url',
+        url: urlValue,
       });
+      setShowUrlInput(false);
+    };
+    audio.onerror = () => {
+      // Still set the URL even if we can't load it (might be CORS)
+      updateNodeData<AudioInputNodeData>(id, {
+        audio: urlValue,
+        filename: urlValue.split('/').pop() || 'url-audio',
+        duration: null,
+        source: 'url',
+        url: urlValue,
+      });
+      setShowUrlInput(false);
+    };
+    audio.src = urlValue;
+  }, [id, updateNodeData, urlValue]);
+
+  const handleUrlKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        handleUrlSubmit();
+      } else if (e.key === 'Escape') {
+        setShowUrlInput(false);
+        setUrlValue(nodeData.url || '');
+      }
     },
-    [id, updateNodeData]
+    [handleUrlSubmit, nodeData.url]
   );
 
   const formatDuration = (seconds: number | null) => {
@@ -61,50 +98,92 @@ function AudioInputNodeComponent(props: NodeProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Header actions - Upload and Link buttons
+  const headerActions = (
+    <div className="flex items-center gap-1">
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={() => fileInputRef.current?.click()}
+        title="Upload audio"
+        className="h-6 w-6"
+      >
+        <Upload className="h-3.5 w-3.5" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={() => setShowUrlInput(!showUrlInput)}
+        title="Paste URL"
+        className="h-6 w-6"
+      >
+        <Link className="h-3.5 w-3.5" />
+      </Button>
+    </div>
+  );
+
   return (
-    <BaseNode {...props}>
-      <div className="space-y-2">
-        {nodeData.audio ? (
-          <div className="relative">
-            <audio src={nodeData.audio} controls className="w-full h-10" />
-            <button
-              onClick={handleRemoveAudio}
-              className="absolute -top-1 -right-1 p-1 bg-[var(--destructive)] rounded-full hover:opacity-80 transition"
-            >
-              <X className="w-3 h-3" />
-            </button>
-            <div className="mt-1 text-xs text-[var(--muted-foreground)] truncate">
-              {nodeData.filename}
-              {nodeData.duration && ` • ${formatDuration(nodeData.duration)}`}
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full h-20 border-2 border-dashed border-[var(--border)] rounded flex flex-col items-center justify-center gap-1 hover:border-[var(--primary)] transition"
+    <BaseNode {...props} headerActions={headerActions}>
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="audio/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
+      {/* URL Input (shown when link button clicked) */}
+      {showUrlInput && (
+        <div className="mb-3 flex gap-2">
+          <input
+            type="url"
+            value={urlValue}
+            onChange={(e) => setUrlValue(e.target.value)}
+            onKeyDown={handleUrlKeyDown}
+            placeholder="https://..."
+            className="flex-1 h-7 px-2 text-xs rounded-md border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleUrlSubmit}
+            disabled={!urlValue.trim()}
+            className="h-7 px-2 text-xs"
           >
-            <Upload className="w-5 h-5 text-[var(--muted-foreground)]" />
-            <span className="text-xs text-[var(--muted-foreground)]">Upload Audio</span>
-          </button>
-        )}
+            Load
+          </Button>
+        </div>
+      )}
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="audio/*"
-          onChange={handleFileSelect}
-          className="hidden"
-        />
-
-        <div className="text-xs text-[var(--muted-foreground)]">Or paste URL:</div>
-        <input
-          type="url"
-          value={nodeData.url || ''}
-          onChange={handleUrlChange}
-          placeholder="https://..."
-          className="w-full px-2 py-1.5 text-xs bg-[var(--background)] border border-[var(--border)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
-        />
-      </div>
+      {/* Audio Preview or Empty State */}
+      {nodeData.audio ? (
+        <div className="space-y-2">
+          <div className="relative">
+            <audio src={nodeData.audio} controls className="w-full h-8" />
+            <Button
+              variant="secondary"
+              size="icon-sm"
+              onClick={handleRemoveAudio}
+              className="absolute -right-1 -top-1 h-5 w-5"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+          <div className="text-[10px] text-muted-foreground truncate">
+            {nodeData.filename}
+            {nodeData.duration && ` • ${formatDuration(nodeData.duration)}`}
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="flex h-16 w-full flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border/50 bg-secondary/20 transition-colors hover:border-primary/50 hover:bg-secondary/40"
+        >
+          <Music className="h-5 w-5 text-muted-foreground/50" />
+          <span className="text-[10px] text-muted-foreground/70">Drop or click</span>
+        </button>
+      )}
     </BaseNode>
   );
 }

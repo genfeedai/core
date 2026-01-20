@@ -139,9 +139,11 @@ function WelcomeModalComponent() {
           <div className="flex w-56 shrink-0 flex-col">
             {/* Logo */}
             <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-chart-4">
-                <span className="text-lg font-bold text-primary-foreground">GF</span>
-              </div>
+              <img
+                src="https://cdn.genfeed.ai/assets/branding/logo-white.png"
+                alt="Genfeed"
+                className="h-10 w-10 object-contain"
+              />
               <span className="text-xl font-semibold">Genfeed</span>
             </div>
 
@@ -161,7 +163,7 @@ function WelcomeModalComponent() {
               <LinkItem
                 icon={<MessageCircle className="h-4 w-4" />}
                 label="Discord"
-                href="https://discord.gg/genfeed"
+                href="https://discord.gg/Qy867n83Z4"
               />
               <LinkItem
                 icon={<Twitter className="h-4 w-4" />}

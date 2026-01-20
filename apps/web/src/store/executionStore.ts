@@ -267,15 +267,7 @@ export const useExecutionStore = create<ExecutionStore>((set, get) => ({
           ...inputsObj,
         });
       } else if (
-        [
-          'lumaReframeImage',
-          'lumaReframeVideo',
-          'topazImageUpscale',
-          'topazVideoUpscale',
-          'lipSync',
-          'voiceChange',
-          'textToSpeech',
-        ].includes(nodeType)
+        ['reframe', 'upscale', 'lipSync', 'voiceChange', 'textToSpeech'].includes(nodeType)
       ) {
         result = await apiClient.post('/replicate/processing', {
           nodeId,
@@ -730,23 +722,22 @@ function getOutputUpdate(
 
   const nodeType = node.type;
 
-  // Image output nodes
-  if (['imageGen', 'lumaReframeImage', 'topazImageUpscale'].includes(nodeType)) {
+  // Image output nodes (note: reframe/upscale can be either - check inputType)
+  if (['imageGen'].includes(nodeType)) {
+    return { outputImage: output };
+  }
+
+  // Unified nodes - output type matches input type
+  if (['reframe', 'upscale'].includes(nodeType)) {
+    const inputType = (node.data as { inputType?: string }).inputType;
+    if (inputType === 'video') {
+      return { outputVideo: output };
+    }
     return { outputImage: output };
   }
 
   // Video output nodes
-  if (
-    [
-      'videoGen',
-      'animation',
-      'videoStitch',
-      'lumaReframeVideo',
-      'topazVideoUpscale',
-      'lipSync',
-      'voiceChange',
-    ].includes(nodeType)
-  ) {
+  if (['videoGen', 'animation', 'videoStitch', 'lipSync', 'voiceChange'].includes(nodeType)) {
     return { outputVideo: output };
   }
 

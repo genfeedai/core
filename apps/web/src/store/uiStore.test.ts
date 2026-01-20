@@ -6,7 +6,6 @@ describe('useUIStore', () => {
     // Reset store to initial state
     useUIStore.setState({
       showPalette: true,
-      showConfigPanel: true,
       showMinimap: true,
       selectedNodeId: null,
       selectedEdgeId: null,
@@ -24,7 +23,6 @@ describe('useUIStore', () => {
       const state = useUIStore.getState();
 
       expect(state.showPalette).toBe(true);
-      expect(state.showConfigPanel).toBe(true);
       expect(state.showMinimap).toBe(true);
       expect(state.selectedNodeId).toBeNull();
       expect(state.selectedEdgeId).toBeNull();
@@ -42,18 +40,6 @@ describe('useUIStore', () => {
 
       togglePalette();
       expect(useUIStore.getState().showPalette).toBe(true);
-    });
-  });
-
-  describe('toggleConfigPanel', () => {
-    it('should toggle config panel visibility', () => {
-      const { toggleConfigPanel } = useUIStore.getState();
-
-      toggleConfigPanel();
-      expect(useUIStore.getState().showConfigPanel).toBe(false);
-
-      toggleConfigPanel();
-      expect(useUIStore.getState().showConfigPanel).toBe(true);
     });
   });
 

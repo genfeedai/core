@@ -10,30 +10,27 @@ import type {
   Resolution,
 } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { RefreshCw, Search } from 'lucide-react';
+import { AlertCircle, ChevronDown, RefreshCw, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { memo, useCallback, useState } from 'react';
 import { ModelBrowserModal } from '@/components/models/ModelBrowserModal';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { useRequiredInputs } from '@/hooks/useRequiredInputs';
 import { useExecutionStore } from '@/store/executionStore';
 import { useWorkflowStore } from '@/store/workflowStore';
 
-const MODELS: { value: ImageModel; label: string; description: string }[] = [
-  { value: 'nano-banana', label: 'Nano Banana', description: 'Fast, $0.039/image' },
-  {
-    value: 'nano-banana-pro',
-    label: 'Nano Banana Pro',
-    description: 'High quality, $0.15-0.30/image',
-  },
+const MODELS: { value: ImageModel; label: string }[] = [
+  { value: 'nano-banana', label: 'Nano Banana' },
+  { value: 'nano-banana-pro', label: 'Nano Banana Pro' },
 ];
 
 function ImageGenNodeComponent(props: NodeProps) {
-  const { id, data } = props;
+  const { id, type, data } = props;
   const nodeData = data as ImageGenNodeData;
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const executeNode = useExecutionStore((state) => state.executeNode);
+  const { hasRequiredInputs } = useRequiredInputs(id, type as 'imageGen');
 
   const [isModelBrowserOpen, setIsModelBrowserOpen] = useState(false);
 
@@ -57,13 +54,6 @@ function ImageGenNodeComponent(props: NodeProps) {
           },
         });
       }
-    },
-    [id, updateNodeData]
-  );
-
-  const handleModelChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      updateNodeData<ImageGenNodeData>(id, { model: e.target.value as ImageModel });
     },
     [id, updateNodeData]
   );
@@ -93,83 +83,80 @@ function ImageGenNodeComponent(props: NodeProps) {
     executeNode(id);
   }, [id, executeNode]);
 
+  const modelDisplayName =
+    nodeData.selectedModel?.displayName ||
+    MODELS.find((m) => m.value === nodeData.model)?.label ||
+    nodeData.model;
+
+  const headerActions = (
+    <Button
+      variant="secondary"
+      size="sm"
+      onClick={() => setIsModelBrowserOpen(true)}
+      className="h-5 px-2 text-[10px]"
+    >
+      Browse
+    </Button>
+  );
+
   return (
-    <BaseNode {...props}>
+    <BaseNode {...props} title={modelDisplayName} headerActions={headerActions}>
       <div className="flex flex-col gap-3">
-        {/* Model Selection */}
+        {/* Compact Settings Row */}
         <div className="space-y-1.5">
-          <Label className="text-xs">Model</Label>
+          {/* Labels row */}
+          <div className="flex gap-2 text-xs text-muted-foreground">
+            <span className="flex-1">Ratio</span>
+            {nodeData.model === 'nano-banana-pro' && <span className="flex-1">Resolution</span>}
+            <span className="flex-1">Format</span>
+          </div>
+          {/* Dropdowns row */}
           <div className="flex gap-2">
-            <select
-              value={nodeData.model}
-              onChange={handleModelChange}
-              className="flex h-9 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            >
-              {MODELS.map((model) => (
-                <option key={model.value} value={model.value}>
-                  {model.label} - {model.description}
-                </option>
-              ))}
-            </select>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              onClick={() => setIsModelBrowserOpen(true)}
-              title="Browse models"
-            >
-              <Search className="h-4 w-4" />
-            </Button>
+            <div className="relative flex-1">
+              <select
+                value={nodeData.aspectRatio}
+                onChange={handleAspectRatioChange}
+                className="appearance-none w-full h-8 rounded-md border border-input bg-background pl-2 pr-7 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                {ASPECT_RATIOS.map((ratio) => (
+                  <option key={ratio} value={ratio}>
+                    {ratio}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none text-muted-foreground" />
+            </div>
+            {nodeData.model === 'nano-banana-pro' && (
+              <div className="relative flex-1">
+                <select
+                  value={nodeData.resolution}
+                  onChange={handleResolutionChange}
+                  className="appearance-none w-full h-8 rounded-md border border-input bg-background pl-2 pr-7 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  {RESOLUTIONS.map((res) => (
+                    <option key={res} value={res}>
+                      {res}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none text-muted-foreground" />
+              </div>
+            )}
+            <div className="relative flex-1">
+              <select
+                value={nodeData.outputFormat}
+                onChange={handleFormatChange}
+                className="appearance-none w-full h-8 rounded-md border border-input bg-background pl-2 pr-7 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                {OUTPUT_FORMATS.map((format) => (
+                  <option key={format} value={format}>
+                    {format.toUpperCase()}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none text-muted-foreground" />
+            </div>
           </div>
-        </div>
-
-        {/* Aspect Ratio */}
-        <div className="space-y-1.5">
-          <Label className="text-xs">Aspect Ratio</Label>
-          <select
-            value={nodeData.aspectRatio}
-            onChange={handleAspectRatioChange}
-            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          >
-            {ASPECT_RATIOS.map((ratio) => (
-              <option key={ratio} value={ratio}>
-                {ratio}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Resolution (only for Pro) */}
-        {nodeData.model === 'nano-banana-pro' && (
-          <div className="space-y-1.5">
-            <Label className="text-xs">Resolution</Label>
-            <select
-              value={nodeData.resolution}
-              onChange={handleResolutionChange}
-              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            >
-              {RESOLUTIONS.map((res) => (
-                <option key={res} value={res}>
-                  {res}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {/* Output Format */}
-        <div className="space-y-1.5">
-          <Label className="text-xs">Format</Label>
-          <select
-            value={nodeData.outputFormat}
-            onChange={handleFormatChange}
-            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          >
-            {OUTPUT_FORMATS.map((format) => (
-              <option key={format} value={format}>
-                {format.toUpperCase()}
-              </option>
-            ))}
-          </select>
         </div>
 
         {/* Output Preview */}
@@ -179,8 +166,8 @@ function ImageGenNodeComponent(props: NodeProps) {
               src={nodeData.outputImage}
               alt="Generated image"
               width={200}
-              height={128}
-              className="h-32 w-full rounded-md object-cover"
+              height={80}
+              className="h-20 w-full rounded-md object-cover cursor-pointer"
               unoptimized
             />
             <Button
@@ -199,11 +186,21 @@ function ImageGenNodeComponent(props: NodeProps) {
         {!nodeData.outputImage && nodeData.status !== 'processing' && (
           <button
             onClick={handleGenerate}
-            className="mt-1 w-full py-2 rounded-md text-sm font-medium transition-opacity hover:opacity-90"
+            disabled={!hasRequiredInputs}
+            className="mt-1 w-full py-2 rounded-md text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
             style={{ backgroundColor: 'var(--node-color)', color: 'var(--background)' }}
           >
+            <Sparkles className="h-4 w-4" />
             Generate Image
           </button>
+        )}
+
+        {/* Help text for required inputs */}
+        {!hasRequiredInputs && nodeData.status !== 'processing' && (
+          <div className="text-xs text-[var(--muted-foreground)] flex items-center gap-1">
+            <AlertCircle className="w-3 h-3" />
+            Connect a prompt to generate
+          </div>
         )}
       </div>
 

@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { settingsApi } from '@/lib/api/settings';
+import { logger } from '@/lib/logger';
 
 // =============================================================================
 // TYPES
@@ -42,6 +44,7 @@ interface SettingsStore {
   // UI Preferences
   edgeStyle: EdgeStyle;
   showMinimap: boolean;
+  autoSaveEnabled: boolean;
 
   // Recent models (for model browser)
   recentModels: RecentModel[];
@@ -50,6 +53,7 @@ interface SettingsStore {
   hasSeenWelcome: boolean;
 
   // Actions
+  toggleAutoSave: () => void;
   setProviderKey: (provider: ProviderType, key: string | null) => void;
   setProviderEnabled: (provider: ProviderType, enabled: boolean) => void;
   setDefaultModel: (type: 'image' | 'video', model: string, provider: ProviderType) => void;
@@ -63,6 +67,11 @@ interface SettingsStore {
   // Computed
   isProviderConfigured: (provider: ProviderType) => boolean;
   getProviderHeader: (provider: ProviderType) => Record<string, string>;
+
+  // API Sync
+  isSyncing: boolean;
+  syncFromServer: () => Promise<void>;
+  syncToServer: () => Promise<void>;
 }
 
 // =============================================================================
@@ -86,6 +95,7 @@ const DEFAULT_SETTINGS = {
   },
   edgeStyle: 'bezier' as EdgeStyle,
   showMinimap: true,
+  autoSaveEnabled: true,
   recentModels: [] as RecentModel[],
   hasSeenWelcome: false,
 };
@@ -106,6 +116,7 @@ function loadFromStorage(): Partial<typeof DEFAULT_SETTINGS> {
         defaults: { ...DEFAULT_SETTINGS.defaults, ...parsed.defaults },
         edgeStyle: parsed.edgeStyle ?? DEFAULT_SETTINGS.edgeStyle,
         showMinimap: parsed.showMinimap ?? DEFAULT_SETTINGS.showMinimap,
+        autoSaveEnabled: parsed.autoSaveEnabled ?? true,
         recentModels: parsed.recentModels ?? [],
         hasSeenWelcome: parsed.hasSeenWelcome ?? false,
       };
@@ -121,6 +132,7 @@ function saveToStorage(state: {
   defaults: DefaultModelSettings;
   edgeStyle: EdgeStyle;
   showMinimap: boolean;
+  autoSaveEnabled: boolean;
   recentModels: RecentModel[];
   hasSeenWelcome: boolean;
 }) {
@@ -146,6 +158,7 @@ function saveToStorage(state: {
       defaults: state.defaults,
       edgeStyle: state.edgeStyle,
       showMinimap: state.showMinimap,
+      autoSaveEnabled: state.autoSaveEnabled,
       recentModels: state.recentModels.slice(0, MAX_RECENT_MODELS),
       hasSeenWelcome: state.hasSeenWelcome,
     };
@@ -166,8 +179,17 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   defaults: initialState.defaults,
   edgeStyle: initialState.edgeStyle,
   showMinimap: initialState.showMinimap,
+  autoSaveEnabled: initialState.autoSaveEnabled,
   recentModels: initialState.recentModels,
   hasSeenWelcome: initialState.hasSeenWelcome,
+
+  toggleAutoSave: () => {
+    set((state) => {
+      const newState = { autoSaveEnabled: !state.autoSaveEnabled };
+      saveToStorage({ ...state, ...newState });
+      return newState;
+    });
+  },
 
   setProviderKey: (provider, key) => {
     set((state) => {
@@ -306,6 +328,78 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     };
 
     return { [headerMap[provider]]: key };
+  },
+
+  // API Sync
+  isSyncing: false,
+
+  syncFromServer: async () => {
+    const { isSyncing } = get();
+    if (isSyncing) return;
+
+    set({ isSyncing: true });
+
+    try {
+      const serverSettings = await settingsApi.getAll();
+
+      // Merge server settings with local (server wins for node defaults/UI prefs)
+      set((state) => {
+        const merged = {
+          defaults: {
+            ...state.defaults,
+            imageModel: serverSettings.nodeDefaults.imageModel || state.defaults.imageModel,
+            imageProvider:
+              (serverSettings.nodeDefaults.imageProvider as ProviderType) ||
+              state.defaults.imageProvider,
+            videoModel: serverSettings.nodeDefaults.videoModel || state.defaults.videoModel,
+            videoProvider:
+              (serverSettings.nodeDefaults.videoProvider as ProviderType) ||
+              state.defaults.videoProvider,
+          },
+          edgeStyle: (serverSettings.uiPreferences.edgeStyle as EdgeStyle) || state.edgeStyle,
+          showMinimap: serverSettings.uiPreferences.showMinimap ?? state.showMinimap,
+          hasSeenWelcome: serverSettings.uiPreferences.hasSeenWelcome ?? state.hasSeenWelcome,
+          recentModels: serverSettings.recentModels.map((m) => ({
+            ...m,
+            provider: m.provider as ProviderType,
+            timestamp: m.timestamp || Date.now(),
+          })),
+        };
+        saveToStorage({ ...state, ...merged });
+        return { ...merged, isSyncing: false };
+      });
+    } catch (error) {
+      logger.error('Failed to sync settings from server', error, { context: 'SettingsStore' });
+      set({ isSyncing: false });
+    }
+  },
+
+  syncToServer: async () => {
+    const state = get();
+    if (state.isSyncing) return;
+
+    set({ isSyncing: true });
+
+    try {
+      await settingsApi.update({
+        nodeDefaults: {
+          imageModel: state.defaults.imageModel,
+          imageProvider: state.defaults.imageProvider,
+          videoModel: state.defaults.videoModel,
+          videoProvider: state.defaults.videoProvider,
+        },
+        uiPreferences: {
+          edgeStyle: state.edgeStyle,
+          showMinimap: state.showMinimap,
+          hasSeenWelcome: state.hasSeenWelcome,
+        },
+      });
+
+      set({ isSyncing: false });
+    } catch (error) {
+      logger.error('Failed to sync settings to server', error, { context: 'SettingsStore' });
+      set({ isSyncing: false });
+    }
   },
 }));
 
