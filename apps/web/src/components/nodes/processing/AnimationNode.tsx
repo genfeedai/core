@@ -64,8 +64,8 @@ function AnimationNodeComponent(props: NodeProps) {
     executeNode(id);
   }, [id, executeNode]);
 
-  // SVG curve preview
-  const curve = nodeData.customCurve;
+  // SVG curve preview - fallback to easeInOutCubic if customCurve is undefined
+  const curve = nodeData.customCurve ?? [0.645, 0.045, 0.355, 1];
   const pathD = `M 0 100 C ${curve[0] * 100} ${100 - curve[1] * 100}, ${curve[2] * 100} ${100 - curve[3] * 100}, 100 0`;
 
   return (

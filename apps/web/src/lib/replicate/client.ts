@@ -276,3 +276,138 @@ export function calculateCost(
 
   return cost;
 }
+
+/**
+ * Calculate total estimated cost for a workflow based on its nodes
+ */
+export function calculateWorkflowCost(
+  nodes: Array<{ type: string; data: Record<string, unknown> }>
+): number {
+  const { total } = calculateWorkflowCostWithBreakdown(nodes);
+  return total;
+}
+
+/**
+ * Cost breakdown item for a single node
+ */
+export interface CostBreakdownItem {
+  nodeId: string;
+  nodeType: string;
+  label: string;
+  model: string;
+  cost: number;
+  details: string;
+}
+
+/**
+ * Result of cost calculation with breakdown
+ */
+export interface CostBreakdownResult {
+  total: number;
+  breakdown: CostBreakdownItem[];
+}
+
+/**
+ * Calculate total estimated cost for a workflow with detailed breakdown per node
+ */
+export function calculateWorkflowCostWithBreakdown(
+  nodes: Array<{ id?: string; type: string; data: Record<string, unknown> }>
+): CostBreakdownResult {
+  let totalCost = 0;
+  const breakdown: CostBreakdownItem[] = [];
+
+  for (const node of nodes) {
+    const { id, type, data } = node;
+    const nodeId = id ?? '';
+    const label = (data.label as string) ?? type;
+
+    switch (type) {
+      case 'imageGen': {
+        const model = (data.model as 'nano-banana' | 'nano-banana-pro') ?? 'nano-banana';
+        const resolution = (data.resolution as string) ?? '2K';
+        let cost: number;
+
+        if (model === 'nano-banana') {
+          cost = PRICING['nano-banana'];
+        } else {
+          const res = resolution as keyof (typeof PRICING)['nano-banana-pro'];
+          cost = PRICING['nano-banana-pro'][res] ?? 0.2;
+        }
+
+        totalCost += cost;
+        breakdown.push({
+          nodeId,
+          nodeType: type,
+          label,
+          model,
+          cost,
+          details: model === 'nano-banana' ? 'per image' : `${resolution} resolution`,
+        });
+        break;
+      }
+
+      case 'videoGen': {
+        const model = (data.model as 'veo-3.1-fast' | 'veo-3.1') ?? 'veo-3.1-fast';
+        const duration = (data.duration as number) ?? 4;
+        const generateAudio = (data.generateAudio as boolean) ?? false;
+
+        const videoKey = generateAudio ? 'withAudio' : 'withoutAudio';
+        const cost = duration * PRICING[model][videoKey];
+        totalCost += cost;
+
+        breakdown.push({
+          nodeId,
+          nodeType: type,
+          label,
+          model,
+          cost,
+          details: `${duration}s ${generateAudio ? 'with' : 'without'} audio`,
+        });
+        break;
+      }
+
+      case 'lipSync': {
+        const model = (data.model as LipSyncModel) ?? 'sync/lipsync-2';
+        const pricing = PRICING[model];
+        const estimatedDuration = 10;
+        let cost = 0;
+
+        if (typeof pricing === 'number') {
+          cost = estimatedDuration * pricing;
+          totalCost += cost;
+        }
+
+        breakdown.push({
+          nodeId,
+          nodeType: type,
+          label,
+          model,
+          cost,
+          details: `~${estimatedDuration}s estimated`,
+        });
+        break;
+      }
+
+      case 'llm': {
+        const cost = 1000 * PRICING.llama;
+        totalCost += cost;
+
+        breakdown.push({
+          nodeId,
+          nodeType: type,
+          label,
+          model: 'llama-3.1-405b',
+          cost,
+          details: '~1000 tokens estimated',
+        });
+        break;
+      }
+
+      // Other node types (input, output, processing) don't have direct API costs
+      default:
+        break;
+    }
+  }
+
+  return { total: totalCost, breakdown };
+}

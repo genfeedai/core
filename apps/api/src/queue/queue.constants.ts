@@ -85,13 +85,15 @@ export const DEFAULT_JOB_OPTIONS = {
 
 /**
  * Queue concurrency settings
+ * All Replicate-hitting queues set to 1 for sequential execution
+ * to avoid rate limiting (429 errors)
  */
 export const QUEUE_CONCURRENCY = {
   [QUEUE_NAMES.WORKFLOW_ORCHESTRATOR]: 10,
-  [QUEUE_NAMES.IMAGE_GENERATION]: 5,
-  [QUEUE_NAMES.VIDEO_GENERATION]: 2,
-  [QUEUE_NAMES.LLM_GENERATION]: 10,
-  [QUEUE_NAMES.PROCESSING]: 3,
+  [QUEUE_NAMES.IMAGE_GENERATION]: 1,
+  [QUEUE_NAMES.VIDEO_GENERATION]: 1,
+  [QUEUE_NAMES.LLM_GENERATION]: 1,
+  [QUEUE_NAMES.PROCESSING]: 1,
 } as const;
 
 /**

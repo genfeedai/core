@@ -4,7 +4,6 @@ import {
   Clock,
   Copy,
   ExternalLink,
-  HelpCircle,
   Images,
   MoreHorizontal,
   Plus,
@@ -16,18 +15,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { WorkflowPreview } from '@/components/WorkflowPreview';
 import type { WorkflowData } from '@/lib/api';
-import { type ExecutionStats, executionsApi } from '@/lib/api/executions';
 import { useWorkflowStore } from '@/store/workflowStore';
-
-function formatRunTime(ms: number): string {
-  if (ms === 0) return '0s';
-  if (ms < 1000) return `${ms}ms`;
-  const seconds = Math.round(ms / 1000);
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
-}
 
 function formatRelativeTime(date: Date): string {
   const now = new Date();
@@ -124,7 +112,6 @@ export default function DashboardPage() {
   const { listWorkflows, deleteWorkflow, duplicateWorkflowApi } = useWorkflowStore();
 
   const [workflows, setWorkflows] = useState<WorkflowData[]>([]);
-  const [stats, setStats] = useState<ExecutionStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasFetched, setHasFetched] = useState(false);
@@ -147,22 +134,11 @@ export default function DashboardPage() {
     [listWorkflows]
   );
 
-  const fetchStats = useCallback(async (signal?: AbortSignal) => {
-    try {
-      const data = await executionsApi.getStats(signal);
-      setStats(data);
-    } catch (_err) {
-      if (signal?.aborted) return;
-      // Stats are optional, don't show error if they fail
-    }
-  }, []);
-
   useEffect(() => {
     const controller = new AbortController();
     fetchWorkflows(controller.signal);
-    fetchStats(controller.signal);
     return () => controller.abort();
-  }, [fetchWorkflows, fetchStats]);
+  }, [fetchWorkflows]);
 
   const handleDelete = useCallback(
     async (id: string) => {
@@ -225,49 +201,6 @@ export default function DashboardPage() {
 
       {/* Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Overview Section */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-[var(--foreground)]">Overview</h2>
-          <p className="text-sm text-[var(--muted-foreground)] mt-1">
-            All the workflows, credentials and data tables you have access to
-          </p>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-px bg-[var(--border)] rounded-lg overflow-hidden mt-6">
-            <div className="bg-[var(--card)] p-4">
-              <p className="text-xs text-[var(--muted-foreground)] mb-1">Prod. executions</p>
-              <p className="text-2xl font-semibold text-[var(--foreground)]">
-                {stats?.totalExecutions ?? 0}
-              </p>
-            </div>
-            <div className="bg-[var(--card)] p-4">
-              <p className="text-xs text-[var(--muted-foreground)] mb-1">Failed prod. executions</p>
-              <p className="text-2xl font-semibold text-[var(--foreground)]">
-                {stats?.failedExecutions ?? 0}
-              </p>
-            </div>
-            <div className="bg-[var(--card)] p-4">
-              <p className="text-xs text-[var(--muted-foreground)] mb-1">Failure rate</p>
-              <p className="text-2xl font-semibold text-[var(--foreground)]">
-                {stats?.failureRate ?? 0}%
-              </p>
-            </div>
-            <div className="bg-[var(--card)] p-4">
-              <p className="text-xs text-[var(--muted-foreground)] mb-1 flex items-center gap-1">
-                Time saved
-                <HelpCircle className="w-3 h-3" />
-              </p>
-              <p className="text-2xl font-semibold text-[var(--foreground)]">--</p>
-            </div>
-            <div className="bg-[var(--card)] p-4">
-              <p className="text-xs text-[var(--muted-foreground)] mb-1">Run time (avg.)</p>
-              <p className="text-2xl font-semibold text-[var(--foreground)]">
-                {formatRunTime(stats?.avgRunTimeMs ?? 0)}
-              </p>
-            </div>
-          </div>
-        </div>
-
         <h2 className="text-lg font-semibold text-[var(--foreground)] mb-6">Your Workflows</h2>
 
         {/* Loading state */}

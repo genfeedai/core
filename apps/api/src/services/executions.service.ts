@@ -235,6 +235,134 @@ export class ExecutionsService {
     };
   }
 
+  // Sequential execution methods
+
+  /**
+   * Set pending nodes for sequential execution
+   */
+  async setPendingNodes(
+    executionId: string,
+    nodes: Array<{
+      nodeId: string;
+      nodeType: string;
+      nodeData: Record<string, unknown>;
+      dependsOn: string[];
+    }>
+  ): Promise<void> {
+    await this.executionModel
+      .updateOne({ _id: executionId }, { $set: { pendingNodes: nodes } })
+      .exec();
+  }
+
+  /**
+   * Get nodes that are ready to execute (all dependencies complete)
+   */
+  async getReadyNodes(executionId: string): Promise<
+    Array<{
+      nodeId: string;
+      nodeType: string;
+      nodeData: Record<string, unknown>;
+      dependsOn: string[];
+    }>
+  > {
+    const execution = await this.findExecution(executionId);
+    const pendingNodes = execution.pendingNodes ?? [];
+    const completedNodeIds = new Set(
+      execution.nodeResults.filter((r) => r.status === 'complete').map((r) => r.nodeId)
+    );
+
+    // Return nodes whose dependencies are all satisfied
+    return pendingNodes.filter((node) =>
+      node.dependsOn.every((depId) => completedNodeIds.has(depId))
+    );
+  }
+
+  /**
+   * Remove a node from pending nodes (after enqueueing)
+   */
+  async removeFromPendingNodes(executionId: string, nodeId: string): Promise<void> {
+    await this.executionModel
+      .updateOne({ _id: executionId }, { $pull: { pendingNodes: { nodeId } } })
+      .exec();
+  }
+
+  /**
+   * Check if all nodes are complete and update execution status
+   * Handles: no pending nodes, blocked nodes (failed dependency), all errors
+   */
+  async checkExecutionCompletion(executionId: string): Promise<boolean> {
+    const execution = await this.findExecution(executionId);
+    const pendingNodes = execution.pendingNodes ?? [];
+
+    // Already completed/failed
+    if (execution.status === 'completed' || execution.status === 'failed') {
+      return true;
+    }
+
+    // Get completed and failed node IDs
+    const completedNodeIds = new Set(
+      execution.nodeResults.filter((r) => r.status === 'complete').map((r) => r.nodeId)
+    );
+    const failedNodeIds = new Set(
+      execution.nodeResults.filter((r) => r.status === 'error').map((r) => r.nodeId)
+    );
+
+    // Check if any pending nodes are blocked by failed dependencies
+    const blockedNodes = pendingNodes.filter((node) =>
+      node.dependsOn.some((depId) => failedNodeIds.has(depId))
+    );
+
+    // If there are blocked nodes, mark them as skipped and remove from pending
+    if (blockedNodes.length > 0) {
+      for (const node of blockedNodes) {
+        await this.updateNodeResult(
+          executionId,
+          node.nodeId,
+          'error',
+          undefined,
+          'Skipped: dependency failed'
+        );
+        await this.removeFromPendingNodes(executionId, node.nodeId);
+      }
+      // Re-fetch after updates
+      return this.checkExecutionCompletion(executionId);
+    }
+
+    // Check if there are any ready nodes left
+    const readyNodes = pendingNodes.filter((node) =>
+      node.dependsOn.every((depId) => completedNodeIds.has(depId))
+    );
+
+    // If no pending nodes and no ready nodes, execution is done
+    if (pendingNodes.length === 0 || (readyNodes.length === 0 && blockedNodes.length === 0)) {
+      const allProcessed = execution.nodeResults.length > 0;
+
+      if (allProcessed && execution.status === 'running') {
+        const hasError = execution.nodeResults.some((r) => r.status === 'error');
+        await this.updateExecutionStatus(
+          executionId,
+          hasError ? 'failed' : 'completed',
+          hasError ? 'One or more nodes failed' : undefined
+        );
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Find existing job for a node (to prevent duplicate predictions on retry)
+   */
+  async findExistingJob(executionId: string, nodeId: string): Promise<JobDocument | null> {
+    return this.jobModel
+      .findOne({
+        executionId: new Types.ObjectId(executionId),
+        nodeId,
+      })
+      .exec();
+  }
+
   /**
    * Get aggregated execution statistics
    */

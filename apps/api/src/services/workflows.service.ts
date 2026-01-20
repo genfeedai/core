@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
 import type { CreateWorkflowDto } from '@/dto/create-workflow.dto';
 import type { ImportWorkflowDto } from '@/dto/import-workflow.dto';
+import type { QueryWorkflowDto } from '@/dto/query-workflow.dto';
 import type { UpdateWorkflowDto } from '@/dto/update-workflow.dto';
 import {
   WORKFLOW_EXPORT_VERSION,
@@ -46,8 +47,13 @@ export class WorkflowsService {
     return workflow.save();
   }
 
-  async findAll(): Promise<WorkflowDocument[]> {
-    return this.workflowModel.find({ isDeleted: false }).sort({ updatedAt: -1 }).exec();
+  async findAll(query?: QueryWorkflowDto): Promise<WorkflowDocument[]> {
+    return this.workflowModel
+      .find({ isDeleted: false })
+      .sort({ updatedAt: -1 })
+      .skip(query?.offset ?? 0)
+      .limit(query?.limit ?? 20)
+      .exec();
   }
 
   async findOne(id: string): Promise<WorkflowDocument> {

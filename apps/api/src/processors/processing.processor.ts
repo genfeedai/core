@@ -31,7 +31,7 @@ export class ProcessingProcessor extends WorkerHost {
   }
 
   async process(job: Job<ProcessingJobData>): Promise<JobResult> {
-    const { executionId, nodeId, nodeType, nodeData } = job.data;
+    const { executionId, workflowId, nodeId, nodeType, nodeData } = job.data;
 
     this.logger.log(`Processing ${nodeType} job: ${job.id} for node ${nodeId}`);
 
@@ -46,47 +46,69 @@ export class ProcessingProcessor extends WorkerHost {
       await job.updateProgress({ percent: 10, message: `Starting ${nodeType}` });
       await this.queueManager.addJobLog(job.id as string, `Starting ${nodeType}`);
 
-      let prediction;
+      // Check for existing prediction (retry scenario) - only for Replicate-based operations
+      const replicateNodeTypes = ['reframe', 'upscale', 'lipSync'];
+      const existingJob = replicateNodeTypes.includes(nodeType)
+        ? await this.executionsService.findExistingJob(executionId, nodeId)
+        : null;
+
+      let predictionId: string | null = null;
 
       switch (nodeType) {
         case 'reframe':
-          // Unified reframe node - detect input type
-          if (nodeData.inputType === 'video') {
-            prediction = await this.replicateService.reframeVideo(executionId, nodeId, {
-              video: nodeData.video as string,
-              aspectRatio: nodeData.aspectRatio,
-              prompt: nodeData.prompt,
-              gridPosition: nodeData.gridPosition,
-            });
+          // Check for existing prediction on retry
+          if (existingJob?.predictionId) {
+            this.logger.log(`Retry: resuming existing prediction ${existingJob.predictionId}`);
+            predictionId = existingJob.predictionId;
           } else {
-            prediction = await this.replicateService.reframeImage(executionId, nodeId, {
-              image: nodeData.image as string,
-              aspectRatio: nodeData.aspectRatio,
-              model: nodeData.model,
-              prompt: nodeData.prompt,
-              gridPosition: nodeData.gridPosition,
-            });
+            // Unified reframe node - detect input type
+            let prediction;
+            if (nodeData.inputType === 'video') {
+              prediction = await this.replicateService.reframeVideo(executionId, nodeId, {
+                video: nodeData.video as string,
+                aspectRatio: nodeData.aspectRatio,
+                prompt: nodeData.prompt,
+                gridPosition: nodeData.gridPosition,
+              });
+            } else {
+              prediction = await this.replicateService.reframeImage(executionId, nodeId, {
+                image: nodeData.image as string,
+                aspectRatio: nodeData.aspectRatio,
+                model: nodeData.model,
+                prompt: nodeData.prompt,
+                gridPosition: nodeData.gridPosition,
+              });
+            }
+            predictionId = prediction.id;
           }
           break;
 
         case 'upscale':
-          // Unified upscale node - detect input type
-          if (nodeData.inputType === 'video') {
-            prediction = await this.replicateService.upscaleVideo(executionId, nodeId, {
-              video: nodeData.video as string,
-              targetResolution: nodeData.targetResolution ?? '1080p',
-              targetFps: nodeData.targetFps ?? 30,
-            });
+          // Check for existing prediction on retry
+          if (existingJob?.predictionId) {
+            this.logger.log(`Retry: resuming existing prediction ${existingJob.predictionId}`);
+            predictionId = existingJob.predictionId;
           } else {
-            prediction = await this.replicateService.upscaleImage(executionId, nodeId, {
-              image: nodeData.image as string,
-              enhanceModel: nodeData.enhanceModel ?? 'Standard V2',
-              upscaleFactor: nodeData.upscaleFactor ?? '2x',
-              outputFormat: nodeData.outputFormat ?? 'png',
-              faceEnhancement: nodeData.faceEnhancement,
-              faceEnhancementStrength: nodeData.faceEnhancementStrength,
-              faceEnhancementCreativity: nodeData.faceEnhancementCreativity,
-            });
+            // Unified upscale node - detect input type
+            let prediction;
+            if (nodeData.inputType === 'video') {
+              prediction = await this.replicateService.upscaleVideo(executionId, nodeId, {
+                video: nodeData.video as string,
+                targetResolution: nodeData.targetResolution ?? '1080p',
+                targetFps: nodeData.targetFps ?? 30,
+              });
+            } else {
+              prediction = await this.replicateService.upscaleImage(executionId, nodeId, {
+                image: nodeData.image as string,
+                enhanceModel: nodeData.enhanceModel ?? 'Standard V2',
+                upscaleFactor: nodeData.upscaleFactor ?? '2x',
+                outputFormat: nodeData.outputFormat ?? 'png',
+                faceEnhancement: nodeData.faceEnhancement,
+                faceEnhancementStrength: nodeData.faceEnhancementStrength,
+                faceEnhancementCreativity: nodeData.faceEnhancementCreativity,
+              });
+            }
+            predictionId = prediction.id;
           }
           break;
 
@@ -112,15 +134,22 @@ export class ProcessingProcessor extends WorkerHost {
         }
 
         case 'lipSync':
-          prediction = await this.replicateService.generateLipSync(executionId, nodeId, {
-            image: nodeData.image,
-            video: nodeData.video,
-            audio: nodeData.audio,
-            model: nodeData.model,
-            syncMode: nodeData.syncMode,
-            temperature: nodeData.temperature,
-            activeSpeaker: nodeData.activeSpeaker,
-          });
+          // Check for existing prediction on retry
+          if (existingJob?.predictionId) {
+            this.logger.log(`Retry: resuming existing prediction ${existingJob.predictionId}`);
+            predictionId = existingJob.predictionId;
+          } else {
+            const prediction = await this.replicateService.generateLipSync(executionId, nodeId, {
+              image: nodeData.image,
+              video: nodeData.video,
+              audio: nodeData.audio,
+              model: nodeData.model,
+              syncMode: nodeData.syncMode,
+              temperature: nodeData.temperature,
+              activeSpeaker: nodeData.activeSpeaker,
+            });
+            predictionId = prediction.id;
+          }
           break;
 
         case 'textToSpeech': {
@@ -219,22 +248,29 @@ export class ProcessingProcessor extends WorkerHost {
           throw new Error(`Unknown processing node type: ${nodeType}`);
       }
 
-      await job.updateProgress({ percent: 30, message: 'Prediction created' });
-      await this.queueManager.addJobLog(job.id as string, `Created prediction: ${prediction.id}`);
+      // Only poll for Replicate-based operations
+      if (predictionId) {
+        await job.updateProgress({ percent: 30, message: 'Prediction created' });
+        await this.queueManager.addJobLog(job.id as string, `Created prediction: ${predictionId}`);
 
-      // Poll for completion
-      const result = await this.pollForCompletion(prediction.id, job);
+        // Poll for completion
+        const result = await this.pollForCompletion(predictionId, job);
 
-      // Update job status
-      await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.COMPLETED, {
-        result: result as unknown as Record<string, unknown>,
-      });
+        // Update job status
+        await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.COMPLETED, {
+          result: result as unknown as Record<string, unknown>,
+        });
 
-      await this.queueManager.addJobLog(job.id as string, `${nodeType} completed`);
+        await this.queueManager.addJobLog(job.id as string, `${nodeType} completed`);
 
-      return result;
+        return result;
+      }
+
+      // Non-Replicate operations already returned above
+      throw new Error(`Unexpected code path for node type: ${nodeType}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const isLastAttempt = job.attemptsMade >= (job.opts.attempts ?? 3) - 1;
 
       await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.FAILED, {
         error: errorMessage,
@@ -249,13 +285,16 @@ export class ProcessingProcessor extends WorkerHost {
         errorMessage
       );
 
-      // If this was the last attempt, move to DLQ
-      if (job.attemptsMade >= (job.opts.attempts ?? 3) - 1) {
+      // If this was the last attempt, handle failure
+      if (isLastAttempt) {
         await this.queueManager.moveToDeadLetterQueue(
           job.id as string,
           QUEUE_NAMES.PROCESSING,
           errorMessage
         );
+
+        // Trigger continuation to process next nodes or complete execution
+        await this.queueManager.continueExecution(executionId, workflowId);
       }
 
       throw error;

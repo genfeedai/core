@@ -29,7 +29,7 @@ export class LLMProcessor extends WorkerHost {
   }
 
   async process(job: Job<LLMJobData>): Promise<JobResult> {
-    const { executionId, nodeId, nodeData } = job.data;
+    const { executionId, workflowId, nodeId, nodeData } = job.data;
 
     this.logger.log(`Processing LLM generation job: ${job.id} for node ${nodeId}`);
 
@@ -91,6 +91,7 @@ export class LLMProcessor extends WorkerHost {
       return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const isLastAttempt = job.attemptsMade >= (job.opts.attempts ?? 3) - 1;
 
       await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.FAILED, {
         error: errorMessage,
@@ -105,13 +106,16 @@ export class LLMProcessor extends WorkerHost {
         errorMessage
       );
 
-      // If this was the last attempt, move to DLQ
-      if (job.attemptsMade >= (job.opts.attempts ?? 3) - 1) {
+      // If this was the last attempt, handle failure
+      if (isLastAttempt) {
         await this.queueManager.moveToDeadLetterQueue(
           job.id as string,
           QUEUE_NAMES.LLM_GENERATION,
           errorMessage
         );
+
+        // Trigger continuation to process next nodes or complete execution
+        await this.queueManager.continueExecution(executionId, workflowId);
       }
 
       throw error;

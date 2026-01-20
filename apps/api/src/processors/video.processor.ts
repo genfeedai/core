@@ -32,7 +32,7 @@ export class VideoProcessor extends WorkerHost {
   }
 
   async process(job: Job<VideoQueueJobData>): Promise<JobResult> {
-    const { executionId, nodeId, nodeType } = job.data;
+    const { executionId, workflowId, nodeId, nodeType } = job.data;
 
     this.logger.log(`Processing ${nodeType} job: ${job.id} for node ${nodeId}`);
 
@@ -47,46 +47,57 @@ export class VideoProcessor extends WorkerHost {
       await job.updateProgress({ percent: 5, message: `Starting ${nodeType} generation` });
       await this.queueManager.addJobLog(job.id as string, `Starting ${nodeType} generation`);
 
-      // Route to appropriate handler based on node type
-      let prediction;
-      if (nodeType === 'motionControl') {
-        const data = job.data as MotionControlJobData;
-        prediction = await this.replicateService.generateMotionControlVideo(executionId, nodeId, {
-          image: data.nodeData.image,
-          prompt: data.nodeData.prompt,
-          mode: data.nodeData.mode,
-          duration: data.nodeData.duration,
-          aspectRatio: data.nodeData.aspectRatio,
-          trajectoryPoints: data.nodeData.trajectoryPoints,
-          cameraMovement: data.nodeData.cameraMovement,
-          cameraIntensity: data.nodeData.cameraIntensity,
-          motionStrength: data.nodeData.motionStrength,
-          negativePrompt: data.nodeData.negativePrompt,
-          seed: data.nodeData.seed,
-        });
+      // Check for existing prediction (retry scenario)
+      const existingJob = await this.executionsService.findExistingJob(executionId, nodeId);
+      let predictionId: string;
+
+      if (existingJob?.predictionId) {
+        // Resume polling existing prediction
+        this.logger.log(`Retry: resuming existing prediction ${existingJob.predictionId}`);
+        predictionId = existingJob.predictionId;
+        await job.updateProgress({ percent: 15, message: 'Resuming existing prediction' });
       } else {
-        // Standard video generation
-        const data = job.data as VideoJobData;
-        const model = data.nodeData.model ?? 'veo-3.1-fast';
-        prediction = await this.replicateService.generateVideo(executionId, nodeId, model, {
-          prompt: data.nodeData.prompt,
-          image: data.nodeData.image,
-          lastFrame: data.nodeData.lastFrame,
-          referenceImages: data.nodeData.referenceImages,
-          duration: data.nodeData.duration,
-          aspectRatio: data.nodeData.aspectRatio,
-          resolution: data.nodeData.resolution,
-          generateAudio: data.nodeData.generateAudio,
-          negativePrompt: data.nodeData.negativePrompt,
-          seed: data.nodeData.seed,
-        });
+        // Create new prediction - route to appropriate handler based on node type
+        let prediction;
+        if (nodeType === 'motionControl') {
+          const data = job.data as MotionControlJobData;
+          prediction = await this.replicateService.generateMotionControlVideo(executionId, nodeId, {
+            image: data.nodeData.image,
+            prompt: data.nodeData.prompt,
+            mode: data.nodeData.mode,
+            duration: data.nodeData.duration,
+            aspectRatio: data.nodeData.aspectRatio,
+            trajectoryPoints: data.nodeData.trajectoryPoints,
+            cameraMovement: data.nodeData.cameraMovement,
+            cameraIntensity: data.nodeData.cameraIntensity,
+            motionStrength: data.nodeData.motionStrength,
+            negativePrompt: data.nodeData.negativePrompt,
+            seed: data.nodeData.seed,
+          });
+        } else {
+          // Standard video generation
+          const data = job.data as VideoJobData;
+          const model = data.nodeData.model ?? 'veo-3.1-fast';
+          prediction = await this.replicateService.generateVideo(executionId, nodeId, model, {
+            prompt: data.nodeData.prompt,
+            image: data.nodeData.image,
+            lastFrame: data.nodeData.lastFrame,
+            referenceImages: data.nodeData.referenceImages,
+            duration: data.nodeData.duration,
+            aspectRatio: data.nodeData.aspectRatio,
+            resolution: data.nodeData.resolution,
+            generateAudio: data.nodeData.generateAudio,
+            negativePrompt: data.nodeData.negativePrompt,
+            seed: data.nodeData.seed,
+          });
+        }
+        predictionId = prediction.id;
+        await job.updateProgress({ percent: 15, message: 'Prediction created' });
+        await this.queueManager.addJobLog(job.id as string, `Created prediction: ${predictionId}`);
       }
 
-      await job.updateProgress({ percent: 15, message: 'Prediction created' });
-      await this.queueManager.addJobLog(job.id as string, `Created prediction: ${prediction.id}`);
-
       // Poll for completion (video takes longer)
-      const result = await this.pollForCompletion(prediction.id, job);
+      const result = await this.pollForCompletion(predictionId, job);
 
       // Update job status
       await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.COMPLETED, {
@@ -98,6 +109,7 @@ export class VideoProcessor extends WorkerHost {
       return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const isLastAttempt = job.attemptsMade >= (job.opts.attempts ?? 3) - 1;
 
       await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.FAILED, {
         error: errorMessage,
@@ -112,13 +124,16 @@ export class VideoProcessor extends WorkerHost {
         errorMessage
       );
 
-      // If this was the last attempt, move to DLQ
-      if (job.attemptsMade >= (job.opts.attempts ?? 3) - 1) {
+      // If this was the last attempt, handle failure
+      if (isLastAttempt) {
         await this.queueManager.moveToDeadLetterQueue(
           job.id as string,
           QUEUE_NAMES.VIDEO_GENERATION,
           errorMessage
         );
+
+        // Trigger continuation to process next nodes or complete execution
+        await this.queueManager.continueExecution(executionId, workflowId);
       }
 
       throw error;

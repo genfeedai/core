@@ -70,6 +70,9 @@ interface ExecutionStore {
   // Helpers
   resetExecution: () => void;
   canResumeFromFailed: () => boolean;
+
+  // Cost management
+  setEstimatedCost: (cost: number) => void;
 }
 
 export const useExecutionStore = create<ExecutionStore>((set, get) => ({
@@ -649,6 +652,10 @@ export const useExecutionStore = create<ExecutionStore>((set, get) => ({
   canResumeFromFailed: () => {
     const { executionId, lastFailedNodeId, isRunning } = get();
     return !isRunning && Boolean(executionId) && Boolean(lastFailedNodeId);
+  },
+
+  setEstimatedCost: (cost: number) => {
+    set({ estimatedCost: cost });
   },
 }));
 

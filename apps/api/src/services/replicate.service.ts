@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import Replicate from 'replicate';
 import { CostCalculatorService } from '@/services/cost-calculator.service';
 import { ExecutionsService } from '@/services/executions.service';
+import { QueueManagerService } from '@/services/queue-manager.service';
 import { WorkflowsService } from '@/services/workflows.service';
 
 // Model identifiers (Replicate official models)
@@ -167,6 +168,8 @@ export class ReplicateService {
     private readonly executionsService: ExecutionsService,
     @Inject(forwardRef(() => WorkflowsService))
     private readonly workflowsService: WorkflowsService,
+    @Inject(forwardRef(() => QueueManagerService))
+    private readonly queueManager: QueueManagerService,
     private readonly costCalculatorService: CostCalculatorService
   ) {
     this.replicate = new Replicate({
@@ -656,6 +659,12 @@ export class ReplicateService {
 
       // Update execution cost summary
       await this.executionsService.updateExecutionCost(job.executionId.toString());
+
+      // Continue sequential execution - enqueue next ready node
+      await this.queueManager.continueExecution(
+        job.executionId.toString(),
+        execution.workflowId.toString()
+      );
     }
   }
 

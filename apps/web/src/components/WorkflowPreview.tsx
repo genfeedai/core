@@ -30,9 +30,8 @@ function PreviewNodeComponent({ data }: PreviewNodeProps) {
 }
 
 // Generate preview node types from NODE_DEFINITIONS
-const previewNodeTypes: NodeTypes = Object.keys(NODE_DEFINITIONS).reduce(
-  (acc, key) => ({ ...acc, [key]: PreviewNodeComponent }),
-  {}
+const previewNodeTypes: NodeTypes = Object.fromEntries(
+  Object.keys(NODE_DEFINITIONS).map((key) => [key, PreviewNodeComponent])
 );
 
 interface WorkflowPreviewProps {

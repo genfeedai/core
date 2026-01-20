@@ -25,7 +25,7 @@ export class ImageProcessor extends WorkerHost {
   }
 
   async process(job: Job<ImageJobData>): Promise<JobResult> {
-    const { executionId, nodeId, nodeData } = job.data;
+    const { executionId, workflowId, nodeId, nodeData } = job.data;
 
     this.logger.log(`Processing image generation job: ${job.id} for node ${nodeId}`);
 
@@ -40,21 +40,32 @@ export class ImageProcessor extends WorkerHost {
       await job.updateProgress({ percent: 10, message: 'Starting image generation' });
       await this.queueManager.addJobLog(job.id as string, 'Starting image generation');
 
-      // Call Replicate service
-      const model = nodeData.model ?? 'nano-banana';
-      const prediction = await this.replicateService.generateImage(executionId, nodeId, model, {
-        prompt: nodeData.prompt,
-        imageInput: nodeData.imageInput,
-        aspectRatio: nodeData.aspectRatio,
-        resolution: nodeData.resolution,
-        outputFormat: nodeData.outputFormat,
-      });
+      // Check for existing prediction (retry scenario)
+      const existingJob = await this.executionsService.findExistingJob(executionId, nodeId);
+      let predictionId: string;
 
-      await job.updateProgress({ percent: 30, message: 'Prediction created' });
-      await this.queueManager.addJobLog(job.id as string, `Created prediction: ${prediction.id}`);
+      if (existingJob?.predictionId) {
+        // Resume polling existing prediction
+        this.logger.log(`Retry: resuming existing prediction ${existingJob.predictionId}`);
+        predictionId = existingJob.predictionId;
+        await job.updateProgress({ percent: 30, message: 'Resuming existing prediction' });
+      } else {
+        // Create new prediction
+        const model = nodeData.model ?? 'nano-banana';
+        const prediction = await this.replicateService.generateImage(executionId, nodeId, model, {
+          prompt: nodeData.prompt,
+          imageInput: nodeData.imageInput,
+          aspectRatio: nodeData.aspectRatio,
+          resolution: nodeData.resolution,
+          outputFormat: nodeData.outputFormat,
+        });
+        predictionId = prediction.id;
+        await job.updateProgress({ percent: 30, message: 'Prediction created' });
+        await this.queueManager.addJobLog(job.id as string, `Created prediction: ${predictionId}`);
+      }
 
       // Poll for completion (Replicate webhooks will also update, but we poll as backup)
-      const result = await this.pollForCompletion(prediction.id, job);
+      const result = await this.pollForCompletion(predictionId, job);
 
       // Update job status
       await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.COMPLETED, {
@@ -66,6 +77,7 @@ export class ImageProcessor extends WorkerHost {
       return result;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const isLastAttempt = job.attemptsMade >= (job.opts.attempts ?? 3) - 1;
 
       await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.FAILED, {
         error: errorMessage,
@@ -80,13 +92,16 @@ export class ImageProcessor extends WorkerHost {
         errorMessage
       );
 
-      // If this was the last attempt, move to DLQ
-      if (job.attemptsMade >= (job.opts.attempts ?? 3) - 1) {
+      // If this was the last attempt, handle failure
+      if (isLastAttempt) {
         await this.queueManager.moveToDeadLetterQueue(
           job.id as string,
           QUEUE_NAMES.IMAGE_GENERATION,
           errorMessage
         );
+
+        // Trigger continuation to process next nodes or complete execution
+        await this.queueManager.continueExecution(executionId, workflowId);
       }
 
       throw error;

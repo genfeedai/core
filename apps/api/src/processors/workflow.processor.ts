@@ -51,7 +51,9 @@ export class WorkflowProcessor extends WorkerHost {
   }
 
   /**
-   * Process a workflow orchestration job - enqueues all nodes for execution
+   * Process a workflow orchestration job - sequential execution model
+   * Only enqueues nodes that are ready (no unmet dependencies)
+   * Webhook handler continues execution when nodes complete
    */
   private async processWorkflowOrchestration(job: Job<WorkflowJobData>): Promise<void> {
     const { executionId, workflowId } = job.data;
@@ -84,28 +86,64 @@ export class WorkflowProcessor extends WorkerHost {
       // Get dependency map for each node
       const dependencyMap = buildDependencyMap(nodes, edges);
 
-      // Enqueue each node in order
+      // Build pending nodes list (excluding passthrough nodes like input/output)
+      const passthroughTypes = ['workflowInput', 'workflowOutput', 'input', 'output'];
+      const pendingNodes: Array<{
+        nodeId: string;
+        nodeType: string;
+        nodeData: Record<string, unknown>;
+        dependsOn: string[];
+      }> = [];
+
       for (const nodeId of executionOrder) {
-        const node = (workflow.nodes as WorkflowNode[]).find((n) => n.id === nodeId);
+        const node = nodes.find((n) => n.id === nodeId);
         if (!node) continue;
 
-        const dependsOn = dependencyMap.get(nodeId) ?? [];
+        // Skip passthrough nodes - mark as complete immediately
+        if (passthroughTypes.includes(node.type)) {
+          await this.executionsService.updateNodeResult(executionId, nodeId, 'complete', {});
+          continue;
+        }
 
+        const dependsOn = dependencyMap.get(nodeId) ?? [];
+        pendingNodes.push({
+          nodeId: node.id,
+          nodeType: node.type,
+          nodeData: node.data,
+          dependsOn,
+        });
+      }
+
+      // Save all pending nodes to execution for continuation
+      await this.executionsService.setPendingNodes(executionId, pendingNodes);
+
+      // Find nodes with no dependencies (ready to execute)
+      const readyNodes = pendingNodes.filter((n) => n.dependsOn.length === 0);
+
+      if (readyNodes.length === 0 && pendingNodes.length > 0) {
+        throw new Error('No nodes ready to execute - possible circular dependency');
+      }
+
+      // Enqueue only the first ready node (sequential execution)
+      // Other ready nodes will be enqueued as previous ones complete
+      if (readyNodes.length > 0) {
+        const firstNode = readyNodes[0];
         await this.queueManager.enqueueNode(
           executionId,
           workflowId,
-          node.id,
-          node.type,
-          node.data,
-          dependsOn
+          firstNode.nodeId,
+          firstNode.nodeType,
+          firstNode.nodeData,
+          firstNode.dependsOn
         );
+        await this.executionsService.removeFromPendingNodes(executionId, firstNode.nodeId);
 
         this.logger.log(
-          `Enqueued node ${nodeId} (${node.type}) with dependencies: [${dependsOn.join(', ')}]`
+          `Enqueued first ready node ${firstNode.nodeId} (${firstNode.nodeType}) - ${pendingNodes.length - 1} nodes pending`
         );
       }
 
-      // Update job status to completed
+      // Update job status to completed (orchestrator is done, execution continues via webhooks)
       await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.COMPLETED);
 
       this.logger.log(`Workflow orchestration completed for execution: ${executionId}`);

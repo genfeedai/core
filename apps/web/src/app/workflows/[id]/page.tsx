@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { AnnotationModal } from '@/components/annotation/AnnotationModal';
 import { WorkflowCanvas } from '@/components/canvas/WorkflowCanvas';
 import { CommandPalette } from '@/components/command-palette';
+import { CostModal } from '@/components/cost';
 import { AIGeneratorPanel } from '@/components/panels/AIGeneratorPanel';
 import { NodePalette } from '@/components/panels/NodePalette';
 import { PromptEditorModal } from '@/components/prompt-editor/PromptEditorModal';
@@ -146,6 +147,7 @@ export default function WorkflowEditorPage() {
       <AnnotationModal />
       <GenerateWorkflowModal />
       <TemplatesModal />
+      <CostModal />
       <CommandPalette />
       {activeModal === 'welcome' && <WelcomeModal />}
     </ReactFlowProvider>

@@ -99,6 +99,15 @@ export class Execution extends Document {
   @Prop({ default: 0 })
   depth: number; // Nesting level (0 = root execution)
 
+  // Sequential execution: pending nodes waiting to be processed
+  @Prop({ type: [Object], default: [] })
+  pendingNodes: Array<{
+    nodeId: string;
+    nodeType: string;
+    nodeData: Record<string, unknown>;
+    dependsOn: string[];
+  }>;
+
   createdAt: Date;
   updatedAt: Date;
 }

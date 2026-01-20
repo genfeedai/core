@@ -5,6 +5,7 @@ import {
   AlertCircle,
   BookMarked,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Cloud,
@@ -15,6 +16,7 @@ import {
   LayoutTemplate,
   Loader2,
   MessageSquare,
+  MoreVertical,
   Play,
   PlayCircle,
   Plus,
@@ -30,6 +32,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { WorkflowSwitcher } from '@/components/workflow/WorkflowSwitcher';
 import { useHeaderCommentNavigation } from '@/hooks/useCommentNavigation';
 import { usePaneActions } from '@/hooks/usePaneActions';
 import { logger } from '@/lib/logger';
@@ -39,28 +42,158 @@ import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
 
 /**
- * Icon button with tooltip
+ * Dropdown menu item interface
  */
-interface IconButtonProps {
+interface DropdownItem {
+  id: string;
+  label: string;
   icon: React.ReactNode;
-  tooltip: string;
   onClick: () => void;
-  active?: boolean;
-  variant?: 'ghost' | 'secondary';
+  external?: boolean;
 }
 
-function IconButton({ icon, tooltip, onClick, active, variant = 'ghost' }: IconButtonProps) {
+/**
+ * Toolbar dropdown menu component
+ */
+interface ToolbarDropdownProps {
+  label: string;
+  items: DropdownItem[];
+}
+
+function ToolbarDropdown({ label, items }: ToolbarDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button variant={active ? 'secondary' : variant} size="icon-sm" onClick={onClick}>
-          {icon}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">
-        <p>{tooltip}</p>
-      </TooltipContent>
-    </Tooltip>
+    <div ref={menuRef} className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+      >
+        {label}
+        <ChevronDown className="h-3.5 w-3.5" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 top-full z-50 mt-1 min-w-[180px] rounded-lg border border-border bg-card py-1 shadow-lg">
+          {items.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                item.onClick();
+                setIsOpen(false);
+              }}
+              className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-foreground transition hover:bg-secondary"
+            >
+              <span className="h-4 w-4 shrink-0">{item.icon}</span>
+              <span>{item.label}</span>
+              {item.external && <span className="ml-auto text-xs text-muted-foreground">↗</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Overflow menu with icon trigger
+ */
+interface OverflowMenuProps {
+  items: DropdownItem[];
+}
+
+function OverflowMenu({ items }: OverflowMenuProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
+  return (
+    <div ref={menuRef} className="relative">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          <p>More options</p>
+        </TooltipContent>
+      </Tooltip>
+
+      {isOpen && (
+        <div className="absolute right-0 top-full z-50 mt-1 min-w-[180px] rounded-lg border border-border bg-card py-1 shadow-lg">
+          {items.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                item.onClick();
+                setIsOpen(false);
+              }}
+              className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-foreground transition hover:bg-secondary"
+            >
+              <span className="h-4 w-4 shrink-0">{item.icon}</span>
+              <span>{item.label}</span>
+              {item.external && <span className="ml-auto text-xs text-muted-foreground">↗</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -71,6 +204,17 @@ function DiscordIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
       <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
+    </svg>
+  );
+}
+
+/**
+ * X (Twitter) icon SVG component
+ */
+function XIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
     </svg>
   );
 }
@@ -239,8 +383,7 @@ function isValidWorkflow(data: unknown): data is WorkflowFile {
 }
 
 export function Toolbar() {
-  const { workflowName, isDirty, exportWorkflow, selectedNodeIds, setWorkflowName, saveWorkflow } =
-    useWorkflowStore();
+  const { exportWorkflow, selectedNodeIds } = useWorkflowStore();
   const {
     isRunning,
     executeWorkflow,
@@ -253,43 +396,8 @@ export function Toolbar() {
     estimatedCost,
     actualCost,
   } = useExecutionStore();
-  const { showAIGenerator, toggleAIGenerator, openModal } = useUIStore();
+  const { toggleAIGenerator, openModal } = useUIStore();
   const { autoLayout } = usePaneActions();
-
-  // Inline name editing state
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [editedName, setEditedName] = useState(workflowName);
-  const nameInputRef = useRef<HTMLInputElement>(null);
-
-  // Sync editedName when workflowName changes externally
-  useEffect(() => {
-    if (!isEditingName) setEditedName(workflowName);
-  }, [workflowName, isEditingName]);
-
-  // Focus and select input when entering edit mode
-  useEffect(() => {
-    if (isEditingName) nameInputRef.current?.select();
-  }, [isEditingName]);
-
-  const handleNameSave = useCallback(async () => {
-    const trimmed = editedName.trim();
-    if (trimmed && trimmed !== workflowName) {
-      setWorkflowName(trimmed);
-      await saveWorkflow();
-    }
-    setIsEditingName(false);
-  }, [editedName, workflowName, setWorkflowName, saveWorkflow]);
-
-  const handleNameKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter') handleNameSave();
-      if (e.key === 'Escape') {
-        setEditedName(workflowName);
-        setIsEditingName(false);
-      }
-    },
-    [handleNameSave, workflowName]
-  );
 
   // Memoize deduped error messages
   const uniqueErrorMessages = useMemo(() => {
@@ -366,20 +474,104 @@ export function Toolbar() {
   const hasSelection = selectedNodeIds.length > 0;
   const showResumeButton = canResumeFromFailed();
 
+  // File menu items
+  const fileMenuItems: DropdownItem[] = useMemo(
+    () => [
+      {
+        id: 'export',
+        label: 'Export Workflow',
+        icon: <Save className="h-4 w-4" />,
+        onClick: handleSave,
+      },
+      {
+        id: 'import',
+        label: 'Import Workflow',
+        icon: <FolderOpen className="h-4 w-4" />,
+        onClick: handleLoad,
+      },
+      {
+        id: 'layout',
+        label: 'Auto-layout',
+        icon: <LayoutGrid className="h-4 w-4" />,
+        onClick: () => autoLayout('LR'),
+      },
+    ],
+    [handleSave, handleLoad, autoLayout]
+  );
+
+  // Resources menu items
+  const resourcesMenuItems: DropdownItem[] = useMemo(
+    () => [
+      {
+        id: 'templates',
+        label: 'Templates',
+        icon: <LayoutTemplate className="h-4 w-4" />,
+        onClick: () => openModal('templates'),
+      },
+      {
+        id: 'promptLibrary',
+        label: 'Prompt Library',
+        icon: <BookMarked className="h-4 w-4" />,
+        onClick: () => openModal('promptLibrary'),
+      },
+      {
+        id: 'aiGenerator',
+        label: 'AI Generator',
+        icon: <Sparkles className="h-4 w-4" />,
+        onClick: toggleAIGenerator,
+      },
+    ],
+    [openModal, toggleAIGenerator]
+  );
+
+  // Overflow menu items
+  const overflowMenuItems: DropdownItem[] = useMemo(
+    () => [
+      {
+        id: 'settings',
+        label: 'Settings',
+        icon: <Settings className="h-4 w-4" />,
+        onClick: () => openModal('settings'),
+      },
+      {
+        id: 'marketplace',
+        label: 'Marketplace',
+        icon: <Store className="h-4 w-4" />,
+        onClick: () => window.open('https://marketplace.genfeed.ai/workflows', '_blank'),
+        external: true,
+      },
+      {
+        id: 'discord',
+        label: 'Discord',
+        icon: <DiscordIcon className="h-4 w-4" />,
+        onClick: () => window.open('https://discord.gg/Qy867n83Z4', '_blank'),
+        external: true,
+      },
+      {
+        id: 'twitter',
+        label: 'X (Twitter)',
+        icon: <XIcon className="h-4 w-4" />,
+        onClick: () => window.open('https://x.com/genfeedai', '_blank'),
+        external: true,
+      },
+    ],
+    [openModal]
+  );
+
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="flex h-14 items-center gap-4 border-b border-border bg-card px-4">
+      <div className="flex h-14 items-center gap-3 border-b border-border bg-card px-4">
         {/* Logo / Home Link */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Link
               href="/"
-              className="flex h-8 w-8 items-center justify-center hover:opacity-90 transition"
+              className="flex h-6 w-6 items-center justify-center hover:opacity-90 transition"
             >
               <img
                 src="https://cdn.genfeed.ai/assets/branding/logo-white.png"
                 alt="Genfeed"
-                className="h-8 w-8 object-contain"
+                className="h-6 w-6 object-contain"
               />
             </Link>
           </TooltipTrigger>
@@ -388,112 +580,17 @@ export function Toolbar() {
           </TooltipContent>
         </Tooltip>
 
-        {/* Workflow Title */}
-        <div>
-          {isEditingName ? (
-            <input
-              ref={nameInputRef}
-              type="text"
-              value={editedName}
-              onChange={(e) => setEditedName(e.target.value)}
-              onBlur={handleNameSave}
-              onKeyDown={handleNameKeyDown}
-              className="text-sm font-semibold bg-transparent border-b border-primary outline-none text-foreground"
-            />
-          ) : (
-            <h1
-              className="text-sm font-semibold text-foreground cursor-pointer hover:text-primary transition-colors"
-              onClick={() => setIsEditingName(true)}
-            >
-              {workflowName}
-              {isDirty && <span className="text-muted-foreground">*</span>}
-            </h1>
-          )}
-          <p className="text-xs text-muted-foreground">Genfeed</p>
-        </div>
+        {/* Workflow Switcher */}
+        <WorkflowSwitcher />
 
         {/* Divider */}
         <div className="h-8 w-px bg-border" />
 
-        {/* Layout */}
-        <IconButton
-          icon={<LayoutGrid className="h-4 w-4" />}
-          tooltip="Auto-layout Nodes"
-          onClick={() => autoLayout('LR')}
-        />
+        {/* File Menu */}
+        <ToolbarDropdown label="File" items={fileMenuItems} />
 
-        {/* Divider */}
-        <div className="h-8 w-px bg-border" />
-
-        {/* File Operations */}
-        <div className="flex items-center gap-1">
-          <IconButton
-            icon={<Save className="h-4 w-4" />}
-            tooltip="Export Workflow (JSON)"
-            onClick={handleSave}
-          />
-          <IconButton
-            icon={<FolderOpen className="h-4 w-4" />}
-            tooltip="Import Workflow"
-            onClick={handleLoad}
-          />
-          <IconButton
-            icon={<LayoutTemplate className="h-4 w-4" />}
-            tooltip="Templates"
-            onClick={() => openModal('templates')}
-          />
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <a
-                href="https://marketplace.genfeed.ai/workflows"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button variant="ghost" size="icon-sm">
-                  <Store className="h-4 w-4" />
-                </Button>
-              </a>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>Marketplace</p>
-            </TooltipContent>
-          </Tooltip>
-          <IconButton
-            icon={<BookMarked className="h-4 w-4" />}
-            tooltip="Prompt Library"
-            onClick={() => openModal('promptLibrary')}
-          />
-          <IconButton
-            icon={<Sparkles className="h-4 w-4" />}
-            tooltip="AI Workflow Generator"
-            onClick={toggleAIGenerator}
-            active={showAIGenerator}
-          />
-        </div>
-
-        {/* Divider */}
-        <div className="h-8 w-px bg-border" />
-
-        {/* Settings */}
-        <IconButton
-          icon={<Settings className="h-4 w-4" />}
-          tooltip="Settings"
-          onClick={() => openModal('settings')}
-        />
-
-        {/* Discord */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <a href="https://discord.gg/Qy867n83Z4" target="_blank" rel="noopener noreferrer">
-              <Button variant="ghost" size="icon-sm">
-                <DiscordIcon className="h-4 w-4" />
-              </Button>
-            </a>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>Join Discord</p>
-          </TooltipContent>
-        </Tooltip>
+        {/* Resources Menu */}
+        <ToolbarDropdown label="Resources" items={resourcesMenuItems} />
 
         {/* Divider */}
         <div className="h-8 w-px bg-border" />
@@ -520,9 +617,6 @@ export function Toolbar() {
             <p>View cost breakdown</p>
           </TooltipContent>
         </Tooltip>
-
-        {/* Divider */}
-        <div className="h-8 w-px bg-border" />
 
         {/* Auto-Save Indicator */}
         <SaveIndicator />
@@ -595,6 +689,12 @@ export function Toolbar() {
             <p>Create new workflow</p>
           </TooltipContent>
         </Tooltip>
+
+        {/* Divider */}
+        <div className="h-8 w-px bg-border" />
+
+        {/* Overflow Menu */}
+        <OverflowMenu items={overflowMenuItems} />
 
         {/* Validation Errors Toast */}
         {uniqueErrorMessages.length > 0 && (

@@ -2,6 +2,7 @@ import type { WorkflowInterface } from '@genfeedai/types';
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import type { CreateWorkflowDto } from '@/dto/create-workflow.dto';
 import { ImportWorkflowDto } from '@/dto/import-workflow.dto';
+import { QueryWorkflowDto } from '@/dto/query-workflow.dto';
 import type { UpdateWorkflowDto } from '@/dto/update-workflow.dto';
 import type { CostEstimate, WorkflowNodeForCost } from '@/interfaces/cost.interface';
 import type { WorkflowExport } from '@/interfaces/workflow-export.interface';
@@ -26,8 +27,8 @@ export class WorkflowsController {
   }
 
   @Get()
-  findAll() {
-    return this.workflowsService.findAll();
+  findAll(@Query() query: QueryWorkflowDto) {
+    return this.workflowsService.findAll(query);
   }
 
   // Static routes must come before parameterized routes (:id)

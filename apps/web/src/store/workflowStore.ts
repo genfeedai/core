@@ -15,6 +15,8 @@ import { applyEdgeChanges, applyNodeChanges, addEdge as rfAddEdge } from '@xyflo
 import { nanoid } from 'nanoid';
 import { create } from 'zustand';
 import { type WorkflowData, workflowsApi } from '@/lib/api';
+import { calculateWorkflowCost } from '@/lib/replicate/client';
+import { useExecutionStore } from '@/store/executionStore';
 import type { GroupColor, NodeGroup } from '@/types/groups';
 import { DEFAULT_GROUP_COLORS } from '@/types/groups';
 
@@ -473,6 +475,10 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
       groups: workflow.groups ?? [],
       selectedNodeIds: [],
     });
+
+    // Calculate and set estimated cost
+    const estimatedCost = calculateWorkflowCost(workflow.nodes);
+    useExecutionStore.getState().setEstimatedCost(estimatedCost);
   },
 
   clearWorkflow: () => {
@@ -838,9 +844,10 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
 
     try {
       const workflow = await workflowsApi.getById(id, signal);
+      const nodes = workflow.nodes as WorkflowNode[];
 
       set({
-        nodes: workflow.nodes as WorkflowNode[],
+        nodes,
         edges: workflow.edges as WorkflowEdge[],
         edgeStyle: workflow.edgeStyle as EdgeStyle,
         workflowName: workflow.name,
@@ -849,6 +856,10 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
         isDirty: false,
         isLoading: false,
       });
+
+      // Calculate and set estimated cost
+      const estimatedCost = calculateWorkflowCost(nodes);
+      useExecutionStore.getState().setEstimatedCost(estimatedCost);
     } catch (error) {
       set({ isLoading: false });
       throw error;

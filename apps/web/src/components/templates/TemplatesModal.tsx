@@ -1,11 +1,12 @@
 'use client';
 
 import type { EdgeStyle } from '@genfeedai/types';
-import { ArrowLeft, ArrowRight, ExternalLink, Layers, Search } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { WorkflowPreview } from '@/components/WorkflowPreview';
 import { type TemplateData, templatesApi } from '@/lib/api/templates';
 import {
   type Difficulty,
@@ -52,9 +53,7 @@ function TemplateCard({
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <Layers className="h-12 w-12 text-muted-foreground/30" />
-          </div>
+          <WorkflowPreview nodes={template.nodes} edges={template.edges} />
         )}
         {/* Difficulty badge */}
         <span

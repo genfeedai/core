@@ -23,6 +23,7 @@ const AUDIO_CODECS: { value: AudioCodec; label: string; hint: string }[] = [
 function VideoStitchNodeComponent(props: NodeProps) {
   const { id, data } = props;
   const nodeData = data as VideoStitchNodeData;
+  const inputVideos = nodeData.inputVideos ?? [];
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const executeNode = useExecutionStore((state) => state.executeNode);
 
@@ -75,11 +76,11 @@ function VideoStitchNodeComponent(props: NodeProps) {
         {/* Input Videos Info */}
         <div className="p-2 bg-[var(--background)] rounded border border-[var(--border)]">
           <div className="text-xs text-[var(--muted-foreground)]">
-            Input Videos: {nodeData.inputVideos.length}
+            Input Videos: {inputVideos.length}
           </div>
-          {nodeData.inputVideos.length > 0 && (
+          {inputVideos.length > 0 && (
             <div className="mt-1 flex gap-1 flex-wrap">
-              {nodeData.inputVideos.map((_, index) => (
+              {inputVideos.map((_, index) => (
                 <div
                   key={index}
                   className="w-6 h-6 bg-[var(--primary)]/20 rounded text-xs flex items-center justify-center text-[var(--primary)]"
@@ -192,7 +193,7 @@ function VideoStitchNodeComponent(props: NodeProps) {
         {!nodeData.outputVideo && nodeData.status !== 'processing' && (
           <button
             onClick={handleProcess}
-            disabled={nodeData.inputVideos.length < 2}
+            disabled={inputVideos.length < 2}
             className="w-full py-2 bg-[var(--primary)] text-white rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Layers className="w-4 h-4" />
@@ -200,7 +201,7 @@ function VideoStitchNodeComponent(props: NodeProps) {
           </button>
         )}
 
-        {nodeData.inputVideos.length < 2 && !nodeData.outputVideo && (
+        {inputVideos.length < 2 && !nodeData.outputVideo && (
           <div className="text-xs text-[var(--muted-foreground)] text-center">
             Connect at least 2 videos to stitch
           </div>

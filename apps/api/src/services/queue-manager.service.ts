@@ -1,5 +1,5 @@
 import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import type { Queue } from 'bullmq';
 import type { Model } from 'mongoose';
@@ -14,6 +14,7 @@ import {
   type QueueName,
 } from '@/queue/queue.constants';
 import { QueueJob, type QueueJobDocument } from '@/schemas/queue-job.schema';
+import type { ExecutionsService } from '@/services/executions.service';
 
 @Injectable()
 export class QueueManagerService {
@@ -30,7 +31,9 @@ export class QueueManagerService {
     @InjectQueue(QUEUE_NAMES.LLM_GENERATION)
     private readonly llmQueue: Queue,
     @InjectModel(QueueJob.name)
-    private readonly queueJobModel: Model<QueueJobDocument>
+    private readonly queueJobModel: Model<QueueJobDocument>,
+    @Inject(forwardRef(() => 'ExecutionsService'))
+    private readonly executionsService: ExecutionsService
   ) {
     this.queues = new Map([
       [QUEUE_NAMES.WORKFLOW_ORCHESTRATOR, this.workflowQueue],
@@ -331,5 +334,42 @@ export class QueueManagerService {
       default:
         return JOB_PRIORITY.NORMAL;
     }
+  }
+
+  /**
+   * Continue sequential execution by enqueueing the next ready node
+   * Called after a node completes (via webhook) or fails (after all retries)
+   */
+  async continueExecution(executionId: string, workflowId: string): Promise<void> {
+    // Check if execution is complete (handles failed nodes and blocked dependents)
+    const isComplete = await this.executionsService.checkExecutionCompletion(executionId);
+    if (isComplete) {
+      this.logger.log(`Execution ${executionId} completed`);
+      return;
+    }
+
+    // Get next ready nodes
+    const readyNodes = await this.executionsService.getReadyNodes(executionId);
+
+    if (readyNodes.length === 0) {
+      this.logger.log(`Execution ${executionId}: no ready nodes, waiting for dependencies`);
+      return;
+    }
+
+    // Enqueue only the first ready node (sequential execution)
+    const nextNode = readyNodes[0];
+    await this.enqueueNode(
+      executionId,
+      workflowId,
+      nextNode.nodeId,
+      nextNode.nodeType,
+      nextNode.nodeData,
+      nextNode.dependsOn
+    );
+    await this.executionsService.removeFromPendingNodes(executionId, nextNode.nodeId);
+
+    this.logger.log(
+      `Execution ${executionId}: enqueued next node ${nextNode.nodeId} (${nextNode.nodeType})`
+    );
   }
 }
