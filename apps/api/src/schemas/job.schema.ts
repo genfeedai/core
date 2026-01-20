@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, type HydratedDocument, Types } from 'mongoose';
 import type { JobCostBreakdown } from '@/interfaces/cost.interface';
+import { PREDICTION_STATUS } from '@/queue/queue.constants';
 
 export type JobDocument = HydratedDocument<Job>;
 
@@ -13,12 +14,12 @@ export class Job extends Document {
   nodeId: string;
 
   @Prop({ required: true, unique: true })
-  predictionId: string; // Replicate prediction ID
+  predictionId: string;
 
   @Prop({
     required: true,
-    enum: ['pending', 'processing', 'succeeded', 'failed', 'canceled'],
-    default: 'pending',
+    enum: Object.values(PREDICTION_STATUS),
+    default: PREDICTION_STATUS.PENDING,
   })
   status: string;
 
@@ -45,8 +46,3 @@ export class Job extends Document {
 }
 
 export const JobSchema = SchemaFactory.createForClass(Job);
-
-// Indexes
-JobSchema.index({ executionId: 1 });
-JobSchema.index({ predictionId: 1 }, { unique: true });
-JobSchema.index({ status: 1 });

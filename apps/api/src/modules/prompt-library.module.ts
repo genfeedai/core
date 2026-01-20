@@ -6,7 +6,18 @@ import { PromptLibraryService } from '@/services/prompt-library.service';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: PromptLibraryItem.name, schema: PromptLibraryItemSchema }]),
+    MongooseModule.forFeatureAsync([
+      {
+        name: PromptLibraryItem.name,
+        useFactory: () => {
+          const schema = PromptLibraryItemSchema;
+          schema.index({ isDeleted: 1, category: 1 });
+          schema.index({ isFeatured: 1, useCount: -1 });
+          schema.index({ name: 'text', description: 'text', promptText: 'text' });
+          return schema;
+        },
+      },
+    ]),
   ],
   controllers: [PromptLibraryController],
   providers: [PromptLibraryService],

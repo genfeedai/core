@@ -9,7 +9,17 @@ import { WorkflowsService } from '@/services/workflows.service';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Workflow.name, schema: WorkflowSchema }]),
+    MongooseModule.forFeatureAsync([
+      {
+        name: Workflow.name,
+        useFactory: () => {
+          const schema = WorkflowSchema;
+          schema.index({ isReusable: 1, isDeleted: 1 });
+          schema.index({ name: 'text', description: 'text' });
+          return schema;
+        },
+      },
+    ]),
     CostModule,
   ],
   controllers: [WorkflowsController],

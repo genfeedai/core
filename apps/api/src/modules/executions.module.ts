@@ -8,9 +8,24 @@ import { ExecutionsService } from '@/services/executions.service';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Execution.name, schema: ExecutionSchema },
-      { name: Job.name, schema: JobSchema },
+    MongooseModule.forFeatureAsync([
+      {
+        name: Execution.name,
+        useFactory: () => {
+          const schema = ExecutionSchema;
+          schema.index({ workflowId: 1, isDeleted: 1 });
+          schema.index({ createdAt: -1 });
+          return schema;
+        },
+      },
+      {
+        name: Job.name,
+        useFactory: () => {
+          const schema = JobSchema;
+          schema.index({ executionId: 1, status: 1 });
+          return schema;
+        },
+      },
     ]),
     forwardRef(() => QueueModule),
   ],

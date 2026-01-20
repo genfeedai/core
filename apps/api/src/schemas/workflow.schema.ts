@@ -134,7 +134,7 @@ export class Workflow extends Document {
   @Prop({ type: [Object], default: [] })
   groups: NodeGroup[];
 
-  @Prop({ default: false })
+  @Prop({ default: false, index: true })
   isDeleted: boolean;
 
   // Composition: computed interface from WorkflowInput/WorkflowOutput boundary nodes
@@ -150,8 +150,3 @@ export class Workflow extends Document {
 }
 
 export const WorkflowSchema = SchemaFactory.createForClass(Workflow);
-
-// Indexes
-WorkflowSchema.index({ isDeleted: 1 });
-WorkflowSchema.index({ name: 'text', description: 'text' });
-WorkflowSchema.index({ isReusable: 1, isDeleted: 1 }); // For finding referencable workflows

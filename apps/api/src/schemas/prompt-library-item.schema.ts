@@ -63,7 +63,7 @@ export class PromptLibraryItem extends Document {
   @Prop({ enum: Object.values(PromptCategory), default: PromptCategory.CUSTOM })
   category: PromptCategory;
 
-  @Prop({ type: [String], default: [] })
+  @Prop({ type: [String], default: [], index: true })
   tags: string[];
 
   // Preview thumbnail (URL or base64)
@@ -87,9 +87,3 @@ export class PromptLibraryItem extends Document {
 }
 
 export const PromptLibraryItemSchema = SchemaFactory.createForClass(PromptLibraryItem);
-
-// Indexes
-PromptLibraryItemSchema.index({ isDeleted: 1, category: 1 });
-PromptLibraryItemSchema.index({ isFeatured: 1, useCount: -1 });
-PromptLibraryItemSchema.index({ tags: 1 });
-PromptLibraryItemSchema.index({ name: 'text', description: 'text', promptText: 'text' });

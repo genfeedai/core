@@ -21,10 +21,10 @@ export class QueueJob extends Document {
   @Prop({ required: true, index: true })
   bullJobId: string;
 
-  @Prop({ required: true, enum: Object.values(QUEUE_NAMES), index: true })
+  @Prop({ required: true, enum: Object.values(QUEUE_NAMES) })
   queueName: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Execution', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'Execution', required: true })
   executionId: Types.ObjectId;
 
   @Prop({ required: true })
@@ -34,7 +34,6 @@ export class QueueJob extends Document {
     required: true,
     enum: Object.values(JOB_STATUS),
     default: JOB_STATUS.PENDING,
-    index: true,
   })
   status: string;
 
@@ -62,7 +61,7 @@ export class QueueJob extends Document {
   @Prop({ type: [Object], default: [] })
   logs: JobLog[];
 
-  @Prop({ default: false, index: true })
+  @Prop({ default: false })
   movedToDlq: boolean;
 
   createdAt: Date;
@@ -70,9 +69,3 @@ export class QueueJob extends Document {
 }
 
 export const QueueJobSchema = SchemaFactory.createForClass(QueueJob);
-
-// Compound indexes for common queries
-QueueJobSchema.index({ executionId: 1, status: 1 });
-QueueJobSchema.index({ queueName: 1, status: 1 });
-QueueJobSchema.index({ status: 1, updatedAt: 1 }); // For recovery queries
-QueueJobSchema.index({ movedToDlq: 1, createdAt: -1 }); // For DLQ management

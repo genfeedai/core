@@ -113,7 +113,7 @@ export const NODE_TYPE_TO_QUEUE: Record<string, QueueName> = {
 };
 
 /**
- * Job status constants
+ * Job status constants (for queue jobs)
  */
 export const JOB_STATUS = {
   PENDING: 'pending',
@@ -127,3 +127,41 @@ export const JOB_STATUS = {
 } as const;
 
 export type JobStatus = (typeof JOB_STATUS)[keyof typeof JOB_STATUS];
+
+/**
+ * Execution status constants (for workflow executions)
+ */
+export const EXECUTION_STATUS = {
+  PENDING: 'pending',
+  RUNNING: 'running',
+  COMPLETED: 'completed',
+  FAILED: 'failed',
+  CANCELLED: 'cancelled',
+} as const;
+
+export type ExecutionStatus = (typeof EXECUTION_STATUS)[keyof typeof EXECUTION_STATUS];
+
+/**
+ * Prediction status constants (for Replicate jobs)
+ */
+export const PREDICTION_STATUS = {
+  PENDING: 'pending',
+  PROCESSING: 'processing',
+  SUCCEEDED: 'succeeded',
+  FAILED: 'failed',
+  CANCELED: 'canceled',
+} as const;
+
+export type PredictionStatus = (typeof PREDICTION_STATUS)[keyof typeof PREDICTION_STATUS];
+
+/**
+ * Node result status constants
+ */
+export const NODE_RESULT_STATUS = {
+  PENDING: 'pending',
+  PROCESSING: 'processing',
+  COMPLETE: 'complete',
+  ERROR: 'error',
+} as const;
+
+export type NodeResultStatus = (typeof NODE_RESULT_STATUS)[keyof typeof NODE_RESULT_STATUS];

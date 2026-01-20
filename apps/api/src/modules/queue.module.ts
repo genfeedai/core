@@ -74,7 +74,19 @@ import { WorkflowsService } from '@/services/workflows.service';
     ),
 
     // MongoDB schema for job persistence
-    MongooseModule.forFeature([{ name: QueueJob.name, schema: QueueJobSchema }]),
+    MongooseModule.forFeatureAsync([
+      {
+        name: QueueJob.name,
+        useFactory: () => {
+          const schema = QueueJobSchema;
+          schema.index({ executionId: 1, status: 1 });
+          schema.index({ queueName: 1, status: 1 });
+          schema.index({ status: 1, updatedAt: 1 });
+          schema.index({ movedToDlq: 1, createdAt: -1 });
+          return schema;
+        },
+      },
+    ]),
 
     // Feature modules
     forwardRef(() => ExecutionsModule),

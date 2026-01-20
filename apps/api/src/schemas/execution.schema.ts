@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, type HydratedDocument, Types } from 'mongoose';
+import { EXECUTION_STATUS, NODE_RESULT_STATUS } from '@/queue/queue.constants';
 
 export type ExecutionDocument = HydratedDocument<Execution>;
 
@@ -22,7 +23,7 @@ class NodeResult {
   @Prop({ required: true })
   nodeId: string;
 
-  @Prop({ required: true, enum: ['pending', 'processing', 'complete', 'error'] })
+  @Prop({ required: true, enum: Object.values(NODE_RESULT_STATUS) })
   status: string;
 
   @Prop({ type: Object })
@@ -48,8 +49,9 @@ export class Execution extends Document {
 
   @Prop({
     required: true,
-    enum: ['pending', 'running', 'completed', 'failed', 'cancelled'],
-    default: 'pending',
+    enum: Object.values(EXECUTION_STATUS),
+    default: EXECUTION_STATUS.PENDING,
+    index: true,
   })
   status: string;
 
@@ -85,8 +87,8 @@ export class Execution extends Document {
   resumedFrom?: string; // For recovery - previous execution ID
 
   // Composition: nested execution tracking
-  @Prop({ type: Types.ObjectId, ref: 'Execution' })
-  parentExecutionId?: Types.ObjectId; // If this is a child execution, reference to parent
+  @Prop({ type: Types.ObjectId, ref: 'Execution', index: true })
+  parentExecutionId?: Types.ObjectId;
 
   @Prop()
   parentNodeId?: string; // The workflowRef node ID in parent that triggered this execution
@@ -102,9 +104,3 @@ export class Execution extends Document {
 }
 
 export const ExecutionSchema = SchemaFactory.createForClass(Execution);
-
-// Indexes
-ExecutionSchema.index({ workflowId: 1, isDeleted: 1 });
-ExecutionSchema.index({ status: 1 });
-ExecutionSchema.index({ createdAt: -1 });
-ExecutionSchema.index({ parentExecutionId: 1 }); // For finding child executions

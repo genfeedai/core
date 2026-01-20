@@ -29,8 +29,8 @@ export class Template extends Document {
   @Prop({ default: 'smoothstep' })
   edgeStyle: string;
 
-  @Prop({ default: false })
-  isSystem: boolean; // Built-in templates vs user-created
+  @Prop({ default: false, index: true })
+  isSystem: boolean;
 
   @Prop({ default: false })
   isDeleted: boolean;
@@ -40,8 +40,3 @@ export class Template extends Document {
 }
 
 export const TemplateSchema = SchemaFactory.createForClass(Template);
-
-// Indexes
-TemplateSchema.index({ isDeleted: 1, category: 1 });
-TemplateSchema.index({ isSystem: 1 });
-TemplateSchema.index({ name: 'text', description: 'text' });
