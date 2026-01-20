@@ -1,5 +1,5 @@
 import { Copy, Lock, LockOpen, Scissors, Trash2 } from 'lucide-react';
-import type { ContextMenuItemConfig } from '@/components/context-menu/ContextMenu';
+import { type ContextMenuItemConfig, createSeparator } from '@/components/context-menu/ContextMenu';
 
 interface NodeMenuOptions {
   nodeId: string;
@@ -30,12 +30,7 @@ export function getNodeMenuItems({
       shortcut: '⌘D',
       onClick: () => onDuplicate(nodeId),
     },
-    {
-      id: 'separator-1',
-      label: '',
-      separator: true,
-      onClick: () => {},
-    },
+    createSeparator('separator-1'),
     isLocked
       ? {
           id: 'unlock',
@@ -51,12 +46,7 @@ export function getNodeMenuItems({
           shortcut: 'L',
           onClick: () => onLock(nodeId),
         },
-    {
-      id: 'separator-2',
-      label: '',
-      separator: true,
-      onClick: () => {},
-    },
+    createSeparator('separator-2'),
     {
       id: 'cut',
       label: 'Cut',
@@ -71,12 +61,7 @@ export function getNodeMenuItems({
       shortcut: '⌘C',
       onClick: () => onCopy(nodeId),
     },
-    {
-      id: 'separator-3',
-      label: '',
-      separator: true,
-      onClick: () => {},
-    },
+    createSeparator('separator-3'),
     {
       id: 'delete',
       label: 'Delete',

@@ -8,7 +8,7 @@ import {
   Monitor,
   Video,
 } from 'lucide-react';
-import type { ContextMenuItemConfig } from '@/components/context-menu/ContextMenu';
+import { type ContextMenuItemConfig, createSeparator } from '@/components/context-menu/ContextMenu';
 
 interface PaneMenuOptions {
   screenX: number;
@@ -62,12 +62,7 @@ export function getPaneMenuItems({
       icon: <Monitor className="w-4 h-4" />,
       onClick: () => onAddNode('output', screenX, screenY),
     },
-    {
-      id: 'separator-1',
-      label: '',
-      separator: true,
-      onClick: () => {},
-    },
+    createSeparator('separator-1'),
     {
       id: 'paste',
       label: 'Paste',
@@ -76,12 +71,7 @@ export function getPaneMenuItems({
       disabled: !hasClipboard,
       onClick: onPaste,
     },
-    {
-      id: 'separator-2',
-      label: '',
-      separator: true,
-      onClick: () => {},
-    },
+    createSeparator('separator-2'),
     {
       id: 'select-all',
       label: 'Select All',

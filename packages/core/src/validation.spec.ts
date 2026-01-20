@@ -214,8 +214,8 @@ describe('getHandleType', () => {
   });
 
   it('should return null for unknown node type', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = getHandleType('unknownType' as any, 'handle', 'source');
+    // Testing invalid type handling - using 'never' to bypass type checking
+    const result = getHandleType('unknownType' as never, 'handle', 'source');
     expect(result).toBeNull();
   });
 
@@ -262,14 +262,14 @@ describe('isValidConnection', () => {
   });
 
   it('should return false for unknown source node type', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = isValidConnection('unknownType' as any, 'handle', 'imageGen', 'prompt');
+    // Testing invalid type handling - using 'never' to bypass type checking
+    const result = isValidConnection('unknownType' as never, 'handle', 'imageGen', 'prompt');
     expect(result).toBe(false);
   });
 
   it('should return false for unknown target node type', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = isValidConnection('prompt', 'text', 'unknownType' as any, 'handle');
+    // Testing invalid type handling - using 'never' to bypass type checking
+    const result = isValidConnection('prompt', 'text', 'unknownType' as never, 'handle');
     expect(result).toBe(false);
   });
 
@@ -311,8 +311,8 @@ describe('getCompatibleHandles', () => {
   });
 
   it('should return empty array for unknown type', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = getCompatibleHandles('unknownType' as any);
+    // Testing invalid type handling - using 'never' to bypass type checking
+    const result = getCompatibleHandles('unknownType' as never);
     expect(result).toEqual([]);
   });
 });

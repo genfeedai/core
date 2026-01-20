@@ -576,8 +576,6 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
         image?: string;
         video?: string;
         audio?: string;
-        rawText?: string;
-        tweetUrl?: string;
         templateId?: string;
         outputImage?: string;
         outputVideo?: string;
@@ -593,8 +591,6 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
           return Boolean(data.video);
         case 'audioInput':
           return Boolean(data.audio);
-        case 'tweetInput':
-          return Boolean(data.tweetUrl?.trim() || data.rawText?.trim());
         case 'template':
           return Boolean(data.templateId);
         default:
@@ -812,10 +808,7 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
     }
   },
 
-  duplicateWorkflowApi: async (id, signal) => {
-    const workflow = await workflowsApi.duplicate(id, signal);
-    return workflow;
-  },
+  duplicateWorkflowApi: (id, signal) => workflowsApi.duplicate(id, signal),
 
   createNewWorkflow: async (signal) => {
     const { edgeStyle } = get();

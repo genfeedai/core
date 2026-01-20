@@ -7,7 +7,7 @@ import {
   LockOpen,
   Trash2,
 } from 'lucide-react';
-import type { ContextMenuItemConfig } from '@/components/context-menu/ContextMenu';
+import { type ContextMenuItemConfig, createSeparator } from '@/components/context-menu/ContextMenu';
 
 interface SelectionMenuOptions {
   nodeIds: string[];
@@ -47,12 +47,7 @@ export function getSelectionMenuItems({
       shortcut: '⌘D',
       onClick: () => onDuplicateAll(nodeIds),
     },
-    {
-      id: 'separator-1',
-      label: '',
-      separator: true,
-      onClick: () => {},
-    },
+    createSeparator('separator-1'),
     {
       id: 'lock-all',
       label: 'Lock All',
@@ -66,12 +61,7 @@ export function getSelectionMenuItems({
       icon: <LockOpen className="w-4 h-4" />,
       onClick: () => onUnlockAll(nodeIds),
     },
-    {
-      id: 'separator-2',
-      label: '',
-      separator: true,
-      onClick: () => {},
-    },
+    createSeparator('separator-2'),
     {
       id: 'align-horizontal',
       label: 'Align Horizontally',
@@ -84,12 +74,7 @@ export function getSelectionMenuItems({
       icon: <AlignVerticalJustifyCenter className="w-4 h-4" />,
       onClick: () => onAlignVertical(nodeIds),
     },
-    {
-      id: 'separator-3',
-      label: '',
-      separator: true,
-      onClick: () => {},
-    },
+    createSeparator('separator-3'),
     {
       id: 'delete-all',
       label: `Delete ${count} Nodes`,

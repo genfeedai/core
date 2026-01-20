@@ -6,13 +6,18 @@ import { ContextMenuSeparator } from './ContextMenuSeparator';
 
 export interface ContextMenuItemConfig {
   id: string;
-  label: string;
+  label?: string;
   icon?: React.ReactNode;
   shortcut?: string;
   disabled?: boolean;
   danger?: boolean;
   separator?: boolean;
-  onClick: () => void;
+  onClick?: () => void;
+}
+
+/** Helper to create a separator item */
+export function createSeparator(id: string): ContextMenuItemConfig {
+  return { id, separator: true };
 }
 
 interface ContextMenuProps {
@@ -112,7 +117,7 @@ export function ContextMenu({ x, y, items, onClose }: ContextMenuProps) {
           event.preventDefault();
           if (selectedIndex >= 0 && selectedIndex < items.length) {
             const item = items[selectedIndex];
-            if (!item.separator && !item.disabled) {
+            if (!item.separator && !item.disabled && item.onClick) {
               item.onClick();
               onClose();
             }
@@ -127,7 +132,7 @@ export function ContextMenu({ x, y, items, onClose }: ContextMenuProps) {
 
   const handleItemClick = useCallback(
     (item: ContextMenuItemConfig) => {
-      if (!item.disabled) {
+      if (!item.disabled && item.onClick) {
         item.onClick();
         onClose();
       }

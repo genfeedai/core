@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PromptLibraryController } from '@/controllers/prompt-library.controller';
+import type { QueryPromptLibraryDto } from '@/dto/query-prompt-library.dto';
 import type { PromptLibraryService } from '@/services/prompt-library.service';
 
 describe('PromptLibraryController', () => {
@@ -59,8 +60,7 @@ describe('PromptLibraryController', () => {
     });
 
     it('should pass query parameters to service', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const query = { search: 'sunset' } as any;
+      const query: QueryPromptLibraryDto = { search: 'sunset' };
 
       await controller.findAll(query);
 

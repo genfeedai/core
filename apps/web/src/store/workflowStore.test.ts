@@ -1,3 +1,4 @@
+import type { PromptNodeData, WorkflowEdge, WorkflowFile } from '@genfeedai/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useWorkflowStore } from './workflowStore';
 
@@ -65,9 +66,8 @@ describe('useWorkflowStore', () => {
     it('should return empty string for invalid node type', () => {
       const { addNode } = useWorkflowStore.getState();
 
-      // Test with invalid type - cast to bypass type checking
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const nodeId = addNode('invalidNodeType' as any, { x: 0, y: 0 });
+      // Test with invalid type - using 'never' to bypass type checking
+      const nodeId = addNode('invalidNodeType' as never, { x: 0, y: 0 });
 
       expect(nodeId).toBe('');
       expect(useWorkflowStore.getState().nodes).toHaveLength(0);
@@ -83,8 +83,7 @@ describe('useWorkflowStore', () => {
 
       const state = useWorkflowStore.getState();
       const node = state.nodes.find((n) => n.id === nodeId);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect((node?.data as any).prompt).toBe('Updated prompt');
+      expect((node?.data as PromptNodeData).prompt).toBe('Updated prompt');
       expect(state.isDirty).toBe(true);
     });
   });
@@ -110,8 +109,7 @@ describe('useWorkflowStore', () => {
       useWorkflowStore.setState((state) => ({
         edges: [
           ...state.edges,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          { id: 'edge-1', source: node1Id, target: node2Id, type: 'bezier' } as any,
+          { id: 'edge-1', source: node1Id, target: node2Id, type: 'bezier' } as WorkflowEdge,
         ],
       }));
 
@@ -150,8 +148,9 @@ describe('useWorkflowStore', () => {
   describe('removeEdge', () => {
     it('should remove an edge', () => {
       useWorkflowStore.setState({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        edges: [{ id: 'edge-1', source: 'node-1', target: 'node-2', type: 'bezier' } as any],
+        edges: [
+          { id: 'edge-1', source: 'node-1', target: 'node-2', type: 'bezier' } as WorkflowEdge,
+        ],
       });
 
       const { removeEdge } = useWorkflowStore.getState();
@@ -167,10 +166,8 @@ describe('useWorkflowStore', () => {
     it('should update edge style', () => {
       useWorkflowStore.setState({
         edges: [
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          { id: 'edge-1', source: 'node-1', target: 'node-2', type: 'bezier' } as any,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          { id: 'edge-2', source: 'node-2', target: 'node-3', type: 'bezier' } as any,
+          { id: 'edge-1', source: 'node-1', target: 'node-2', type: 'bezier' } as WorkflowEdge,
+          { id: 'edge-2', source: 'node-2', target: 'node-3', type: 'bezier' } as WorkflowEdge,
         ],
       });
 
@@ -188,7 +185,7 @@ describe('useWorkflowStore', () => {
     it('should load a workflow file', () => {
       const { loadWorkflow } = useWorkflowStore.getState();
 
-      loadWorkflow({
+      const workflowFile: WorkflowFile = {
         version: 1,
         name: 'Loaded Workflow',
         description: '',
@@ -204,8 +201,8 @@ describe('useWorkflowStore', () => {
         edgeStyle: 'straight',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
+      };
+      loadWorkflow(workflowFile);
 
       const state = useWorkflowStore.getState();
       expect(state.workflowName).toBe('Loaded Workflow');

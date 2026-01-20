@@ -1,15 +1,15 @@
+import { PRICING } from '@genfeedai/core';
 import { ConfigService } from '@nestjs/config';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CostCalculatorService } from '@/services/cost-calculator.service';
 import { ExecutionsService } from '@/services/executions.service';
-import { PRICING, ReplicateService } from '@/services/replicate.service';
+import { ReplicateService } from '@/services/replicate.service';
 import { WorkflowsService } from '@/services/workflows.service';
 import { mockReplicateClient } from '@/test/mocks/replicate.mock';
 
 describe('ReplicateService', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let service: any;
+  let service: ReplicateService;
 
   const mockExecutionsService = {
     createJob: vi.fn().mockResolvedValue({ _id: 'job-123' }),

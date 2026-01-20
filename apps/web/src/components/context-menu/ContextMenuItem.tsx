@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 export interface ContextMenuItemProps {
   id: string;
-  label: string;
+  label?: string;
   icon?: ReactNode;
   shortcut?: string;
   disabled?: boolean;
@@ -41,7 +41,7 @@ export function ContextMenuItem({
           {icon}
         </span>
       )}
-      <span className="flex-1">{label}</span>
+      {label && <span className="flex-1">{label}</span>}
       {shortcut && <span className="text-xs text-[var(--muted-foreground)] ml-4">{shortcut}</span>}
     </button>
   );

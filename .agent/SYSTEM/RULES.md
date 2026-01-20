@@ -1,7 +1,7 @@
 # Coding Rules - Genfeed
 
 **Purpose:** Coding standards and patterns for this project.
-**Last Updated:** 2026-01-14
+**Last Updated:** 2026-01-20
 
 ---
 
@@ -9,9 +9,8 @@
 
 1. **Follow existing patterns** - Search for 3+ similar implementations before writing new code
 2. **Quality over speed** - Think through implementations before coding
-3. **No inline types** - Define interfaces/types in dedicated files
-4. **No `any` types** - Use proper TypeScript types
-5. **No `console.log`** - Use a logging service
+3. **No `any` types** - Use proper TypeScript types
+4. **No `console.log`** - Use a logging service
 
 ---
 
@@ -60,9 +59,26 @@ import type { IUser } from '@interfaces/user';
 ### Don't
 
 - Use `any` type
-- Use inline interface definitions
 - Use relative imports for shared code
 - Ignore TypeScript errors
+
+### Interface Placement
+
+| Scope | Location |
+|-------|----------|
+| File-local only (1 file) | Inline is fine |
+| Shared across API files | `apps/api/src/interfaces/` |
+| Shared across packages | `packages/types/src/` |
+
+**Examples of acceptable inline interfaces:**
+- Query params only used in one controller
+- Internal processor state types
+- Helper function arguments
+
+**Move to dedicated file when:**
+- Used in more than one file
+- Part of public API contract
+- Likely to be reused
 
 ---
 
