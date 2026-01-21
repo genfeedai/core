@@ -154,6 +154,75 @@ export class ExecutionsService {
     return this.jobModel.findOne({ predictionId }).exec();
   }
 
+  /**
+   * Find a job with its execution and workflow context in a single aggregation query
+   * Replaces 3 sequential queries with 1 aggregation using $lookup
+   */
+  async findJobWithContext(predictionId: string): Promise<{
+    job: JobDocument;
+    execution: ExecutionDocument;
+    workflow: { _id: Types.ObjectId; nodes: Array<{ id: string; data: Record<string, unknown> }> };
+  } | null> {
+    const result = await this.jobModel
+      .aggregate([
+        { $match: { predictionId } },
+        {
+          $lookup: {
+            from: 'executions',
+            localField: 'executionId',
+            foreignField: '_id',
+            as: 'execution',
+          },
+        },
+        { $unwind: '$execution' },
+        {
+          $lookup: {
+            from: 'workflows',
+            localField: 'execution.workflowId',
+            foreignField: '_id',
+            as: 'workflow',
+            pipeline: [{ $project: { _id: 1, nodes: 1 } }],
+          },
+        },
+        { $unwind: '$workflow' },
+        {
+          $project: {
+            job: {
+              _id: '$_id',
+              executionId: '$executionId',
+              nodeId: '$nodeId',
+              predictionId: '$predictionId',
+              status: '$status',
+              progress: '$progress',
+              output: '$output',
+              error: '$error',
+              cost: '$cost',
+              costBreakdown: '$costBreakdown',
+              predictTime: '$predictTime',
+              createdAt: '$createdAt',
+              updatedAt: '$updatedAt',
+            },
+            execution: '$execution',
+            workflow: '$workflow',
+          },
+        },
+      ])
+      .exec();
+
+    if (!result || result.length === 0) {
+      return null;
+    }
+
+    return result[0] as {
+      job: JobDocument;
+      execution: ExecutionDocument;
+      workflow: {
+        _id: Types.ObjectId;
+        nodes: Array<{ id: string; data: Record<string, unknown> }>;
+      };
+    };
+  }
+
   async updateJob(
     predictionId: string,
     updates: {
@@ -289,6 +358,7 @@ export class ExecutionsService {
   /**
    * Check if all nodes are complete and update execution status
    * Handles: no pending nodes, blocked nodes (failed dependency), all errors
+   * Optimized: Uses single reduce to categorize all node results in one pass
    */
   async checkExecutionCompletion(executionId: string): Promise<boolean> {
     const execution = await this.findExecution(executionId);
@@ -299,17 +369,22 @@ export class ExecutionsService {
       return true;
     }
 
-    // Get completed and failed node IDs
-    const completedNodeIds = new Set(
-      execution.nodeResults.filter((r) => r.status === 'complete').map((r) => r.nodeId)
-    );
-    const failedNodeIds = new Set(
-      execution.nodeResults.filter((r) => r.status === 'error').map((r) => r.nodeId)
+    // Single-pass categorization of node results (replaces multiple filter calls)
+    const { completedIds, failedIds, hasError } = execution.nodeResults.reduce(
+      (acc, r) => {
+        if (r.status === 'complete') acc.completedIds.add(r.nodeId);
+        else if (r.status === 'error') {
+          acc.failedIds.add(r.nodeId);
+          acc.hasError = true;
+        }
+        return acc;
+      },
+      { completedIds: new Set<string>(), failedIds: new Set<string>(), hasError: false }
     );
 
     // Check if any pending nodes are blocked by failed dependencies
     const blockedNodes = pendingNodes.filter((node) =>
-      node.dependsOn.some((depId) => failedNodeIds.has(depId))
+      node.dependsOn.some((depId) => failedIds.has(depId))
     );
 
     // If there are blocked nodes, mark them as skipped and remove from pending
@@ -330,7 +405,7 @@ export class ExecutionsService {
 
     // Check if there are any ready nodes left
     const readyNodes = pendingNodes.filter((node) =>
-      node.dependsOn.every((depId) => completedNodeIds.has(depId))
+      node.dependsOn.every((depId) => completedIds.has(depId))
     );
 
     // If no pending nodes and no ready nodes, execution is done
@@ -338,7 +413,6 @@ export class ExecutionsService {
       const allProcessed = execution.nodeResults.length > 0;
 
       if (allProcessed && execution.status === 'running') {
-        const hasError = execution.nodeResults.some((r) => r.status === 'error');
         await this.updateExecutionStatus(
           executionId,
           hasError ? 'failed' : 'completed',

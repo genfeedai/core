@@ -2,7 +2,7 @@
 
 import { ChevronDown, Loader2, Plus, Workflow } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { WorkflowData } from '@/lib/api';
 import { logger } from '@/lib/logger';
@@ -156,8 +156,11 @@ function WorkflowSwitcherComponent({ className }: WorkflowSwitcherProps) {
     }
   }, [isDirty, saveWorkflow, router]);
 
-  // Filter out current workflow from list
-  const otherWorkflows = workflows.filter((w) => w._id !== workflowId);
+  // Filter out current workflow from list (memoized to avoid re-computation on each render)
+  const otherWorkflows = useMemo(
+    () => workflows.filter((w) => w._id !== workflowId),
+    [workflows, workflowId]
+  );
 
   return (
     <>

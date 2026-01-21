@@ -5,6 +5,7 @@ import { ExecutionsModule } from '@/modules/executions.module';
 import { QueueModule } from '@/modules/queue.module';
 import { WorkflowsModule } from '@/modules/workflows.module';
 import { ReplicateService } from '@/services/replicate.service';
+import { ReplicatePollerService } from '@/services/replicate-poller.service';
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { ReplicateService } from '@/services/replicate.service';
     CostModule,
   ],
   controllers: [ReplicateController],
-  providers: [ReplicateService],
-  exports: [ReplicateService],
+  providers: [ReplicateService, ReplicatePollerService],
+  exports: [ReplicateService, ReplicatePollerService],
 })
 export class ReplicateModule {}

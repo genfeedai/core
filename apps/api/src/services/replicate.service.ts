@@ -601,16 +601,14 @@ export class ReplicateService {
 
     this.logger.log(`Received webhook for prediction ${id}: ${status}`);
 
-    // Update job in database
-    const job = await this.executionsService.findJobByPredictionId(id);
-    if (!job) {
+    // Fetch job, execution, and workflow in a single aggregation query
+    const context = await this.executionsService.findJobWithContext(id);
+    if (!context) {
       this.logger.warn(`Job not found for prediction ${id}`);
       return;
     }
 
-    // Get node data to determine model and settings for cost calculation
-    const execution = await this.executionsService.findExecution(job.executionId.toString());
-    const workflow = await this.workflowsService.findOne(execution.workflowId.toString());
+    const { job, execution, workflow } = context;
     const node = workflow.nodes.find((n) => n.id === job.nodeId);
 
     // Calculate actual cost using model-specific pricing
