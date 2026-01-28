@@ -1,7 +1,7 @@
 /**
  * Auto-generated Replicate model types
  * DO NOT EDIT - Run `bun run sync:replicate` to regenerate
- * Generated at: 2026-01-16T03:17:30.756Z
+ * Generated at: 2026-01-23T11:12:52.916Z
  */
 
 // This file is auto-generated. Do not edit manually.

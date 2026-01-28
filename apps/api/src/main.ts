@@ -7,9 +7,10 @@ import { AppModule } from '@/app.module';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Increase body parser limit for large workflow payloads
-  app.useBodyParser('json', { limit: '10mb' });
-  app.useBodyParser('urlencoded', { limit: '10mb', extended: true });
+  // Increase body parser limit for base64 image payloads
+  // Base64 adds ~33% overhead, so 50mb supports ~37mb of raw image data
+  app.useBodyParser('json', { limit: '50mb' });
+  app.useBodyParser('urlencoded', { limit: '50mb', extended: true });
   const logger = new Logger('Bootstrap');
 
   const configService = app.get(ConfigService);

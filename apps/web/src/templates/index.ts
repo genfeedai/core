@@ -1,7 +1,10 @@
 import type { WorkflowFile } from '@genfeedai/types';
 import { FULL_PIPELINE_TEMPLATE } from './full-pipeline';
+import { DANCE_VIDEO_TEMPLATE } from './generated/dance-video';
 import { EXTENDED_VIDEO_TEMPLATE } from './generated/extended-video';
+import { FACECAM_AVATAR_TEMPLATE } from './generated/facecam-avatar';
 import { GRID_TO_VIDEO_TEMPLATE } from './generated/grid-to-video';
+import { INSTAGRAM_CAROUSEL_TEMPLATE } from './generated/instagram-carousel';
 import { SOCIAL_BRAND_KIT_TEMPLATE } from './generated/social-brand-kit';
 import { STREAM_TO_SOCIAL_TEMPLATE } from './generated/stream-to-social';
 import { VOICE_TO_VIDEO_TEMPLATE } from './generated/voice-to-video';
@@ -29,6 +32,9 @@ export const TEMPLATE_REGISTRY: Record<string, WorkflowFile> = {
   'youtube-video-generator': YOUTUBE_VIDEO_GENERATOR_TEMPLATE,
   'stream-to-social': STREAM_TO_SOCIAL_TEMPLATE,
   'social-brand-kit': SOCIAL_BRAND_KIT_TEMPLATE,
+  'facecam-avatar': FACECAM_AVATAR_TEMPLATE,
+  'dance-video': DANCE_VIDEO_TEMPLATE,
+  'instagram-carousel': INSTAGRAM_CAROUSEL_TEMPLATE,
 };
 
 export const TEMPLATE_INFO: TemplateInfo[] = [
@@ -37,18 +43,21 @@ export const TEMPLATE_INFO: TemplateInfo[] = [
     name: 'Image Series',
     description: 'Generate a series of related images from a concept prompt using LLM expansion',
     category: 'images',
+    thumbnail: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=600&h=400&fit=crop',
   },
   {
     id: 'image-to-video',
     name: 'Image to Video',
     description: 'Create interpolated video between two images with easing animation',
     category: 'video',
+    thumbnail: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?w=600&h=400&fit=crop',
   },
   {
     id: 'full-pipeline',
     name: 'Full Content Pipeline',
     description: 'Complete workflow: concept → images → videos → animation → stitched output',
     category: 'full-pipeline',
+    thumbnail: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop',
   },
   {
     id: 'extended-video',
@@ -56,6 +65,7 @@ export const TEMPLATE_INFO: TemplateInfo[] = [
     description:
       'Generate longer videos by chaining segments: extract last frame, generate continuation prompt, create next segment, and stitch together',
     category: 'video',
+    thumbnail: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=600&h=400&fit=crop',
   },
   {
     id: 'grid-to-video',
@@ -63,12 +73,14 @@ export const TEMPLATE_INFO: TemplateInfo[] = [
     description:
       'Generate a 3x3 grid image, split into 9 cells, create video from each, apply easing, and stitch into final video',
     category: 'full-pipeline',
+    thumbnail: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=400&fit=crop',
   },
   {
     id: 'voice-to-video',
     name: 'Voice to Video',
     description: 'Generate a talking-head video from an image and audio file using lip-sync AI',
     category: 'audio',
+    thumbnail: 'https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=600&h=400&fit=crop',
   },
   {
     id: 'youtube-thumbnail-script',
@@ -76,6 +88,7 @@ export const TEMPLATE_INFO: TemplateInfo[] = [
     description:
       'Generate multiple thumbnail variations using character and reference images, plus a livestream script from topic context',
     category: 'images',
+    thumbnail: 'https://images.unsplash.com/photo-1611162616475-46b635cb6868?w=600&h=400&fit=crop',
   },
   {
     id: 'youtube-video-generator',
@@ -83,6 +96,7 @@ export const TEMPLATE_INFO: TemplateInfo[] = [
     description:
       'Generate a complete 10-minute YouTube video: script → images → videos with camera movements → stitch → music → subtitles',
     category: 'full-pipeline',
+    thumbnail: 'https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?w=600&h=400&fit=crop',
   },
   {
     id: 'stream-to-social',
@@ -90,6 +104,7 @@ export const TEMPLATE_INFO: TemplateInfo[] = [
     description:
       'Transform a 1-hour stream into short-form content: transcribe → extract hot takes → generate intro + trim highlights → export',
     category: 'full-pipeline',
+    thumbnail: 'https://images.unsplash.com/photo-1614680376593-902f74cf0d41?w=600&h=400&fit=crop',
   },
   {
     id: 'social-brand-kit',
@@ -97,6 +112,31 @@ export const TEMPLATE_INFO: TemplateInfo[] = [
     description:
       'Generate a complete brand kit: profile picture, YouTube banner, Facebook cover, and X header with automatic platform resizing',
     category: 'images',
+    thumbnail: 'https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?w=600&h=400&fit=crop',
+  },
+  {
+    id: 'facecam-avatar',
+    name: 'Facecam Avatar',
+    description:
+      'Generate talking head videos from text scripts using ElevenLabs TTS and lip sync AI',
+    category: 'video',
+    thumbnail: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop',
+  },
+  {
+    id: 'dance-video',
+    name: 'Dance Video',
+    description:
+      'Apply dance or motion from a reference video to a static image using Kling v2.6 motion control',
+    category: 'video',
+    thumbnail: 'https://images.unsplash.com/photo-1508700929628-666bc8bd84ea?w=600&h=400&fit=crop',
+  },
+  {
+    id: 'instagram-carousel',
+    name: 'Instagram Carousel',
+    description:
+      'Generate 3 pose variations of a subject from a single reference image for carousel posts',
+    category: 'images',
+    thumbnail: 'https://images.unsplash.com/photo-1611262588024-d12430b98920?w=600&h=400&fit=crop',
   },
 ];
 
@@ -120,4 +160,7 @@ export {
   YOUTUBE_VIDEO_GENERATOR_TEMPLATE,
   STREAM_TO_SOCIAL_TEMPLATE,
   SOCIAL_BRAND_KIT_TEMPLATE,
+  FACECAM_AVATAR_TEMPLATE,
+  DANCE_VIDEO_TEMPLATE,
+  INSTAGRAM_CAROUSEL_TEMPLATE,
 };

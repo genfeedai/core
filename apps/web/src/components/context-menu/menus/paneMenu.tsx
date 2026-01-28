@@ -99,7 +99,10 @@ export function getPaneMenuItems({
   onAutoLayout,
 }: PaneMenuOptions): ContextMenuItemConfig[] {
   const nodesByCategory = getNodesByCategory();
-  const categories: NodeCategory[] = ['input', 'ai', 'processing', 'output', 'composition'];
+  // Filter out categories with no nodes (e.g., deprecated 'output' category)
+  const categories = (
+    ['input', 'ai', 'processing', 'output', 'composition'] as NodeCategory[]
+  ).filter((cat) => nodesByCategory[cat].length > 0);
 
   // Generate category submenus with all nodes
   const addNodeItems: ContextMenuItemConfig[] = categories.map((category) => {

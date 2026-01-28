@@ -17,7 +17,7 @@ import { useUIStore } from '@/store/uiStore';
 // TYPES
 // =============================================================================
 
-type TabId = 'defaults' | 'appearance' | 'help';
+type TabId = 'defaults' | 'api-keys' | 'appearance' | 'help';
 
 interface Tab {
   id: TabId;
@@ -26,6 +26,7 @@ interface Tab {
 
 const TABS: Tab[] = [
   { id: 'defaults', label: 'Defaults' },
+  { id: 'api-keys', label: 'API Keys' },
   { id: 'appearance', label: 'Appearance' },
   { id: 'help', label: 'Help' },
 ];
@@ -123,19 +124,164 @@ function DefaultsTab() {
           Replicate is recommended for best model availability and reliability.
         </p>
       </div>
+    </div>
+  );
+}
 
-      {/* API Setup Instructions */}
-      <div className="mt-8 rounded-lg border border-border bg-secondary/30 p-4">
-        <h4 className="font-medium text-foreground">API Configuration</h4>
-        <p className="mt-1 text-sm text-muted-foreground">
-          API keys are configured via environment variables. Add your keys to the{' '}
-          <code className="rounded bg-background px-1.5 py-0.5 text-xs">.env</code> file:
+// =============================================================================
+// API KEYS TAB
+// =============================================================================
+
+const TTS_ENABLED = process.env.NEXT_PUBLIC_TTS_ENABLED === 'true';
+
+interface ApiKeyStatus {
+  name: string;
+  envVar: string;
+  location: 'api' | 'web' | 'both';
+  isConfigured: boolean | null; // null = unknown (server-side only)
+  description: string;
+  docsUrl?: string;
+}
+
+const API_KEYS: ApiKeyStatus[] = [
+  {
+    name: 'Replicate',
+    envVar: 'REPLICATE_API_TOKEN',
+    location: 'api',
+    isConfigured: null,
+    description: 'Required for image/video generation (Nano Banana, Veo, Kling)',
+    docsUrl: 'https://replicate.com/account/api-tokens',
+  },
+  {
+    name: 'ElevenLabs',
+    envVar: 'ELEVENLABS_API_KEY',
+    location: 'both',
+    isConfigured: TTS_ENABLED,
+    description: 'Required for Text-to-Speech (Facecam Avatar template)',
+    docsUrl: 'https://elevenlabs.io/app/settings/api-keys',
+  },
+  {
+    name: 'fal.ai',
+    envVar: 'FAL_API_KEY',
+    location: 'api',
+    isConfigured: null,
+    description: 'Alternative provider for image/video generation',
+    docsUrl: 'https://fal.ai/dashboard/keys',
+  },
+  {
+    name: 'Hugging Face',
+    envVar: 'HF_API_TOKEN',
+    location: 'api',
+    isConfigured: null,
+    description: 'Alternative provider for AI models',
+    docsUrl: 'https://huggingface.co/settings/tokens',
+  },
+];
+
+function ApiKeysTab() {
+  return (
+    <div className="space-y-6">
+      {/* Important Notice */}
+      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+        <h4 className="font-medium text-amber-600 dark:text-amber-400">
+          API keys must be configured in .env files
+        </h4>
+        <p className="mt-1 text-sm text-amber-600/80 dark:text-amber-400/80">
+          This app does not store API keys in the browser. You need to edit the environment files
+          directly on the server.
         </p>
-        <pre className="mt-3 overflow-x-auto rounded bg-background p-3 text-xs text-muted-foreground">
-          {`REPLICATE_API_TOKEN=r8_...
-FAL_API_KEY=...
-HF_API_TOKEN=hf_...`}
+      </div>
+
+      {/* File Locations */}
+      <div className="space-y-2">
+        <h4 className="text-sm font-medium text-foreground">Configuration Files</h4>
+        <div className="grid gap-2">
+          <div className="rounded border border-border bg-secondary/30 p-3">
+            <code className="text-xs font-medium text-primary">apps/api/.env</code>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Backend API keys (Replicate, ElevenLabs, fal.ai, etc.)
+            </p>
+          </div>
+          <div className="rounded border border-border bg-secondary/30 p-3">
+            <code className="text-xs font-medium text-primary">apps/web/.env</code>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Frontend flags (e.g., NEXT_PUBLIC_TTS_ENABLED=true)
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* API Keys Status */}
+      <div className="space-y-2">
+        <h4 className="text-sm font-medium text-foreground">Required API Keys</h4>
+        <div className="space-y-2">
+          {API_KEYS.map((key) => (
+            <div
+              key={key.envVar}
+              className="flex items-start gap-3 rounded-lg border border-border p-3"
+            >
+              {/* Status Indicator */}
+              <div className="mt-0.5">
+                {key.isConfigured === true && (
+                  <div className="h-2.5 w-2.5 rounded-full bg-green-500" title="Configured" />
+                )}
+                {key.isConfigured === false && (
+                  <div className="h-2.5 w-2.5 rounded-full bg-red-500" title="Not configured" />
+                )}
+                {key.isConfigured === null && (
+                  <div
+                    className="h-2.5 w-2.5 rounded-full bg-gray-400"
+                    title="Status unknown (server-side)"
+                  />
+                )}
+              </div>
+
+              {/* Key Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-sm text-foreground">{key.name}</span>
+                  <code className="text-[10px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground">
+                    {key.envVar}
+                  </code>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">{key.description}</p>
+                {key.isConfigured === false && (
+                  <p className="text-xs text-red-500 mt-1">
+                    Add to apps/{key.location === 'both' ? 'api/.env & web/.env' : 'api/.env'}
+                  </p>
+                )}
+              </div>
+
+              {/* Get Key Link */}
+              {key.docsUrl && (
+                <a
+                  href={key.docsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary hover:underline whitespace-nowrap"
+                >
+                  Get key
+                </a>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ElevenLabs specific instructions */}
+      <div className="rounded-lg border border-border bg-secondary/30 p-4">
+        <h4 className="font-medium text-foreground text-sm">ElevenLabs Setup</h4>
+        <p className="mt-1 text-xs text-muted-foreground">To enable Text-to-Speech, add both:</p>
+        <pre className="mt-2 overflow-x-auto rounded bg-background p-3 text-xs text-muted-foreground">
+          {`# apps/api/.env
+ELEVENLABS_API_KEY=your_key_here
+
+# apps/web/.env
+NEXT_PUBLIC_TTS_ENABLED=true`}
         </pre>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Then restart both the API and web servers.
+        </p>
       </div>
     </div>
   );
@@ -378,6 +524,7 @@ function SettingsModalComponent() {
         {/* Content */}
         <div className="flex-1 overflow-auto p-6">
           {activeTab === 'defaults' && <DefaultsTab />}
+          {activeTab === 'api-keys' && <ApiKeysTab />}
           {activeTab === 'appearance' && <AppearanceTab />}
           {activeTab === 'help' && <HelpTab />}
         </div>

@@ -6,6 +6,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { BullBoardController } from '@/controllers/bull-board.controller';
 import { ExecutionsModule } from '@/modules/executions.module';
 import { FFmpegModule } from '@/modules/ffmpeg.module';
+import { FilesModule } from '@/modules/files.module';
 import { ReplicateModule } from '@/modules/replicate.module';
 import { TTSModule } from '@/modules/tts.module';
 import { WorkflowsModule } from '@/modules/workflows.module';
@@ -18,6 +19,7 @@ import { DEFAULT_JOB_OPTIONS, QUEUE_NAMES } from '@/queue/queue.constants';
 import { QueueJob, QueueJobSchema } from '@/schemas/queue-job.schema';
 import { ExecutionsService } from '@/services/executions.service';
 import { FFmpegService } from '@/services/ffmpeg.service';
+import { FilesService } from '@/services/files.service';
 import { JobRecoveryService } from '@/services/job-recovery.service';
 import { QueueManagerService } from '@/services/queue-manager.service';
 import { ReplicateService } from '@/services/replicate.service';
@@ -91,6 +93,7 @@ import { WorkflowsService } from '@/services/workflows.service';
 
     // Feature modules
     forwardRef(() => ExecutionsModule),
+    forwardRef(() => FilesModule),
     forwardRef(() => WorkflowsModule),
     forwardRef(() => ReplicateModule),
     forwardRef(() => TTSModule),
@@ -140,6 +143,10 @@ import { WorkflowsService } from '@/services/workflows.service';
     {
       provide: 'WorkflowInterfaceService',
       useExisting: WorkflowInterfaceService,
+    },
+    {
+      provide: 'FilesService',
+      useExisting: FilesService,
     },
   ],
   controllers: [BullBoardController],

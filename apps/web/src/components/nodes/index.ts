@@ -11,6 +11,7 @@ import {
   ImageGenNode,
   LipSyncNode,
   LLMNode,
+  MotionControlNode,
   TextToSpeechNode,
   TranscribeNode,
   VideoGenNode,
@@ -47,6 +48,7 @@ export const nodeTypes: NodeTypes = {
   voiceChange: VoiceChangeNode,
   textToSpeech: TextToSpeechNode,
   transcribe: TranscribeNode,
+  motionControl: MotionControlNode,
   // Processing nodes
   resize: ResizeNode,
   animation: AnimationNode,
@@ -58,7 +60,7 @@ export const nodeTypes: NodeTypes = {
   reframe: ReframeNode,
   upscale: UpscaleNode,
   subtitle: SubtitleNode,
-  // Output nodes
+  // Output nodes (deprecated - kept for backwards compatibility with existing workflows)
   output: OutputNode,
   // Composition nodes (workflow-as-node)
   workflowInput: WorkflowInputNode,

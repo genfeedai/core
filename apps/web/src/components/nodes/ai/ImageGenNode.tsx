@@ -160,13 +160,13 @@ function ImageGenNodeComponent(props: NodeProps) {
 
         {/* Output Preview */}
         {nodeData.outputImage && (
-          <div className="relative mt-1 overflow-hidden rounded-md bg-black/20">
+          <div className="relative mt-1 aspect-[4/3] overflow-hidden rounded-md bg-black/20">
             <Image
               src={nodeData.outputImage}
               alt="Generated image"
               width={280}
-              height={200}
-              className="w-full h-auto max-h-48 object-contain cursor-pointer"
+              height={210}
+              className="w-full h-full object-cover cursor-pointer"
               unoptimized
             />
             <Button

@@ -32,7 +32,7 @@ export const MODELS = {
 
 export interface ImageGenInput {
   prompt: string;
-  imageInput?: string[];
+  inputImages?: string[];
   aspectRatio?: string;
   resolution?: string;
   outputFormat?: string;
@@ -202,7 +202,7 @@ export class ReplicateService {
       model: modelId,
       input: {
         prompt: input.prompt,
-        image_input: input.imageInput ?? [],
+        image_input: input.inputImages ?? [],
         aspect_ratio: input.aspectRatio ?? '1:1',
         output_format: input.outputFormat ?? 'jpg',
         ...(model === 'nano-banana-pro' && {

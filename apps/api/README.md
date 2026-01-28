@@ -73,7 +73,6 @@ REPLICATE_API_TOKEN=r8_xxx
 
 # Optional
 REDIS_PASSWORD=
-WEBHOOK_BASE_URL=https://api.example.com
 ```
 
 ## Development

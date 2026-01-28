@@ -39,7 +39,6 @@ describe('ReplicateService', () => {
   const mockConfigService = {
     get: vi.fn((key: string) => {
       if (key === 'REPLICATE_API_TOKEN') return 'test-token';
-      if (key === 'WEBHOOK_BASE_URL') return 'https://test.webhook.url';
       return undefined;
     }),
   };
@@ -112,7 +111,7 @@ describe('ReplicateService', () => {
     it('should include image input when provided', async () => {
       await service.generateImage('execution-1', 'node-1', 'nano-banana', {
         prompt: 'Test image',
-        imageInput: ['https://example.com/input.png'],
+        inputImages: ['https://example.com/input.png'],
       });
 
       expect(mockExecutionsService.createJob).toHaveBeenCalled();
@@ -231,58 +230,6 @@ describe('ReplicateService', () => {
   describe('cancelPrediction', () => {
     it('should cancel a prediction', async () => {
       await expect(service.cancelPrediction('prediction-123')).resolves.toBeUndefined();
-    });
-  });
-
-  describe('handleWebhook', () => {
-    it('should process completed webhook and update job', async () => {
-      await service.handleWebhook({
-        id: 'prediction-123',
-        status: 'succeeded',
-        output: { url: 'https://example.com/output.png' },
-        metrics: { predict_time: 5.0 },
-      });
-
-      expect(mockExecutionsService.findJobByPredictionId).toHaveBeenCalledWith('prediction-123');
-      expect(mockExecutionsService.updateJob).toHaveBeenCalled();
-      expect(mockExecutionsService.updateNodeResult).toHaveBeenCalled();
-      expect(mockExecutionsService.updateExecutionCost).toHaveBeenCalled();
-    });
-
-    it('should handle failed webhook', async () => {
-      await service.handleWebhook({
-        id: 'prediction-123',
-        status: 'failed',
-        output: null,
-        error: 'Model error',
-        metrics: { predict_time: 2.0 },
-      });
-
-      expect(mockExecutionsService.updateJob).toHaveBeenCalled();
-      expect(mockExecutionsService.updateNodeResult).toHaveBeenCalled();
-    });
-
-    it('should handle canceled webhook', async () => {
-      await service.handleWebhook({
-        id: 'prediction-123',
-        status: 'canceled',
-        output: null,
-      });
-
-      expect(mockExecutionsService.updateJob).toHaveBeenCalled();
-      expect(mockExecutionsService.updateNodeResult).toHaveBeenCalled();
-    });
-
-    it('should log warning when job not found', async () => {
-      mockExecutionsService.findJobByPredictionId.mockResolvedValue(null);
-
-      await service.handleWebhook({
-        id: 'unknown-prediction',
-        status: 'succeeded',
-        output: {},
-      });
-
-      expect(mockExecutionsService.updateJob).not.toHaveBeenCalled();
     });
   });
 

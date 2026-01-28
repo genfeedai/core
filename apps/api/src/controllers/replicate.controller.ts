@@ -17,7 +17,7 @@ export class ReplicateController {
       dto.model,
       {
         prompt: dto.prompt,
-        imageInput: dto.imageInput,
+        inputImages: dto.inputImages,
         aspectRatio: dto.aspectRatio,
         resolution: dto.resolution,
         outputFormat: dto.outputFormat,

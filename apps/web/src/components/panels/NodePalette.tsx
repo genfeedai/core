@@ -213,7 +213,14 @@ export function NodePalette() {
     });
   }, []);
 
-  const categories: NodeCategory[] = ['input', 'ai', 'processing', 'output', 'composition'];
+  // Filter out categories with no nodes (e.g., deprecated 'output' category)
+  const categories = useMemo(
+    () =>
+      (['input', 'ai', 'processing', 'output', 'composition'] as NodeCategory[]).filter(
+        (cat) => nodesByCategory[cat].length > 0
+      ),
+    [nodesByCategory]
+  );
 
   return (
     <div className="w-64 min-w-64 h-full bg-[var(--background)] border-r border-[var(--border)] flex flex-col overflow-hidden">

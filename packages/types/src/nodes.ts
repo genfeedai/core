@@ -82,8 +82,8 @@ export type NodeType =
   | 'imageGridSplit'
   | 'annotation'
   | 'subtitle'
-  // Output nodes
-  | 'output'
+  // Output nodes (deprecated - outputs auto-save now)
+  | 'output' // @deprecated - kept for backwards compatibility with existing workflows
   // Composition nodes (workflow-as-node)
   | 'workflowInput'
   | 'workflowOutput'
@@ -394,7 +394,7 @@ export interface TranscribeNodeData extends BaseNodeData {
 }
 
 // Kling Motion Control types
-export type MotionControlMode = 'trajectory' | 'camera' | 'combined';
+export type MotionControlMode = 'trajectory' | 'camera' | 'combined' | 'video_transfer';
 export type CameraMovement =
   | 'static'
   | 'pan_left'
@@ -408,6 +408,12 @@ export type CameraMovement =
   | 'dolly_in'
   | 'dolly_out';
 
+// Kling v2.6 Motion Control quality mode
+export type KlingQualityMode = 'std' | 'pro';
+
+// Character orientation for video transfer
+export type CharacterOrientation = 'image' | 'video';
+
 export interface TrajectoryPoint {
   x: number; // 0-1 normalized
   y: number; // 0-1 normalized
@@ -417,6 +423,7 @@ export interface TrajectoryPoint {
 export interface MotionControlNodeData extends BaseNodeData {
   // Inputs from connections
   inputImage: string | null;
+  inputVideo: string | null;
   inputPrompt: string | null;
 
   // Output
@@ -433,6 +440,11 @@ export interface MotionControlNodeData extends BaseNodeData {
   // Camera mode
   cameraMovement: CameraMovement;
   cameraIntensity: number; // 0-100
+
+  // Video transfer mode (Kling v2.6)
+  qualityMode: KlingQualityMode;
+  characterOrientation: CharacterOrientation;
+  keepOriginalSound: boolean;
 
   // Advanced options
   motionStrength: number; // 0-100, how much motion to apply
@@ -791,6 +803,7 @@ export type WorkflowNodeData =
   | VoiceChangeNodeData
   | TextToSpeechNodeData
   | TranscribeNodeData
+  | MotionControlNodeData
   | AnimationNodeData
   | VideoStitchNodeData
   | ResizeNodeData
@@ -1094,6 +1107,7 @@ export const NODE_DEFINITIONS: Record<NodeType, NodeDefinition> = {
     icon: 'Navigation',
     inputs: [
       { id: 'image', type: 'image', label: 'Image', required: true },
+      { id: 'video', type: 'video', label: 'Motion Video' },
       { id: 'prompt', type: 'text', label: 'Prompt' },
     ],
     outputs: [{ id: 'video', type: 'video', label: 'Video' }],
@@ -1101,14 +1115,18 @@ export const NODE_DEFINITIONS: Record<NodeType, NodeDefinition> = {
       label: 'Motion Control',
       status: 'idle',
       inputImage: null,
+      inputVideo: null,
       inputPrompt: null,
       outputVideo: null,
-      mode: 'camera',
+      mode: 'video_transfer',
       duration: 5,
       aspectRatio: '16:9',
       trajectoryPoints: [],
       cameraMovement: 'static',
       cameraIntensity: 50,
+      qualityMode: 'pro',
+      characterOrientation: 'image',
+      keepOriginalSound: true,
       motionStrength: 50,
       negativePrompt: '',
       seed: null,
@@ -1343,11 +1361,12 @@ export const NODE_DEFINITIONS: Record<NodeType, NodeDefinition> = {
     },
   },
 
-  // Output nodes
+  // Output nodes (deprecated - outputs auto-save now)
+  // Kept for backwards compatibility with existing workflows
   output: {
     type: 'output',
     label: 'Output',
-    description: 'Final workflow output',
+    description: 'Final workflow output (deprecated - outputs auto-save now)',
     category: 'output',
     icon: 'CheckCircle',
     inputs: [{ id: 'media', type: 'image', label: 'Media', required: true }],
@@ -1420,7 +1439,16 @@ export const NODE_DEFINITIONS: Record<NodeType, NodeDefinition> = {
 // Explicit ordering for each category (most used first)
 const NODE_ORDER: Record<NodeCategory, NodeType[]> = {
   input: ['imageInput', 'videoInput', 'audioInput', 'prompt', 'template'],
-  ai: ['imageGen', 'videoGen', 'llm', 'lipSync', 'textToSpeech', 'transcribe', 'voiceChange'],
+  ai: [
+    'imageGen',
+    'videoGen',
+    'llm',
+    'lipSync',
+    'textToSpeech',
+    'transcribe',
+    'voiceChange',
+    'motionControl',
+  ],
   processing: [
     'reframe',
     'upscale',
@@ -1433,7 +1461,7 @@ const NODE_ORDER: Record<NodeCategory, NodeType[]> = {
     'subtitle',
     'animation',
   ],
-  output: ['output'],
+  output: [],
   composition: ['workflowRef', 'workflowInput', 'workflowOutput'],
 };
 

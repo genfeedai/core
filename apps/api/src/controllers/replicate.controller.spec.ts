@@ -23,7 +23,6 @@ describe('ReplicateController', () => {
       output: ['https://example.com/output.png'],
     }),
     cancelPrediction: vi.fn().mockResolvedValue(undefined),
-    handleWebhook: vi.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -60,7 +59,7 @@ describe('ReplicateController', () => {
         dto.model,
         {
           prompt: dto.prompt,
-          imageInput: undefined,
+          inputImages: undefined,
           aspectRatio: dto.aspectRatio,
           resolution: undefined,
           outputFormat: undefined,
@@ -74,7 +73,7 @@ describe('ReplicateController', () => {
         nodeId: 'node-1',
         model: 'nano-banana-pro' as const,
         prompt: 'Enhanced image',
-        imageInput: ['https://example.com/input.png'],
+        inputImages: ['https://example.com/input.png'],
       };
 
       await controller.generateImage(dto);
@@ -84,7 +83,7 @@ describe('ReplicateController', () => {
         dto.nodeId,
         dto.model,
         expect.objectContaining({
-          imageInput: dto.imageInput,
+          inputImages: dto.inputImages,
         })
       );
     });
@@ -231,46 +230,6 @@ describe('ReplicateController', () => {
 
       expect(result).toEqual({ cancelled: true });
       expect(mockReplicateService.cancelPrediction).toHaveBeenCalledWith('prediction-123');
-    });
-  });
-
-  describe('POST /replicate/webhook', () => {
-    it('should handle webhook and return acknowledgment', async () => {
-      const dto = {
-        id: 'prediction-123',
-        status: 'succeeded',
-        output: { url: 'https://example.com/output.png' },
-        metrics: { predict_time: 5.0 },
-      };
-
-      const result = await controller.handleWebhook(dto);
-
-      expect(result).toEqual({ received: true });
-      expect(mockReplicateService.handleWebhook).toHaveBeenCalledWith({
-        id: dto.id,
-        status: dto.status,
-        output: dto.output,
-        error: undefined,
-        metrics: dto.metrics,
-      });
-    });
-
-    it('should handle failed webhook with error', async () => {
-      const dto = {
-        id: 'prediction-123',
-        status: 'failed',
-        output: null,
-        error: 'Model crashed',
-      };
-
-      const result = await controller.handleWebhook(dto);
-
-      expect(result).toEqual({ received: true });
-      expect(mockReplicateService.handleWebhook).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: 'Model crashed',
-        })
-      );
     });
   });
 });

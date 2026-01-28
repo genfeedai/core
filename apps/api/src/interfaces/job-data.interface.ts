@@ -34,7 +34,7 @@ export interface ImageJobData extends NodeJobData {
   nodeData: {
     model: 'nano-banana' | 'nano-banana-pro';
     prompt: string;
-    imageInput?: string[];
+    inputImages?: string[];
     aspectRatio?: string;
     resolution?: string;
     outputFormat?: string;

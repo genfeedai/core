@@ -142,7 +142,12 @@ function ModelBrowserModalComponent({
   capabilities,
   title = 'Browse Models',
 }: ModelBrowserModalProps) {
-  const { recentModels, addRecentModel, providers } = useSettingsStore();
+  const recentModels = useSettingsStore((s) => s.recentModels);
+  const addRecentModel = useSettingsStore((s) => s.addRecentModel);
+  // Select individual API keys to avoid reference changes triggering re-renders
+  const replicateKey = useSettingsStore((s) => s.providers.replicate.apiKey);
+  const falKey = useSettingsStore((s) => s.providers.fal.apiKey);
+  const hfKey = useSettingsStore((s) => s.providers.huggingface.apiKey);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [providerFilter, setProviderFilter] = useState<ProviderType | 'all'>('all');
@@ -170,14 +175,14 @@ function ModelBrowserModalComponent({
 
         // Build headers with API keys
         const headers: Record<string, string> = {};
-        if (providers.replicate.apiKey) {
-          headers['X-Replicate-Key'] = providers.replicate.apiKey;
+        if (replicateKey) {
+          headers['X-Replicate-Key'] = replicateKey;
         }
-        if (providers.fal.apiKey) {
-          headers['X-Fal-Key'] = providers.fal.apiKey;
+        if (falKey) {
+          headers['X-Fal-Key'] = falKey;
         }
-        if (providers.huggingface.apiKey) {
-          headers['X-HF-Key'] = providers.huggingface.apiKey;
+        if (hfKey) {
+          headers['X-HF-Key'] = hfKey;
         }
 
         const response = await fetch(`/api/providers/models?${params.toString()}`, {
@@ -198,7 +203,7 @@ function ModelBrowserModalComponent({
         setIsLoading(false);
       }
     },
-    [searchQuery, providerFilter, capabilities, providers]
+    [searchQuery, providerFilter, capabilities, replicateKey, falKey, hfKey]
   );
 
   // Debounced search

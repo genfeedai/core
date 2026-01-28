@@ -99,7 +99,7 @@ export const apiClient = {
 
   /**
    * Upload a file to the server
-   * @param endpoint - API endpoint (e.g., '/files/input/workflow-id/image')
+   * @param endpoint - API endpoint (e.g., '/files/workflows/{workflowId}/input/image')
    * @param file - File to upload
    * @param options - Additional fetch options
    */

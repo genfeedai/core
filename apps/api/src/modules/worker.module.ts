@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ExecutionsModule } from '@/modules/executions.module';
+import { FilesModule } from '@/modules/files.module';
 import { OllamaModule } from '@/modules/ollama.module';
 import { ReplicateModule } from '@/modules/replicate.module';
 import { WorkflowsModule } from '@/modules/workflows.module';
@@ -14,6 +15,7 @@ import { VideoProcessor } from '@/processors/video.processor';
 import { DEFAULT_JOB_OPTIONS, QUEUE_NAMES } from '@/queue/queue.constants';
 import { QueueJob, QueueJobSchema } from '@/schemas/queue-job.schema';
 import { ExecutionsService } from '@/services/executions.service';
+import { FilesService } from '@/services/files.service';
 import { JobRecoveryService } from '@/services/job-recovery.service';
 import { OllamaService } from '@/services/ollama.service';
 import { QueueManagerService } from '@/services/queue-manager.service';
@@ -100,6 +102,7 @@ import { WorkflowsService } from '@/services/workflows.service';
 
     // Feature modules for processor dependencies
     ExecutionsModule,
+    FilesModule,
     WorkflowsModule,
     ReplicateModule,
     OllamaModule,
@@ -135,6 +138,10 @@ import { WorkflowsService } from '@/services/workflows.service';
     {
       provide: 'OllamaService',
       useExisting: OllamaService,
+    },
+    {
+      provide: 'FilesService',
+      useExisting: FilesService,
     },
   ],
 })

@@ -47,7 +47,7 @@ export class PromptLibraryItem extends Document {
   preferredModel?: string;
 
   // Organization
-  @Prop({ enum: PROMPT_CATEGORIES, default: 'custom' })
+  @Prop({ type: String, enum: PROMPT_CATEGORIES, default: 'custom' })
   category: PromptCategory;
 
   @Prop({ type: [String], default: [], index: true })

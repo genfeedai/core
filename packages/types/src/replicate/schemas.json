@@ -55,7 +55,7 @@
       "title": "Output",
       "format": "uri"
     },
-    "fetchedAt": "2026-01-16T03:17:28.348Z"
+    "fetchedAt": "2026-01-23T11:12:50.393Z"
   },
   {
     "modelId": "google/nano-banana-pro",
@@ -133,7 +133,7 @@
       "title": "Output",
       "format": "uri"
     },
-    "fetchedAt": "2026-01-16T03:17:28.627Z"
+    "fetchedAt": "2026-01-23T11:12:50.597Z"
   },
   {
     "modelId": "google/veo-3.1-fast",
@@ -227,7 +227,7 @@
       "title": "Output",
       "format": "uri"
     },
-    "fetchedAt": "2026-01-16T03:17:28.811Z"
+    "fetchedAt": "2026-01-23T11:12:50.782Z"
   },
   {
     "modelId": "google/veo-3.1",
@@ -332,7 +332,7 @@
       "title": "Output",
       "format": "uri"
     },
-    "fetchedAt": "2026-01-16T03:17:29.006Z"
+    "fetchedAt": "2026-01-23T11:12:50.973Z"
   },
   {
     "modelId": "kwaivgi/kling-v2.5-turbo-pro",
@@ -409,7 +409,7 @@
       "title": "Output",
       "format": "uri"
     },
-    "fetchedAt": "2026-01-16T03:17:29.185Z"
+    "fetchedAt": "2026-01-23T11:12:51.339Z"
   },
   {
     "modelId": "kwaivgi/kling-v2.6-motion-control",
@@ -479,7 +479,7 @@
       "title": "Output",
       "format": "uri"
     },
-    "fetchedAt": "2026-01-16T03:17:29.367Z"
+    "fetchedAt": "2026-01-23T11:12:51.531Z"
   },
   {
     "modelId": "meta/meta-llama-3.1-405b-instruct",
@@ -578,7 +578,7 @@
       "x-cog-array-type": "iterator",
       "x-cog-array-display": "concatenate"
     },
-    "fetchedAt": "2026-01-16T03:17:29.545Z"
+    "fetchedAt": "2026-01-23T11:12:51.728Z"
   },
   {
     "modelId": "luma/reframe-image",
@@ -663,7 +663,7 @@
       "title": "Output",
       "format": "uri"
     },
-    "fetchedAt": "2026-01-16T03:17:29.731Z"
+    "fetchedAt": "2026-01-23T11:12:51.958Z"
   },
   {
     "modelId": "luma/reframe-video",
@@ -738,7 +738,7 @@
       "title": "Output",
       "format": "uri"
     },
-    "fetchedAt": "2026-01-16T03:17:29.916Z"
+    "fetchedAt": "2026-01-23T11:12:52.148Z"
   },
   {
     "modelId": "sync/lipsync-2",
@@ -796,7 +796,7 @@
       "title": "Output",
       "format": "uri"
     },
-    "fetchedAt": "2026-01-16T03:17:30.104Z"
+    "fetchedAt": "2026-01-23T11:12:52.337Z"
   },
   {
     "modelId": "sync/lipsync-2-pro",
@@ -854,7 +854,7 @@
       "title": "Output",
       "format": "uri"
     },
-    "fetchedAt": "2026-01-16T03:17:30.377Z"
+    "fetchedAt": "2026-01-23T11:12:52.530Z"
   },
   {
     "modelId": "bytedance/latentsync",
@@ -902,7 +902,7 @@
       "title": "Output",
       "format": "uri"
     },
-    "fetchedAt": "2026-01-16T03:17:30.556Z"
+    "fetchedAt": "2026-01-23T11:12:52.725Z"
   },
   {
     "modelId": "pixverse/lipsync",
@@ -938,6 +938,6 @@
       "title": "Output",
       "format": "uri"
     },
-    "fetchedAt": "2026-01-16T03:17:30.741Z"
+    "fetchedAt": "2026-01-23T11:12:52.915Z"
   }
 ]

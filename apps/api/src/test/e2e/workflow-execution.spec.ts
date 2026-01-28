@@ -29,7 +29,6 @@ describe('Workflow Execution E2E', () => {
           load: [
             () => ({
               REPLICATE_API_TOKEN: 'test-token',
-              WEBHOOK_BASE_URL: 'http://localhost:3001',
             }),
           ],
         }),

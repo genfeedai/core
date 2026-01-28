@@ -48,7 +48,7 @@ function ImageInputNodeComponent(props: NodeProps) {
         setIsUploading(true);
         try {
           const result = await apiClient.uploadFile<FileUploadResult>(
-            `/files/input/${workflowId}/image`,
+            `/files/workflows/${workflowId}/input/image`,
             file
           );
 

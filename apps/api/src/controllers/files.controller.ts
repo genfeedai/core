@@ -64,9 +64,9 @@ export class FilesController {
 
   /**
    * Upload a workflow input file (image, video, or audio)
-   * POST /api/files/input/:workflowId/:fileType
+   * POST /api/files/workflows/:workflowId/input/:fileType
    */
-  @Post('input/:workflowId/:fileType')
+  @Post('workflows/:workflowId/input/:fileType')
   @UseInterceptors(
     FileInterceptor('file', {
       limits: {
@@ -113,9 +113,9 @@ export class FilesController {
 
   /**
    * Serve a workflow input file
-   * GET /api/files/input/:workflowId/:filename
+   * GET /api/files/workflows/:workflowId/input/:filename
    */
-  @Get('input/:workflowId/:filename')
+  @Get('workflows/:workflowId/input/:filename')
   async serveInputFile(
     @Param('workflowId') workflowId: string,
     @Param('filename') filename: string,
@@ -136,16 +136,16 @@ export class FilesController {
   }
 
   /**
-   * Serve an execution output file
-   * GET /api/files/output/:executionId/:filename
+   * Serve a workflow output file
+   * GET /api/files/workflows/:workflowId/output/:filename
    */
-  @Get('output/:executionId/:filename')
+  @Get('workflows/:workflowId/output/:filename')
   async serveOutputFile(
-    @Param('executionId') executionId: string,
+    @Param('workflowId') workflowId: string,
     @Param('filename') filename: string,
     @Res() res: Response
   ): Promise<void> {
-    const filePath = this.filesService.getOutputFilePath(executionId, filename);
+    const filePath = this.filesService.getOutputFilePath(workflowId, filename);
 
     if (!this.filesService.fileExists(filePath)) {
       throw new NotFoundException('File not found');

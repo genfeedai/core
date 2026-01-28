@@ -53,7 +53,7 @@ function VideoInputNodeComponent(props: NodeProps) {
         setIsUploading(true);
         try {
           const result = await apiClient.uploadFile<FileUploadResult>(
-            `/files/input/${workflowId}/video`,
+            `/files/workflows/${workflowId}/input/video`,
             file
           );
 

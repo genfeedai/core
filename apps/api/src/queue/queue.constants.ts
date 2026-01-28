@@ -172,11 +172,6 @@ export type NodeResultStatus = (typeof NODE_RESULT_STATUS)[keyof typeof NODE_RES
  * Node types that are passthrough (no processing needed)
  * These are marked as complete immediately without enqueueing
  */
-export const PASSTHROUGH_NODE_TYPES = [
-  'workflowInput',
-  'workflowOutput',
-  'input',
-  'output',
-] as const;
+export const PASSTHROUGH_NODE_TYPES = ['workflowInput', 'workflowOutput', 'input'] as const;
 
 export type PassthroughNodeType = (typeof PASSTHROUGH_NODE_TYPES)[number];

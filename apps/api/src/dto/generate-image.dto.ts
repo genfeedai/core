@@ -17,7 +17,7 @@ export class GenerateImageDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  imageInput?: string[];
+  inputImages?: string[];
 
   @IsOptional()
   @IsString()

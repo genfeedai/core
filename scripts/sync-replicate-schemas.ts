@@ -44,6 +44,7 @@ const MODELS_TO_SYNC = [
   // Image generation
   { id: 'google/nano-banana', name: 'NanoBanana', category: 'image' },
   { id: 'google/nano-banana-pro', name: 'NanoBananaPro', category: 'image' },
+  { id: 'prunaai/z-image-turbo', name: 'ZImageTurbo', category: 'image' },
   // Video generation
   { id: 'google/veo-3.1-fast', name: 'Veo31Fast', category: 'video' },
   { id: 'google/veo-3.1', name: 'Veo31', category: 'video' },

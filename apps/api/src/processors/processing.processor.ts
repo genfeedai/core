@@ -17,6 +17,7 @@ import { BaseProcessor } from '@/processors/base.processor';
 import { JOB_STATUS, QUEUE_CONCURRENCY, QUEUE_NAMES } from '@/queue/queue.constants';
 import type { ExecutionsService } from '@/services/executions.service';
 import type { FFmpegService } from '@/services/ffmpeg.service';
+import type { FilesService } from '@/services/files.service';
 import type { QueueManagerService } from '@/services/queue-manager.service';
 import type { ReplicateService } from '@/services/replicate.service';
 import { POLL_CONFIGS, ReplicatePollerService } from '@/services/replicate-poller.service';
@@ -41,7 +42,9 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
     @Inject(forwardRef(() => 'TTSService'))
     private readonly ttsService: TTSService,
     @Inject(forwardRef(() => 'FFmpegService'))
-    private readonly ffmpegService: FFmpegService
+    private readonly ffmpegService: FFmpegService,
+    @Inject(forwardRef(() => 'FilesService'))
+    private readonly filesService: FilesService
   ) {
     super();
   }
@@ -173,11 +176,31 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
 
         // Update execution node result
         if (result.success) {
+          // Auto-save output to local storage for Replicate-based operations
+          let localOutput = result.output;
+          const outputUrl = result.output?.image || result.output?.video;
+          const outputType = result.output?.image ? 'image' : 'video';
+
+          if (outputUrl && typeof outputUrl === 'string') {
+            try {
+              const saved = await this.filesService.downloadAndSaveOutput(
+                job.data.workflowId,
+                nodeId,
+                outputUrl
+              );
+              localOutput = { ...result.output, [outputType]: saved.url, localPath: saved.path };
+              this.logger.log(`Auto-saved ${outputType} output to ${saved.path}`);
+            } catch (saveError) {
+              this.logger.warn(`Failed to auto-save output: ${(saveError as Error).message}`);
+              // Continue with remote URL if save fails
+            }
+          }
+
           await this.executionsService.updateNodeResult(
             executionId,
             nodeId,
             'complete',
-            result.output
+            localOutput
           );
         } else {
           await this.executionsService.updateNodeResult(

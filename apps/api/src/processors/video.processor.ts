@@ -9,6 +9,7 @@ import type {
 import { BaseProcessor } from '@/processors/base.processor';
 import { JOB_STATUS, QUEUE_CONCURRENCY, QUEUE_NAMES } from '@/queue/queue.constants';
 import type { ExecutionsService } from '@/services/executions.service';
+import type { FilesService } from '@/services/files.service';
 import type { QueueManagerService } from '@/services/queue-manager.service';
 import type { ReplicateService } from '@/services/replicate.service';
 import { POLL_CONFIGS, ReplicatePollerService } from '@/services/replicate-poller.service';
@@ -31,7 +32,9 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
     @Inject(forwardRef(() => 'ReplicateService'))
     private readonly replicateService: ReplicateService,
     @Inject(forwardRef(() => 'ReplicatePollerService'))
-    private readonly replicatePollerService: ReplicatePollerService
+    private readonly replicatePollerService: ReplicatePollerService,
+    @Inject(forwardRef(() => 'FilesService'))
+    private readonly filesService: FilesService
   ) {
     super();
   }
@@ -109,12 +112,24 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
 
       // Update execution node result
       if (result.success) {
-        await this.executionsService.updateNodeResult(
-          executionId,
-          nodeId,
-          'complete',
-          result.output
-        );
+        // Auto-save output to local storage
+        let localOutput = result.output;
+        if (result.output?.video && typeof result.output.video === 'string') {
+          try {
+            const saved = await this.filesService.downloadAndSaveOutput(
+              job.data.workflowId,
+              nodeId,
+              result.output.video
+            );
+            localOutput = { ...result.output, video: saved.url, localPath: saved.path };
+            this.logger.log(`Auto-saved video output to ${saved.path}`);
+          } catch (saveError) {
+            this.logger.warn(`Failed to auto-save output: ${(saveError as Error).message}`);
+            // Continue with remote URL if save fails
+          }
+        }
+
+        await this.executionsService.updateNodeResult(executionId, nodeId, 'complete', localOutput);
       } else {
         await this.executionsService.updateNodeResult(
           executionId,

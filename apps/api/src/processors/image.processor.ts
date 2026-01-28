@@ -5,6 +5,7 @@ import type { ImageJobData, JobResult } from '@/interfaces/job-data.interface';
 import { BaseProcessor } from '@/processors/base.processor';
 import { JOB_STATUS, QUEUE_CONCURRENCY, QUEUE_NAMES } from '@/queue/queue.constants';
 import type { ExecutionsService } from '@/services/executions.service';
+import type { FilesService } from '@/services/files.service';
 import type { QueueManagerService } from '@/services/queue-manager.service';
 import type { ReplicateService } from '@/services/replicate.service';
 import { POLL_CONFIGS, ReplicatePollerService } from '@/services/replicate-poller.service';
@@ -24,7 +25,9 @@ export class ImageProcessor extends BaseProcessor<ImageJobData> {
     @Inject(forwardRef(() => 'ReplicateService'))
     private readonly replicateService: ReplicateService,
     @Inject(forwardRef(() => 'ReplicatePollerService'))
-    private readonly replicatePollerService: ReplicatePollerService
+    private readonly replicatePollerService: ReplicatePollerService,
+    @Inject(forwardRef(() => 'FilesService'))
+    private readonly filesService: FilesService
   ) {
     super();
   }
@@ -57,9 +60,15 @@ export class ImageProcessor extends BaseProcessor<ImageJobData> {
       } else {
         // Create new prediction
         const model = nodeData.model ?? 'nano-banana';
+
+        // Convert local file URLs to base64 for Replicate
+        const inputImages = nodeData.inputImages
+          ? this.filesService.urlsToBase64(nodeData.inputImages)
+          : [];
+
         const prediction = await this.replicateService.generateImage(executionId, nodeId, model, {
           prompt: nodeData.prompt,
-          imageInput: nodeData.imageInput,
+          inputImages,
           aspectRatio: nodeData.aspectRatio,
           resolution: nodeData.resolution,
           outputFormat: nodeData.outputFormat,
@@ -77,12 +86,24 @@ export class ImageProcessor extends BaseProcessor<ImageJobData> {
 
       // Update execution node result
       if (result.success) {
-        await this.executionsService.updateNodeResult(
-          executionId,
-          nodeId,
-          'complete',
-          result.output
-        );
+        // Auto-save output to local storage
+        let localOutput = result.output;
+        if (result.output?.image && typeof result.output.image === 'string') {
+          try {
+            const saved = await this.filesService.downloadAndSaveOutput(
+              job.data.workflowId,
+              nodeId,
+              result.output.image
+            );
+            localOutput = { ...result.output, image: saved.url, localPath: saved.path };
+            this.logger.log(`Auto-saved image output to ${saved.path}`);
+          } catch (saveError) {
+            this.logger.warn(`Failed to auto-save output: ${(saveError as Error).message}`);
+            // Continue with remote URL if save fails
+          }
+        }
+
+        await this.executionsService.updateNodeResult(executionId, nodeId, 'complete', localOutput);
       } else {
         await this.executionsService.updateNodeResult(
           executionId,
