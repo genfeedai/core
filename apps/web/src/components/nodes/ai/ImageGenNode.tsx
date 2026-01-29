@@ -3,23 +3,15 @@
 import type { ImageGenNodeData, ImageModel } from '@genfeedai/types';
 import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import {
-  AlertCircle,
-  Download,
-  Expand,
-  ImageIcon,
-  Loader2,
-  RefreshCw,
-  Sparkles,
-} from 'lucide-react';
+import { AlertCircle, Download, Expand, ImageIcon, Loader2, Play } from 'lucide-react';
 import Image from 'next/image';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ModelBrowserModal } from '@/components/models/ModelBrowserModal';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { SchemaInputs } from '@/components/nodes/SchemaInputs';
 import { Button } from '@/components/ui/button';
+import { useCanGenerate } from '@/hooks/useCanGenerate';
 import { useModelSelection } from '@/hooks/useModelSelection';
-import { useRequiredInputs } from '@/hooks/useRequiredInputs';
 import { extractEnumValues, supportsImageInput } from '@/lib/utils/schemaUtils';
 import { useExecutionStore } from '@/store/executionStore';
 import { useUIStore } from '@/store/uiStore';
@@ -47,7 +39,12 @@ function ImageGenNodeComponent(props: NodeProps) {
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const executeNode = useExecutionStore((state) => state.executeNode);
   const openNodeDetailModal = useUIStore((state) => state.openNodeDetailModal);
-  const { hasRequiredInputs } = useRequiredInputs(id, type as 'imageGen');
+  const { canGenerate } = useCanGenerate({
+    nodeId: id,
+    nodeType: type as 'imageGen',
+    inputSchema: nodeData.selectedModel?.inputSchema as Record<string, unknown> | undefined,
+    schemaParams: nodeData.schemaParams,
+  });
 
   const [isModelBrowserOpen, setIsModelBrowserOpen] = useState(false);
   const [selectedPreview, setSelectedPreview] = useState<number | null>(null);
@@ -93,12 +90,11 @@ function ImageGenNodeComponent(props: NodeProps) {
       return;
     }
 
-    hasAttemptedSchemaLoad.current = true;
-
     const modelId = INTERNAL_TO_MODEL_ID[nodeData.model];
     if (!modelId) return;
 
     const controller = new AbortController();
+    let isCancelled = false;
 
     const loadSchema = async () => {
       try {
@@ -106,22 +102,26 @@ function ImageGenNodeComponent(props: NodeProps) {
           signal: controller.signal,
         });
 
-        if (!response.ok) return;
+        if (!response.ok || isCancelled) return;
 
         const data = await response.json();
         const model = data.models?.find((m: { id: string }) => m.id === modelId);
 
-        if (model) {
+        if (model && !isCancelled) {
+          hasAttemptedSchemaLoad.current = true;
           handleModelSelect(model);
         }
       } catch {
-        // Ignore abort errors and other failures
+        // Ignore abort errors and other failures - allows retry on next effect run
       }
     };
 
     loadSchema();
 
-    return () => controller.abort();
+    return () => {
+      isCancelled = true;
+      controller.abort();
+    };
   }, [nodeData.model, nodeData.selectedModel, handleModelSelect]);
 
   // Get schema properties from selected model
@@ -183,40 +183,30 @@ function ImageGenNodeComponent(props: NodeProps) {
   const headerActions = useMemo(
     () => (
       <>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => setIsModelBrowserOpen(true)}
-          className="h-5 px-2 text-[10px]"
-        >
+        <Button variant="secondary" size="sm" onClick={() => setIsModelBrowserOpen(true)}>
           Browse
         </Button>
         {nodeData.outputImage && (
-          <>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={handleExpand}
-              className="h-5 w-5"
-              title="Expand preview"
-            >
-              <Expand className="h-3 w-3" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={handleGenerate}
-              disabled={nodeData.status === 'processing'}
-              className="h-5 w-5"
-              title="Regenerate"
-            >
-              <RefreshCw className="h-3 w-3" />
-            </Button>
-          </>
+          <Button variant="ghost" size="icon-sm" onClick={handleExpand} title="Expand preview">
+            <Expand className="h-3 w-3" />
+          </Button>
         )}
+        <Button
+          variant={canGenerate ? 'default' : 'secondary'}
+          size="sm"
+          onClick={handleGenerate}
+          disabled={!canGenerate || nodeData.status === 'processing'}
+        >
+          {nodeData.status === 'processing' ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Play className="h-4 w-4 fill-current" />
+          )}
+          {nodeData.status === 'processing' ? 'Generating' : 'Generate'}
+        </Button>
       </>
     ),
-    [nodeData.outputImage, nodeData.status, handleGenerate, handleExpand]
+    [nodeData.outputImage, nodeData.status, handleGenerate, handleExpand, canGenerate]
   );
 
   return (
@@ -257,13 +247,10 @@ function ImageGenNodeComponent(props: NodeProps) {
               <span className="text-xs text-muted-foreground">
                 Generated ({nodeData.outputImages.length} images)
               </span>
-              <button
-                onClick={handleDownloadAll}
-                className="text-xs text-primary hover:underline flex items-center gap-1"
-              >
+              <Button variant="link" size="sm" onClick={handleDownloadAll} className="h-auto p-0">
                 <Download className="w-3 h-3" />
                 Download All
-              </button>
+              </Button>
             </div>
             <div className="grid grid-cols-2 gap-1">
               {nodeData.outputImages.map((img, i) => (
@@ -281,15 +268,17 @@ function ImageGenNodeComponent(props: NodeProps) {
                     unoptimized
                   />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDownload(i);
                       }}
-                      className="p-1 bg-white/20 rounded hover:bg-white/30"
+                      className="h-6 w-6 bg-white/20 hover:bg-white/30"
                     >
                       <Download className="w-3 h-3 text-white" />
-                    </button>
+                    </Button>
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[8px] text-center py-0.5">
                     {i + 1}
@@ -308,12 +297,14 @@ function ImageGenNodeComponent(props: NodeProps) {
                   className="object-contain"
                   unoptimized
                 />
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => setSelectedPreview(null)}
-                  className="absolute top-1 right-1 p-1 bg-black/50 rounded text-white text-xs"
+                  className="absolute top-1 right-1 h-5 w-5 bg-black/50 hover:bg-black/70 text-white"
                 >
                   ×
-                </button>
+                </Button>
               </div>
             )}
             {/* Processing overlay */}
@@ -360,25 +351,8 @@ function ImageGenNodeComponent(props: NodeProps) {
           </div>
         )}
 
-        {/* Generate Button (when no output) */}
-        {!nodeData.outputImage && !(nodeData.outputImages?.length > 0) && (
-          <button
-            onClick={handleGenerate}
-            disabled={!hasRequiredInputs || nodeData.status === 'processing'}
-            className="w-full py-2 rounded-md text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-            style={{ backgroundColor: 'var(--node-color)', color: 'var(--background)' }}
-          >
-            {nodeData.status === 'processing' ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="h-4 w-4" />
-            )}
-            {nodeData.status === 'processing' ? 'Generating...' : 'Generate Image'}
-          </button>
-        )}
-
         {/* Help text for required inputs */}
-        {!hasRequiredInputs && nodeData.status !== 'processing' && (
+        {!canGenerate && nodeData.status !== 'processing' && (
           <div className="text-xs text-[var(--muted-foreground)] flex items-center gap-1">
             <AlertCircle className="w-3 h-3" />
             Connect a prompt to generate

@@ -1,6 +1,6 @@
 'use client';
 
-import { useReactFlow, useViewport } from '@xyflow/react';
+import { useReactFlow, useViewport, ViewportPortal } from '@xyflow/react';
 import { clsx } from 'clsx';
 import { Lock, Palette, Trash2, Unlock } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
@@ -46,21 +46,64 @@ function calculateGroupBounds(
   if (minX === Infinity) return null;
 
   const padding = 24;
+  const headerHeight = 32;
   return {
     x: minX - padding,
-    y: minY - padding - 32, // Extra space for header
+    y: minY - padding - headerHeight,
     width: maxX - minX + padding * 2,
-    height: maxY - minY + padding * 2 + 32,
+    height: maxY - minY + padding * 2 + headerHeight,
   };
 }
 
-interface GroupOverlayItemProps {
+interface GroupBackgroundProps {
   group: NodeGroup;
 }
 
-function GroupOverlayItem({ group }: GroupOverlayItemProps) {
+/**
+ * Group background - renders BELOW nodes
+ * Uses flow coordinates directly (ViewportPortal handles transform)
+ */
+function GroupBackground({ group }: GroupBackgroundProps) {
+  const { getNode } = useReactFlow();
+
+  const bounds = useMemo(
+    () => calculateGroupBounds(group.nodeIds, getNode),
+    [group.nodeIds, getNode]
+  );
+
+  if (!bounds) return null;
+
+  const colors = GROUP_COLORS[group.color ?? 'purple'];
+
+  return (
+    <div
+      className={clsx(
+        'absolute rounded-lg border-2 border-dashed',
+        colors.bg,
+        colors.border,
+        group.isLocked && 'opacity-60'
+      )}
+      style={{
+        left: bounds.x,
+        top: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
+      }}
+    />
+  );
+}
+
+interface GroupControlsProps {
+  group: NodeGroup;
+  zoom: number;
+}
+
+/**
+ * Group controls (header with drag, buttons) - renders ABOVE nodes
+ * Uses flow coordinates directly (ViewportPortal handles transform)
+ */
+function GroupControls({ group, zoom }: GroupControlsProps) {
   const { getNode, setNodes } = useReactFlow();
-  const { x: panX, y: panY, zoom } = useViewport();
   const { toggleGroupLock, deleteGroup, setGroupColor, setDirty } = useWorkflowStore();
   const [showColorPicker, setShowColorPicker] = useState(false);
 
@@ -148,40 +191,16 @@ function GroupOverlayItem({ group }: GroupOverlayItemProps) {
   if (!bounds) return null;
 
   const colors = GROUP_COLORS[group.color ?? 'purple'];
+  const headerHeight = 32;
 
   const handleColorSelect = (color: GroupColor) => {
     setGroupColor(group.id, color);
     setShowColorPicker(false);
   };
 
-  // Apply viewport transform: convert flow coordinates to screen coordinates
-  const screenLeft = bounds.x * zoom + panX;
-  const screenTop = bounds.y * zoom + panY;
-  const screenWidth = bounds.width * zoom;
-  const screenHeight = bounds.height * zoom;
-
-  // Scale header height with zoom but keep it usable
-  const headerHeight = Math.max(24, 32 * zoom);
-
   return (
     <>
-      {/* Group Background - pointer-events-none so clicks pass through to nodes */}
-      <div
-        className={clsx(
-          'absolute rounded-lg border-2 border-dashed pointer-events-none',
-          colors.bg,
-          colors.border,
-          group.isLocked && 'opacity-60'
-        )}
-        style={{
-          left: screenLeft,
-          top: screenTop,
-          width: screenWidth,
-          height: screenHeight,
-        }}
-      />
-
-      {/* Group Header - separate element with pointer-events-auto for interaction */}
+      {/* Group Header - draggable */}
       <div
         onMouseDown={handleMouseDown}
         className={clsx(
@@ -194,16 +213,13 @@ function GroupOverlayItem({ group }: GroupOverlayItemProps) {
           group.isLocked && 'opacity-60'
         )}
         style={{
-          left: screenLeft,
-          top: screenTop,
-          width: screenWidth,
+          left: bounds.x,
+          top: bounds.y,
+          width: bounds.width,
           height: headerHeight,
         }}
       >
-        <span
-          className={clsx('font-medium truncate', colors.text)}
-          style={{ fontSize: Math.max(10, 14 * zoom) }}
-        >
+        <span className={clsx('font-medium truncate', colors.text)} style={{ fontSize: 14 }}>
           {group.name}
         </span>
         <div className="flex items-center gap-1">
@@ -271,8 +287,8 @@ function GroupOverlayItem({ group }: GroupOverlayItemProps) {
             colors.text
           )}
           style={{
-            left: screenLeft + 12 * zoom,
-            top: screenTop + headerHeight + 8 * zoom,
+            left: bounds.x + 12,
+            top: bounds.y + headerHeight + 8,
           }}
         >
           LOCKED
@@ -282,17 +298,57 @@ function GroupOverlayItem({ group }: GroupOverlayItemProps) {
   );
 }
 
-function GroupOverlayComponent() {
+/**
+ * Renders group backgrounds BELOW nodes (z-index: -1)
+ * Must be placed inside ReactFlow component
+ */
+function GroupBackgroundsPortalComponent() {
   const { groups } = useWorkflowStore();
 
   if (groups.length === 0) return null;
 
   return (
-    <div className="absolute inset-0 pointer-events-none z-[5]">
-      {groups.map((group) => (
-        <GroupOverlayItem key={group.id} group={group} />
-      ))}
-    </div>
+    <ViewportPortal>
+      <div style={{ position: 'absolute', top: 0, left: 0, zIndex: -1, pointerEvents: 'none' }}>
+        {groups.map((group) => (
+          <GroupBackground key={group.id} group={group} />
+        ))}
+      </div>
+    </ViewportPortal>
+  );
+}
+
+/**
+ * Renders group headers/controls ABOVE nodes (z-index: 1000)
+ * Must be placed inside ReactFlow component
+ */
+function GroupControlsOverlayComponent() {
+  const { groups } = useWorkflowStore();
+  const { zoom } = useViewport();
+
+  if (groups.length === 0) return null;
+
+  return (
+    <ViewportPortal>
+      <div style={{ position: 'absolute', top: 0, left: 0, zIndex: 1000, pointerEvents: 'none' }}>
+        {groups.map((group) => (
+          <GroupControls key={group.id} group={group} zoom={zoom} />
+        ))}
+      </div>
+    </ViewportPortal>
+  );
+}
+
+export const GroupBackgroundsPortal = memo(GroupBackgroundsPortalComponent);
+export const GroupControlsOverlay = memo(GroupControlsOverlayComponent);
+
+// Legacy export for backwards compatibility - combines both portals
+function GroupOverlayComponent() {
+  return (
+    <>
+      <GroupBackgroundsPortal />
+      <GroupControlsOverlay />
+    </>
   );
 }
 

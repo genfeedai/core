@@ -8,7 +8,7 @@ import { memo, useCallback } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { useRequiredInputs } from '@/hooks/useRequiredInputs';
+import { useCanGenerate } from '@/hooks/useCanGenerate';
 import { useExecutionStore } from '@/store/executionStore';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
@@ -19,7 +19,10 @@ function LLMNodeComponent(props: NodeProps) {
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const executeNode = useExecutionStore((state) => state.executeNode);
   const openNodeDetailModal = useUIStore((state) => state.openNodeDetailModal);
-  const { hasRequiredInputs } = useRequiredInputs(id, type as 'llm');
+  const { canGenerate } = useCanGenerate({
+    nodeId: id,
+    nodeType: type as 'llm',
+  });
 
   const handleSystemPromptChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -52,13 +55,7 @@ function LLMNodeComponent(props: NodeProps) {
   }, [id, openNodeDetailModal]);
 
   const headerActions = nodeData.outputText ? (
-    <Button
-      variant="ghost"
-      size="icon-sm"
-      onClick={handleExpand}
-      title="Expand preview"
-      className="h-6 w-6"
-    >
+    <Button variant="ghost" size="icon-sm" onClick={handleExpand} title="Expand preview">
       <Expand className="h-3.5 w-3.5" />
     </Button>
   ) : null;
@@ -120,22 +117,26 @@ function LLMNodeComponent(props: NodeProps) {
             <div className="p-2 bg-[var(--background)] border border-[var(--border)] rounded text-sm max-h-32 overflow-y-auto">
               {nodeData.outputText}
             </div>
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={handleGenerate}
               disabled={nodeData.status === 'processing'}
-              className="absolute top-1 right-1 p-1 bg-black/50 rounded-full hover:bg-black/70 transition disabled:opacity-50"
+              className="absolute top-1 right-1 h-6 w-6 bg-black/50 hover:bg-black/70"
             >
               <RefreshCw className="w-3 h-3" />
-            </button>
+            </Button>
           </div>
         )}
 
         {/* Generate Button */}
         {!nodeData.outputText && (
-          <button
+          <Button
+            variant={canGenerate ? 'default' : 'secondary'}
+            size="sm"
             onClick={handleGenerate}
-            disabled={!hasRequiredInputs || nodeData.status === 'processing'}
-            className="w-full py-2 bg-[var(--primary)] text-white rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!canGenerate || nodeData.status === 'processing'}
+            className="w-full"
           >
             {nodeData.status === 'processing' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -143,11 +144,11 @@ function LLMNodeComponent(props: NodeProps) {
               <Sparkles className="w-4 h-4" />
             )}
             {nodeData.status === 'processing' ? 'Generating...' : 'Generate Text'}
-          </button>
+          </Button>
         )}
 
         {/* Help text for required inputs */}
-        {!hasRequiredInputs && nodeData.status !== 'processing' && (
+        {!canGenerate && nodeData.status !== 'processing' && (
           <div className="text-xs text-[var(--muted-foreground)] flex items-center gap-1">
             <AlertCircle className="w-3 h-3" />
             Connect a prompt to generate

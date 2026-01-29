@@ -1,4 +1,10 @@
-# Genfeed
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/genfeedai/core/master/.github/banner-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/genfeedai/core/master/.github/banner-light.svg">
+    <img alt="Genfeed - AI-Powered Visual Workflow Editor" src="https://raw.githubusercontent.com/genfeedai/core/master/.github/banner-dark.svg" width="800">
+  </picture>
+</p>
 
 Open-source visual workflow editor for AI-powered content creation. Build automated pipelines that generate images, videos, and text using a drag-and-drop interface.
 
@@ -6,11 +12,17 @@ Open-source visual workflow editor for AI-powered content creation. Build automa
 
 ## Features
 
-- **Visual Workflow Editor** - Drag-and-drop nodes to build AI pipelines
-- **Type-safe Connections** - Auto-validates connections (image→image, text→text, video→video)
-- **Multi-Provider Support** - Replicate, fal.ai, HuggingFace integrations
-- **Real-time Execution** - Run workflows and see results update live
+- **Visual Workflow Editor** - Drag-and-drop 25+ node types to build AI pipelines
+- **Type-safe Connections** - Auto-validates connections by data type (image→image, text→text, video→video)
+- **Multi-Provider Support** - Replicate, fal.ai, ElevenLabs, OpenAI integrations
+- **Real-time Execution** - SSE streaming with live progress updates
 - **AI Workflow Generator** - Describe what you want, get a workflow
+- **Debug Mode** - Mock API responses for testing workflows without API costs
+- **23 Pre-built Templates** - Ready-to-use workflows for common tasks
+- **Prompts Library** - 24+ curated prompts with style settings
+- **Multi-Image Output** - Batch generation with gallery view
+- **Negative Prompt Selector** - One-click quality controls
+- **Subworkflows** - Compose complex pipelines from reusable parts
 - **Self-hostable** - Run on your own infrastructure
 
 ## Quick Start
@@ -60,61 +72,57 @@ genfeed/
 │   └── storage/     # Database adapters (MongoDB, SQLite)
 ```
 
-## Video Generation Workflow
+```mermaid
+flowchart LR
+    subgraph Frontend
+        WE[Workflow Editor<br/>React Flow]
+    end
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        GENFEED VIDEO GENERATION PIPELINE                     │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                  │
-│  │   WORKFLOW   │    │  EXECUTION   │    │ ORCHESTRATOR │                  │
-│  │   EDITOR     │───▶│   SERVICE    │───▶│    QUEUE     │                  │
-│  │  (React Flow)│    │   (NestJS)   │    │  (BullMQ)    │                  │
-│  └──────────────┘    └──────────────┘    └──────┬───────┘                  │
-│                                                  │                          │
-│                          ┌───────────────────────┼───────────────────────┐  │
-│                          │                       │                       │  │
-│                          ▼                       ▼                       ▼  │
-│               ┌──────────────────┐    ┌──────────────────┐    ┌────────────┐│
-│               │ VIDEO GENERATION │    │ IMAGE GENERATION │    │    LLM     ││
-│               │    Replicate     │    │    Replicate     │    │  OpenAI    ││
-│               │  • veo-3.1-fast  │    │  • flux-dev      │    │  • GPT-4o  ││
-│               │  • kling-v2.5    │    │  • sdxl          │    │  • Claude  ││
-│               └────────┬─────────┘    └────────┬─────────┘    └─────┬──────┘│
-│                        │                       │                     │      │
-│                        └───────────────────────┼─────────────────────┘      │
-│                                                ▼                            │
-│                                    ┌──────────────────┐                     │
-│                                    │  POST-PROCESSING │                     │
-│                                    │    (Optional)    │                     │
-│                                    │  • Frame Extract │                     │
-│                                    │  • Video Upscale │                     │
-│                                    │  • Lip Sync      │                     │
-│                                    │  • TTS (11Labs)  │                     │
-│                                    └────────┬─────────┘                     │
-│                                             │                               │
-│                                             ▼                               │
-│                                    ┌──────────────────┐                     │
-│                                    │     STORAGE      │                     │
-│                                    │    (MongoDB)     │                     │
-│                                    │  + Gallery View  │                     │
-│                                    └──────────────────┘                     │
-│                                                                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Queues: workflow-orchestrator │ video-generation │ image-generation │ llm  │
-│  Concurrency:       10         │        2         │        5         │  10  │
-└─────────────────────────────────────────────────────────────────────────────┘
+    subgraph Backend
+        ES[Execution Service<br/>NestJS]
+        OQ[Orchestrator Queue<br/>BullMQ]
+    end
+
+    subgraph Processors
+        VP[Video Processor]
+        IP[Image Processor]
+        LP[LLM Processor]
+        AP[Audio Processor]
+    end
+
+    subgraph Providers
+        R[Replicate]
+        E[ElevenLabs]
+        O[OpenAI]
+    end
+
+    WE --> ES --> OQ
+    OQ --> VP & IP & LP & AP
+    VP & IP --> R
+    AP --> E
+    LP --> O
 ```
 
 ## Node Types
 
 | Category | Nodes |
 |----------|-------|
-| Input | Prompt, Image Input, Video Input, Template |
-| AI | Image Generator, Video Generator, LLM |
-| Processing | Animation, Video Stitch, Video Trim, Annotation |
-| Output | Output, Preview, Social Publish |
+| Input | Prompt, Image Input, Audio Input, Video Input, Template |
+| AI Generation | Image Generator, Video Generator, LLM, Lip Sync, Voice Change, Text to Speech, Transcribe, Motion Control |
+| Processing | Resize, Reframe, Upscale, Animation, Video Stitch, Video Trim, Frame Extract, Grid Split, Annotation, Subtitle |
+| Output | Output |
+| Composition | Workflow Input, Workflow Output, Subworkflow |
+
+## Templates
+
+23 pre-built templates available:
+
+| Category | Templates |
+|----------|-----------|
+| Video | Extended Video Pipeline, Grid to Video, Voice to Video, Dance Video |
+| Social | YouTube Thumbnail Generator, YouTube 10-Min Video, Instagram Carousel, Social Media Brand Kit |
+| Avatar | AI Influencer Avatar, Facecam Avatar |
+| Content | Stream to Short-Form, Basic Image Generation, Image to Video |
 
 ## Setup Guide
 
@@ -237,7 +245,8 @@ See [apps/api/.env.example](apps/api/.env.example) for all options.
 |----------|----------|
 | [Replicate](https://replicate.com) | Image & video generation models |
 | [fal.ai](https://fal.ai) | Fast inference endpoints |
-| [HuggingFace](https://huggingface.co) | Open-source models |
+| [ElevenLabs](https://elevenlabs.io) | Text-to-speech & voice cloning |
+| [OpenAI](https://openai.com) | LLM & text generation |
 
 ### Database Options
 

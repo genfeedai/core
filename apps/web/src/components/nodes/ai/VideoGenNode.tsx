@@ -3,15 +3,14 @@
 import type { VideoGenNodeData, VideoModel } from '@genfeedai/types';
 import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { AlertCircle, Expand, ImageIcon, Loader2, Play, RefreshCw, Video } from 'lucide-react';
-import Image from 'next/image';
+import { AlertCircle, Expand, Loader2, Play, Video } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ModelBrowserModal } from '@/components/models/ModelBrowserModal';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { SchemaInputs } from '@/components/nodes/SchemaInputs';
 import { Button } from '@/components/ui/button';
+import { useCanGenerate } from '@/hooks/useCanGenerate';
 import { useModelSelection } from '@/hooks/useModelSelection';
-import { useRequiredInputs } from '@/hooks/useRequiredInputs';
 import { extractEnumValues, supportsImageInput } from '@/lib/utils/schemaUtils';
 import { useExecutionStore } from '@/store/executionStore';
 import { useUIStore } from '@/store/uiStore';
@@ -39,7 +38,12 @@ function VideoGenNodeComponent(props: NodeProps) {
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const executeNode = useExecutionStore((state) => state.executeNode);
   const openNodeDetailModal = useUIStore((state) => state.openNodeDetailModal);
-  const { hasRequiredInputs } = useRequiredInputs(id, type as 'videoGen');
+  const { canGenerate } = useCanGenerate({
+    nodeId: id,
+    nodeType: type as 'videoGen',
+    inputSchema: nodeData.selectedModel?.inputSchema as Record<string, unknown> | undefined,
+    schemaParams: nodeData.schemaParams,
+  });
 
   const [isModelBrowserOpen, setIsModelBrowserOpen] = useState(false);
 
@@ -60,12 +64,11 @@ function VideoGenNodeComponent(props: NodeProps) {
       return;
     }
 
-    hasAttemptedSchemaLoad.current = true;
-
     const modelId = INTERNAL_TO_MODEL_ID[nodeData.model];
     if (!modelId) return;
 
     const controller = new AbortController();
+    let isCancelled = false;
 
     const loadSchema = async () => {
       try {
@@ -73,22 +76,26 @@ function VideoGenNodeComponent(props: NodeProps) {
           signal: controller.signal,
         });
 
-        if (!response.ok) return;
+        if (!response.ok || isCancelled) return;
 
         const data = await response.json();
         const model = data.models?.find((m: { id: string }) => m.id === modelId);
 
-        if (model) {
+        if (model && !isCancelled) {
+          hasAttemptedSchemaLoad.current = true;
           handleModelSelect(model);
         }
       } catch {
-        // Ignore abort errors and other failures
+        // Ignore abort errors and other failures - allows retry on next effect run
       }
     };
 
     loadSchema();
 
-    return () => controller.abort();
+    return () => {
+      isCancelled = true;
+      controller.abort();
+    };
   }, [nodeData.model, nodeData.selectedModel, handleModelSelect]);
 
   // Get schema properties from selected model
@@ -150,40 +157,30 @@ function VideoGenNodeComponent(props: NodeProps) {
   const headerActions = useMemo(
     () => (
       <>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => setIsModelBrowserOpen(true)}
-          className="h-5 px-2 text-[10px]"
-        >
+        <Button variant="secondary" size="sm" onClick={() => setIsModelBrowserOpen(true)}>
           Browse
         </Button>
         {nodeData.outputVideo && (
-          <>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={handleExpand}
-              className="h-5 w-5"
-              title="Expand preview"
-            >
-              <Expand className="h-3 w-3" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={handleGenerate}
-              disabled={nodeData.status === 'processing'}
-              className="h-5 w-5"
-              title="Regenerate"
-            >
-              <RefreshCw className="h-3 w-3" />
-            </Button>
-          </>
+          <Button variant="ghost" size="icon-sm" onClick={handleExpand} title="Expand preview">
+            <Expand className="h-3 w-3" />
+          </Button>
         )}
+        <Button
+          variant={canGenerate ? 'default' : 'secondary'}
+          size="sm"
+          onClick={handleGenerate}
+          disabled={!canGenerate || nodeData.status === 'processing'}
+        >
+          {nodeData.status === 'processing' ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Play className="h-4 w-4 fill-current" />
+          )}
+          {nodeData.status === 'processing' ? 'Generating' : 'Generate'}
+        </Button>
       </>
     ),
-    [nodeData.outputVideo, nodeData.status, handleGenerate, handleExpand]
+    [nodeData.outputVideo, nodeData.status, handleGenerate, handleExpand, canGenerate]
   );
 
   // Determine which inputs to disable based on model support
@@ -223,36 +220,6 @@ function VideoGenNodeComponent(props: NodeProps) {
           </div>
         )}
 
-        {/* Input Image Preview - shows connected image or empty dropzone */}
-        {!nodeData.outputVideo && modelSupportsImageInput && (
-          <div className="flex-1 min-h-[100px] rounded-md overflow-hidden bg-black/20">
-            {nodeData.inputImage ? (
-              <div className="relative w-full h-full min-h-[100px]">
-                <Image
-                  src={nodeData.inputImage}
-                  alt="Input image"
-                  fill
-                  className="object-contain"
-                  unoptimized
-                />
-                {nodeData.status === 'processing' && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="flex flex-col items-center gap-2">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                      <span className="text-xs text-white/80">Generating...</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex h-full min-h-[100px] w-full flex-col items-center justify-center gap-1 border border-dashed border-border/50 rounded-md">
-                <ImageIcon className="h-6 w-6 text-muted-foreground/30" />
-                <span className="text-[10px] text-muted-foreground/50">Connect start frame</span>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Output Preview */}
         {nodeData.outputVideo ? (
           <div className="relative aspect-video w-full rounded-md overflow-hidden bg-black/20">
@@ -285,25 +252,8 @@ function VideoGenNodeComponent(props: NodeProps) {
           </div>
         )}
 
-        {/* Generate Button */}
-        {!nodeData.outputVideo && (
-          <button
-            onClick={handleGenerate}
-            disabled={!hasRequiredInputs || nodeData.status === 'processing'}
-            className="w-full py-2 rounded-md text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-            style={{ backgroundColor: 'var(--node-color)', color: 'var(--background)' }}
-          >
-            {nodeData.status === 'processing' ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Play className="w-4 h-4" />
-            )}
-            {nodeData.status === 'processing' ? 'Generating...' : 'Generate Video'}
-          </button>
-        )}
-
         {/* Help text for required inputs */}
-        {!hasRequiredInputs && nodeData.status !== 'processing' && (
+        {!canGenerate && nodeData.status !== 'processing' && (
           <div className="text-xs text-[var(--muted-foreground)] flex items-center gap-1">
             <AlertCircle className="w-3 h-3" />
             Connect a prompt to generate

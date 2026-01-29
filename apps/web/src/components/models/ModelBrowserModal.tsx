@@ -1,13 +1,13 @@
 'use client';
 
-import type { ModelCapability, ProviderModel, ProviderType } from '@genfeedai/types';
-import { AlertTriangle, Clock, ExternalLink, Search, Sparkles, X } from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { logger } from '@/lib/logger';
 import { useSettingsStore } from '@/store/settingsStore';
+import type { ModelCapability, ProviderModel, ProviderType } from '@genfeedai/types';
+import { AlertTriangle, Clock, ExternalLink, Search, Sparkles, X } from 'lucide-react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 // =============================================================================
 // TYPES

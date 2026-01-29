@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useRequiredInputs } from '@/hooks/useRequiredInputs';
+import { useCanGenerate } from '@/hooks/useCanGenerate';
 import { useExecutionStore } from '@/store/executionStore';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
@@ -38,10 +38,11 @@ function TranscribeNodeComponent(props: NodeProps) {
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const executeNode = useExecutionStore((state) => state.executeNode);
   const openNodeDetailModal = useUIStore((state) => state.openNodeDetailModal);
-  const { connectionStatus } = useRequiredInputs(id, type as 'transcribe');
-
-  // Transcribe needs at least video OR audio connected
-  const hasInput = connectionStatus.get('video') || connectionStatus.get('audio');
+  // Transcribe validates via useCanGenerate - needs video OR audio with data
+  const { canGenerate } = useCanGenerate({
+    nodeId: id,
+    nodeType: type as 'transcribe',
+  });
 
   const handleLanguageChange = useCallback(
     (value: string) => {
@@ -71,13 +72,7 @@ function TranscribeNodeComponent(props: NodeProps) {
   const headerActions = useMemo(
     () =>
       nodeData.outputText ? (
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={handleExpand}
-          className="h-5 w-5"
-          title="Expand preview"
-        >
+        <Button variant="ghost" size="icon-sm" onClick={handleExpand} title="Expand preview">
           <Expand className="h-3 w-3" />
         </Button>
       ) : null,
@@ -128,22 +123,26 @@ function TranscribeNodeComponent(props: NodeProps) {
             <div className="p-2 bg-[var(--background)] border border-[var(--border)] rounded text-sm max-h-32 overflow-y-auto whitespace-pre-wrap">
               {nodeData.outputText}
             </div>
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={handleTranscribe}
               disabled={nodeData.status === 'processing'}
-              className="absolute top-1 right-1 p-1 bg-black/50 rounded-full hover:bg-black/70 transition disabled:opacity-50"
+              className="absolute top-1 right-1 h-6 w-6 bg-black/50 hover:bg-black/70"
             >
               <RefreshCw className="w-3 h-3" />
-            </button>
+            </Button>
           </div>
         )}
 
         {/* Transcribe Button */}
         {!nodeData.outputText && (
-          <button
+          <Button
+            variant={canGenerate ? 'default' : 'secondary'}
+            size="sm"
             onClick={handleTranscribe}
-            disabled={!hasInput || nodeData.status === 'processing'}
-            className="w-full py-2 bg-[var(--primary)] text-white rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!canGenerate || nodeData.status === 'processing'}
+            className="w-full"
           >
             {nodeData.status === 'processing' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -151,11 +150,11 @@ function TranscribeNodeComponent(props: NodeProps) {
               <FileText className="w-4 h-4" />
             )}
             {nodeData.status === 'processing' ? 'Transcribing...' : 'Transcribe'}
-          </button>
+          </Button>
         )}
 
         {/* Help text for required inputs */}
-        {!hasInput && nodeData.status !== 'processing' && (
+        {!canGenerate && nodeData.status !== 'processing' && (
           <div className="text-xs text-[var(--muted-foreground)] flex items-center gap-1">
             <AlertCircle className="w-3 h-3" />
             Connect video or audio to transcribe

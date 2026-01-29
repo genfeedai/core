@@ -113,7 +113,6 @@ function AudioInputNodeComponent(props: NodeProps) {
           size="icon-sm"
           onClick={() => fileInputRef.current?.click()}
           title="Upload audio"
-          className="h-6 w-6"
         >
           <Upload className="h-3.5 w-3.5" />
         </Button>
@@ -122,18 +121,11 @@ function AudioInputNodeComponent(props: NodeProps) {
           size="icon-sm"
           onClick={() => setShowUrlInput(!showUrlInput)}
           title="Paste URL"
-          className="h-6 w-6"
         >
           <Link className="h-3.5 w-3.5" />
         </Button>
         {nodeData.audio && (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={handleExpand}
-            title="Expand preview"
-            className="h-6 w-6"
-          >
+          <Button variant="ghost" size="icon-sm" onClick={handleExpand} title="Expand preview">
             <Expand className="h-3.5 w-3.5" />
           </Button>
         )}

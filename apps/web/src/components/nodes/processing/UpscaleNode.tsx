@@ -210,13 +210,7 @@ function UpscaleNodeComponent(props: NodeProps) {
   const headerActions = useMemo(
     () =>
       hasOutput ? (
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={handleExpand}
-          className="h-5 w-5"
-          title="Expand preview"
-        >
+        <Button variant="ghost" size="icon-sm" onClick={handleExpand} title="Expand preview">
           <Expand className="h-3 w-3" />
         </Button>
       ) : null,
@@ -391,13 +385,14 @@ function UpscaleNodeComponent(props: NodeProps) {
             <div className="flex items-center justify-between mb-1">
               <Label className="text-xs">Result</Label>
               {nodeData.originalPreview && (
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={handleComparisonToggle}
-                  className="p-1 rounded hover:bg-secondary transition-colors"
                   title={nodeData.showComparison ? 'Show result only' : 'Compare before/after'}
                 >
                   <SplitSquareHorizontal className="h-3.5 w-3.5" />
-                </button>
+                </Button>
               )}
             </div>
 
@@ -421,13 +416,15 @@ function UpscaleNodeComponent(props: NodeProps) {
                   className="h-32 w-full rounded-md object-cover"
                   unoptimized
                 />
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={handleProcess}
                   disabled={nodeData.status === 'processing'}
-                  className="absolute right-2 top-2 p-1.5 bg-black/50 rounded-full hover:bg-black/70 transition-colors disabled:opacity-50"
+                  className="absolute right-2 top-2 h-6 w-6 bg-black/50 hover:bg-black/70"
                 >
                   <RefreshCw className="h-3.5 w-3.5 text-white" />
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -439,13 +436,14 @@ function UpscaleNodeComponent(props: NodeProps) {
             <div className="flex items-center justify-between mb-1">
               <Label className="text-xs">Result</Label>
               {nodeData.originalPreview && nodeData.outputPreview && (
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={handleComparisonToggle}
-                  className="p-1 rounded hover:bg-secondary transition-colors"
                   title={nodeData.showComparison ? 'Show video' : 'Compare frames'}
                 >
                   <SplitSquareHorizontal className="h-3.5 w-3.5" />
-                </button>
+                </Button>
               )}
             </div>
 
@@ -470,13 +468,15 @@ function UpscaleNodeComponent(props: NodeProps) {
                   loop
                   muted
                 />
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={handleProcess}
                   disabled={nodeData.status === 'processing'}
-                  className="absolute right-2 top-2 p-1.5 bg-black/50 rounded-full hover:bg-black/70 transition-colors disabled:opacity-50"
+                  className="absolute right-2 top-2 h-6 w-6 bg-black/50 hover:bg-black/70"
                 >
                   <RefreshCw className="h-3.5 w-3.5 text-white" />
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -484,17 +484,18 @@ function UpscaleNodeComponent(props: NodeProps) {
 
         {/* Process Button */}
         {!hasOutput && (
-          <button
+          <Button
+            variant="default"
+            size="sm"
             onClick={handleProcess}
             disabled={!hasInput || nodeData.status === 'processing'}
-            className="mt-1 w-full py-2 rounded-md text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-            style={{ backgroundColor: 'var(--node-color)', color: 'var(--background)' }}
+            className="mt-1 w-full"
           >
             {nodeData.status === 'processing' && <Loader2 className="h-4 w-4 animate-spin" />}
             {nodeData.status === 'processing'
               ? 'Upscaling...'
               : `Upscale ${inputType === 'video' ? 'Video' : inputType === 'image' ? 'Image' : 'Media'}`}
-          </button>
+          </Button>
         )}
       </div>
     </BaseNode>

@@ -6,6 +6,7 @@ import type { NodeProps } from '@xyflow/react';
 import { Layers, Loader2, RefreshCw, Zap } from 'lucide-react';
 import { memo, useCallback } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
@@ -207,22 +208,26 @@ function VideoStitchNodeComponent(props: NodeProps) {
               controls
               loop={nodeData.seamlessLoop}
             />
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={handleProcess}
               disabled={nodeData.status === 'processing'}
-              className="absolute top-1 right-1 p-1 bg-black/50 rounded-full hover:bg-black/70 transition disabled:opacity-50"
+              className="absolute top-1 right-1 h-6 w-6 bg-black/50 hover:bg-black/70"
             >
               <RefreshCw className="w-3 h-3" />
-            </button>
+            </Button>
           </div>
         )}
 
         {/* Process Button */}
         {!nodeData.outputVideo && (
-          <button
+          <Button
+            variant="default"
+            size="sm"
             onClick={handleProcess}
             disabled={inputVideos.length < 2 || nodeData.status === 'processing'}
-            className="w-full py-2 bg-[var(--primary)] text-white rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full"
           >
             {nodeData.status === 'processing' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -230,7 +235,7 @@ function VideoStitchNodeComponent(props: NodeProps) {
               <Layers className="w-4 h-4" />
             )}
             {nodeData.status === 'processing' ? 'Stitching...' : 'Stitch Videos'}
-          </button>
+          </Button>
         )}
 
         {inputVideos.length < 2 && !nodeData.outputVideo && (

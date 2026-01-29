@@ -9,16 +9,21 @@ import { BaseNode } from '@/components/nodes/BaseNode';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
+import { useCanGenerate } from '@/hooks/useCanGenerate';
 import { useExecutionStore } from '@/store/executionStore';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
 
 function VoiceChangeNodeComponent(props: NodeProps) {
-  const { id, data } = props;
+  const { id, type, data } = props;
   const nodeData = data as VoiceChangeNodeData;
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const executeNode = useExecutionStore((state) => state.executeNode);
   const openNodeDetailModal = useUIStore((state) => state.openNodeDetailModal);
+  const { canGenerate } = useCanGenerate({
+    nodeId: id,
+    nodeType: type as 'voiceChange',
+  });
 
   const handlePreserveOriginalChange = useCallback(
     (checked: boolean | 'indeterminate') => {
@@ -45,18 +50,10 @@ function VoiceChangeNodeComponent(props: NodeProps) {
     openNodeDetailModal(id, 'preview');
   }, [id, openNodeDetailModal]);
 
-  const hasRequiredInputs = nodeData.inputVideo && nodeData.inputAudio;
-
   const headerActions = useMemo(
     () =>
       nodeData.outputVideo ? (
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={handleExpand}
-          className="h-5 w-5"
-          title="Expand preview"
-        >
+        <Button variant="ghost" size="icon-sm" onClick={handleExpand} title="Expand preview">
           <Expand className="h-3 w-3" />
         </Button>
       ) : null,
@@ -110,22 +107,26 @@ function VoiceChangeNodeComponent(props: NodeProps) {
               controls
               className="w-full rounded border border-[var(--border)]"
             />
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={handleProcess}
-              disabled={nodeData.status === 'processing' || !hasRequiredInputs}
-              className="absolute top-1 right-1 p-1 bg-black/50 rounded-full hover:bg-black/70 transition disabled:opacity-50"
+              disabled={nodeData.status === 'processing' || !canGenerate}
+              className="absolute top-1 right-1 h-6 w-6 bg-black/50 hover:bg-black/70"
             >
               <RefreshCw className="w-3 h-3" />
-            </button>
+            </Button>
           </div>
         )}
 
         {/* Process Button */}
         {!nodeData.outputVideo && (
-          <button
+          <Button
+            variant={canGenerate ? 'default' : 'secondary'}
+            size="sm"
             onClick={handleProcess}
-            disabled={!hasRequiredInputs || nodeData.status === 'processing'}
-            className="w-full py-2 bg-[var(--primary)] text-white rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!canGenerate || nodeData.status === 'processing'}
+            className="w-full"
           >
             {nodeData.status === 'processing' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -137,11 +138,11 @@ function VoiceChangeNodeComponent(props: NodeProps) {
               : nodeData.preserveOriginalAudio
                 ? 'Mix Audio'
                 : 'Replace Audio'}
-          </button>
+          </Button>
         )}
 
         {/* Help text for required inputs */}
-        {!hasRequiredInputs && nodeData.status !== 'processing' && (
+        {!canGenerate && nodeData.status !== 'processing' && (
           <div className="text-xs text-[var(--muted-foreground)] flex items-center gap-1">
             <AudioLines className="w-3 h-3" />
             Connect video + new audio

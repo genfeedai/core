@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
+  <!-- Background -->
+  <rect width="800" height="200" fill="#0a0a0a" rx="12"/>
+
+  <!-- Node 1: Prompt (top left) -->
+  <g transform="translate(40, 45)">
+    <rect width="150" height="34" fill="#171717" stroke="#262626" stroke-width="1" rx="8"/>
+    <rect x="8" y="12" width="10" height="10" fill="#404040" rx="2"/>
+    <text x="24" y="21" fill="#e5e5e5" font-size="12" font-family="system-ui, sans-serif">Prompt</text>
+    <circle cx="150" cy="17" r="5" fill="#22d3ee"/>
+  </g>
+
+  <!-- Node 2: Image (bottom left) -->
+  <g transform="translate(40, 120)">
+    <rect width="150" height="34" fill="#171717" stroke="#262626" stroke-width="1" rx="8"/>
+    <rect x="8" y="12" width="10" height="10" fill="#404040" rx="2"/>
+    <text x="24" y="21" fill="#e5e5e5" font-size="12" font-family="system-ui, sans-serif">Image</text>
+    <circle cx="150" cy="17" r="5" fill="#eab308"/>
+  </g>
+
+  <!-- Edge 1: Prompt to ImageGen -->
+  <path d="M190 62 C 260 62, 290 83, 330 83" stroke="#404040" stroke-width="1.5" fill="none"/>
+
+  <!-- Edge 2: Image to ImageGen -->
+  <path d="M190 137 C 260 137, 290 103, 330 103" stroke="#404040" stroke-width="1.5" fill="none"/>
+
+  <!-- Node 3: ImageGen (center) -->
+  <g transform="translate(330, 66)">
+    <rect width="140" height="34" fill="#171717" stroke="#262626" stroke-width="1" rx="8"/>
+    <text x="12" y="22" fill="#a855f7" font-size="14">✦</text>
+    <text x="32" y="21" fill="#e5e5e5" font-size="12" font-family="system-ui, sans-serif">ImageGen</text>
+    <circle cx="0" cy="17" r="5" fill="#22d3ee"/>
+    <circle cx="0" cy="37" r="5" fill="#eab308"/>
+    <circle cx="140" cy="17" r="5" fill="#22d3ee"/>
+  </g>
+
+  <!-- Edge 3: ImageGen to Output -->
+  <path d="M470 83 C 530 83, 560 117, 610 117" stroke="#404040" stroke-width="1.5" fill="none"/>
+
+  <!-- Node 4: Output (right) -->
+  <g transform="translate(610, 100)">
+    <rect width="150" height="34" fill="#171717" stroke="#262626" stroke-width="1" rx="8"/>
+    <rect x="8" y="12" width="10" height="10" fill="#404040" rx="2"/>
+    <text x="24" y="21" fill="#e5e5e5" font-size="12" font-family="system-ui, sans-serif">Output</text>
+    <circle cx="0" cy="17" r="5" fill="#22d3ee"/>
+  </g>
+</svg>

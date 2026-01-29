@@ -8,6 +8,7 @@ import {
   HelpCircle,
   MessageCircle,
   Settings,
+  Store,
   Twitter,
   X,
 } from 'lucide-react';
@@ -557,6 +558,18 @@ function HelpTab() {
             <div>
               <div className="font-medium text-foreground">Twitter / X</div>
               <p className="text-xs text-muted-foreground">Follow for updates</p>
+            </div>
+          </a>
+          <a
+            href="https://marketplace.genfeed.ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-lg border border-border p-3 transition hover:border-primary/50 hover:bg-secondary/30"
+          >
+            <Store className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <div className="font-medium text-foreground">Marketplace</div>
+              <p className="text-xs text-muted-foreground">Browse workflows, prompts & assets</p>
             </div>
           </a>
         </div>

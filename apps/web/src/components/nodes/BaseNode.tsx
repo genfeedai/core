@@ -45,6 +45,7 @@ import {
   Volume2,
   Wand2,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { memo, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { PreviewTooltip } from '@/components/nodes/PreviewTooltip';
 import { useExecutionStore } from '@/store/executionStore';
@@ -319,19 +320,18 @@ function BaseNodeComponent({
                 {title ?? nodeData.label}
               </span>
             )}
-            {headerActions}
-            {/* Lock Toggle Button */}
-            <button
+            <StatusIndicator status={nodeData.status} />
+            {/* Lock Toggle Button - before headerActions so icon buttons are on the left */}
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={handleLockToggle}
-              className={clsx(
-                'rounded p-1 transition-colors hover:bg-secondary',
-                isLocked ? 'text-chart-3' : 'text-muted-foreground'
-              )}
+              className={isLocked ? 'text-chart-3' : 'text-muted-foreground'}
               title={isLocked ? 'Unlock node (L)' : 'Lock node (L)'}
             >
               {isLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
-            </button>
-            <StatusIndicator status={nodeData.status} />
+            </Button>
+            {headerActions}
           </div>
 
           {/* Content */}
@@ -341,27 +341,26 @@ function BaseNodeComponent({
               <div className="mb-3 rounded-md border border-destructive/30 bg-destructive/10 p-2">
                 <div className="flex items-start gap-1.5">
                   <p className="flex-1 text-xs text-destructive break-all">{nodeData.error}</p>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={handleCopyError}
-                    className="flex-shrink-0 rounded p-1 text-destructive/70 hover:bg-destructive/20 hover:text-destructive transition-colors"
+                    className="flex-shrink-0 h-5 w-5 text-destructive/70 hover:bg-destructive/20 hover:text-destructive"
                     title="Copy error"
                   >
                     <Copy className="h-3 w-3" />
-                  </button>
+                  </Button>
                 </div>
-                <button
+                <Button
+                  variant="destructive"
+                  size="sm"
                   onClick={handleRetry}
                   disabled={isRunning}
-                  className={clsx(
-                    'mt-2 flex w-full items-center justify-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition-colors',
-                    isRunning
-                      ? 'cursor-not-allowed bg-muted text-muted-foreground'
-                      : 'bg-destructive/20 text-destructive hover:bg-destructive/30'
-                  )}
+                  className="mt-2 w-full"
                 >
                   <RotateCcw className="h-3 w-3" />
                   Retry
-                </button>
+                </Button>
               </div>
             )}
 

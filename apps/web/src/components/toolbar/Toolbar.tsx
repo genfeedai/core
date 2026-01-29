@@ -38,8 +38,6 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
 import { CommentNavigator } from './CommentNavigator';
-import { DiscordIcon, XIcon } from './icons';
-import { OverflowMenu } from './OverflowMenu';
 import { SaveAsDialog } from './SaveAsDialog';
 import { SaveIndicator } from './SaveIndicator';
 import { ToolbarDropdown } from './ToolbarDropdown';
@@ -78,8 +76,15 @@ function isValidWorkflow(data: unknown): data is WorkflowFile {
 
 export function Toolbar() {
   const router = useRouter();
-  const { exportWorkflow, selectedNodeIds, workflowId, workflowName, duplicateWorkflowApi, nodes } =
-    useWorkflowStore();
+  const {
+    exportWorkflow,
+    selectedNodeIds,
+    workflowId,
+    workflowName,
+    duplicateWorkflowApi,
+    nodes,
+    validateWorkflow,
+  } = useWorkflowStore();
   const { undo, redo } = useWorkflowStore.temporal.getState();
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
@@ -105,6 +110,13 @@ export function Toolbar() {
     if (!validationErrors?.errors.length) return [];
     return [...new Set(validationErrors.errors.map((e) => e.message))];
   }, [validationErrors]);
+
+  // Check if workflow can be executed (has nodes and passes validation)
+  const canRunWorkflow = useMemo(() => {
+    if (nodes.length === 0) return false;
+    const validation = validateWorkflow();
+    return validation.isValid;
+  }, [nodes, validateWorkflow]);
 
   // Subscribe to temporal state changes for undo/redo button states
   useEffect(() => {
@@ -297,41 +309,19 @@ export function Toolbar() {
         icon: <Sparkles className="h-4 w-4" />,
         onClick: toggleAIGenerator,
       },
-    ],
-    [openModal, toggleAIGenerator]
-  );
-
-  const overflowMenuItems: DropdownItem[] = useMemo(
-    () => [
       {
-        id: 'settings',
-        label: 'Settings',
-        icon: <Settings className="h-4 w-4" />,
-        onClick: () => openModal('settings'),
+        id: 'separator-1',
+        separator: true,
       },
       {
         id: 'marketplace',
         label: 'Marketplace',
         icon: <Store className="h-4 w-4" />,
-        onClick: () => window.open('https://marketplace.genfeed.ai/workflows', '_blank'),
-        external: true,
-      },
-      {
-        id: 'discord',
-        label: 'Discord',
-        icon: <DiscordIcon className="h-4 w-4" />,
-        onClick: () => window.open('https://discord.gg/Qy867n83Z4', '_blank'),
-        external: true,
-      },
-      {
-        id: 'twitter',
-        label: 'X (Twitter)',
-        icon: <XIcon className="h-4 w-4" />,
-        onClick: () => window.open('https://x.com/genfeedai', '_blank'),
+        onClick: () => window.open('https://marketplace.genfeed.ai', '_blank'),
         external: true,
       },
     ],
-    [openModal]
+    [openModal, toggleAIGenerator]
   );
 
   return (
@@ -389,29 +379,6 @@ export function Toolbar() {
           </Tooltip>
         )}
 
-        {/* Cost Indicator */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => openModal('cost')}
-              className="flex items-center gap-1.5 rounded-md px-2 py-1 text-sm transition hover:bg-secondary"
-            >
-              <DollarSign className="h-4 w-4 text-chart-2" />
-              <span className="font-medium tabular-nums">
-                {actualCost > 0 ? actualCost.toFixed(2) : estimatedCost.toFixed(2)}
-              </span>
-              {actualCost > 0 && estimatedCost > 0 && actualCost !== estimatedCost && (
-                <span className="text-xs text-muted-foreground">
-                  (est. {estimatedCost.toFixed(2)})
-                </span>
-              )}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>View cost breakdown</p>
-          </TooltipContent>
-        </Tooltip>
-
         {/* Auto-layout Button */}
         <Tooltip>
           <TooltipTrigger asChild>
@@ -449,11 +416,64 @@ export function Toolbar() {
         {/* Auto-Save Indicator */}
         <SaveIndicator />
 
+        {/* Cost Indicator */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => openModal('cost')}
+              className="flex items-center gap-1.5 rounded-md px-2 py-1 text-sm text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+            >
+              <DollarSign className="h-4 w-4" />
+              <span className="font-medium tabular-nums">
+                {actualCost > 0 ? actualCost.toFixed(2) : estimatedCost.toFixed(2)}
+              </span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p>Estimated cost{actualCost > 0 ? ` (actual: $${actualCost.toFixed(2)})` : ''}</p>
+          </TooltipContent>
+        </Tooltip>
+
         {/* Comment Navigator */}
         <CommentNavigator />
 
         {/* Spacer */}
         <div className="flex-1" />
+
+        {/* Settings */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground"
+              onClick={() => openModal('settings')}
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p>Settings</p>
+          </TooltipContent>
+        </Tooltip>
+
+        {/* Divider */}
+        <div className="h-8 w-px bg-border" />
+
+        {/* New Workflow */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link href="/workflows/new">
+              <Button variant="secondary">
+                <Plus className="h-4 w-4 mr-1" />
+                New
+              </Button>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p>Create new workflow</p>
+          </TooltipContent>
+        </Tooltip>
 
         {/* Run Controls */}
         {showResumeButton && (
@@ -482,9 +502,15 @@ export function Toolbar() {
             </TooltipContent>
           </Tooltip>
         )}
+
+        {/* Run Workflow */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant={isRunning ? 'destructive' : 'white'} onClick={handleRunStop}>
+            <Button
+              variant={isRunning ? 'destructive' : canRunWorkflow ? 'white' : 'secondary'}
+              onClick={handleRunStop}
+              disabled={!isRunning && !canRunWorkflow}
+            >
               {isRunning ? (
                 <>
                   <Square className="h-4 w-4" />
@@ -502,27 +528,6 @@ export function Toolbar() {
             <p>{isRunning ? 'Stop execution' : 'Execute all nodes'}</p>
           </TooltipContent>
         </Tooltip>
-
-        {/* New Workflow */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Link href="/workflows/new">
-              <Button variant="secondary">
-                <Plus className="h-4 w-4 mr-1" />
-                New
-              </Button>
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>Create new workflow</p>
-          </TooltipContent>
-        </Tooltip>
-
-        {/* Divider */}
-        <div className="h-8 w-px bg-border" />
-
-        {/* Overflow Menu */}
-        <OverflowMenu items={overflowMenuItems} />
 
         {/* Validation Errors Toast */}
         {uniqueErrorMessages.length > 0 && (

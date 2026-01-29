@@ -156,12 +156,9 @@ export function NodeDetailModal() {
                 Download
               </Button>
             )}
-            <button
-              onClick={closeNodeDetailModal}
-              className="p-2 rounded-lg hover:bg-secondary transition-colors"
-            >
-              <X className="w-5 h-5 text-foreground" />
-            </button>
+            <Button variant="ghost" size="icon-sm" onClick={closeNodeDetailModal}>
+              <X className="w-5 h-5" />
+            </Button>
           </div>
         </div>
 
@@ -212,33 +209,36 @@ export function NodeDetailModal() {
             {/* Zoom controls */}
             {mediaInfo.url && mediaInfo.type === 'image' && (
               <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-card border border-border rounded-lg p-1">
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => setZoomLevel((prev) => Math.max(prev - 0.25, 0.25))}
-                  className="p-2 hover:bg-secondary rounded transition-colors"
                   title="Zoom out (-)"
                 >
                   <ZoomOut className="w-4 h-4" />
-                </button>
+                </Button>
                 <span className="text-xs text-muted-foreground w-12 text-center">
                   {Math.round(zoomLevel * 100)}%
                 </span>
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => setZoomLevel((prev) => Math.min(prev + 0.25, 4))}
-                  className="p-2 hover:bg-secondary rounded transition-colors"
                   title="Zoom in (+)"
                 >
                   <ZoomIn className="w-4 h-4" />
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => {
                     setZoomLevel(1);
                     setPanOffset({ x: 0, y: 0 });
                   }}
-                  className="px-2 py-1 text-xs hover:bg-secondary rounded transition-colors"
                   title="Reset zoom (0)"
                 >
                   Reset
-                </button>
+                </Button>
               </div>
             )}
           </div>

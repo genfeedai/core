@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
+import { useCanGenerate } from '@/hooks/useCanGenerate';
 import { useExecutionStore } from '@/store/executionStore';
 import { useWorkflowStore } from '@/store/workflowStore';
 
@@ -46,10 +47,14 @@ const VOICES: { value: TTSVoice; label: string; description: string }[] = [
 ];
 
 function TextToSpeechNodeComponent(props: NodeProps) {
-  const { id, data } = props;
+  const { id, type, data } = props;
   const nodeData = data as TextToSpeechNodeData;
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const executeNode = useExecutionStore((state) => state.executeNode);
+  const { canGenerate } = useCanGenerate({
+    nodeId: id,
+    nodeType: type as 'textToSpeech',
+  });
 
   const handleProviderChange = useCallback(
     (value: string) => {
@@ -91,8 +96,6 @@ function TextToSpeechNodeComponent(props: NodeProps) {
     executeNode(id);
   }, [id, executeNode, updateNodeData]);
 
-  const hasInput = Boolean(nodeData.inputText);
-
   const headerActions = useMemo(
     () =>
       nodeData.outputAudio ? (
@@ -100,14 +103,13 @@ function TextToSpeechNodeComponent(props: NodeProps) {
           variant="ghost"
           size="icon-sm"
           onClick={handleGenerate}
-          disabled={nodeData.status === 'processing' || !hasInput}
-          className="h-5 w-5"
+          disabled={nodeData.status === 'processing' || !canGenerate}
           title="Regenerate"
         >
           <RefreshCw className="h-3 w-3" />
         </Button>
       ) : null,
-    [nodeData.outputAudio, nodeData.status, hasInput, handleGenerate]
+    [nodeData.outputAudio, nodeData.status, canGenerate, handleGenerate]
   );
 
   return (
@@ -221,10 +223,12 @@ function TextToSpeechNodeComponent(props: NodeProps) {
 
         {/* Generate Button */}
         {!nodeData.outputAudio && (
-          <button
+          <Button
+            variant={canGenerate && TTS_ENABLED ? 'default' : 'secondary'}
+            size="sm"
             onClick={handleGenerate}
-            disabled={!hasInput || !TTS_ENABLED || nodeData.status === 'processing'}
-            className="w-full py-2 bg-[var(--primary)] text-white rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!canGenerate || !TTS_ENABLED || nodeData.status === 'processing'}
+            className="w-full"
           >
             {nodeData.status === 'processing' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -232,11 +236,11 @@ function TextToSpeechNodeComponent(props: NodeProps) {
               <Volume2 className="w-4 h-4" />
             )}
             {nodeData.status === 'processing' ? 'Generating...' : 'Generate Speech'}
-          </button>
+          </Button>
         )}
 
         {/* Help text for required input */}
-        {!hasInput && nodeData.status !== 'processing' && (
+        {!canGenerate && nodeData.status !== 'processing' && (
           <div className="text-xs text-[var(--muted-foreground)] flex items-center gap-1">
             <AudioLines className="w-3 h-3" />
             Connect text input to generate speech

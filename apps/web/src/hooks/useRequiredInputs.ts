@@ -21,7 +21,7 @@ interface RequiredInputsResult {
  * @returns Object with hasRequiredInputs boolean and details about missing inputs
  */
 export function useRequiredInputs(nodeId: string, nodeType: NodeType): RequiredInputsResult {
-  const { edges } = useWorkflowStore();
+  const edges = useWorkflowStore((state) => state.edges);
 
   return useMemo(() => {
     const nodeDef = NODE_DEFINITIONS[nodeType];

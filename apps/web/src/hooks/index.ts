@@ -1,4 +1,5 @@
 export { useAutoSave } from './useAutoSave';
+export { useCanGenerate } from './useCanGenerate';
 export { useCommentNavigation, useHeaderCommentNavigation } from './useCommentNavigation';
 export { useContextMenu } from './useContextMenu';
 export { useGlobalShortcuts } from './useGlobalShortcuts';

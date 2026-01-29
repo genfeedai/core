@@ -177,13 +177,7 @@ function VideoInputNodeComponent(props: NodeProps) {
   const headerActions = (
     <div className="flex items-center gap-1">
       {nodeData.video && (
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={handleExpand}
-          title="Expand preview"
-          className="h-6 w-6"
-        >
+        <Button variant="ghost" size="icon-sm" onClick={handleExpand} title="Expand preview">
           <Expand className="h-3.5 w-3.5" />
         </Button>
       )}
@@ -192,7 +186,6 @@ function VideoInputNodeComponent(props: NodeProps) {
         size="icon-sm"
         onClick={() => fileInputRef.current?.click()}
         title="Upload video"
-        className="h-6 w-6"
       >
         <Upload className="h-3.5 w-3.5" />
       </Button>
@@ -201,7 +194,6 @@ function VideoInputNodeComponent(props: NodeProps) {
         size="icon-sm"
         onClick={() => setShowUrlInput(!showUrlInput)}
         title="Paste URL"
-        className="h-6 w-6"
       >
         <Link className="h-3.5 w-3.5" />
       </Button>

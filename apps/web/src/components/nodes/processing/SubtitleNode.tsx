@@ -6,6 +6,7 @@ import type { NodeProps } from '@xyflow/react';
 import { Loader2, RefreshCw, Subtitles } from 'lucide-react';
 import { memo, useCallback } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -143,24 +144,26 @@ function SubtitleNodeComponent(props: NodeProps) {
         {nodeData.outputVideo && (
           <div className="relative">
             <video src={nodeData.outputVideo} className="w-full h-20 object-cover rounded" muted />
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={handleProcess}
               disabled={nodeData.status === 'processing'}
-              className="absolute top-1 right-1 p-1 bg-black/50 rounded-full hover:bg-black/70 transition disabled:opacity-50"
+              className="absolute top-1 right-1 h-6 w-6 bg-black/50 hover:bg-black/70"
             >
               <RefreshCw className="w-3 h-3" />
-            </button>
+            </Button>
           </div>
         )}
 
         {/* Process Button */}
         {!nodeData.outputVideo && (
-          <button
-            type="button"
+          <Button
+            variant="default"
+            size="sm"
             onClick={handleProcess}
             disabled={!hasRequiredInputs || nodeData.status === 'processing'}
-            className="w-full py-2 bg-[var(--primary)] text-white rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full"
           >
             {nodeData.status === 'processing' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -168,7 +171,7 @@ function SubtitleNodeComponent(props: NodeProps) {
               <Subtitles className="w-4 h-4" />
             )}
             {nodeData.status === 'processing' ? 'Burning...' : 'Burn Subtitles'}
-          </button>
+          </Button>
         )}
       </div>
     </BaseNode>

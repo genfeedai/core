@@ -6,6 +6,7 @@ import { Expand, Save } from 'lucide-react';
 import { memo, useCallback } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { PromptPicker } from '@/components/prompt-library';
+import { Button } from '@/components/ui/button';
 import { usePromptEditorStore } from '@/store/promptEditorStore';
 import { usePromptLibraryStore } from '@/store/promptLibraryStore';
 import { useWorkflowStore } from '@/store/workflowStore';
@@ -58,21 +59,18 @@ function PromptNodeComponent(props: NodeProps) {
 
   const headerActions = (
     <>
-      <button
-        onClick={handleExpand}
-        className="p-1 hover:bg-secondary rounded transition text-muted-foreground hover:text-foreground"
-        title="Expand editor"
-      >
+      <Button variant="ghost" size="icon-sm" onClick={handleExpand} title="Expand editor">
         <Expand className="w-3.5 h-3.5" />
-      </button>
-      <button
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon-sm"
         onClick={handleSaveToLibrary}
         disabled={!nodeData.prompt}
-        className="p-1 hover:bg-secondary rounded transition text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
         title="Save to library"
       >
         <Save className="w-3.5 h-3.5" />
-      </button>
+      </Button>
     </>
   );
 

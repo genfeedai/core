@@ -6,6 +6,7 @@ import type { NodeProps } from '@xyflow/react';
 import { Download, Grid3X3, Loader2, RefreshCw } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -206,13 +207,10 @@ function ImageGridSplitNodeComponent(props: NodeProps) {
               <span className="text-xs text-[var(--muted-foreground)]">
                 Output ({nodeData.outputImages.length} images)
               </span>
-              <button
-                onClick={handleDownloadAll}
-                className="text-xs text-[var(--primary)] hover:underline flex items-center gap-1"
-              >
+              <Button variant="link" size="sm" onClick={handleDownloadAll} className="h-auto p-0">
                 <Download className="w-3 h-3" />
                 Download All
-              </button>
+              </Button>
             </div>
             <div
               className="grid gap-1"
@@ -228,15 +226,17 @@ function ImageGridSplitNodeComponent(props: NodeProps) {
                 >
                   <img src={img} alt={`Cell ${index + 1}`} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-1">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDownload(index);
                       }}
-                      className="p-1 bg-white/20 rounded hover:bg-white/30"
+                      className="h-6 w-6 bg-white/20 hover:bg-white/30"
                     >
                       <Download className="w-3 h-3 text-white" />
-                    </button>
+                    </Button>
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[8px] text-center py-0.5">
                     {index + 1}
@@ -252,32 +252,38 @@ function ImageGridSplitNodeComponent(props: NodeProps) {
                   alt={`Preview ${selectedPreview + 1}`}
                   className="w-full rounded border border-[var(--border)]"
                 />
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => setSelectedPreview(null)}
-                  className="absolute top-1 right-1 p-1 bg-black/50 rounded text-white text-xs"
+                  className="absolute top-1 right-1 h-5 w-5 bg-black/50 hover:bg-black/70 text-white"
                 >
                   ×
-                </button>
+                </Button>
               </div>
             )}
             {/* Re-process button */}
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={handleProcess}
               disabled={nodeData.status === 'processing'}
-              className="w-full py-1.5 bg-[var(--muted)] text-[var(--foreground)] rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full"
             >
               <RefreshCw className="w-3 h-3" />
               Re-split
-            </button>
+            </Button>
           </div>
         )}
 
         {/* Process Button */}
         {nodeData.outputImages.length === 0 && (
-          <button
+          <Button
+            variant="default"
+            size="sm"
             onClick={handleProcess}
             disabled={!nodeData.inputImage || nodeData.status === 'processing'}
-            className="w-full py-2 bg-[var(--primary)] text-white rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full"
           >
             {nodeData.status === 'processing' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -285,7 +291,7 @@ function ImageGridSplitNodeComponent(props: NodeProps) {
               <Grid3X3 className="w-4 h-4" />
             )}
             {nodeData.status === 'processing' ? 'Splitting...' : 'Split Image'}
-          </button>
+          </Button>
         )}
 
         {!nodeData.inputImage && nodeData.outputImages.length === 0 && (

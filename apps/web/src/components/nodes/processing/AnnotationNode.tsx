@@ -46,13 +46,7 @@ function AnnotationNodeComponent(props: NodeProps) {
   const headerActions = useMemo(
     () =>
       inputImage ? (
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={handleExpand}
-          className="h-5 w-5"
-          title="Expand preview"
-        >
+        <Button variant="ghost" size="icon-sm" onClick={handleExpand} title="Expand preview">
           <Expand className="h-3 w-3" />
         </Button>
       ) : null,

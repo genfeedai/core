@@ -8,6 +8,7 @@ import { ImageIcon, Loader2, RefreshCw, Video } from 'lucide-react';
 import Image from 'next/image';
 import { memo, useCallback } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
+import { Button } from '@/components/ui/button';
 import { GridPositionSelector } from '@/components/ui/grid-position-selector';
 import { Label } from '@/components/ui/label';
 import {
@@ -155,29 +156,32 @@ function ResizeNodeComponent(props: NodeProps) {
                 unoptimized
               />
             )}
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={handleProcess}
               disabled={nodeData.status === 'processing'}
-              className="absolute right-2 top-2 p-1.5 bg-black/50 rounded-full hover:bg-black/70 transition-colors disabled:opacity-50"
+              className="absolute right-2 top-2 h-6 w-6 bg-black/50 hover:bg-black/70"
             >
               <RefreshCw className="h-3.5 w-3.5 text-white" />
-            </button>
+            </Button>
           </div>
         )}
 
         {/* Process Button */}
         {!nodeData.outputMedia && (
-          <button
+          <Button
+            variant="default"
+            size="sm"
             onClick={handleProcess}
             disabled={!nodeData.inputMedia || nodeData.status === 'processing'}
-            className="mt-1 w-full py-2 rounded-md text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-            style={{ backgroundColor: 'var(--node-color)', color: 'var(--background)' }}
+            className="mt-1 w-full"
           >
             {nodeData.status === 'processing' && <Loader2 className="h-4 w-4 animate-spin" />}
             {nodeData.status === 'processing'
               ? 'Resizing...'
               : `Resize ${mediaType === 'video' ? 'Video' : 'Image'}`}
-          </button>
+          </Button>
         )}
       </div>
     </BaseNode>

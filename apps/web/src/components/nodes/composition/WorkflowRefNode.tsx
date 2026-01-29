@@ -5,6 +5,7 @@ import { Handle, type NodeProps, Position } from '@xyflow/react';
 import { clsx } from 'clsx';
 import { AlertCircle, CheckCircle2, GitBranch, Loader2, RefreshCw } from 'lucide-react';
 import { memo, useCallback, useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -270,14 +271,15 @@ function WorkflowRefNodeComponent(props: NodeProps) {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-muted-foreground font-medium">Interface</span>
-              <button
+              <Button
+                variant="ghost"
+                size="icon-sm"
                 onClick={handleRefreshInterface}
                 disabled={isLoading}
-                className="p-1 hover:bg-secondary rounded transition-colors disabled:opacity-50"
                 title="Refresh interface"
               >
                 <RefreshCw className={clsx('h-3 w-3', isLoading && 'animate-spin')} />
-              </button>
+              </Button>
             </div>
 
             {/* Inputs */}

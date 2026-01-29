@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { useRequiredInputs } from '@/hooks/useRequiredInputs';
+import { useCanGenerate } from '@/hooks/useCanGenerate';
 import { useExecutionStore } from '@/store/executionStore';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
@@ -64,7 +64,10 @@ function MotionControlNodeComponent(props: NodeProps) {
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const executeNode = useExecutionStore((state) => state.executeNode);
   const openNodeDetailModal = useUIStore((state) => state.openNodeDetailModal);
-  const { hasRequiredInputs } = useRequiredInputs(id, type as 'motionControl');
+  const { canGenerate } = useCanGenerate({
+    nodeId: id,
+    nodeType: type as 'motionControl',
+  });
 
   const handleModeChange = useCallback(
     (value: string) => {
@@ -139,13 +142,7 @@ function MotionControlNodeComponent(props: NodeProps) {
   const headerActions = useMemo(
     () =>
       nodeData.outputVideo ? (
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={handleExpand}
-          className="h-5 w-5"
-          title="Expand preview"
-        >
+        <Button variant="ghost" size="icon-sm" onClick={handleExpand} title="Expand preview">
           <Expand className="h-3 w-3" />
         </Button>
       ) : null,
@@ -294,22 +291,26 @@ function MotionControlNodeComponent(props: NodeProps) {
               className="w-full h-20 object-cover rounded cursor-pointer"
               controls
             />
-            <button
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={handleGenerate}
               disabled={nodeData.status === 'processing'}
-              className="absolute top-1 right-1 p-1 bg-black/50 rounded-full hover:bg-black/70 transition disabled:opacity-50"
+              className="absolute top-1 right-1 h-6 w-6 bg-black/50 hover:bg-black/70"
             >
               <RefreshCw className="w-3 h-3" />
-            </button>
+            </Button>
           </div>
         )}
 
         {/* Generate Button */}
         {!nodeData.outputVideo && (
-          <button
+          <Button
+            variant={canGenerate ? 'default' : 'secondary'}
+            size="sm"
             onClick={handleGenerate}
-            disabled={!hasRequiredInputs || nodeData.status === 'processing'}
-            className="w-full py-2 bg-[var(--primary)] text-white rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!canGenerate || nodeData.status === 'processing'}
+            className="w-full"
           >
             {nodeData.status === 'processing' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -317,11 +318,11 @@ function MotionControlNodeComponent(props: NodeProps) {
               <Play className="w-4 h-4" />
             )}
             {nodeData.status === 'processing' ? 'Generating...' : 'Generate Motion'}
-          </button>
+          </Button>
         )}
 
         {/* Help text for required inputs */}
-        {!hasRequiredInputs && nodeData.status !== 'processing' && (
+        {!canGenerate && nodeData.status !== 'processing' && (
           <div className="text-xs text-[var(--muted-foreground)] flex items-center gap-1">
             <AlertCircle className="w-3 h-3" />
             {isVideoTransferMode
