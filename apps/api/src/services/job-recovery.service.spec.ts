@@ -179,6 +179,11 @@ describe('JobRecoveryService', () => {
       expect(mockQueueJobModel.find).toHaveBeenCalledWith({
         status: { $in: [JOB_STATUS.ACTIVE, JOB_STATUS.PENDING] },
         updatedAt: { $lt: expect.any(Date) },
+        $or: [
+          { lastHeartbeat: { $exists: false } },
+          { lastHeartbeat: null },
+          { lastHeartbeat: { $lt: expect.any(Date) } },
+        ],
         movedToDlq: false,
       });
     });

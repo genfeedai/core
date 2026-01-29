@@ -49,6 +49,8 @@ export interface WorkflowTemplate {
   edges: TemplateEdge[];
   edgeStyle?: EdgeStyle;
   groups?: NodeGroup[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ValidationError {

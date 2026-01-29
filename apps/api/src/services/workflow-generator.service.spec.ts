@@ -376,11 +376,9 @@ describe('WorkflowGeneratorService', () => {
       expect(systemPrompt).toContain('videoGen');
       expect(systemPrompt).toContain('llm');
 
-      // Processing nodes
-      expect(systemPrompt).toContain('lumaReframeImage');
-      expect(systemPrompt).toContain('lumaReframeVideo');
-      expect(systemPrompt).toContain('topazImageUpscale');
-      expect(systemPrompt).toContain('topazVideoUpscale');
+      // Processing nodes (using generic types with inputType)
+      expect(systemPrompt).toContain('reframe');
+      expect(systemPrompt).toContain('upscale');
       expect(systemPrompt).toContain('videoStitch');
       expect(systemPrompt).toContain('videoTrim');
       expect(systemPrompt).toContain('annotation');

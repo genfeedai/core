@@ -1,4 +1,4 @@
-import { TemplateCategory, type WorkflowFile } from '@genfeedai/types';
+import { TemplateCategory, type WorkflowTemplate } from '@genfeedai/types';
 import { FULL_PIPELINE_TEMPLATE } from './full-pipeline';
 import { AI_INFLUENCER_AVATAR_TEMPLATE } from './generated/ai-influencer-avatar';
 import { DANCE_VIDEO_TEMPLATE } from './generated/dance-video';
@@ -22,7 +22,7 @@ export interface TemplateInfo {
   thumbnail?: string;
 }
 
-export const TEMPLATE_REGISTRY: Record<string, WorkflowFile> = {
+export const TEMPLATE_REGISTRY: Record<string, WorkflowTemplate> = {
   'image-series': IMAGE_SERIES_TEMPLATE,
   'image-to-video': IMAGE_TO_VIDEO_TEMPLATE,
   'full-pipeline': FULL_PIPELINE_TEMPLATE,
@@ -150,7 +150,7 @@ export const TEMPLATE_INFO: TemplateInfo[] = [
   },
 ];
 
-export function getTemplate(id: string): WorkflowFile | undefined {
+export function getTemplate(id: string): WorkflowTemplate | undefined {
   return TEMPLATE_REGISTRY[id];
 }
 
