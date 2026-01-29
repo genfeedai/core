@@ -10,6 +10,7 @@ import {
   Trash2,
   Workflow,
 } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -54,7 +55,7 @@ function WorkflowCard({ workflow, onDelete, onDuplicate }: WorkflowCardProps) {
       className="group relative flex flex-col bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 hover:border-white transition-all duration-200"
     >
       {/* Workflow preview / Thumbnail */}
-      <div className="aspect-video bg-[var(--secondary)] rounded-md mb-3 overflow-hidden">
+      <div className="relative aspect-video bg-[var(--secondary)] rounded-md mb-3 overflow-hidden">
         {hasThumbnail ? (
           isVideo ? (
             <video
@@ -66,10 +67,13 @@ function WorkflowCard({ workflow, onDelete, onDuplicate }: WorkflowCardProps) {
               playsInline
             />
           ) : (
-            <img
+            <Image
               src={workflow.thumbnail!}
               alt={workflow.name}
-              className="h-full w-full object-cover object-center"
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              className="object-cover object-center"
+              unoptimized
             />
           )
         ) : (
@@ -198,10 +202,13 @@ export default function DashboardPage() {
       <header className="border-b border-[var(--border)] bg-[var(--card)]">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img
+            <Image
               src="https://cdn.genfeed.ai/assets/branding/logo-white.png"
               alt="Genfeed"
+              width={32}
+              height={32}
               className="h-8 w-auto"
+              unoptimized
             />
             <h1 className="text-xl font-semibold text-[var(--foreground)]">Genfeed</h1>
           </div>

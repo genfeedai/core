@@ -1,28 +1,49 @@
 'use client';
 
 import { ReactFlowProvider } from '@xyflow/react';
+import dynamic from 'next/dynamic';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { AnnotationModal } from '@/components/annotation/AnnotationModal';
 import { WorkflowCanvas } from '@/components/canvas/WorkflowCanvas';
 import { CommandPalette } from '@/components/command-palette';
-import { CostModal } from '@/components/cost';
 import { AIGeneratorPanel } from '@/components/panels/AIGeneratorPanel';
 import { DebugPanel } from '@/components/panels/DebugPanel';
 import { NodePalette } from '@/components/panels/NodePalette';
 import { PromptEditorModal } from '@/components/prompt-editor/PromptEditorModal';
 import { CreatePromptModal, PromptLibraryModal } from '@/components/prompt-library';
-import { SettingsModal } from '@/components/settings/SettingsModal';
-import { TemplatesModal } from '@/components/templates/TemplatesModal';
 import { Toolbar } from '@/components/toolbar';
-import { WelcomeModal } from '@/components/welcome/WelcomeModal';
-import { GenerateWorkflowModal } from '@/components/workflow/GenerateWorkflowModal';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useGlobalShortcuts } from '@/hooks/useGlobalShortcuts';
 import { usePromptLibraryStore } from '@/store/promptLibraryStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
+
+// Dynamic imports for less frequently used modals to reduce initial bundle
+const AnnotationModal = dynamic(
+  () => import('@/components/annotation/AnnotationModal').then((mod) => mod.AnnotationModal),
+  { ssr: false }
+);
+const CostModal = dynamic(() => import('@/components/cost').then((mod) => mod.CostModal), {
+  ssr: false,
+});
+const GenerateWorkflowModal = dynamic(
+  () =>
+    import('@/components/workflow/GenerateWorkflowModal').then((mod) => mod.GenerateWorkflowModal),
+  { ssr: false }
+);
+const TemplatesModal = dynamic(
+  () => import('@/components/templates/TemplatesModal').then((mod) => mod.TemplatesModal),
+  { ssr: false }
+);
+const WelcomeModal = dynamic(
+  () => import('@/components/welcome/WelcomeModal').then((mod) => mod.WelcomeModal),
+  { ssr: false }
+);
+const SettingsModal = dynamic(
+  () => import('@/components/settings/SettingsModal').then((mod) => mod.SettingsModal),
+  { ssr: false }
+);
 
 export default function WorkflowEditorPage() {
   const params = useParams();

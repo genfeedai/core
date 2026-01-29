@@ -2,7 +2,7 @@
   "dependencies": {
     "@bull-board/api": "6.16.2",
     "@bull-board/express": "6.16.2",
-    "@bull-board/ui": "^6.16.2",
+    "@bull-board/ui": "6.16.2",
     "@genfeedai/core": "workspace:*",
     "@genfeedai/types": "workspace:*",
     "@nestjs/bullmq": "11.0.4",
@@ -37,11 +37,11 @@
     "ts-loader": "9.5.2",
     "ts-node": "10.9.2",
     "tsconfig-paths": "4.2.0",
-    "tsconfig-paths-webpack-plugin": "^4.2.0",
+    "tsconfig-paths-webpack-plugin": "4.2.0",
     "typescript": "5.7.3",
     "unplugin-swc": "1.5.2",
     "vitest": "3.0.4",
-    "webpack-node-externals": "^3.0.0"
+    "webpack-node-externals": "3.0.0"
   },
   "license": "AGPL-3.0",
   "name": "@genfeedai/api",

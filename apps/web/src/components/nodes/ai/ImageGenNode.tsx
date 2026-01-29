@@ -1,6 +1,6 @@
 'use client';
 
-import type { ImageGenNodeData, ImageModel, ProviderModel } from '@genfeedai/types';
+import type { ImageGenNodeData, ImageModel } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { AlertCircle, Loader2, RefreshCw, Sparkles } from 'lucide-react';
 import Image from 'next/image';
@@ -9,7 +9,9 @@ import { ModelBrowserModal } from '@/components/models/ModelBrowserModal';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { SchemaInputs } from '@/components/nodes/SchemaInputs';
 import { Button } from '@/components/ui/button';
+import { useModelSelection } from '@/hooks/useModelSelection';
 import { useRequiredInputs } from '@/hooks/useRequiredInputs';
+import { extractEnumValues, supportsImageInput } from '@/lib/utils/schemaUtils';
 import { useExecutionStore } from '@/store/executionStore';
 import { useWorkflowStore } from '@/store/workflowStore';
 
@@ -18,42 +20,10 @@ const MODELS: { value: ImageModel; label: string }[] = [
   { value: 'nano-banana-pro', label: 'Nano Banana Pro' },
 ];
 
-/**
- * Extract default values from schema properties
- */
-function getSchemaDefaults(schema: Record<string, unknown> | undefined): Record<string, unknown> {
-  if (!schema) return {};
-
-  const properties = (schema as { properties?: Record<string, { default?: unknown }> }).properties;
-  if (!properties) return {};
-
-  const defaults: Record<string, unknown> = {};
-  for (const [key, prop] of Object.entries(properties)) {
-    if (prop.default !== undefined) {
-      defaults[key] = prop.default;
-    }
-  }
-  return defaults;
-}
-
-/**
- * Check if the model's schema supports image input
- */
-function supportsImageInput(schema: Record<string, unknown> | undefined): boolean {
-  if (!schema) return true; // Default to true if no schema
-
-  const properties = (schema as { properties?: Record<string, unknown> }).properties;
-  if (!properties) return true;
-
-  // Check for common image input field names
-  return !!(
-    properties.image ||
-    properties.image_input ||
-    properties.start_image ||
-    properties.first_frame_image ||
-    properties.reference_images
-  );
-}
+const IMAGE_MODEL_MAP: Record<string, ImageModel> = {
+  'google/nano-banana': 'nano-banana',
+  'google/nano-banana-pro': 'nano-banana-pro',
+};
 
 function ImageGenNodeComponent(props: NodeProps) {
   const { id, type, data } = props;
@@ -63,6 +33,13 @@ function ImageGenNodeComponent(props: NodeProps) {
   const { hasRequiredInputs } = useRequiredInputs(id, type as 'imageGen');
 
   const [isModelBrowserOpen, setIsModelBrowserOpen] = useState(false);
+
+  // Use shared hook for model selection
+  const { handleModelSelect } = useModelSelection<ImageModel, ImageGenNodeData>({
+    nodeId: id,
+    modelMap: IMAGE_MODEL_MAP,
+    fallbackModel: 'nano-banana-pro',
+  });
 
   // Get schema properties from selected model
   const schemaProperties = useMemo(() => {
@@ -75,56 +52,20 @@ function ImageGenNodeComponent(props: NodeProps) {
   }, [nodeData.selectedModel?.inputSchema]);
 
   // Extract enum values from component schemas for SchemaInputs
-  const enumValues = useMemo(() => {
-    const componentSchemas = nodeData.selectedModel?.componentSchemas as
-      | Record<string, { enum?: unknown[]; type?: string }>
-      | undefined;
-    if (!componentSchemas) return undefined;
-
-    const result: Record<string, string[]> = {};
-    for (const [key, schema] of Object.entries(componentSchemas)) {
-      if (schema.enum && Array.isArray(schema.enum)) {
-        // Convert all enum values to strings for the dropdown
-        result[key] = schema.enum.map((v) => String(v));
-      }
-    }
-    return Object.keys(result).length > 0 ? result : undefined;
-  }, [nodeData.selectedModel?.componentSchemas]);
+  const enumValues = useMemo(
+    () =>
+      extractEnumValues(
+        nodeData.selectedModel?.componentSchemas as
+          | Record<string, { enum?: unknown[]; type?: string }>
+          | undefined
+      ),
+    [nodeData.selectedModel?.componentSchemas]
+  );
 
   // Check if model supports image input
   const modelSupportsImageInput = useMemo(
     () => supportsImageInput(nodeData.selectedModel?.inputSchema),
     [nodeData.selectedModel?.inputSchema]
-  );
-
-  const handleModelSelect = useCallback(
-    (model: ProviderModel) => {
-      // Map provider model to internal model format where applicable
-      const modelMap: Record<string, ImageModel> = {
-        'google/nano-banana': 'nano-banana',
-        'google/nano-banana-pro': 'nano-banana-pro',
-      };
-
-      const internalModel = modelMap[model.id] ?? ('nano-banana-pro' as ImageModel);
-
-      // Extract defaults from the new model's schema
-      const schemaDefaults = getSchemaDefaults(model.inputSchema);
-
-      updateNodeData<ImageGenNodeData>(id, {
-        model: internalModel,
-        provider: model.provider,
-        selectedModel: {
-          provider: model.provider,
-          modelId: model.id,
-          displayName: model.displayName,
-          inputSchema: model.inputSchema,
-          componentSchemas: model.componentSchemas,
-        },
-        // Initialize schemaParams with defaults from new model
-        schemaParams: schemaDefaults,
-      });
-    },
-    [id, updateNodeData]
   );
 
   const handleSchemaParamChange = useCallback(
@@ -151,29 +92,32 @@ function ImageGenNodeComponent(props: NodeProps) {
     MODELS.find((m) => m.value === nodeData.model)?.label ||
     nodeData.model;
 
-  const headerActions = (
-    <>
-      <Button
-        variant="secondary"
-        size="sm"
-        onClick={() => setIsModelBrowserOpen(true)}
-        className="h-5 px-2 text-[10px]"
-      >
-        Browse
-      </Button>
-      {nodeData.outputImage && (
+  const headerActions = useMemo(
+    () => (
+      <>
         <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={handleGenerate}
-          disabled={nodeData.status === 'processing'}
-          className="h-5 w-5"
-          title="Regenerate"
+          variant="secondary"
+          size="sm"
+          onClick={() => setIsModelBrowserOpen(true)}
+          className="h-5 px-2 text-[10px]"
         >
-          <RefreshCw className="h-3 w-3" />
+          Browse
         </Button>
-      )}
-    </>
+        {nodeData.outputImage && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={handleGenerate}
+            disabled={nodeData.status === 'processing'}
+            className="h-5 w-5"
+            title="Regenerate"
+          >
+            <RefreshCw className="h-3 w-3" />
+          </Button>
+        )}
+      </>
+    ),
+    [nodeData.outputImage, nodeData.status, handleGenerate]
   );
 
   return (

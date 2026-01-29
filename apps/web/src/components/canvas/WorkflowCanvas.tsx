@@ -16,6 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import '@xyflow/react/dist/style.css';
 
 import type {
+  HandleType,
   ImageGenNodeData,
   NodeType,
   VideoGenNodeData,
@@ -28,29 +29,29 @@ import { ContextMenu } from '@/components/context-menu';
 import { nodeTypes } from '@/components/nodes';
 import { NodeDetailModal } from '@/components/nodes/NodeDetailModal';
 import { useContextMenu } from '@/hooks/useContextMenu';
-import { CATEGORY_COLORS, DEFAULT_NODE_COLOR } from '@/lib/constants/colors';
+import { DEFAULT_NODE_COLOR } from '@/lib/constants/colors';
+import { supportsImageInput } from '@/lib/utils/schemaUtils';
 import { useExecutionStore } from '@/store/executionStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
 
 /**
- * Check if the model's schema supports image input
+ * Get the data type for an edge based on source handle
+ * Returns the HandleType which determines edge color
  */
-function supportsImageInput(schema: Record<string, unknown> | undefined): boolean {
-  if (!schema) return true; // Default to true if no schema
+function getEdgeDataType(
+  edge: WorkflowEdge,
+  nodeMap: Map<string, WorkflowNode>
+): HandleType | null {
+  const sourceNode = nodeMap.get(edge.source);
+  if (!sourceNode) return null;
 
-  const properties = (schema as { properties?: Record<string, unknown> }).properties;
-  if (!properties) return true;
+  const nodeDef = NODE_DEFINITIONS[sourceNode.type as NodeType];
+  if (!nodeDef) return null;
 
-  // Check for common image input field names
-  return !!(
-    properties.image ||
-    properties.image_input ||
-    properties.start_image ||
-    properties.first_frame_image ||
-    properties.reference_images
-  );
+  const sourceHandle = nodeDef.outputs.find((h) => h.id === edge.sourceHandle);
+  return sourceHandle?.type ?? null;
 }
 
 export function WorkflowCanvas() {
@@ -232,9 +233,13 @@ export function WorkflowCanvas() {
     [nodeMap]
   );
 
-  // Compute edges with highlight/dim classes and execution state
+  // Compute edges with highlight/dim classes, data type colors, and execution state
   const styledEdges = useMemo(() => {
     return edges.map((edge) => {
+      // Get the data type for coloring (based on source handle)
+      const dataType = getEdgeDataType(edge, nodeMap);
+      const typeClass = dataType ? `edge-${dataType}` : '';
+
       // Check if this edge targets a disabled input
       const isDisabledTarget = isEdgeTargetingDisabledInput(edge);
 
@@ -249,14 +254,14 @@ export function WorkflowCanvas() {
           return {
             ...edge,
             animated: false,
-            className: 'edge-disabled',
+            className: `${typeClass} edge-disabled`.trim(),
           };
         }
 
         return {
           ...edge,
           animated: false, // We use CSS animation instead
-          className: isExecutingEdge ? 'executing' : 'active-pipe',
+          className: `${typeClass} ${isExecutingEdge ? 'executing' : 'active-pipe'}`.trim(),
         };
       }
 
@@ -264,7 +269,7 @@ export function WorkflowCanvas() {
       if (isDisabledTarget) {
         return {
           ...edge,
-          className: 'edge-disabled',
+          className: `${typeClass} edge-disabled`.trim(),
         };
       }
 
@@ -274,13 +279,17 @@ export function WorkflowCanvas() {
           highlightedNodeIds.includes(edge.source) && highlightedNodeIds.includes(edge.target);
         return {
           ...edge,
-          className: isConnected ? 'highlighted' : 'dimmed',
+          className: `${typeClass} ${isConnected ? 'highlighted' : 'dimmed'}`.trim(),
         };
       }
 
-      return edge;
+      // Default state - just the type color
+      return {
+        ...edge,
+        className: typeClass,
+      };
     });
-  }, [edges, highlightedNodeIds, isRunning, currentNodeId, isEdgeTargetingDisabledInput]);
+  }, [edges, nodeMap, highlightedNodeIds, isRunning, currentNodeId, isEdgeTargetingDisabledInput]);
 
   const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: WorkflowNode) => {
@@ -522,11 +531,7 @@ export function WorkflowCanvas() {
         {showMinimap && (
           <MiniMap
             nodeStrokeWidth={0}
-            nodeColor={(node) => {
-              const nodeType = node.type as NodeType;
-              const category = NODE_DEFINITIONS[nodeType]?.category ?? 'input';
-              return CATEGORY_COLORS[category] ?? DEFAULT_NODE_COLOR;
-            }}
+            nodeColor={() => DEFAULT_NODE_COLOR}
             zoomable
             pannable
             maskColor="rgba(0, 0, 0, 0.8)"

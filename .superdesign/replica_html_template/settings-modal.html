@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings Modal - Genfeed</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+  <style>
+    :root {
+      --background: oklch(0.09 0 0);
+      --foreground: oklch(0.95 0 0);
+      --card: oklch(0.12 0 0);
+      --muted: oklch(0.18 0 0);
+      --muted-foreground: oklch(0.6 0 0);
+      --border: oklch(0.22 0 0);
+      --primary: oklch(0.7 0.18 175);
+      --secondary: oklch(0.18 0 0);
+    }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--background);
+      color: var(--foreground);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .bg-card { background: var(--card); }
+    .bg-muted { background: var(--muted); }
+    .bg-secondary { background: var(--secondary); }
+    .bg-primary { background: var(--primary); }
+    .text-foreground { color: var(--foreground); }
+    .text-muted-foreground { color: var(--muted-foreground); }
+    .text-primary { color: var(--primary); }
+    .border-border { border-color: var(--border); }
+  </style>
+</head>
+<body>
+  <!-- Backdrop -->
+  <div class="fixed inset-0 bg-black/70"></div>
+
+  <!-- Modal -->
+  <div class="fixed left-1/2 top-1/2 z-50 flex max-h-[90vh] w-[calc(100%-2rem)] max-w-[600px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg bg-card shadow-xl">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b border-border px-6 py-4">
+      <div class="flex items-center gap-3">
+        <!-- Settings Icon -->
+        <svg class="h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+        <h2 class="text-lg font-semibold text-foreground">Settings</h2>
+      </div>
+      <!-- Close button -->
+      <button class="p-1.5 rounded hover:bg-muted transition">
+        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex border-b border-border px-6">
+      <button class="relative px-4 py-3 text-sm font-medium text-foreground">
+        Defaults
+        <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"></div>
+      </button>
+      <button class="relative px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground transition">
+        API Keys
+      </button>
+      <button class="relative px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground transition">
+        Appearance
+      </button>
+      <button class="relative px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground transition">
+        Developer
+      </button>
+      <button class="relative px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground transition">
+        Help
+      </button>
+    </div>
+
+    <!-- Content: Defaults Tab -->
+    <div class="flex-1 overflow-auto p-6">
+      <div class="space-y-6">
+        <p class="text-sm text-muted-foreground">
+          Set default models for new nodes. You can always change models per-node.
+        </p>
+
+        <!-- Default Image Model -->
+        <div class="space-y-2">
+          <label class="text-sm font-medium text-foreground">Default Image Model</label>
+          <div class="relative">
+            <button class="w-full flex items-center justify-between px-3 py-2 text-sm border border-border rounded-md bg-muted hover:bg-secondary transition">
+              <span>Nano Banana</span>
+              <svg class="h-4 w-4 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Default Video Model -->
+        <div class="space-y-2">
+          <label class="text-sm font-medium text-foreground">Default Video Model</label>
+          <div class="relative">
+            <button class="w-full flex items-center justify-between px-3 py-2 text-sm border border-border rounded-md bg-muted hover:bg-secondary transition">
+              <span>Veo 3.1 Fast</span>
+              <svg class="h-4 w-4 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Default Provider -->
+        <div class="space-y-2">
+          <label class="text-sm font-medium text-foreground">Default Provider</label>
+          <div class="relative">
+            <button class="w-full flex items-center justify-between px-3 py-2 text-sm border border-border rounded-md bg-muted hover:bg-secondary transition">
+              <span>Replicate (Recommended)</span>
+              <svg class="h-4 w-4 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </button>
+          </div>
+          <p class="text-xs text-muted-foreground">
+            Replicate is recommended for best model availability and reliability.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

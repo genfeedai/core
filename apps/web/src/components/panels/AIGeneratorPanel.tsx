@@ -2,9 +2,10 @@
 
 import type { WorkflowFile } from '@genfeedai/types';
 import { Bot, Loader2, Send, Sparkles, Trash2, Upload, User, X } from 'lucide-react';
-import { memo, useCallback, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
+import { PanelContainer } from './PanelContainer';
 
 interface Message {
   id: string;
@@ -23,6 +24,14 @@ function AIGeneratorPanelComponent() {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Abort any in-flight request when component unmounts
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
 
   const toggleAIGenerator = useUIStore((s) => s.toggleAIGenerator);
   const loadWorkflow = useWorkflowStore((s) => s.loadWorkflow);
@@ -35,6 +44,11 @@ function AIGeneratorPanelComponent() {
 
   const handleSend = useCallback(async () => {
     if (!input.trim() || isLoading) return;
+
+    // Abort any previous in-flight request
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     const userMessage: Message = {
       id: `msg-${++messageId}`,
@@ -61,6 +75,7 @@ function AIGeneratorPanelComponent() {
           prompt: userMessage.content,
           conversationHistory,
         }),
+        signal: controller.signal,
       });
 
       const data = await response.json();
@@ -77,6 +92,9 @@ function AIGeneratorPanelComponent() {
       setMessages((prev) => [...prev, assistantMessage]);
       scrollToBottom();
     } catch (error) {
+      // Don't show error message if request was aborted
+      if (controller.signal.aborted) return;
+
       const errorMessage: Message = {
         id: `msg-${++messageId}`,
         role: 'assistant',
@@ -87,7 +105,9 @@ function AIGeneratorPanelComponent() {
       setMessages((prev) => [...prev, errorMessage]);
       scrollToBottom();
     } finally {
-      setIsLoading(false);
+      if (!controller.signal.aborted) {
+        setIsLoading(false);
+      }
     }
   }, [input, isLoading, messages, scrollToBottom]);
 
@@ -114,7 +134,7 @@ function AIGeneratorPanelComponent() {
   }, []);
 
   return (
-    <div className="w-80 h-full border-l border-[var(--border)] bg-[var(--background)] flex flex-col">
+    <PanelContainer className="w-80 h-full border-l border-[var(--border)] bg-[var(--background)] flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-[var(--border)]">
         <div className="flex items-center gap-2">
@@ -266,7 +286,7 @@ function AIGeneratorPanelComponent() {
           Press Enter to send, Shift+Enter for new line
         </p>
       </div>
-    </div>
+    </PanelContainer>
   );
 }
 

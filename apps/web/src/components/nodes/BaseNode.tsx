@@ -196,31 +196,16 @@ function BaseNodeComponent({
     toggleNodeLock(id);
   };
 
-  // Category colors - using CSS variables for button access
-  const categoryStyles: Record<string, { className: string; cssVar: string }> = {
-    input: {
-      className: 'border-[var(--category-input)] bg-card',
-      cssVar: 'var(--category-input)',
-    },
-    ai: {
-      className: 'border-[var(--category-ai)] bg-card',
-      cssVar: 'var(--category-ai)',
-    },
-    processing: {
-      className: 'border-[var(--category-processing)] bg-card',
-      cssVar: 'var(--category-processing)',
-    },
-    output: {
-      className: 'border-[var(--category-output)] bg-card',
-      cssVar: 'var(--category-output)',
-    },
-    composition: {
-      className: 'border-[var(--category-composition)] bg-card',
-      cssVar: 'var(--category-composition)',
-    },
+  // Category CSS variables (for processing glow, resizer handles)
+  const categoryCssVars: Record<string, string> = {
+    input: 'var(--category-input)',
+    ai: 'var(--category-ai)',
+    processing: 'var(--category-processing)',
+    output: 'var(--category-output)',
+    composition: 'var(--category-composition)',
   };
 
-  const categoryStyle = categoryStyles[nodeDef.category] ?? categoryStyles.input;
+  const categoryColor = categoryCssVars[nodeDef.category] ?? categoryCssVars.input;
 
   const isProcessing = nodeData.status === 'processing';
 
@@ -234,24 +219,23 @@ function BaseNodeComponent({
         maxWidth={500}
         lineClassName="!border-transparent"
         handleClassName="!w-2.5 !h-2.5 !border-0 !rounded-sm"
-        handleStyle={{ backgroundColor: categoryStyle.cssVar }}
+        handleStyle={{ backgroundColor: categoryColor }}
       />
       <div
         ref={nodeRef}
         className={clsx(
-          'relative flex flex-col rounded-lg border shadow-lg transition-all duration-200',
+          'relative flex flex-col rounded-lg border border-border bg-card shadow-lg transition-all duration-200',
           // Only apply min/max width if node hasn't been manually resized
           !isResized && 'min-w-[220px] max-w-[320px]',
-          categoryStyle.className,
-          isSelected && 'ring-2',
+          isSelected && 'ring-2 ring-primary',
           isLocked && 'opacity-60',
           isProcessing && 'node-processing',
           !isHighlighted && !isSelected && 'opacity-40'
         )}
         style={
           {
-            '--node-color': categoryStyle.cssVar,
-            ...(isSelected && { '--tw-ring-color': categoryStyle.cssVar }),
+            // Category color used for processing glow animation
+            '--node-color': categoryColor,
             // When resized, use explicit dimensions
             ...(isResized && {
               width: width ? `${width}px` : undefined,

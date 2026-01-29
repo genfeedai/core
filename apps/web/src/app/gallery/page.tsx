@@ -1,6 +1,7 @@
 'use client';
 
 import { ArrowLeft, Film, ImageIcon, Music, RefreshCw, Trash2 } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { GalleryGrid } from '@/components/gallery/GalleryGrid';
@@ -142,10 +143,13 @@ export default function GalleryPage() {
             >
               <ArrowLeft className="w-5 h-5 text-[var(--muted-foreground)]" />
             </Link>
-            <img
+            <Image
               src="https://cdn.genfeed.ai/assets/branding/logo-white.png"
               alt="Genfeed"
+              width={32}
+              height={32}
               className="h-8 w-auto"
+              unoptimized
             />
             <h1 className="text-xl font-semibold text-[var(--foreground)]">Gallery</h1>
           </div>

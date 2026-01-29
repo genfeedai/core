@@ -2,6 +2,7 @@ export { useAutoSave } from './useAutoSave';
 export { useCommentNavigation, useHeaderCommentNavigation } from './useCommentNavigation';
 export { useContextMenu } from './useContextMenu';
 export { useGlobalShortcuts } from './useGlobalShortcuts';
+export { useModelSelection } from './useModelSelection';
 export { useNodeActions } from './useNodeActions';
 export { useOptimalHandleOrder } from './useOptimalHandleOrder';
 export { usePaneActions } from './usePaneActions';

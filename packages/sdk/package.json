@@ -1,11 +1,14 @@
 {
-  "name": "@genfeedai/sdk",
-  "version": "0.1.0",
+  "dependencies": {
+    "@genfeedai/types": "workspace:*"
+  },
   "description": "SDK for building custom Genfeed nodes",
-  "license": "AGPL-3.0",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "devDependencies": {
+    "@types/react": "18.2.0",
+    "react": "18.2.0",
+    "tsup": "8.0.0",
+    "typescript": "5.9.3"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
@@ -22,26 +25,23 @@
     "dist",
     "README.md"
   ],
-  "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@genfeedai/types": "workspace:*"
-  },
-  "devDependencies": {
-    "@types/react": "^18.2.0",
-    "react": "^18.2.0",
-    "tsup": "^8.0.0",
-    "typescript": "5.9.3"
-  },
+  "license": "AGPL-3.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "name": "@genfeedai/sdk",
   "peerDependencies": {
-    "react": "^18.0.0"
+    "react": "18.0.0"
   },
   "peerDependenciesMeta": {
     "react": {
       "optional": true
     }
-  }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "types": "./dist/index.d.ts",
+  "version": "0.1.0"
 }

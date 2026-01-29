@@ -1,6 +1,6 @@
 'use client';
 
-import type { ProviderModel, VideoGenNodeData, VideoModel } from '@genfeedai/types';
+import type { VideoGenNodeData, VideoModel } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { AlertCircle, ImageIcon, Loader2, Play, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
@@ -9,7 +9,9 @@ import { ModelBrowserModal } from '@/components/models/ModelBrowserModal';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { SchemaInputs } from '@/components/nodes/SchemaInputs';
 import { Button } from '@/components/ui/button';
+import { useModelSelection } from '@/hooks/useModelSelection';
 import { useRequiredInputs } from '@/hooks/useRequiredInputs';
+import { extractEnumValues, supportsImageInput } from '@/lib/utils/schemaUtils';
 import { useExecutionStore } from '@/store/executionStore';
 import { useWorkflowStore } from '@/store/workflowStore';
 
@@ -18,41 +20,10 @@ const MODELS: { value: VideoModel; label: string; description: string }[] = [
   { value: 'veo-3.1', label: 'Veo 3.1', description: 'High quality' },
 ];
 
-/**
- * Extract default values from schema properties
- */
-function getSchemaDefaults(schema: Record<string, unknown> | undefined): Record<string, unknown> {
-  if (!schema) return {};
-
-  const properties = (schema as { properties?: Record<string, { default?: unknown }> }).properties;
-  if (!properties) return {};
-
-  const defaults: Record<string, unknown> = {};
-  for (const [key, prop] of Object.entries(properties)) {
-    if (prop.default !== undefined) {
-      defaults[key] = prop.default;
-    }
-  }
-  return defaults;
-}
-
-/**
- * Check if the model's schema supports image/video input
- */
-function supportsImageInput(schema: Record<string, unknown> | undefined): boolean {
-  if (!schema) return true; // Default to true if no schema
-
-  const properties = (schema as { properties?: Record<string, unknown> }).properties;
-  if (!properties) return true;
-
-  // Check for common image/video input field names
-  return !!(
-    properties.image ||
-    properties.start_image ||
-    properties.first_frame_image ||
-    properties.reference_images
-  );
-}
+const VIDEO_MODEL_MAP: Record<string, VideoModel> = {
+  'google/veo-3.1-fast': 'veo-3.1-fast',
+  'google/veo-3.1': 'veo-3.1',
+};
 
 function VideoGenNodeComponent(props: NodeProps) {
   const { id, type, data } = props;
@@ -62,6 +33,13 @@ function VideoGenNodeComponent(props: NodeProps) {
   const { hasRequiredInputs } = useRequiredInputs(id, type as 'videoGen');
 
   const [isModelBrowserOpen, setIsModelBrowserOpen] = useState(false);
+
+  // Use shared hook for model selection
+  const { handleModelSelect } = useModelSelection<VideoModel, VideoGenNodeData>({
+    nodeId: id,
+    modelMap: VIDEO_MODEL_MAP,
+    fallbackModel: 'veo-3.1-fast',
+  });
 
   // Get schema properties from selected model
   const schemaProperties = useMemo(() => {
@@ -74,56 +52,20 @@ function VideoGenNodeComponent(props: NodeProps) {
   }, [nodeData.selectedModel?.inputSchema]);
 
   // Extract enum values from component schemas for SchemaInputs
-  const enumValues = useMemo(() => {
-    const componentSchemas = nodeData.selectedModel?.componentSchemas as
-      | Record<string, { enum?: unknown[]; type?: string }>
-      | undefined;
-    if (!componentSchemas) return undefined;
-
-    const result: Record<string, string[]> = {};
-    for (const [key, schema] of Object.entries(componentSchemas)) {
-      if (schema.enum && Array.isArray(schema.enum)) {
-        // Convert all enum values to strings for the dropdown
-        result[key] = schema.enum.map((v) => String(v));
-      }
-    }
-    return Object.keys(result).length > 0 ? result : undefined;
-  }, [nodeData.selectedModel?.componentSchemas]);
+  const enumValues = useMemo(
+    () =>
+      extractEnumValues(
+        nodeData.selectedModel?.componentSchemas as
+          | Record<string, { enum?: unknown[]; type?: string }>
+          | undefined
+      ),
+    [nodeData.selectedModel?.componentSchemas]
+  );
 
   // Check if model supports image input
   const modelSupportsImageInput = useMemo(
     () => supportsImageInput(nodeData.selectedModel?.inputSchema),
     [nodeData.selectedModel?.inputSchema]
-  );
-
-  const handleModelSelect = useCallback(
-    (model: ProviderModel) => {
-      // Map provider model to our internal model format
-      const modelMap: Record<string, VideoModel> = {
-        'google/veo-3.1-fast': 'veo-3.1-fast',
-        'google/veo-3.1': 'veo-3.1',
-      };
-
-      const internalModel = modelMap[model.id] ?? ('veo-3.1-fast' as VideoModel);
-
-      // Extract defaults from the new model's schema
-      const schemaDefaults = getSchemaDefaults(model.inputSchema);
-
-      updateNodeData<VideoGenNodeData>(id, {
-        model: internalModel,
-        provider: model.provider,
-        selectedModel: {
-          provider: model.provider,
-          modelId: model.id,
-          displayName: model.displayName,
-          inputSchema: model.inputSchema,
-          componentSchemas: model.componentSchemas,
-        },
-        // Initialize schemaParams with defaults from new model
-        schemaParams: schemaDefaults,
-      });
-    },
-    [id, updateNodeData]
   );
 
   const handleSchemaParamChange = useCallback(
@@ -150,29 +92,32 @@ function VideoGenNodeComponent(props: NodeProps) {
     MODELS.find((m) => m.value === nodeData.model)?.label ||
     nodeData.model;
 
-  const headerActions = (
-    <>
-      <Button
-        variant="secondary"
-        size="sm"
-        onClick={() => setIsModelBrowserOpen(true)}
-        className="h-5 px-2 text-[10px]"
-      >
-        Browse
-      </Button>
-      {nodeData.outputVideo && (
+  const headerActions = useMemo(
+    () => (
+      <>
         <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={handleGenerate}
-          disabled={nodeData.status === 'processing'}
-          className="h-5 w-5"
-          title="Regenerate"
+          variant="secondary"
+          size="sm"
+          onClick={() => setIsModelBrowserOpen(true)}
+          className="h-5 px-2 text-[10px]"
         >
-          <RefreshCw className="h-3 w-3" />
+          Browse
         </Button>
-      )}
-    </>
+        {nodeData.outputVideo && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={handleGenerate}
+            disabled={nodeData.status === 'processing'}
+            className="h-5 w-5"
+            title="Regenerate"
+          >
+            <RefreshCw className="h-3 w-3" />
+          </Button>
+        )}
+      </>
+    ),
+    [nodeData.outputVideo, nodeData.status, handleGenerate]
   );
 
   // Determine which inputs to disable based on model support

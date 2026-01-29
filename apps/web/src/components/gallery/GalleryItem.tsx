@@ -1,6 +1,7 @@
 'use client';
 
 import { Film, ImageIcon, Music } from 'lucide-react';
+import Image from 'next/image';
 import { memo } from 'react';
 import type { GalleryItem as GalleryItemType } from '@/lib/gallery/types';
 
@@ -32,7 +33,14 @@ export const GalleryItem = memo(function GalleryItem({ item, onSelect }: Gallery
     >
       {/* Thumbnail */}
       {item.type === 'image' && (
-        <img src={mediaUrl} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
+        <Image
+          src={mediaUrl}
+          alt={item.name}
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+          className="object-cover"
+          unoptimized
+        />
       )}
       {item.type === 'video' && (
         <video src={mediaUrl} className="w-full h-full object-cover" muted preload="metadata" />
