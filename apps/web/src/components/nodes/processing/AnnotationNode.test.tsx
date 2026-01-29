@@ -13,6 +13,15 @@ vi.mock('@/store/workflowStore', () => ({
   useWorkflowStore: vi.fn((selector) => selector({ getConnectedInputs: mockGetConnectedInputs })),
 }));
 
+const mockOpenNodeDetailModal = vi.fn();
+
+vi.mock('@/store/uiStore', () => ({
+  useUIStore: (selector: (state: unknown) => unknown) => {
+    const state = { openNodeDetailModal: mockOpenNodeDetailModal };
+    return selector(state);
+  },
+}));
+
 vi.mock('../BaseNode', () => ({
   BaseNode: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="base-node">{children}</div>

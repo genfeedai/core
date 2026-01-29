@@ -106,7 +106,15 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
       await this.queueManager.addJobLog(job.id as string, `Starting ${nodeType}`);
 
       // Check for existing prediction (retry scenario) - only for Replicate-based operations
-      const replicateNodeTypes = ['reframe', 'upscale', 'lipSync'];
+      const replicateNodeTypes = [
+        'reframe',
+        'lumaReframeImage',
+        'lumaReframeVideo',
+        'upscale',
+        'topazImageUpscale',
+        'topazVideoUpscale',
+        'lipSync',
+      ];
       const existingJob = replicateNodeTypes.includes(nodeType)
         ? await this.executionsService.findExistingJob(executionId, nodeId)
         : null;
@@ -114,6 +122,8 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
       let predictionId: string | null = null;
 
       switch (nodeType) {
+        case 'lumaReframeImage':
+        case 'lumaReframeVideo':
         case 'reframe':
           predictionId = await this.handleReframe(
             job as unknown as Job<ReframeJobData>,
@@ -121,6 +131,8 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
           );
           break;
 
+        case 'topazImageUpscale':
+        case 'topazVideoUpscale':
         case 'upscale':
           predictionId = await this.handleUpscale(
             job as unknown as Job<UpscaleJobData>,
