@@ -1,12 +1,6 @@
-import { createRequire } from 'node:module';
 import path from 'node:path';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
-
-// Force single React instance in monorepo (prevents dual-instance hook errors on CI)
-const require = createRequire(import.meta.url);
-const reactPath = path.dirname(require.resolve('react/package.json'));
-const reactDomPath = path.dirname(require.resolve('react-dom/package.json'));
 
 export default defineConfig({
   plugins: [react()],
@@ -41,8 +35,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      react: reactPath,
-      'react-dom': reactDomPath,
     },
     dedupe: ['react', 'react-dom'],
   },
