@@ -16,10 +16,7 @@ vi.mock('@/store/workflowStore', () => ({
 const mockOpenNodeDetailModal = vi.fn();
 
 vi.mock('@/store/uiStore', () => ({
-  useUIStore: (selector: (state: unknown) => unknown) => {
-    const state = { openNodeDetailModal: mockOpenNodeDetailModal };
-    return selector(state);
-  },
+  useUIStore: vi.fn((selector) => selector({ openNodeDetailModal: mockOpenNodeDetailModal })),
 }));
 
 vi.mock('../BaseNode', () => ({

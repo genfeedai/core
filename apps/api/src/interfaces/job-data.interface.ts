@@ -138,7 +138,7 @@ export interface MotionControlJobData extends NodeJobData {
  * Reframe job data
  */
 export interface ReframeJobData extends NodeJobData {
-  nodeType: 'reframe';
+  nodeType: 'reframe' | 'lumaReframeImage' | 'lumaReframeVideo';
   nodeData: {
     inputType: 'image' | 'video';
     // Image input (when inputType === 'image')
@@ -156,7 +156,7 @@ export interface ReframeJobData extends NodeJobData {
  * Upscale job data
  */
 export interface UpscaleJobData extends NodeJobData {
-  nodeType: 'upscale';
+  nodeType: 'upscale' | 'topazImageUpscale' | 'topazVideoUpscale';
   nodeData: {
     inputType: 'image' | 'video';
     // Image input (when inputType === 'image')
