@@ -1,21 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
-import type { CreatePromptLibraryItemDto } from '@/dto/create-prompt-library-item.dto';
-import type { QueryPromptLibraryDto } from '@/dto/query-prompt-library.dto';
-import {
-  PromptLibraryItem,
-  type PromptLibraryItemDocument,
-} from '@/schemas/prompt-library-item.schema';
+import type { CreatePromptDto } from '@/dto/create-prompt.dto';
+import type { QueryPromptsDto } from '@/dto/query-prompts.dto';
+import { Prompt, type PromptDocument } from '@/schemas/prompt.schema';
 
 @Injectable()
-export class PromptLibraryService {
+export class PromptsService {
   constructor(
-    @InjectModel(PromptLibraryItem.name)
-    private readonly promptModel: Model<PromptLibraryItemDocument>
+    @InjectModel(Prompt.name)
+    private readonly promptModel: Model<PromptDocument>
   ) {}
 
-  async create(dto: CreatePromptLibraryItemDto): Promise<PromptLibraryItemDocument> {
+  async create(dto: CreatePromptDto): Promise<PromptDocument> {
     const prompt = new this.promptModel({
       name: dto.name,
       description: dto.description ?? '',
@@ -31,7 +28,7 @@ export class PromptLibraryService {
     return prompt.save();
   }
 
-  async findAll(query: QueryPromptLibraryDto): Promise<PromptLibraryItemDocument[]> {
+  async findAll(query: QueryPromptsDto): Promise<PromptDocument[]> {
     const filter: Record<string, unknown> = { isDeleted: false };
 
     if (query.category) filter.category = query.category;
@@ -51,7 +48,7 @@ export class PromptLibraryService {
       .exec();
   }
 
-  async findFeatured(limit = 10): Promise<PromptLibraryItemDocument[]> {
+  async findFeatured(limit = 10): Promise<PromptDocument[]> {
     return this.promptModel
       .find({ isDeleted: false, isFeatured: true })
       .sort({ useCount: -1 })
@@ -59,7 +56,7 @@ export class PromptLibraryService {
       .exec();
   }
 
-  async findOne(id: string): Promise<PromptLibraryItemDocument> {
+  async findOne(id: string): Promise<PromptDocument> {
     const item = await this.promptModel.findOne({ _id: id, isDeleted: false }).exec();
     if (!item) {
       throw new NotFoundException(`Prompt library item ${id} not found`);
@@ -67,10 +64,7 @@ export class PromptLibraryService {
     return item;
   }
 
-  async update(
-    id: string,
-    dto: Partial<CreatePromptLibraryItemDto>
-  ): Promise<PromptLibraryItemDocument> {
+  async update(id: string, dto: Partial<CreatePromptDto>): Promise<PromptDocument> {
     const item = await this.promptModel
       .findOneAndUpdate({ _id: id, isDeleted: false }, { $set: dto }, { new: true })
       .exec();
@@ -80,7 +74,7 @@ export class PromptLibraryService {
     return item;
   }
 
-  async remove(id: string): Promise<PromptLibraryItemDocument> {
+  async remove(id: string): Promise<PromptDocument> {
     const item = await this.promptModel
       .findOneAndUpdate({ _id: id, isDeleted: false }, { $set: { isDeleted: true } }, { new: true })
       .exec();
@@ -90,7 +84,7 @@ export class PromptLibraryService {
     return item;
   }
 
-  async incrementUseCount(id: string): Promise<PromptLibraryItemDocument> {
+  async incrementUseCount(id: string): Promise<PromptDocument> {
     const item = await this.promptModel
       .findOneAndUpdate({ _id: id, isDeleted: false }, { $inc: { useCount: 1 } }, { new: true })
       .exec();
@@ -100,7 +94,7 @@ export class PromptLibraryService {
     return item;
   }
 
-  async duplicate(id: string): Promise<PromptLibraryItemDocument> {
+  async duplicate(id: string): Promise<PromptDocument> {
     const original = await this.findOne(id);
     const duplicate = new this.promptModel({
       name: `${original.name} (copy)`,

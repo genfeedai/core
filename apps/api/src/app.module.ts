@@ -4,7 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from '@/controllers/app.controller';
 import { ExecutionsModule } from '@/modules/executions.module';
 import { FilesModule } from '@/modules/files.module';
-import { PromptLibraryModule } from '@/modules/prompt-library.module';
+import { PromptsModule } from '@/modules/prompts.module';
 import { ProvidersModule } from '@/modules/providers.module';
 import { QueueModule } from '@/modules/queue.module';
 import { ReplicateModule } from '@/modules/replicate.module';
@@ -37,7 +37,7 @@ import { AppService } from '@/services/app.service';
     ExecutionsModule,
     ReplicateModule,
     TTSModule,
-    PromptLibraryModule,
+    PromptsModule,
     ProvidersModule,
     SettingsModule,
     FilesModule,

@@ -74,6 +74,23 @@ function ImageGenNodeComponent(props: NodeProps) {
     return schema?.properties as Record<string, unknown> | undefined;
   }, [nodeData.selectedModel?.inputSchema]);
 
+  // Extract enum values from component schemas for SchemaInputs
+  const enumValues = useMemo(() => {
+    const componentSchemas = nodeData.selectedModel?.componentSchemas as
+      | Record<string, { enum?: unknown[]; type?: string }>
+      | undefined;
+    if (!componentSchemas) return undefined;
+
+    const result: Record<string, string[]> = {};
+    for (const [key, schema] of Object.entries(componentSchemas)) {
+      if (schema.enum && Array.isArray(schema.enum)) {
+        // Convert all enum values to strings for the dropdown
+        result[key] = schema.enum.map((v) => String(v));
+      }
+    }
+    return Object.keys(result).length > 0 ? result : undefined;
+  }, [nodeData.selectedModel?.componentSchemas]);
+
   // Check if model supports image input
   const modelSupportsImageInput = useMemo(
     () => supportsImageInput(nodeData.selectedModel?.inputSchema),
@@ -101,6 +118,7 @@ function ImageGenNodeComponent(props: NodeProps) {
           modelId: model.id,
           displayName: model.displayName,
           inputSchema: model.inputSchema,
+          componentSchemas: model.componentSchemas,
         },
         // Initialize schemaParams with defaults from new model
         schemaParams: schemaDefaults,
@@ -172,6 +190,12 @@ function ImageGenNodeComponent(props: NodeProps) {
             schema={schemaProperties}
             values={nodeData.schemaParams ?? {}}
             onChange={handleSchemaParamChange}
+            enumValues={enumValues}
+            componentSchemas={
+              nodeData.selectedModel?.componentSchemas as
+                | Record<string, { enum?: unknown[]; type?: string }>
+                | undefined
+            }
           />
         )}
 

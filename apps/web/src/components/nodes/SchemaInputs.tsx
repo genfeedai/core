@@ -22,12 +22,19 @@ interface SchemaProperty {
   nullable?: boolean;
 }
 
+interface ComponentSchema {
+  enum?: unknown[];
+  type?: string;
+}
+
 interface SchemaInputsProps {
   schema: Record<string, SchemaProperty> | undefined;
   values: Record<string, unknown>;
   onChange: (key: string, value: unknown) => void;
   /** Custom enum values map - key is the $ref path, value is array of enum options */
   enumValues?: Record<string, string[]>;
+  /** Component schemas with type info for proper type coercion */
+  componentSchemas?: Record<string, ComponentSchema>;
 }
 
 // Fields that come from node connections and should be skipped
@@ -262,7 +269,13 @@ function NumberInput({
   );
 }
 
-function SchemaInputsComponent({ schema, values, onChange, enumValues }: SchemaInputsProps) {
+function SchemaInputsComponent({
+  schema,
+  values,
+  onChange,
+  enumValues,
+  componentSchemas,
+}: SchemaInputsProps) {
   const handleChange = useCallback(
     (key: string, value: unknown) => {
       onChange(key, value);
@@ -309,6 +322,10 @@ function SchemaInputsComponent({ schema, values, onChange, enumValues }: SchemaI
           const options = enumValues?.[enumKey] ?? DEFAULT_ENUM_VALUES[enumKey] ?? [];
 
           if (options.length > 0) {
+            // Get the component schema type for proper type coercion
+            const componentSchema = componentSchemas?.[enumKey];
+            const enumType = componentSchema?.type;
+
             return (
               <EnumSelect
                 key={key}
@@ -316,7 +333,16 @@ function SchemaInputsComponent({ schema, values, onChange, enumValues }: SchemaI
                 property={property}
                 value={value}
                 options={options}
-                onChange={(v) => handleChange(key, v)}
+                onChange={(v) => {
+                  // Convert string value to correct type based on component schema
+                  if (enumType === 'integer') {
+                    handleChange(key, Number.parseInt(v, 10));
+                  } else if (enumType === 'number') {
+                    handleChange(key, Number.parseFloat(v));
+                  } else {
+                    handleChange(key, v);
+                  }
+                }}
               />
             );
           }

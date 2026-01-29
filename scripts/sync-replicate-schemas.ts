@@ -144,6 +144,8 @@ interface ModelSchema {
   coverImageUrl?: string;
   inputSchema: JSONSchema;
   outputSchema: JSONSchema;
+  /** Component schemas containing enum definitions (aspect_ratio, duration, etc.) */
+  componentSchemas?: Record<string, JSONSchemaProperty>;
   fetchedAt: string;
 }
 
@@ -449,6 +451,17 @@ async function main() {
       const inputSchema = openapi.components?.schemas?.Input ?? { type: 'object', properties: {} };
       const outputSchema = openapi.components?.schemas?.Output ?? { type: 'unknown' };
 
+      // Extract component schemas (enum definitions like aspect_ratio, duration, etc.)
+      // Exclude Input/Output which are handled separately
+      const componentSchemas: Record<string, JSONSchemaProperty> = {};
+      if (openapi.components?.schemas) {
+        for (const [key, value] of Object.entries(openapi.components.schemas)) {
+          if (key !== 'Input' && key !== 'Output') {
+            componentSchemas[key] = value as JSONSchemaProperty;
+          }
+        }
+      }
+
       schemas.push({
         modelId: model.id,
         name: model.name,
@@ -457,6 +470,7 @@ async function main() {
         coverImageUrl: response.cover_image_url ?? undefined,
         inputSchema,
         outputSchema,
+        componentSchemas: Object.keys(componentSchemas).length > 0 ? componentSchemas : undefined,
         fetchedAt: new Date().toISOString(),
       });
 

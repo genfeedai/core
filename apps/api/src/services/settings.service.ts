@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { UserSettings, type UserSettingsDocument } from '@/schemas/user-settings.schema';
+import { Settings, type SettingsDocument } from '@/schemas/settings.schema';
 
 // DTO types for settings updates
 export interface NodeDefaultsDto {
@@ -41,12 +41,12 @@ const MAX_RECENT_MODELS = 8;
 
 @Injectable()
 export class SettingsService {
-  constructor(@InjectModel(UserSettings.name) private settingsModel: Model<UserSettingsDocument>) {}
+  constructor(@InjectModel(Settings.name) private settingsModel: Model<SettingsDocument>) {}
 
   /**
    * Get settings for a user, creating default settings if they don't exist
    */
-  async getSettings(userId: string): Promise<UserSettingsDocument> {
+  async getSettings(userId: string): Promise<SettingsDocument> {
     let settings = await this.settingsModel.findOne({ userId });
 
     if (!settings) {
@@ -64,10 +64,7 @@ export class SettingsService {
   /**
    * Update node defaults for a user
    */
-  async updateNodeDefaults(
-    userId: string,
-    defaults: NodeDefaultsDto
-  ): Promise<UserSettingsDocument> {
+  async updateNodeDefaults(userId: string, defaults: NodeDefaultsDto): Promise<SettingsDocument> {
     const settings = await this.getSettings(userId);
 
     // Merge with existing defaults
@@ -86,7 +83,7 @@ export class SettingsService {
   async updateUiPreferences(
     userId: string,
     preferences: UiPreferencesDto
-  ): Promise<UserSettingsDocument> {
+  ): Promise<SettingsDocument> {
     const settings = await this.getSettings(userId);
 
     // Merge with existing preferences
@@ -102,7 +99,7 @@ export class SettingsService {
   /**
    * Update multiple settings at once
    */
-  async updateSettings(userId: string, updates: UpdateSettingsDto): Promise<UserSettingsDocument> {
+  async updateSettings(userId: string, updates: UpdateSettingsDto): Promise<SettingsDocument> {
     const settings = await this.getSettings(userId);
 
     if (updates.nodeDefaults) {
@@ -126,7 +123,7 @@ export class SettingsService {
   /**
    * Add a model to recent models list
    */
-  async addRecentModel(userId: string, model: RecentModelDto): Promise<UserSettingsDocument> {
+  async addRecentModel(userId: string, model: RecentModelDto): Promise<SettingsDocument> {
     const settings = await this.getSettings(userId);
 
     // Remove existing entry for same model
@@ -147,7 +144,7 @@ export class SettingsService {
   /**
    * Clear recent models list
    */
-  async clearRecentModels(userId: string): Promise<UserSettingsDocument> {
+  async clearRecentModels(userId: string): Promise<SettingsDocument> {
     const settings = await this.getSettings(userId);
     settings.recentModels = [];
     await settings.save();
@@ -157,7 +154,7 @@ export class SettingsService {
   /**
    * Reset settings to defaults
    */
-  async resetSettings(userId: string): Promise<UserSettingsDocument> {
+  async resetSettings(userId: string): Promise<SettingsDocument> {
     await this.settingsModel.deleteOne({ userId });
     return this.getSettings(userId); // Creates fresh defaults
   }

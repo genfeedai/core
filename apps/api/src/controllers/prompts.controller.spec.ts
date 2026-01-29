@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { PromptLibraryController } from '@/controllers/prompt-library.controller';
-import type { QueryPromptLibraryDto } from '@/dto/query-prompt-library.dto';
-import type { PromptLibraryService } from '@/services/prompt-library.service';
+import { PromptsController } from '@/controllers/prompts.controller';
+import type { QueryPromptsDto } from '@/dto/query-prompts.dto';
+import type { PromptsService } from '@/services/prompts.service';
 
-describe('PromptLibraryController', () => {
-  let controller: PromptLibraryController;
+describe('PromptsController', () => {
+  let controller: PromptsController;
 
   const mockPromptItem = {
     id: 'prompt-1',
@@ -32,7 +32,7 @@ describe('PromptLibraryController', () => {
     vi.clearAllMocks();
 
     // Instantiate controller directly with mocks (bypassing NestJS DI due to type-only imports)
-    controller = new PromptLibraryController(mockService as unknown as PromptLibraryService);
+    controller = new PromptsController(mockService as unknown as PromptsService);
   });
 
   describe('create', () => {
@@ -60,7 +60,7 @@ describe('PromptLibraryController', () => {
     });
 
     it('should pass query parameters to service', async () => {
-      const query: QueryPromptLibraryDto = { search: 'sunset' };
+      const query: QueryPromptsDto = { search: 'sunset' };
 
       await controller.findAll(query);
 

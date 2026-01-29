@@ -1,18 +1,13 @@
-import type {
-  ICreatePromptLibraryItem,
-  IPromptLibraryItem,
-  IQueryPromptLibrary,
-  PromptCategory,
-} from '@genfeedai/types';
+import type { ICreatePrompt, IPrompt, IQueryPrompts, PromptCategory } from '@genfeedai/types';
 import { create } from 'zustand';
-import { promptLibraryApi } from '@/lib/api';
+import { promptsApi } from '@/lib/api';
 import { logger } from '@/lib/logger';
 
 interface PromptLibraryStore {
   // State
-  items: IPromptLibraryItem[];
-  featuredItems: IPromptLibraryItem[];
-  selectedItem: IPromptLibraryItem | null;
+  items: IPrompt[];
+  featuredItems: IPrompt[];
+  selectedItem: IPrompt | null;
   isLoading: boolean;
   error: string | null;
 
@@ -25,29 +20,25 @@ interface PromptLibraryStore {
 
   // Modal state
   isCreateModalOpen: boolean;
-  editingItem: IPromptLibraryItem | null;
+  editingItem: IPrompt | null;
 
   // Actions - UI
   setSearchQuery: (query: string) => void;
   setCategoryFilter: (category: PromptCategory | null) => void;
-  setSelectedItem: (item: IPromptLibraryItem | null) => void;
+  setSelectedItem: (item: IPrompt | null) => void;
   openPicker: () => void;
   closePicker: () => void;
-  openCreateModal: (editItem?: IPromptLibraryItem) => void;
+  openCreateModal: (editItem?: IPrompt) => void;
   closeCreateModal: () => void;
 
   // Actions - API
-  loadItems: (query?: IQueryPromptLibrary, signal?: AbortSignal) => Promise<void>;
+  loadItems: (query?: IQueryPrompts, signal?: AbortSignal) => Promise<void>;
   loadFeatured: (signal?: AbortSignal) => Promise<void>;
-  createItem: (data: ICreatePromptLibraryItem, signal?: AbortSignal) => Promise<IPromptLibraryItem>;
-  updateItem: (
-    id: string,
-    data: Partial<ICreatePromptLibraryItem>,
-    signal?: AbortSignal
-  ) => Promise<IPromptLibraryItem>;
+  createItem: (data: ICreatePrompt, signal?: AbortSignal) => Promise<IPrompt>;
+  updateItem: (id: string, data: Partial<ICreatePrompt>, signal?: AbortSignal) => Promise<IPrompt>;
   deleteItem: (id: string, signal?: AbortSignal) => Promise<void>;
-  duplicateItem: (id: string, signal?: AbortSignal) => Promise<IPromptLibraryItem>;
-  recordItemUsage: (id: string, signal?: AbortSignal) => Promise<IPromptLibraryItem>;
+  duplicateItem: (id: string, signal?: AbortSignal) => Promise<IPrompt>;
+  recordItemUsage: (id: string, signal?: AbortSignal) => Promise<IPrompt>;
 }
 
 export const usePromptLibraryStore = create<PromptLibraryStore>((set, get) => ({
@@ -91,12 +82,12 @@ export const usePromptLibraryStore = create<PromptLibraryStore>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const { searchQuery, categoryFilter } = get();
-      const finalQuery: IQueryPromptLibrary = {
+      const finalQuery: IQueryPrompts = {
         ...query,
         search: query?.search ?? (searchQuery || undefined),
         category: query?.category ?? categoryFilter ?? undefined,
       };
-      const items = await promptLibraryApi.getAll(finalQuery, signal);
+      const items = await promptsApi.getAll(finalQuery, signal);
       set({ items, isLoading: false });
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
@@ -107,7 +98,7 @@ export const usePromptLibraryStore = create<PromptLibraryStore>((set, get) => ({
 
   loadFeatured: async (signal) => {
     try {
-      const featuredItems = await promptLibraryApi.getFeatured(10, signal);
+      const featuredItems = await promptsApi.getFeatured(10, signal);
       set({ featuredItems });
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
@@ -119,7 +110,7 @@ export const usePromptLibraryStore = create<PromptLibraryStore>((set, get) => ({
   createItem: async (data, signal) => {
     set({ isLoading: true, error: null });
     try {
-      const item = await promptLibraryApi.create(data, signal);
+      const item = await promptsApi.create(data, signal);
       set((state) => ({
         items: [item, ...state.items],
         isLoading: false,
@@ -136,7 +127,7 @@ export const usePromptLibraryStore = create<PromptLibraryStore>((set, get) => ({
   updateItem: async (id, data, signal) => {
     set({ isLoading: true, error: null });
     try {
-      const item = await promptLibraryApi.update(id, data, signal);
+      const item = await promptsApi.update(id, data, signal);
       set((state) => ({
         items: state.items.map((i) => (i._id === id ? item : i)),
         selectedItem: state.selectedItem?._id === id ? item : state.selectedItem,
@@ -153,7 +144,7 @@ export const usePromptLibraryStore = create<PromptLibraryStore>((set, get) => ({
 
   deleteItem: async (id, signal) => {
     try {
-      await promptLibraryApi.delete(id, signal);
+      await promptsApi.delete(id, signal);
       set((state) => ({
         items: state.items.filter((i) => i._id !== id),
         selectedItem: state.selectedItem?._id === id ? null : state.selectedItem,
@@ -166,7 +157,7 @@ export const usePromptLibraryStore = create<PromptLibraryStore>((set, get) => ({
 
   duplicateItem: async (id, signal) => {
     try {
-      const item = await promptLibraryApi.duplicate(id, signal);
+      const item = await promptsApi.duplicate(id, signal);
       set((state) => ({
         items: [item, ...state.items],
       }));
@@ -179,7 +170,7 @@ export const usePromptLibraryStore = create<PromptLibraryStore>((set, get) => ({
 
   recordItemUsage: async (id, signal) => {
     try {
-      const item = await promptLibraryApi.use(id, signal);
+      const item = await promptsApi.use(id, signal);
       set((state) => ({
         items: state.items.map((i) => (i._id === id ? item : i)),
         isPickerOpen: false,

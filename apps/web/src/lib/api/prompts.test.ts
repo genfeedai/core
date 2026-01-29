@@ -1,7 +1,7 @@
-import type { IPromptLibraryItem } from '@genfeedai/types';
+import type { IPrompt } from '@genfeedai/types';
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { apiClient } from './client';
-import { promptLibraryApi } from './prompt-library';
+import { promptsApi } from './prompts';
 
 // Mock the apiClient
 vi.mock('./client', () => ({
@@ -13,8 +13,8 @@ vi.mock('./client', () => ({
   },
 }));
 
-describe('promptLibraryApi', () => {
-  const mockPromptItem: IPromptLibraryItem = {
+describe('promptsApi', () => {
+  const mockPromptItem: IPrompt = {
     _id: 'prompt-1',
     name: 'Test Prompt',
     description: 'A test prompt',
@@ -46,9 +46,9 @@ describe('promptLibraryApi', () => {
         promptText: 'Generate a beautiful sunset',
       };
 
-      const result = await promptLibraryApi.create(createData);
+      const result = await promptsApi.create(createData);
 
-      expect(apiClient.post).toHaveBeenCalledWith('/prompt-library', createData, {
+      expect(apiClient.post).toHaveBeenCalledWith('/prompts', createData, {
         signal: undefined,
       });
       expect(result.name).toBe('Test Prompt');
@@ -59,9 +59,9 @@ describe('promptLibraryApi', () => {
     it('should get all prompt library items', async () => {
       (apiClient.get as Mock).mockResolvedValueOnce([mockPromptItem]);
 
-      const result = await promptLibraryApi.getAll();
+      const result = await promptsApi.getAll();
 
-      expect(apiClient.get).toHaveBeenCalledWith('/prompt-library', { signal: undefined });
+      expect(apiClient.get).toHaveBeenCalledWith('/prompts', { signal: undefined });
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe('Test Prompt');
     });
@@ -69,14 +69,14 @@ describe('promptLibraryApi', () => {
     it('should pass query parameters', async () => {
       (apiClient.get as Mock).mockResolvedValueOnce([mockPromptItem]);
 
-      await promptLibraryApi.getAll({
+      await promptsApi.getAll({
         category: 'landscape',
         search: 'sunset',
         limit: 10,
       });
 
       expect(apiClient.get).toHaveBeenCalledWith(
-        '/prompt-library?category=landscape&search=sunset&limit=10',
+        '/prompts?category=landscape&search=sunset&limit=10',
         { signal: undefined }
       );
     });
@@ -84,19 +84,19 @@ describe('promptLibraryApi', () => {
     it('should handle empty query', async () => {
       (apiClient.get as Mock).mockResolvedValueOnce([]);
 
-      const result = await promptLibraryApi.getAll();
+      const result = await promptsApi.getAll();
       expect(result).toEqual([]);
     });
 
     it('should pass sorting options', async () => {
       (apiClient.get as Mock).mockResolvedValueOnce([mockPromptItem]);
 
-      await promptLibraryApi.getAll({
+      await promptsApi.getAll({
         sortBy: 'useCount',
         sortOrder: 'desc',
       });
 
-      expect(apiClient.get).toHaveBeenCalledWith('/prompt-library?sortBy=useCount&sortOrder=desc', {
+      expect(apiClient.get).toHaveBeenCalledWith('/prompts?sortBy=useCount&sortOrder=desc', {
         signal: undefined,
       });
     });
@@ -107,9 +107,9 @@ describe('promptLibraryApi', () => {
       const featuredItem = { ...mockPromptItem, isFeatured: true };
       (apiClient.get as Mock).mockResolvedValueOnce([featuredItem]);
 
-      const result = await promptLibraryApi.getFeatured();
+      const result = await promptsApi.getFeatured();
 
-      expect(apiClient.get).toHaveBeenCalledWith('/prompt-library/featured', { signal: undefined });
+      expect(apiClient.get).toHaveBeenCalledWith('/prompts/featured', { signal: undefined });
       expect(result).toHaveLength(1);
       expect(result[0].isFeatured).toBe(true);
     });
@@ -117,9 +117,9 @@ describe('promptLibraryApi', () => {
     it('should pass limit parameter', async () => {
       (apiClient.get as Mock).mockResolvedValueOnce([]);
 
-      await promptLibraryApi.getFeatured(5);
+      await promptsApi.getFeatured(5);
 
-      expect(apiClient.get).toHaveBeenCalledWith('/prompt-library/featured?limit=5', {
+      expect(apiClient.get).toHaveBeenCalledWith('/prompts/featured?limit=5', {
         signal: undefined,
       });
     });
@@ -129,9 +129,9 @@ describe('promptLibraryApi', () => {
     it('should get a single prompt item by ID', async () => {
       (apiClient.get as Mock).mockResolvedValueOnce(mockPromptItem);
 
-      const result = await promptLibraryApi.getById('prompt-1');
+      const result = await promptsApi.getById('prompt-1');
 
-      expect(apiClient.get).toHaveBeenCalledWith('/prompt-library/prompt-1', { signal: undefined });
+      expect(apiClient.get).toHaveBeenCalledWith('/prompts/prompt-1', { signal: undefined });
       expect(result._id).toBe('prompt-1');
     });
   });
@@ -142,9 +142,9 @@ describe('promptLibraryApi', () => {
       (apiClient.put as Mock).mockResolvedValueOnce(updatedItem);
 
       const updates = { name: 'Updated Prompt' };
-      const result = await promptLibraryApi.update('prompt-1', updates);
+      const result = await promptsApi.update('prompt-1', updates);
 
-      expect(apiClient.put).toHaveBeenCalledWith('/prompt-library/prompt-1', updates, {
+      expect(apiClient.put).toHaveBeenCalledWith('/prompts/prompt-1', updates, {
         signal: undefined,
       });
       expect(result.name).toBe('Updated Prompt');
@@ -155,9 +155,9 @@ describe('promptLibraryApi', () => {
     it('should delete a prompt item', async () => {
       (apiClient.delete as Mock).mockResolvedValueOnce(undefined);
 
-      await promptLibraryApi.delete('prompt-1');
+      await promptsApi.delete('prompt-1');
 
-      expect(apiClient.delete).toHaveBeenCalledWith('/prompt-library/prompt-1', {
+      expect(apiClient.delete).toHaveBeenCalledWith('/prompts/prompt-1', {
         signal: undefined,
       });
     });
@@ -168,9 +168,9 @@ describe('promptLibraryApi', () => {
       const usedItem = { ...mockPromptItem, useCount: 6 };
       (apiClient.post as Mock).mockResolvedValueOnce(usedItem);
 
-      const result = await promptLibraryApi.use('prompt-1');
+      const result = await promptsApi.use('prompt-1');
 
-      expect(apiClient.post).toHaveBeenCalledWith('/prompt-library/prompt-1/use', undefined, {
+      expect(apiClient.post).toHaveBeenCalledWith('/prompts/prompt-1/use', undefined, {
         signal: undefined,
       });
       expect(result.useCount).toBe(6);
@@ -182,9 +182,9 @@ describe('promptLibraryApi', () => {
       const duplicatedItem = { ...mockPromptItem, _id: 'prompt-2', name: 'Test Prompt (Copy)' };
       (apiClient.post as Mock).mockResolvedValueOnce(duplicatedItem);
 
-      const result = await promptLibraryApi.duplicate('prompt-1');
+      const result = await promptsApi.duplicate('prompt-1');
 
-      expect(apiClient.post).toHaveBeenCalledWith('/prompt-library/prompt-1/duplicate', undefined, {
+      expect(apiClient.post).toHaveBeenCalledWith('/prompts/prompt-1/duplicate', undefined, {
         signal: undefined,
       });
       expect(result._id).toBe('prompt-2');

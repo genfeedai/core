@@ -2,11 +2,11 @@ import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { PromptLibraryItem } from '@/schemas/prompt-library-item.schema';
-import { PromptLibraryService } from '@/services/prompt-library.service';
+import { Prompt } from '@/schemas/prompt.schema';
+import { PromptsService } from '@/services/prompts.service';
 import { createConstructableMockModel, createObjectId } from '@/test/mocks/mongoose.mock';
 
-function createMockPromptLibraryItem(overrides = {}) {
+function createMockPrompt(overrides = {}) {
   return {
     _id: createObjectId(),
     name: 'Test Prompt',
@@ -30,12 +30,12 @@ function createMockPromptLibraryItem(overrides = {}) {
   };
 }
 
-describe('PromptLibraryService', () => {
-  let service: PromptLibraryService;
-  let mockPrompt: ReturnType<typeof createMockPromptLibraryItem>;
+describe('PromptsService', () => {
+  let service: PromptsService;
+  let mockPrompt: ReturnType<typeof createMockPrompt>;
 
   const createMockPromptModel = () => {
-    mockPrompt = createMockPromptLibraryItem();
+    mockPrompt = createMockPrompt();
     return createConstructableMockModel(
       {
         find: vi.fn().mockReturnValue({
@@ -63,15 +63,15 @@ describe('PromptLibraryService', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        PromptLibraryService,
+        PromptsService,
         {
-          provide: getModelToken(PromptLibraryItem.name),
+          provide: getModelToken(Prompt.name),
           useValue: mockModel,
         },
       ],
     }).compile();
 
-    service = module.get<PromptLibraryService>(PromptLibraryService);
+    service = module.get<PromptsService>(PromptsService);
   });
 
   describe('create', () => {
@@ -178,15 +178,15 @@ describe('PromptLibraryService', () => {
 
       const module: TestingModule = await Test.createTestingModule({
         providers: [
-          PromptLibraryService,
+          PromptsService,
           {
-            provide: getModelToken(PromptLibraryItem.name),
+            provide: getModelToken(Prompt.name),
             useValue: mockModel,
           },
         ],
       }).compile();
 
-      const serviceWithNullFind = module.get<PromptLibraryService>(PromptLibraryService);
+      const serviceWithNullFind = module.get<PromptsService>(PromptsService);
       const id = createObjectId().toString();
 
       await expect(serviceWithNullFind.findOne(id)).rejects.toThrow(NotFoundException);
@@ -211,15 +211,15 @@ describe('PromptLibraryService', () => {
 
       const module: TestingModule = await Test.createTestingModule({
         providers: [
-          PromptLibraryService,
+          PromptsService,
           {
-            provide: getModelToken(PromptLibraryItem.name),
+            provide: getModelToken(Prompt.name),
             useValue: mockModel,
           },
         ],
       }).compile();
 
-      const serviceWithNullUpdate = module.get<PromptLibraryService>(PromptLibraryService);
+      const serviceWithNullUpdate = module.get<PromptsService>(PromptsService);
       const id = createObjectId().toString();
 
       await expect(serviceWithNullUpdate.update(id, { name: 'New' })).rejects.toThrow(
@@ -245,15 +245,15 @@ describe('PromptLibraryService', () => {
 
       const module: TestingModule = await Test.createTestingModule({
         providers: [
-          PromptLibraryService,
+          PromptsService,
           {
-            provide: getModelToken(PromptLibraryItem.name),
+            provide: getModelToken(Prompt.name),
             useValue: mockModel,
           },
         ],
       }).compile();
 
-      const serviceWithNullRemove = module.get<PromptLibraryService>(PromptLibraryService);
+      const serviceWithNullRemove = module.get<PromptsService>(PromptsService);
       const id = createObjectId().toString();
 
       await expect(serviceWithNullRemove.remove(id)).rejects.toThrow(NotFoundException);
@@ -277,15 +277,15 @@ describe('PromptLibraryService', () => {
 
       const module: TestingModule = await Test.createTestingModule({
         providers: [
-          PromptLibraryService,
+          PromptsService,
           {
-            provide: getModelToken(PromptLibraryItem.name),
+            provide: getModelToken(Prompt.name),
             useValue: mockModel,
           },
         ],
       }).compile();
 
-      const serviceWithNullUpdate = module.get<PromptLibraryService>(PromptLibraryService);
+      const serviceWithNullUpdate = module.get<PromptsService>(PromptsService);
       const id = createObjectId().toString();
 
       await expect(serviceWithNullUpdate.incrementUseCount(id)).rejects.toThrow(NotFoundException);
@@ -309,15 +309,15 @@ describe('PromptLibraryService', () => {
 
       const module: TestingModule = await Test.createTestingModule({
         providers: [
-          PromptLibraryService,
+          PromptsService,
           {
-            provide: getModelToken(PromptLibraryItem.name),
+            provide: getModelToken(Prompt.name),
             useValue: mockModel,
           },
         ],
       }).compile();
 
-      const serviceWithNullFind = module.get<PromptLibraryService>(PromptLibraryService);
+      const serviceWithNullFind = module.get<PromptsService>(PromptsService);
       const id = createObjectId().toString();
 
       await expect(serviceWithNullFind.duplicate(id)).rejects.toThrow(NotFoundException);

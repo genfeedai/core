@@ -1,6 +1,6 @@
 'use client';
 
-import type { IPromptLibraryItem } from '@genfeedai/types';
+import type { IPrompt } from '@genfeedai/types';
 import { BookMarked, ChevronDown, ExternalLink, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { usePromptLibraryStore } from '@/store/promptLibraryStore';
 
 interface PromptPickerProps {
-  onSelect: (item: IPromptLibraryItem) => void;
+  onSelect: (item: IPrompt) => void;
   label?: string;
 }
 
@@ -64,7 +64,7 @@ function PromptPickerComponent({ onSelect, label }: PromptPickerProps) {
   }, []);
 
   const handleSelect = useCallback(
-    async (item: IPromptLibraryItem) => {
+    async (item: IPrompt) => {
       await recordItemUsage(item._id);
       onSelect(item);
       setIsOpen(false);

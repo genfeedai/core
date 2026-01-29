@@ -116,6 +116,10 @@ function getReplicateModels(): ProviderModel[] {
     .filter((schema) => MODEL_METADATA[schema.modelId])
     .map((schema) => {
       const meta = MODEL_METADATA[schema.modelId];
+      // Extract component schemas that contain enum definitions (aspect_ratio, duration, etc.)
+      const componentSchemas = (schema as { componentSchemas?: Record<string, unknown> })
+        .componentSchemas;
+
       return {
         id: schema.modelId,
         displayName: meta.displayName || schema.name,
@@ -125,6 +129,7 @@ function getReplicateModels(): ProviderModel[] {
         pricing: meta.pricing,
         thumbnail: (schema as { coverImageUrl?: string }).coverImageUrl || undefined,
         inputSchema: schema.inputSchema as Record<string, unknown> | undefined,
+        componentSchemas: componentSchemas as Record<string, unknown> | undefined,
       };
     });
 }

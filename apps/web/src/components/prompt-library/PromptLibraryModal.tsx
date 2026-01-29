@@ -1,6 +1,6 @@
 'use client';
 
-import { CATEGORY_LABELS, type IPromptLibraryItem, type PromptCategory } from '@genfeedai/types';
+import { CATEGORY_LABELS, type IPrompt, type PromptCategory } from '@genfeedai/types';
 import { BookMarked, Copy, MoreVertical, Plus, Search, Sparkles, Trash2, X } from 'lucide-react';
 import Image from 'next/image';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
@@ -11,9 +11,9 @@ import { useUIStore } from '@/store/uiStore';
 import { CreatePromptModal } from './CreatePromptModal';
 
 interface PromptCardProps {
-  item: IPromptLibraryItem;
-  onSelect: (item: IPromptLibraryItem) => void;
-  onEdit: (item: IPromptLibraryItem) => void;
+  item: IPrompt;
+  onSelect: (item: IPrompt) => void;
+  onEdit: (item: IPrompt) => void;
   onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
 }
@@ -168,7 +168,7 @@ function PromptLibraryModalComponent() {
   }, [isOpen, loadItems]);
 
   const handleSelect = useCallback(
-    (_item: IPromptLibraryItem) => {
+    (_item: IPrompt) => {
       // Just close modal for now - integration will handle applying to node
       closeModal();
     },
@@ -176,7 +176,7 @@ function PromptLibraryModalComponent() {
   );
 
   const handleEdit = useCallback(
-    (item: IPromptLibraryItem) => {
+    (item: IPrompt) => {
       openCreateModal(item);
     },
     [openCreateModal]

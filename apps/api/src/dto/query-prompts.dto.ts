@@ -2,7 +2,7 @@ import { PROMPT_CATEGORIES, type PromptCategory } from '@genfeedai/types';
 import { Transform } from 'class-transformer';
 import { IsIn, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 
-export class QueryPromptLibraryDto {
+export class QueryPromptsDto {
   @IsOptional()
   @IsIn(PROMPT_CATEGORIES)
   category?: PromptCategory;

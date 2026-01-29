@@ -32,7 +32,7 @@ export class StyleSettingsDto {
   scene?: string;
 }
 
-export class CreatePromptLibraryItemDto {
+export class CreatePromptDto {
   @IsString()
   name: string;
 

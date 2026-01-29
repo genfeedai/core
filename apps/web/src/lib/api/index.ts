@@ -1,7 +1,7 @@
 export { ApiError, apiClient } from './client';
 export type { ExecutionData, JobData, NodeResult } from './executions';
 export { executionsApi } from './executions';
-export { promptLibraryApi } from './prompt-library';
+export { promptsApi } from './prompts';
 export type {
   NodeDefaultsData,
   RecentModelData,

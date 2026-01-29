@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, type HydratedDocument } from 'mongoose';
 
-export type UserSettingsDocument = HydratedDocument<UserSettings>;
+export type SettingsDocument = HydratedDocument<Settings>;
 
 // Default model settings for node types
 @Schema({ _id: false })
@@ -67,8 +67,8 @@ class UiPreferences {
 const NodeDefaultsSchema = SchemaFactory.createForClass(NodeDefaults);
 const UiPreferencesSchema = SchemaFactory.createForClass(UiPreferences);
 
-@Schema({ timestamps: true, collection: 'user_settings' })
-export class UserSettings extends Document {
+@Schema({ timestamps: true, collection: 'settings' })
+export class Settings extends Document {
   // User identifier (could be anonymous session ID or authenticated user ID)
   @Prop({ required: true, unique: true, index: true })
   userId: string;
@@ -104,4 +104,4 @@ export class UserSettings extends Document {
   updatedAt: Date;
 }
 
-export const UserSettingsSchema = SchemaFactory.createForClass(UserSettings);
+export const SettingsSchema = SchemaFactory.createForClass(Settings);

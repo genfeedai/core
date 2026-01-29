@@ -44,6 +44,8 @@ export interface ProviderModel {
   thumbnail?: string;
   pricing?: string;
   inputSchema?: Record<string, unknown>;
+  /** Component schemas containing enum definitions (aspect_ratio, duration, etc.) */
+  componentSchemas?: Record<string, unknown>;
 }
 
 export interface SelectedModel {
@@ -51,6 +53,8 @@ export interface SelectedModel {
   modelId: string;
   displayName: string;
   inputSchema?: Record<string, unknown>;
+  /** Component schemas containing enum definitions (aspect_ratio, duration, etc.) */
+  componentSchemas?: Record<string, unknown>;
 }
 
 // =============================================================================

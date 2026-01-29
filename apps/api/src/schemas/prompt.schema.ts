@@ -2,7 +2,7 @@ import { PROMPT_CATEGORIES, type PromptCategory } from '@genfeedai/types';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, type HydratedDocument } from 'mongoose';
 
-export type PromptLibraryItemDocument = HydratedDocument<PromptLibraryItem>;
+export type PromptDocument = HydratedDocument<Prompt>;
 
 // Style settings embedded document
 @Schema({ _id: false })
@@ -23,8 +23,8 @@ export class StyleSettings {
   scene?: string; // indoor, outdoor, urban, nature, etc.
 }
 
-@Schema({ timestamps: true, collection: 'prompt-library-items' })
-export class PromptLibraryItem extends Document {
+@Schema({ timestamps: true, collection: 'prompts' })
+export class Prompt extends Document {
   // Core prompt content
   @Prop({ required: true })
   name: string;
@@ -73,4 +73,4 @@ export class PromptLibraryItem extends Document {
   updatedAt: Date;
 }
 
-export const PromptLibraryItemSchema = SchemaFactory.createForClass(PromptLibraryItem);
+export const PromptSchema = SchemaFactory.createForClass(Prompt);

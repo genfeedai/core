@@ -1,6 +1,6 @@
 'use client';
 
-import type { IPromptLibraryItem, PromptNodeData } from '@genfeedai/types';
+import type { IPrompt, PromptNodeData } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { Expand, Save } from 'lucide-react';
 import { memo, useCallback } from 'react';
@@ -25,7 +25,7 @@ function PromptNodeComponent(props: NodeProps) {
   );
 
   const handleSelectFromLibrary = useCallback(
-    (item: IPromptLibraryItem) => {
+    (item: IPrompt) => {
       updateNodeData<PromptNodeData>(id, { prompt: item.promptText });
     },
     [id, updateNodeData]

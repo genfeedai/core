@@ -3,7 +3,7 @@
 import {
   CAMERA_PRESETS,
   CATEGORY_LABELS,
-  type ICreatePromptLibraryItem,
+  type ICreatePrompt,
   LIGHTING_PRESETS,
   MOOD_PRESETS,
   type PromptCategory,
@@ -21,7 +21,7 @@ function CreatePromptModalComponent() {
 
   const isEditing = !!editingItem;
 
-  const [formData, setFormData] = useState<ICreatePromptLibraryItem>({
+  const [formData, setFormData] = useState<ICreatePrompt>({
     name: editingItem?.name ?? '',
     description: editingItem?.description ?? '',
     promptText: editingItem?.promptText ?? '',
@@ -35,7 +35,7 @@ function CreatePromptModalComponent() {
   const [tagInput, setTagInput] = useState('');
 
   const handleChange = useCallback(
-    (field: keyof ICreatePromptLibraryItem, value: string | string[] | Record<string, string>) => {
+    (field: keyof ICreatePrompt, value: string | string[] | Record<string, string>) => {
       setFormData((prev) => ({ ...prev, [field]: value }));
     },
     []

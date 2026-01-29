@@ -27,8 +27,8 @@ export const PROMPT_CATEGORIES = [
 
 export type PromptCategory = (typeof PROMPT_CATEGORIES)[number];
 
-// Main prompt library item interface
-export interface IPromptLibraryItem {
+// Main prompt interface
+export interface IPrompt {
   _id: string;
   name: string;
   description: string;
@@ -47,7 +47,7 @@ export interface IPromptLibraryItem {
 }
 
 // Create/Update DTO type (frontend)
-export interface ICreatePromptLibraryItem {
+export interface ICreatePrompt {
   name: string;
   description?: string;
   promptText: string;
@@ -61,7 +61,7 @@ export interface ICreatePromptLibraryItem {
 }
 
 // Query params type (frontend)
-export interface IQueryPromptLibrary {
+export interface IQueryPrompts {
   category?: PromptCategory;
   search?: string;
   tag?: string;
