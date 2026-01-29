@@ -1,6 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, type TestingModule } from '@nestjs/testing';
+import { TemplateCategory } from '@genfeedai/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Template } from '@/schemas/template.schema';
 import { TemplatesService } from '@/services/templates.service';
@@ -61,7 +62,7 @@ describe('TemplatesService', () => {
       const dto = {
         name: 'Test Template',
         description: 'A test template',
-        category: 'custom',
+        category: TemplateCategory.IMAGE,
         nodes: [],
         edges: [],
       };
@@ -73,7 +74,7 @@ describe('TemplatesService', () => {
     });
 
     it('should create template with default values', async () => {
-      const dto = { name: 'Minimal Template', category: 'custom' };
+      const dto = { name: 'Minimal Template', category: TemplateCategory.IMAGE };
 
       const result = await service.create(dto);
 
@@ -83,20 +84,20 @@ describe('TemplatesService', () => {
 
   describe('findAll', () => {
     it('should return all non-deleted templates', async () => {
-      const result = await service.findAll();
+      const result = await service.findAll({});
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual(mockTemplate);
     });
 
     it('should filter by category', async () => {
-      const result = await service.findAll('custom');
+      const result = await service.findAll({ category: TemplateCategory.IMAGE });
 
       expect(result).toHaveLength(1);
     });
 
     it('should ignore "all" category filter', async () => {
-      const result = await service.findAll('all');
+      const result = await service.findAll({ category: 'all' });
 
       expect(result).toHaveLength(1);
     });

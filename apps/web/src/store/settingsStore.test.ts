@@ -58,7 +58,7 @@ describe('useSettingsStore', () => {
       expect(state.defaults.imageProvider).toBe('replicate');
       expect(state.defaults.videoModel).toBe('veo-3.1');
       expect(state.defaults.videoProvider).toBe('replicate');
-      expect(state.edgeStyle).toBe('bezier');
+      expect(state.edgeStyle).toBe('default');
       expect(state.recentModels).toEqual([]);
     });
   });

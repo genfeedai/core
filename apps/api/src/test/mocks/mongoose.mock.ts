@@ -12,6 +12,7 @@ export interface MockModelMethods {
   create: Mock;
   deleteOne: Mock;
   deleteMany: Mock;
+  updateOne: Mock;
 }
 
 // Type for constructable mock model (can be called with new or as function)

@@ -2,6 +2,7 @@ import { Types } from 'mongoose';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkflowsController } from '@/controllers/workflows.controller';
 import type { CostCalculatorService } from '@/services/cost-calculator.service';
+import type { WorkflowGeneratorService } from '@/services/workflow-generator.service';
 import type { WorkflowsService } from '@/services/workflows.service';
 
 describe('WorkflowsController', () => {
@@ -58,13 +59,18 @@ describe('WorkflowsController', () => {
     }),
   };
 
+  const mockWorkflowGeneratorService = {
+    generateWorkflow: vi.fn().mockResolvedValue(mockWorkflow),
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
 
     // Instantiate controller directly with mocks (bypassing NestJS DI due to type-only imports)
     controller = new WorkflowsController(
       mockWorkflowsService as unknown as WorkflowsService,
-      mockCostCalculatorService as unknown as CostCalculatorService
+      mockCostCalculatorService as unknown as CostCalculatorService,
+      mockWorkflowGeneratorService as unknown as WorkflowGeneratorService
     );
   });
 
@@ -84,10 +90,10 @@ describe('WorkflowsController', () => {
 
   describe('findAll', () => {
     it('should return all workflows', async () => {
-      const result = await controller.findAll();
+      const result = await controller.findAll({});
 
       expect(result).toEqual([mockWorkflow]);
-      expect(mockWorkflowsService.findAll).toHaveBeenCalled();
+      expect(mockWorkflowsService.findAll).toHaveBeenCalledWith({});
     });
   });
 

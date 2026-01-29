@@ -2,6 +2,7 @@ import { Types } from 'mongoose';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExecutionsController } from '@/controllers/executions.controller';
 import type { ExecutionsService } from '@/services/executions.service';
+import type { QueueManagerService } from '@/services/queue-manager.service';
 
 describe('ExecutionsController', () => {
   let controller: ExecutionsController;
@@ -51,11 +52,18 @@ describe('ExecutionsController', () => {
     getExecutionCostDetails: vi.fn().mockResolvedValue(mockCostDetails),
   };
 
+  const mockQueueManager = {
+    cancelExecution: vi.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
 
     // Instantiate controller directly with mocks (bypassing NestJS DI due to type-only imports)
-    controller = new ExecutionsController(mockService as unknown as ExecutionsService);
+    controller = new ExecutionsController(
+      mockService as unknown as ExecutionsService,
+      mockQueueManager as unknown as QueueManagerService
+    );
   });
 
   describe('createExecution', () => {

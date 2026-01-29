@@ -1,3 +1,4 @@
+import { TemplateCategory } from '@genfeedai/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TemplatesController } from '@/controllers/templates.controller';
 import type { TemplatesService } from '@/services/templates.service';
@@ -9,7 +10,7 @@ describe('TemplatesController', () => {
     id: 'template-1',
     name: 'Test Template',
     description: 'A test template',
-    category: 'image-generation',
+    category: TemplateCategory.IMAGE,
     promptText: 'Generate a beautiful {{subject}}',
     variables: [{ name: 'subject', description: 'The subject to generate' }],
     isSystem: false,
@@ -38,7 +39,7 @@ describe('TemplatesController', () => {
       const createDto = {
         name: 'Test Template',
         promptText: 'Generate a beautiful {{subject}}',
-        category: 'image-generation',
+        category: TemplateCategory.IMAGE,
       };
 
       const result = await controller.create(createDto);
@@ -53,13 +54,16 @@ describe('TemplatesController', () => {
       const result = await controller.findAll();
 
       expect(result).toEqual([mockTemplate]);
-      expect(mockService.findAll).toHaveBeenCalledWith(undefined);
+      expect(mockService.findAll).toHaveBeenCalledWith({ category: undefined, search: undefined });
     });
 
     it('should filter by category when provided', async () => {
-      await controller.findAll('image-generation');
+      await controller.findAll(TemplateCategory.IMAGE);
 
-      expect(mockService.findAll).toHaveBeenCalledWith('image-generation');
+      expect(mockService.findAll).toHaveBeenCalledWith({
+        category: TemplateCategory.IMAGE,
+        search: undefined,
+      });
     });
   });
 

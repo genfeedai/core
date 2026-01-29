@@ -41,7 +41,7 @@ describe('useWorkflowStore', () => {
 
       expect(state.nodes).toEqual([]);
       expect(state.edges).toEqual([]);
-      expect(state.edgeStyle).toBe('bezier');
+      expect(state.edgeStyle).toBe('default');
       expect(state.workflowName).toBe('Untitled Workflow');
       expect(state.workflowId).toBeNull();
       expect(state.isDirty).toBe(false);
@@ -265,13 +265,14 @@ describe('useWorkflowStore', () => {
   });
 
   describe('validateWorkflow', () => {
-    it('should return valid for empty workflow', () => {
+    it('should return invalid for empty workflow', () => {
       const { validateWorkflow } = useWorkflowStore.getState();
 
       const result = validateWorkflow();
 
-      expect(result.isValid).toBe(true);
-      expect(result.errors).toHaveLength(0);
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0].message).toContain('empty');
     });
 
     it('should detect missing required inputs', () => {

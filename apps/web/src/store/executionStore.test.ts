@@ -227,8 +227,9 @@ describe('useExecutionStore', () => {
   });
 
   describe('canResumeFromFailed', () => {
-    it('should return true when there is a failed node', () => {
+    it('should return true when there is a failed node and executionId', () => {
       useExecutionStore.setState({
+        executionId: 'exec-123',
         lastFailedNodeId: 'node-1',
         isRunning: false,
       });
@@ -239,6 +240,7 @@ describe('useExecutionStore', () => {
 
     it('should return false when no failed node', () => {
       useExecutionStore.setState({
+        executionId: 'exec-123',
         lastFailedNodeId: null,
         isRunning: false,
       });
@@ -249,8 +251,20 @@ describe('useExecutionStore', () => {
 
     it('should return false when still running', () => {
       useExecutionStore.setState({
+        executionId: 'exec-123',
         lastFailedNodeId: 'node-1',
         isRunning: true,
+      });
+
+      const { canResumeFromFailed } = useExecutionStore.getState();
+      expect(canResumeFromFailed()).toBe(false);
+    });
+
+    it('should return false when no executionId', () => {
+      useExecutionStore.setState({
+        executionId: null,
+        lastFailedNodeId: 'node-1',
+        isRunning: false,
       });
 
       const { canResumeFromFailed } = useExecutionStore.getState();
