@@ -339,9 +339,9 @@ describe('CostCalculatorService', () => {
   describe('calculateTopazCost', () => {
     describe('topazImageUpscale', () => {
       it('should calculate cost for 2x upscale (2MP -> 8MP)', () => {
-        // Base 2MP * 4 (2x^2) = 8MP -> $0.08 tier
+        // Base 2MP * 4 (2x^2) = 8MP -> $0.16 tier (4-9 MP)
         const cost = service.calculateTopazCost('topazImageUpscale', { upscaleFactor: '2x' });
-        expect(cost).toBe(0.08);
+        expect(cost).toBe(0.16);
       });
 
       it('should calculate cost for 4x upscale (2MP -> 32MP)', () => {
@@ -357,9 +357,9 @@ describe('CostCalculatorService', () => {
       });
 
       it('should default to no upscale when factor not specified', () => {
-        // Base 2MP * 1 = 2MP -> $0.05 tier
+        // Base 2MP * 1 = 2MP -> $0.08 tier (1-4 MP)
         const cost = service.calculateTopazCost('topazImageUpscale', {});
-        expect(cost).toBe(0.05);
+        expect(cost).toBe(0.08);
       });
     });
 
@@ -467,7 +467,8 @@ describe('CostCalculatorService', () => {
 
       const result = service.calculateWorkflowEstimate(nodes);
 
-      expect(result.total).toBe(0.08);
+      // 2x upscale: 2MP * 4 = 8MP -> $0.16 tier (4-9 MP)
+      expect(result.total).toBe(0.16);
     });
 
     it('should calculate cost for topazVideoUpscale node', () => {
@@ -505,8 +506,8 @@ describe('CostCalculatorService', () => {
 
       const result = service.calculateWorkflowEstimate(nodes);
 
-      // $0.15 + $0.01 + $0.08 = $0.24
-      expect(result.total).toBe(0.15 + 0.01 + 0.08);
+      // $0.15 (nano-banana-pro 2K) + $0.01 (photon-flash-1) + $0.16 (2x upscale 8MP) = $0.32
+      expect(result.total).toBe(0.15 + 0.01 + 0.16);
       expect(result.breakdown).toHaveLength(3);
     });
   });
