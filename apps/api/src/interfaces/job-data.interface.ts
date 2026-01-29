@@ -1,4 +1,5 @@
 import type { Types } from 'mongoose';
+import { ProcessingNodeType, ReframeNodeType, UpscaleNodeType } from '@genfeedai/types';
 
 /**
  * Base job data interface
@@ -138,7 +139,7 @@ export interface MotionControlJobData extends NodeJobData {
  * Reframe job data
  */
 export interface ReframeJobData extends NodeJobData {
-  nodeType: 'reframe' | 'lumaReframeImage' | 'lumaReframeVideo';
+  nodeType: ReframeNodeType;
   nodeData: {
     inputType: 'image' | 'video';
     // Image input (when inputType === 'image')
@@ -156,7 +157,7 @@ export interface ReframeJobData extends NodeJobData {
  * Upscale job data
  */
 export interface UpscaleJobData extends NodeJobData {
-  nodeType: 'upscale' | 'topazImageUpscale' | 'topazVideoUpscale';
+  nodeType: UpscaleNodeType;
   nodeData: {
     inputType: 'image' | 'video';
     // Image input (when inputType === 'image')

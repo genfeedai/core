@@ -1,6 +1,7 @@
 import { OnWorkerEvent, Processor } from '@nestjs/bullmq';
 import { forwardRef, Inject, Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
+import { ProcessingNodeType, ReframeNodeType, UpscaleNodeType } from '@genfeedai/types';
 import type {
   JobResult,
   LipSyncJobData,
@@ -106,14 +107,14 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
       await this.queueManager.addJobLog(job.id as string, `Starting ${nodeType}`);
 
       // Check for existing prediction (retry scenario) - only for Replicate-based operations
-      const replicateNodeTypes = [
-        'reframe',
-        'lumaReframeImage',
-        'lumaReframeVideo',
-        'upscale',
-        'topazImageUpscale',
-        'topazVideoUpscale',
-        'lipSync',
+      const replicateNodeTypes: string[] = [
+        ReframeNodeType.REFRAME,
+        ReframeNodeType.LUMA_REFRAME_IMAGE,
+        ReframeNodeType.LUMA_REFRAME_VIDEO,
+        UpscaleNodeType.UPSCALE,
+        UpscaleNodeType.TOPAZ_IMAGE_UPSCALE,
+        UpscaleNodeType.TOPAZ_VIDEO_UPSCALE,
+        ProcessingNodeType.LIP_SYNC,
       ];
       const existingJob = replicateNodeTypes.includes(nodeType)
         ? await this.executionsService.findExistingJob(executionId, nodeId)
@@ -122,44 +123,44 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
       let predictionId: string | null = null;
 
       switch (nodeType) {
-        case 'lumaReframeImage':
-        case 'lumaReframeVideo':
-        case 'reframe':
+        case ReframeNodeType.LUMA_REFRAME_IMAGE:
+        case ReframeNodeType.LUMA_REFRAME_VIDEO:
+        case ReframeNodeType.REFRAME:
           predictionId = await this.handleReframe(
             job as unknown as Job<ReframeJobData>,
             existingJob?.predictionId
           );
           break;
 
-        case 'topazImageUpscale':
-        case 'topazVideoUpscale':
-        case 'upscale':
+        case UpscaleNodeType.TOPAZ_IMAGE_UPSCALE:
+        case UpscaleNodeType.TOPAZ_VIDEO_UPSCALE:
+        case UpscaleNodeType.UPSCALE:
           predictionId = await this.handleUpscale(
             job as unknown as Job<UpscaleJobData>,
             existingJob?.predictionId
           );
           break;
 
-        case 'videoFrameExtract':
+        case ProcessingNodeType.VIDEO_FRAME_EXTRACT:
           return this.handleVideoFrameExtract(job as unknown as Job<VideoFrameExtractJobData>);
 
-        case 'lipSync':
+        case ProcessingNodeType.LIP_SYNC:
           predictionId = await this.handleLipSync(
             job as unknown as Job<LipSyncJobData>,
             existingJob?.predictionId
           );
           break;
 
-        case 'textToSpeech':
+        case ProcessingNodeType.TEXT_TO_SPEECH:
           return this.handleTextToSpeech(job as unknown as Job<TextToSpeechJobData>);
 
-        case 'voiceChange':
+        case ProcessingNodeType.VOICE_CHANGE:
           return this.handleVoiceChange(job as unknown as Job<VoiceChangeJobData>);
 
-        case 'subtitle':
+        case ProcessingNodeType.SUBTITLE:
           return this.handleSubtitle(job as unknown as Job<SubtitleJobData>);
 
-        case 'videoStitch':
+        case ProcessingNodeType.VIDEO_STITCH:
           return this.handleVideoStitch(job as unknown as Job<VideoStitchJobData>);
 
         default:

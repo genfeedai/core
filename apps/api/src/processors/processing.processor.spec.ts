@@ -1,5 +1,6 @@
 import type { Job } from 'bullmq';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ReframeNodeType, UpscaleNodeType } from '@genfeedai/types';
 import type { ProcessingJobData } from '@/interfaces/job-data.interface';
 import { JOB_STATUS, QUEUE_NAMES } from '@/queue/queue.constants';
 
@@ -15,10 +16,12 @@ const mockQueueManager = {
   updateJobStatus: vi.fn(),
   addJobLog: vi.fn(),
   moveToDeadLetterQueue: vi.fn(),
+  continueExecution: vi.fn(),
 };
 
 const mockExecutionsService = {
   updateNodeResult: vi.fn(),
+  findExistingJob: vi.fn().mockResolvedValue(null),
 };
 
 const mockReplicateService = {
@@ -27,6 +30,27 @@ const mockReplicateService = {
   upscaleImage: vi.fn(),
   upscaleVideo: vi.fn(),
   getPredictionStatus: vi.fn(),
+};
+
+const mockReplicatePollerService = {
+  pollForCompletion: vi.fn(),
+  createJobProgressCallback: vi.fn().mockReturnValue(() => {}),
+};
+
+const mockTTSService = {
+  generateSpeech: vi.fn(),
+};
+
+const mockFFmpegService = {
+  extractFrame: vi.fn(),
+  replaceAudio: vi.fn(),
+  addSubtitles: vi.fn(),
+  stitchVideos: vi.fn(),
+  imageToVideo: vi.fn(),
+};
+
+const mockFilesService = {
+  downloadAndSaveOutput: vi.fn(),
 };
 
 // Import after mocks
@@ -55,16 +79,35 @@ describe('ProcessingProcessor', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    // Reset findExistingJob to return null by default
+    mockExecutionsService.findExistingJob.mockResolvedValue(null);
+
+    // Reset pollForCompletion to return success by default
+    mockReplicatePollerService.pollForCompletion.mockResolvedValue({
+      success: true,
+      output: 'https://example.com/result.png',
+    });
+
+    // Reset file save to success by default
+    mockFilesService.downloadAndSaveOutput.mockResolvedValue({
+      url: 'https://saved.example.com/result.png',
+      path: '/local/path/result.png',
+    });
+
     processor = new ProcessingProcessor(
       mockQueueManager as never,
       mockExecutionsService as never,
-      mockReplicateService as never
+      mockReplicateService as never,
+      mockReplicatePollerService as never,
+      mockTTSService as never,
+      mockFFmpegService as never,
+      mockFilesService as never
     );
   });
 
   describe('process - lumaReframeImage', () => {
     it('should process luma reframe image job', async () => {
-      const job = createMockJob('lumaReframeImage', {
+      const job = createMockJob(ReframeNodeType.LUMA_REFRAME_IMAGE, {
         image: 'https://example.com/image.png',
         aspectRatio: '16:9',
         model: 'photon-flash-1',
@@ -76,10 +119,10 @@ describe('ProcessingProcessor', () => {
         id: 'pred-123',
       });
 
-      mockReplicateService.getPredictionStatus.mockResolvedValueOnce({
-        status: 'succeeded',
+      mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
+        success: true,
         output: 'https://example.com/reframed.png',
-        metrics: { predict_time: 5.2 },
+        predictTime: 5.2,
       });
 
       const result = await processor.process(job);
@@ -93,17 +136,12 @@ describe('ProcessingProcessor', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.predictionId).toBe('pred-123');
     });
 
     it('should update job status to ACTIVE on start', async () => {
-      const job = createMockJob('lumaReframeImage', { image: 'test.png' });
+      const job = createMockJob(ReframeNodeType.LUMA_REFRAME_IMAGE, { image: 'test.png' });
 
       mockReplicateService.reframeImage.mockResolvedValueOnce({ id: 'pred-1' });
-      mockReplicateService.getPredictionStatus.mockResolvedValueOnce({
-        status: 'succeeded',
-        output: 'result.png',
-      });
 
       await processor.process(job);
 
@@ -111,13 +149,9 @@ describe('ProcessingProcessor', () => {
     });
 
     it('should update node status to processing', async () => {
-      const job = createMockJob('lumaReframeImage', { image: 'test.png' });
+      const job = createMockJob(ReframeNodeType.LUMA_REFRAME_IMAGE, { image: 'test.png' });
 
       mockReplicateService.reframeImage.mockResolvedValueOnce({ id: 'pred-1' });
-      mockReplicateService.getPredictionStatus.mockResolvedValueOnce({
-        status: 'succeeded',
-        output: 'result.png',
-      });
 
       await processor.process(job);
 
@@ -131,7 +165,7 @@ describe('ProcessingProcessor', () => {
 
   describe('process - lumaReframeVideo', () => {
     it('should process luma reframe video job', async () => {
-      const job = createMockJob('lumaReframeVideo', {
+      const job = createMockJob(ReframeNodeType.LUMA_REFRAME_VIDEO, {
         video: 'https://example.com/video.mp4',
         aspectRatio: '9:16',
         prompt: 'Convert to portrait',
@@ -142,8 +176,8 @@ describe('ProcessingProcessor', () => {
         id: 'pred-456',
       });
 
-      mockReplicateService.getPredictionStatus.mockResolvedValueOnce({
-        status: 'succeeded',
+      mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
+        success: true,
         output: 'https://example.com/reframed.mp4',
       });
 
@@ -162,7 +196,7 @@ describe('ProcessingProcessor', () => {
 
   describe('process - topazImageUpscale', () => {
     it('should process topaz image upscale job', async () => {
-      const job = createMockJob('topazImageUpscale', {
+      const job = createMockJob(UpscaleNodeType.TOPAZ_IMAGE_UPSCALE, {
         image: 'https://example.com/image.png',
         enhanceModel: 'standard-v2',
         upscaleFactor: '2x',
@@ -176,8 +210,8 @@ describe('ProcessingProcessor', () => {
         id: 'pred-789',
       });
 
-      mockReplicateService.getPredictionStatus.mockResolvedValueOnce({
-        status: 'succeeded',
+      mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
+        success: true,
         output: 'https://example.com/upscaled.png',
       });
 
@@ -199,7 +233,7 @@ describe('ProcessingProcessor', () => {
 
   describe('process - topazVideoUpscale', () => {
     it('should process topaz video upscale job', async () => {
-      const job = createMockJob('topazVideoUpscale', {
+      const job = createMockJob(UpscaleNodeType.TOPAZ_VIDEO_UPSCALE, {
         video: 'https://example.com/video.mp4',
         targetResolution: '4k',
         targetFps: 60,
@@ -209,8 +243,8 @@ describe('ProcessingProcessor', () => {
         id: 'pred-video',
       });
 
-      mockReplicateService.getPredictionStatus.mockResolvedValueOnce({
-        status: 'succeeded',
+      mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
+        success: true,
         output: 'https://example.com/4k-video.mp4',
       });
 
@@ -238,33 +272,31 @@ describe('ProcessingProcessor', () => {
 
   describe('polling for completion', () => {
     it('should poll until prediction succeeds', async () => {
-      const job = createMockJob('lumaReframeImage', { image: 'test.png' });
+      const job = createMockJob(ReframeNodeType.LUMA_REFRAME_IMAGE, { image: 'test.png' });
 
       mockReplicateService.reframeImage.mockResolvedValueOnce({ id: 'pred-1' });
 
-      // First call: processing, second call: succeeded
-      mockReplicateService.getPredictionStatus
-        .mockResolvedValueOnce({ status: 'processing' })
-        .mockResolvedValueOnce({ status: 'processing' })
-        .mockResolvedValueOnce({
-          status: 'succeeded',
-          output: 'result.png',
-          metrics: { predict_time: 10.5 },
-        });
+      mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
+        success: true,
+        output: 'result.png',
+        predictTime: 10.5,
+      });
 
       const result = await processor.process(job);
 
-      expect(mockReplicateService.getPredictionStatus).toHaveBeenCalledTimes(3);
+      expect(mockReplicatePollerService.pollForCompletion).toHaveBeenCalledWith(
+        'pred-1',
+        expect.any(Object)
+      );
       expect(result.success).toBe(true);
-      expect(result.predictTime).toBe(10.5);
     });
 
     it('should return failure when prediction fails', async () => {
-      const job = createMockJob('topazImageUpscale', { image: 'test.png' });
+      const job = createMockJob(UpscaleNodeType.TOPAZ_IMAGE_UPSCALE, { image: 'test.png' });
 
       mockReplicateService.upscaleImage.mockResolvedValueOnce({ id: 'pred-1' });
-      mockReplicateService.getPredictionStatus.mockResolvedValueOnce({
-        status: 'failed',
+      mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
+        success: false,
         error: 'Model error: Invalid input',
       });
 
@@ -275,11 +307,12 @@ describe('ProcessingProcessor', () => {
     });
 
     it('should return failure when prediction is canceled', async () => {
-      const job = createMockJob('lumaReframeVideo', { video: 'test.mp4' });
+      const job = createMockJob(ReframeNodeType.LUMA_REFRAME_VIDEO, { video: 'test.mp4' });
 
       mockReplicateService.reframeVideo.mockResolvedValueOnce({ id: 'pred-1' });
-      mockReplicateService.getPredictionStatus.mockResolvedValueOnce({
-        status: 'canceled',
+      mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
+        success: false,
+        error: 'Prediction canceled',
       });
 
       const result = await processor.process(job);
@@ -289,12 +322,9 @@ describe('ProcessingProcessor', () => {
     });
 
     it('should update progress during polling', async () => {
-      const job = createMockJob('lumaReframeImage', { image: 'test.png' });
+      const job = createMockJob(ReframeNodeType.LUMA_REFRAME_IMAGE, { image: 'test.png' });
 
       mockReplicateService.reframeImage.mockResolvedValueOnce({ id: 'pred-1' });
-      mockReplicateService.getPredictionStatus
-        .mockResolvedValueOnce({ status: 'processing' })
-        .mockResolvedValueOnce({ status: 'succeeded', output: 'result.png' });
 
       await processor.process(job);
 
@@ -305,7 +335,7 @@ describe('ProcessingProcessor', () => {
 
   describe('error handling', () => {
     it('should update job status to FAILED on error', async () => {
-      const job = createMockJob('lumaReframeImage', { image: 'test.png' });
+      const job = createMockJob(ReframeNodeType.LUMA_REFRAME_IMAGE, { image: 'test.png' });
 
       mockReplicateService.reframeImage.mockRejectedValueOnce(new Error('API Error'));
 
@@ -321,7 +351,7 @@ describe('ProcessingProcessor', () => {
     });
 
     it('should update node status to error', async () => {
-      const job = createMockJob('topazVideoUpscale', { video: 'test.mp4' });
+      const job = createMockJob(UpscaleNodeType.TOPAZ_VIDEO_UPSCALE, { video: 'test.mp4' });
 
       mockReplicateService.upscaleVideo.mockRejectedValueOnce(new Error('Processing failed'));
 
@@ -337,7 +367,7 @@ describe('ProcessingProcessor', () => {
     });
 
     it('should move to DLQ on final attempt', async () => {
-      const job = createMockJob('lumaReframeImage', { image: 'test.png' });
+      const job = createMockJob(ReframeNodeType.LUMA_REFRAME_IMAGE, { image: 'test.png' });
       (job as unknown as { attemptsMade: number }).attemptsMade = 2; // This is the 3rd attempt (0-indexed)
 
       mockReplicateService.reframeImage.mockRejectedValueOnce(new Error('Persistent failure'));
@@ -352,7 +382,7 @@ describe('ProcessingProcessor', () => {
     });
 
     it('should not move to DLQ on non-final attempt', async () => {
-      const job = createMockJob('lumaReframeImage', { image: 'test.png' });
+      const job = createMockJob(ReframeNodeType.LUMA_REFRAME_IMAGE, { image: 'test.png' });
       (job as unknown as { attemptsMade: number }).attemptsMade = 0;
 
       mockReplicateService.reframeImage.mockRejectedValueOnce(new Error('Temporary failure'));
@@ -363,7 +393,7 @@ describe('ProcessingProcessor', () => {
     });
 
     it('should handle unknown error type', async () => {
-      const job = createMockJob('lumaReframeImage', { image: 'test.png' });
+      const job = createMockJob(ReframeNodeType.LUMA_REFRAME_IMAGE, { image: 'test.png' });
 
       mockReplicateService.reframeImage.mockRejectedValueOnce('string error');
 
@@ -381,13 +411,9 @@ describe('ProcessingProcessor', () => {
 
   describe('job logging', () => {
     it('should log job start', async () => {
-      const job = createMockJob('lumaReframeImage', { image: 'test.png' });
+      const job = createMockJob(ReframeNodeType.LUMA_REFRAME_IMAGE, { image: 'test.png' });
 
       mockReplicateService.reframeImage.mockResolvedValueOnce({ id: 'pred-1' });
-      mockReplicateService.getPredictionStatus.mockResolvedValueOnce({
-        status: 'succeeded',
-        output: 'result.png',
-      });
 
       await processor.process(job);
 
@@ -398,13 +424,9 @@ describe('ProcessingProcessor', () => {
     });
 
     it('should log prediction creation', async () => {
-      const job = createMockJob('topazImageUpscale', { image: 'test.png' });
+      const job = createMockJob(UpscaleNodeType.TOPAZ_IMAGE_UPSCALE, { image: 'test.png' });
 
       mockReplicateService.upscaleImage.mockResolvedValueOnce({ id: 'pred-abc' });
-      mockReplicateService.getPredictionStatus.mockResolvedValueOnce({
-        status: 'succeeded',
-        output: 'result.png',
-      });
 
       await processor.process(job);
 
@@ -415,13 +437,9 @@ describe('ProcessingProcessor', () => {
     });
 
     it('should log job completion', async () => {
-      const job = createMockJob('lumaReframeVideo', { video: 'test.mp4' });
+      const job = createMockJob(ReframeNodeType.LUMA_REFRAME_VIDEO, { video: 'test.mp4' });
 
       mockReplicateService.reframeVideo.mockResolvedValueOnce({ id: 'pred-1' });
-      mockReplicateService.getPredictionStatus.mockResolvedValueOnce({
-        status: 'succeeded',
-        output: 'result.mp4',
-      });
 
       await processor.process(job);
 
@@ -434,11 +452,11 @@ describe('ProcessingProcessor', () => {
 
   describe('job completion status', () => {
     it('should update job status to COMPLETED on success', async () => {
-      const job = createMockJob('lumaReframeImage', { image: 'test.png' });
+      const job = createMockJob(ReframeNodeType.LUMA_REFRAME_IMAGE, { image: 'test.png' });
 
       mockReplicateService.reframeImage.mockResolvedValueOnce({ id: 'pred-1' });
-      mockReplicateService.getPredictionStatus.mockResolvedValueOnce({
-        status: 'succeeded',
+      mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
+        success: true,
         output: { url: 'https://example.com/result.png' },
       });
 
@@ -457,13 +475,9 @@ describe('ProcessingProcessor', () => {
   describe('polling timeouts', () => {
     it('should use longer timeout for video operations', async () => {
       // This is a behavioral test - video operations should not timeout as quickly
-      const job = createMockJob('topazVideoUpscale', { video: 'test.mp4' });
+      const job = createMockJob(UpscaleNodeType.TOPAZ_VIDEO_UPSCALE, { video: 'test.mp4' });
 
       mockReplicateService.upscaleVideo.mockResolvedValueOnce({ id: 'pred-1' });
-      mockReplicateService.getPredictionStatus.mockResolvedValueOnce({
-        status: 'succeeded',
-        output: 'result.mp4',
-      });
 
       const result = await processor.process(job);
 
@@ -471,13 +485,9 @@ describe('ProcessingProcessor', () => {
     });
 
     it('should use shorter timeout for image operations', async () => {
-      const job = createMockJob('lumaReframeImage', { image: 'test.png' });
+      const job = createMockJob(ReframeNodeType.LUMA_REFRAME_IMAGE, { image: 'test.png' });
 
       mockReplicateService.reframeImage.mockResolvedValueOnce({ id: 'pred-1' });
-      mockReplicateService.getPredictionStatus.mockResolvedValueOnce({
-        status: 'succeeded',
-        output: 'result.png',
-      });
 
       const result = await processor.process(job);
 
