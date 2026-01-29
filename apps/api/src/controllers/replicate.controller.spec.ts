@@ -1,40 +1,41 @@
-import { Test, type TestingModule } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ReplicateController } from '@/controllers/replicate.controller';
-import { ReplicateService } from '@/services/replicate.service';
 
 describe('ReplicateController', () => {
   let controller: ReplicateController;
-  let _replicateService: ReplicateService;
 
   const mockReplicateService = {
     generateImage: vi.fn().mockResolvedValue({
       id: 'prediction-123',
       status: 'starting',
+      debugPayload: undefined,
+      output: undefined,
     }),
     generateVideo: vi.fn().mockResolvedValue({
       id: 'prediction-456',
       status: 'starting',
+      debugPayload: undefined,
+      output: undefined,
     }),
     generateText: vi.fn().mockResolvedValue('Generated text response'),
     getPredictionStatus: vi.fn().mockResolvedValue({
       id: 'prediction-123',
       status: 'succeeded',
       output: ['https://example.com/output.png'],
+      error: undefined,
     }),
     cancelPrediction: vi.fn().mockResolvedValue(undefined),
   };
 
-  beforeEach(async () => {
+  const mockFilesService = {
+    downloadAndSaveOutput: vi.fn(),
+    downloadAndSaveMultipleOutputs: vi.fn(),
+  };
+
+  beforeEach(() => {
     vi.clearAllMocks();
 
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [ReplicateController],
-      providers: [{ provide: ReplicateService, useValue: mockReplicateService }],
-    }).compile();
-
-    controller = module.get<ReplicateController>(ReplicateController);
-    _replicateService = module.get<ReplicateService>(ReplicateService);
+    controller = new ReplicateController(mockReplicateService as never, mockFilesService as never);
   });
 
   describe('POST /replicate/image', () => {
@@ -50,6 +51,8 @@ describe('ReplicateController', () => {
       const result = await controller.generateImage(dto);
 
       expect(result).toEqual({
+        debugPayload: undefined,
+        output: undefined,
         predictionId: 'prediction-123',
         status: 'starting',
       });
@@ -58,11 +61,14 @@ describe('ReplicateController', () => {
         dto.nodeId,
         dto.model,
         {
-          prompt: dto.prompt,
-          inputImages: undefined,
           aspectRatio: dto.aspectRatio,
-          resolution: undefined,
+          debugMode: undefined,
+          inputImages: undefined,
           outputFormat: undefined,
+          prompt: dto.prompt,
+          resolution: undefined,
+          schemaParams: undefined,
+          selectedModel: undefined,
         }
       );
     });
@@ -102,6 +108,8 @@ describe('ReplicateController', () => {
       const result = await controller.generateVideo(dto);
 
       expect(result).toEqual({
+        debugPayload: undefined,
+        output: undefined,
         predictionId: 'prediction-456',
         status: 'starting',
       });
@@ -140,16 +148,19 @@ describe('ReplicateController', () => {
         dto.nodeId,
         dto.model,
         {
-          prompt: dto.prompt,
+          aspectRatio: dto.aspectRatio,
+          debugMode: undefined,
+          duration: dto.duration,
+          generateAudio: dto.generateAudio,
           image: dto.image,
           lastFrame: dto.lastFrame,
-          referenceImages: dto.referenceImages,
-          duration: dto.duration,
-          aspectRatio: dto.aspectRatio,
-          resolution: dto.resolution,
-          generateAudio: dto.generateAudio,
           negativePrompt: dto.negativePrompt,
+          prompt: dto.prompt,
+          referenceImages: dto.referenceImages,
+          resolution: dto.resolution,
+          schemaParams: undefined,
           seed: dto.seed,
+          selectedModel: undefined,
         }
       );
     });
@@ -168,9 +179,9 @@ describe('ReplicateController', () => {
         status: 'succeeded',
       });
       expect(mockReplicateService.generateText).toHaveBeenCalledWith({
+        maxTokens: undefined,
         prompt: dto.prompt,
         systemPrompt: undefined,
-        maxTokens: undefined,
         temperature: undefined,
         topP: undefined,
       });
@@ -188,9 +199,9 @@ describe('ReplicateController', () => {
       await controller.generateText(dto);
 
       expect(mockReplicateService.generateText).toHaveBeenCalledWith({
+        maxTokens: dto.maxTokens,
         prompt: dto.prompt,
         systemPrompt: dto.systemPrompt,
-        maxTokens: dto.maxTokens,
         temperature: dto.temperature,
         topP: dto.topP,
       });
@@ -202,10 +213,10 @@ describe('ReplicateController', () => {
       const result = await controller.getPredictionStatus('prediction-123');
 
       expect(result).toEqual({
-        id: 'prediction-123',
-        status: 'succeeded',
-        output: ['https://example.com/output.png'],
         error: undefined,
+        id: 'prediction-123',
+        output: ['https://example.com/output.png'],
+        status: 'succeeded',
       });
       expect(mockReplicateService.getPredictionStatus).toHaveBeenCalledWith('prediction-123');
     });

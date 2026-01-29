@@ -6,17 +6,21 @@ import { useNodeActions } from './useNodeActions';
 const mockRemoveNode = vi.fn();
 const mockDuplicateNode = vi.fn();
 
-vi.mock('@/store/workflowStore', () => ({
-  useWorkflowStore: () => ({
-    nodes: [
-      { id: 'node-1', type: 'imageGen', data: {}, position: { x: 0, y: 0 } },
-      { id: 'node-2', type: 'llm', data: {}, position: { x: 100, y: 0 } },
-      { id: 'node-3', type: 'output', data: {}, position: { x: 200, y: 0 } },
-    ],
-    removeNode: mockRemoveNode,
-    duplicateNode: mockDuplicateNode,
-  }),
-}));
+vi.mock('@/store/workflowStore', () => {
+  const store = (selector?: (state: unknown) => unknown) => {
+    const state = {
+      nodes: [
+        { id: 'node-1', type: 'imageGen', data: {}, position: { x: 0, y: 0 } },
+        { id: 'node-2', type: 'llm', data: {}, position: { x: 100, y: 0 } },
+        { id: 'node-3', type: 'output', data: {}, position: { x: 200, y: 0 } },
+      ],
+      removeNode: mockRemoveNode,
+      duplicateNode: mockDuplicateNode,
+    };
+    return selector ? selector(state) : state;
+  };
+  return { useWorkflowStore: store };
+});
 
 describe('useNodeActions', () => {
   beforeEach(() => {

@@ -13,6 +13,7 @@ describe('ExecutionsController', () => {
 
   const mockExecution = {
     _id: mockExecutionId,
+    id: mockExecutionId.toString(),
     workflowId: mockWorkflowId,
     status: 'pending',
     startedAt: new Date(),
@@ -50,10 +51,12 @@ describe('ExecutionsController', () => {
     findJobByPredictionId: vi.fn().mockResolvedValue(mockJob),
     updateJob: vi.fn().mockResolvedValue({ ...mockJob, status: 'completed', progress: 100 }),
     getExecutionCostDetails: vi.fn().mockResolvedValue(mockCostDetails),
+    getStats: vi.fn().mockResolvedValue({ total: 0 }),
   };
 
   const mockQueueManager = {
     cancelExecution: vi.fn().mockResolvedValue(undefined),
+    enqueueWorkflow: vi.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(() => {
@@ -68,10 +71,34 @@ describe('ExecutionsController', () => {
 
   describe('createExecution', () => {
     it('should create a new execution for a workflow', async () => {
-      const result = await controller.createExecution(mockWorkflowId.toString());
+      const result = await controller.createExecution(mockWorkflowId.toString(), {});
 
       expect(result).toEqual(mockExecution);
-      expect(mockService.createExecution).toHaveBeenCalledWith(mockWorkflowId.toString());
+      expect(mockService.createExecution).toHaveBeenCalledWith(mockWorkflowId.toString(), {
+        debugMode: undefined,
+        selectedNodeIds: undefined,
+      });
+      expect(mockQueueManager.enqueueWorkflow).toHaveBeenCalledWith(
+        mockExecutionId.toString(),
+        mockWorkflowId.toString(),
+        { debugMode: undefined, selectedNodeIds: undefined }
+      );
+    });
+
+    it('should pass debugMode and selectedNodeIds when provided', async () => {
+      const body = { debugMode: true, selectedNodeIds: ['node-1', 'node-2'] };
+
+      await controller.createExecution(mockWorkflowId.toString(), body);
+
+      expect(mockService.createExecution).toHaveBeenCalledWith(mockWorkflowId.toString(), {
+        debugMode: true,
+        selectedNodeIds: ['node-1', 'node-2'],
+      });
+      expect(mockQueueManager.enqueueWorkflow).toHaveBeenCalledWith(
+        mockExecutionId.toString(),
+        mockWorkflowId.toString(),
+        { debugMode: true, selectedNodeIds: ['node-1', 'node-2'] }
+      );
     });
   });
 

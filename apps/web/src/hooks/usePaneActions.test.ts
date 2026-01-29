@@ -1,17 +1,23 @@
 import { act, renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePaneActions } from './usePaneActions';
 
 // Mock ReactFlow
 const mockSetNodes = vi.fn();
+const mockSetEdges = vi.fn();
 const mockFitView = vi.fn();
 const mockScreenToFlowPosition = vi.fn((pos: { x: number; y: number }) => pos);
+const mockGetNodes = vi.fn(() => mockNodes);
+const mockGetEdges = vi.fn(() => mockEdges);
 
 vi.mock('@xyflow/react', () => ({
   useReactFlow: () => ({
     setNodes: mockSetNodes,
+    setEdges: mockSetEdges,
     fitView: mockFitView,
     screenToFlowPosition: mockScreenToFlowPosition,
+    getNodes: mockGetNodes,
+    getEdges: mockGetEdges,
   }),
 }));
 
@@ -31,6 +37,13 @@ vi.mock('@/store/workflowStore', () => ({
   }),
 }));
 
+// Mock settingsStore
+vi.mock('@/store/settingsStore', () => {
+  const store = () => ({ edgeStyle: 'default' });
+  store.getState = () => ({ edgeStyle: 'default' });
+  return { useSettingsStore: store };
+});
+
 // Mock autoLayout
 vi.mock('@/lib/autoLayout', () => ({
   getLayoutedNodes: vi.fn((nodes) =>
@@ -45,6 +58,10 @@ describe('usePaneActions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe('addNodeAtPosition', () => {
@@ -87,15 +104,7 @@ describe('usePaneActions', () => {
       expect(updatedNodes[1].selected).toBe(true);
     });
 
-    it('should work with empty nodes', () => {
-      vi.doMock('@/store/workflowStore', () => ({
-        useWorkflowStore: () => ({
-          addNode: mockAddNode,
-          nodes: [],
-          edges: [],
-        }),
-      }));
-
+    it('should handle empty nodes array', () => {
       const { result } = renderHook(() => usePaneActions());
 
       act(() => {
@@ -103,6 +112,11 @@ describe('usePaneActions', () => {
       });
 
       expect(mockSetNodes).toHaveBeenCalled();
+      // Verify the callback works with an empty array
+      const setNodesCallback = mockSetNodes.mock.calls[0][0];
+      const updatedNodes = setNodesCallback([]);
+
+      expect(updatedNodes).toEqual([]);
     });
   });
 

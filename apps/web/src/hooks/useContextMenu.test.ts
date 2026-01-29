@@ -36,6 +36,7 @@ vi.mock('@/store/workflowStore', () => ({
     removeEdge: mockRemoveEdge,
     toggleNodeLock: mockToggleNodeLock,
     createGroup: mockCreateGroup,
+    workflowId: 'workflow-1',
   }),
 }));
 
@@ -56,7 +57,18 @@ vi.mock('./usePaneActions', () => ({
     addNodeAtPosition: vi.fn(),
     selectAll: vi.fn(),
     fitView: vi.fn(),
+    autoLayout: vi.fn(),
   }),
+}));
+
+vi.mock('@/lib/api', () => ({
+  workflowsApi: {
+    setThumbnail: vi.fn(),
+  },
+}));
+
+vi.mock('@/lib/logger', () => ({
+  logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
 
 vi.mock('@/components/context-menu/menus', () => ({

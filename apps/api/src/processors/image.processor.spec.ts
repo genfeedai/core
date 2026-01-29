@@ -1,8 +1,7 @@
-import { Test, type TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ImageProcessor } from '@/processors/image.processor';
 import { JOB_STATUS, QUEUE_NAMES } from '@/queue/queue.constants';
+import { POLL_CONFIGS } from '@/services/replicate-poller.service';
 
 // Mock BullMQ WorkerHost
 vi.mock('@nestjs/bullmq', () => ({
@@ -11,20 +10,40 @@ vi.mock('@nestjs/bullmq', () => ({
   OnWorkerEvent: () => vi.fn(),
 }));
 
+// Create mock services
+const mockQueueManager = {
+  updateJobStatus: vi.fn(),
+  addJobLog: vi.fn(),
+  moveToDeadLetterQueue: vi.fn(),
+  continueExecution: vi.fn(),
+  heartbeatJob: vi.fn(),
+};
+
+const mockExecutionsService = {
+  updateNodeResult: vi.fn(),
+  findExistingJob: vi.fn().mockResolvedValue(null),
+};
+
+const mockReplicateService = {
+  generateImage: vi.fn(),
+};
+
+const mockReplicatePollerService = {
+  pollForCompletion: vi.fn(),
+  createJobProgressCallback: vi.fn().mockReturnValue(() => {}),
+};
+
+const mockFilesService = {
+  downloadAndSaveOutput: vi.fn(),
+  downloadAndSaveMultipleOutputs: vi.fn(),
+  urlsToBase64Async: vi.fn().mockResolvedValue([]),
+};
+
+// Import after mocks
+import { ImageProcessor } from '@/processors/image.processor';
+
 describe('ImageProcessor', () => {
   let processor: ImageProcessor;
-  let mockQueueManager: {
-    updateJobStatus: ReturnType<typeof vi.fn>;
-    addJobLog: ReturnType<typeof vi.fn>;
-    moveToDeadLetterQueue: ReturnType<typeof vi.fn>;
-  };
-  let mockExecutionsService: {
-    updateNodeResult: ReturnType<typeof vi.fn>;
-  };
-  let mockReplicateService: {
-    generateImage: ReturnType<typeof vi.fn>;
-    getPredictionStatus: ReturnType<typeof vi.fn>;
-  };
 
   const mockExecutionId = new Types.ObjectId().toString();
   const mockNodeId = 'image-node-1';
@@ -50,38 +69,38 @@ describe('ImageProcessor', () => {
     ...overrides,
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
 
-    mockQueueManager = {
-      updateJobStatus: vi.fn().mockResolvedValue(undefined),
-      addJobLog: vi.fn().mockResolvedValue(undefined),
-      moveToDeadLetterQueue: vi.fn().mockResolvedValue(undefined),
-    };
+    // Reset findExistingJob to return null by default
+    mockExecutionsService.findExistingJob.mockResolvedValue(null);
 
-    mockExecutionsService = {
-      updateNodeResult: vi.fn().mockResolvedValue(undefined),
-    };
+    // Reset generateImage to return a prediction
+    mockReplicateService.generateImage.mockResolvedValue({ id: mockPredictionId });
 
-    mockReplicateService = {
-      generateImage: vi.fn().mockResolvedValue({ id: mockPredictionId }),
-      getPredictionStatus: vi.fn().mockResolvedValue({
-        status: 'succeeded',
-        output: ['https://example.com/image.png'],
-        metrics: { predict_time: 5.2 },
-      }),
-    };
+    // Reset pollForCompletion to return success by default
+    mockReplicatePollerService.pollForCompletion.mockResolvedValue({
+      success: true,
+      output: ['https://example.com/image.png'],
+      predictTime: 5.2,
+    });
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ImageProcessor,
-        { provide: 'QueueManagerService', useValue: mockQueueManager },
-        { provide: 'ExecutionsService', useValue: mockExecutionsService },
-        { provide: 'ReplicateService', useValue: mockReplicateService },
-      ],
-    }).compile();
+    // Reset file save to success by default
+    mockFilesService.downloadAndSaveOutput.mockResolvedValue({
+      url: 'https://saved.example.com/image.png',
+      path: '/local/path/image.png',
+    });
 
-    processor = module.get<ImageProcessor>(ImageProcessor);
+    // Reset urlsToBase64Async
+    mockFilesService.urlsToBase64Async.mockResolvedValue([]);
+
+    processor = new ImageProcessor(
+      mockQueueManager as never,
+      mockExecutionsService as never,
+      mockReplicateService as never,
+      mockReplicatePollerService as never,
+      mockFilesService as never
+    );
   });
 
   describe('process', () => {
@@ -165,25 +184,59 @@ describe('ImageProcessor', () => {
       );
     });
 
-    it('should poll for prediction completion', async () => {
+    it('should poll for prediction completion via replicatePollerService', async () => {
       const job = createMockJob();
 
       await processor.process(job as never);
 
-      expect(mockReplicateService.getPredictionStatus).toHaveBeenCalledWith(mockPredictionId);
+      expect(mockReplicatePollerService.pollForCompletion).toHaveBeenCalledWith(
+        mockPredictionId,
+        expect.objectContaining({
+          pollInterval: POLL_CONFIGS.image.pollInterval,
+        })
+      );
     });
 
-    it('should return success result when prediction succeeds', async () => {
+    it('should return result from pollForCompletion', async () => {
       const job = createMockJob();
 
       const result = await processor.process(job as never);
 
-      expect(result).toEqual({
-        success: true,
-        output: ['https://example.com/image.png'],
-        predictionId: mockPredictionId,
-        predictTime: 5.2,
-      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          success: true,
+          output: ['https://example.com/image.png'],
+          predictTime: 5.2,
+        })
+      );
+    });
+
+    it('should download and save output on success', async () => {
+      const job = createMockJob();
+
+      await processor.process(job as never);
+
+      expect(mockFilesService.downloadAndSaveOutput).toHaveBeenCalledWith(
+        'workflow-123',
+        mockNodeId,
+        'https://example.com/image.png',
+        mockPredictionId
+      );
+    });
+
+    it('should update node result with local output on success', async () => {
+      const job = createMockJob();
+
+      await processor.process(job as never);
+
+      expect(mockExecutionsService.updateNodeResult).toHaveBeenCalledWith(
+        mockExecutionId,
+        mockNodeId,
+        'complete',
+        expect.objectContaining({
+          image: 'https://saved.example.com/image.png',
+        })
+      );
     });
 
     it('should update job status to COMPLETED on success', async () => {
@@ -200,38 +253,53 @@ describe('ImageProcessor', () => {
       );
     });
 
+    it('should continue execution after success', async () => {
+      const job = createMockJob();
+
+      await processor.process(job as never);
+
+      expect(mockQueueManager.continueExecution).toHaveBeenCalledWith(
+        mockExecutionId,
+        'workflow-123'
+      );
+    });
+
     it('should return failure result when prediction fails', async () => {
-      mockReplicateService.getPredictionStatus.mockResolvedValue({
-        status: 'failed',
+      mockReplicatePollerService.pollForCompletion.mockResolvedValue({
+        success: false,
         error: 'Model error',
       });
       const job = createMockJob();
 
       const result = await processor.process(job as never);
 
-      expect(result).toEqual({
-        success: false,
-        error: 'Model error',
-        predictionId: mockPredictionId,
-      });
+      expect(result).toEqual(
+        expect.objectContaining({
+          success: false,
+          error: 'Model error',
+        })
+      );
     });
 
-    it('should handle canceled predictions', async () => {
-      mockReplicateService.getPredictionStatus.mockResolvedValue({
-        status: 'canceled',
+    it('should update node result to error when prediction fails', async () => {
+      mockReplicatePollerService.pollForCompletion.mockResolvedValue({
+        success: false,
+        error: 'Model error',
       });
       const job = createMockJob();
 
-      const result = await processor.process(job as never);
+      await processor.process(job as never);
 
-      expect(result).toEqual({
-        success: false,
-        error: 'Prediction canceled',
-        predictionId: mockPredictionId,
-      });
+      expect(mockExecutionsService.updateNodeResult).toHaveBeenCalledWith(
+        mockExecutionId,
+        mockNodeId,
+        'error',
+        undefined,
+        'Model error'
+      );
     });
 
-    it('should update job status to FAILED on error', async () => {
+    it('should update job status to FAILED on thrown error', async () => {
       mockReplicateService.generateImage.mockRejectedValue(new Error('API error'));
       const job = createMockJob();
 
@@ -247,7 +315,7 @@ describe('ImageProcessor', () => {
       );
     });
 
-    it('should update node result to error on failure', async () => {
+    it('should update node result to error on thrown error', async () => {
       mockReplicateService.generateImage.mockRejectedValue(new Error('API error'));
       const job = createMockJob();
 
@@ -289,58 +357,24 @@ describe('ImageProcessor', () => {
 
       expect(mockQueueManager.moveToDeadLetterQueue).not.toHaveBeenCalled();
     });
-  });
 
-  describe('pollForCompletion', () => {
-    it('should update progress during polling', async () => {
-      let pollCount = 0;
-      mockReplicateService.getPredictionStatus.mockImplementation(() => {
-        pollCount++;
-        if (pollCount >= 2) {
-          return Promise.resolve({
-            status: 'succeeded',
-            output: ['url'],
-            metrics: { predict_time: 1 },
-          });
-        }
-        return Promise.resolve({ status: 'processing' });
+    it('should resume existing prediction on retry', async () => {
+      mockExecutionsService.findExistingJob.mockResolvedValue({
+        predictionId: 'existing-pred-456',
       });
-
       const job = createMockJob();
+
       await processor.process(job as never);
 
-      // Should have multiple progress updates
-      expect(job.updateProgress).toHaveBeenCalledTimes(expect.any(Number));
+      // Should NOT call generateImage since we resume the existing prediction
+      expect(mockReplicateService.generateImage).not.toHaveBeenCalled();
+
+      // Should poll with existing prediction ID
+      expect(mockReplicatePollerService.pollForCompletion).toHaveBeenCalledWith(
+        'existing-pred-456',
+        expect.any(Object)
+      );
     });
-
-    it('should timeout after max attempts', async () => {
-      // Always return processing status
-      mockReplicateService.getPredictionStatus.mockResolvedValue({
-        status: 'processing',
-      });
-
-      const job = createMockJob();
-
-      // Mock setTimeout to speed up test
-      vi.useFakeTimers();
-
-      const processPromise = processor.process(job as never);
-
-      // Fast-forward through all polling intervals
-      for (let i = 0; i < 61; i++) {
-        await vi.advanceTimersByTimeAsync(5000);
-      }
-
-      const result = await processPromise;
-
-      expect(result).toEqual({
-        success: false,
-        error: 'Prediction timed out',
-        predictionId: mockPredictionId,
-      });
-
-      vi.useRealTimers();
-    }, 10000);
   });
 
   describe('onCompleted', () => {

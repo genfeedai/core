@@ -4,19 +4,24 @@ import { AnnotationNode } from './AnnotationNode';
 
 const mockOpenAnnotation = vi.fn();
 const mockGetConnectedInputs = vi.fn();
+const mockOpenNodeDetailModal = vi.fn();
 
 vi.mock('@/store/annotationStore', () => ({
-  useAnnotationStore: vi.fn((selector) => selector({ openAnnotation: mockOpenAnnotation })),
+  useAnnotationStore: vi.fn((selector: (state: unknown) => unknown) =>
+    selector({ openAnnotation: mockOpenAnnotation })
+  ),
 }));
 
 vi.mock('@/store/workflowStore', () => ({
-  useWorkflowStore: vi.fn((selector) => selector({ getConnectedInputs: mockGetConnectedInputs })),
+  useWorkflowStore: vi.fn((selector: (state: unknown) => unknown) =>
+    selector({ getConnectedInputs: mockGetConnectedInputs })
+  ),
 }));
 
-const mockOpenNodeDetailModal = vi.fn();
-
 vi.mock('@/store/uiStore', () => ({
-  useUIStore: vi.fn((selector) => selector({ openNodeDetailModal: mockOpenNodeDetailModal })),
+  useUIStore: vi.fn((selector: (state: unknown) => unknown) =>
+    selector({ openNodeDetailModal: mockOpenNodeDetailModal })
+  ),
 }));
 
 vi.mock('../BaseNode', () => ({
@@ -29,6 +34,38 @@ vi.mock('next/image', () => ({
   default: (props: Record<string, unknown>) => (
     <img {...props} src={props.src as string} alt={props.alt as string} />
   ),
+}));
+
+// Mock UI button with variant support for class-based assertions
+vi.mock('@/components/ui/button', () => ({
+  Button: ({
+    children,
+    onClick,
+    disabled,
+    variant = 'default',
+    className,
+  }: {
+    children: React.ReactNode;
+    onClick?: () => void;
+    disabled?: boolean;
+    variant?: string;
+    className?: string;
+  }) => {
+    const variantClasses: Record<string, string> = {
+      default: 'bg-primary text-primary-foreground',
+      outline: 'border bg-background',
+      ghost: 'hover:bg-accent',
+    };
+    return (
+      <button
+        onClick={onClick}
+        disabled={disabled}
+        className={`${variantClasses[variant] ?? ''} ${className ?? ''}`}
+      >
+        {children}
+      </button>
+    );
+  },
 }));
 
 describe('AnnotationNode', () => {

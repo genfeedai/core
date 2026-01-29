@@ -18,17 +18,18 @@ let mockIsDirty = false;
 let mockIsSaving = false;
 let mockNodes: { id: string }[] = [];
 
-vi.mock('@/store/workflowStore', () => ({
-  useWorkflowStore: (selector: (state: unknown) => unknown) => {
-    const state = {
-      isDirty: mockIsDirty,
-      isSaving: mockIsSaving,
-      saveWorkflow: mockSaveWorkflow,
-      nodes: mockNodes,
-    };
-    return selector(state);
-  },
-}));
+const mockState = () => ({
+  isDirty: mockIsDirty,
+  isSaving: mockIsSaving,
+  saveWorkflow: mockSaveWorkflow,
+  nodes: mockNodes,
+});
+
+vi.mock('@/store/workflowStore', () => {
+  const store = (selector: (state: unknown) => unknown) => selector(mockState());
+  store.getState = () => mockState();
+  return { useWorkflowStore: store };
+});
 
 describe('useAutoSave', () => {
   beforeEach(() => {
@@ -66,7 +67,7 @@ describe('useAutoSave', () => {
       renderHook(() => useAutoSave(false));
 
       act(() => {
-        vi.advanceTimersByTime(6000);
+        vi.advanceTimersByTime(3000);
       });
 
       expect(mockSaveWorkflow).not.toHaveBeenCalled();
@@ -79,7 +80,7 @@ describe('useAutoSave', () => {
       renderHook(() => useAutoSave());
 
       act(() => {
-        vi.advanceTimersByTime(6000);
+        vi.advanceTimersByTime(3000);
       });
 
       expect(mockSaveWorkflow).not.toHaveBeenCalled();
@@ -93,7 +94,7 @@ describe('useAutoSave', () => {
       renderHook(() => useAutoSave());
 
       act(() => {
-        vi.advanceTimersByTime(6000);
+        vi.advanceTimersByTime(3000);
       });
 
       expect(mockSaveWorkflow).not.toHaveBeenCalled();
@@ -106,20 +107,20 @@ describe('useAutoSave', () => {
       renderHook(() => useAutoSave());
 
       act(() => {
-        vi.advanceTimersByTime(6000);
+        vi.advanceTimersByTime(3000);
       });
 
       expect(mockSaveWorkflow).not.toHaveBeenCalled();
     });
 
-    it('should trigger save after 5 seconds of inactivity', async () => {
+    it('should trigger save after delay of inactivity', async () => {
       mockIsDirty = true;
       mockNodes = [{ id: 'node-1' }];
 
       renderHook(() => useAutoSave());
 
       await act(async () => {
-        vi.advanceTimersByTime(5000);
+        vi.advanceTimersByTime(2500);
       });
 
       expect(mockSaveWorkflow).toHaveBeenCalledTimes(1);
@@ -132,7 +133,7 @@ describe('useAutoSave', () => {
       renderHook(() => useAutoSave());
 
       await act(async () => {
-        vi.advanceTimersByTime(5000);
+        vi.advanceTimersByTime(2500);
       });
 
       expect(mockSaveWorkflow).toHaveBeenCalledWith(expect.any(AbortSignal));
@@ -146,24 +147,26 @@ describe('useAutoSave', () => {
 
       const { rerender } = renderHook(() => useAutoSave());
 
-      // Simulate rapid changes by rerendering
+      // Advance partway through delay
       await act(async () => {
-        vi.advanceTimersByTime(2000);
+        vi.advanceTimersByTime(1000);
       });
 
+      // Trigger rerender with changed nodes (resets the debounce timer)
       mockNodes = [{ id: 'node-1' }, { id: 'node-2' }];
       rerender();
 
+      // Advance another 1000ms - still within new debounce window
       await act(async () => {
-        vi.advanceTimersByTime(2000);
+        vi.advanceTimersByTime(1000);
       });
 
-      // Should not have saved yet since we're still within debounce window
+      // Should not have saved yet since timer was reset
       expect(mockSaveWorkflow).not.toHaveBeenCalled();
 
-      // Wait for full debounce period
+      // Wait for full debounce period from last change
       await act(async () => {
-        vi.advanceTimersByTime(5000);
+        vi.advanceTimersByTime(2500);
       });
 
       expect(mockSaveWorkflow).toHaveBeenCalledTimes(1);
@@ -178,13 +181,13 @@ describe('useAutoSave', () => {
       const { unmount } = renderHook(() => useAutoSave());
 
       await act(async () => {
-        vi.advanceTimersByTime(2000);
+        vi.advanceTimersByTime(1000);
       });
 
       unmount();
 
       await act(async () => {
-        vi.advanceTimersByTime(5000);
+        vi.advanceTimersByTime(3000);
       });
 
       // Should not have saved since component was unmounted
@@ -201,7 +204,7 @@ describe('useAutoSave', () => {
       renderHook(() => useAutoSave());
 
       await act(async () => {
-        vi.advanceTimersByTime(5000);
+        vi.advanceTimersByTime(2500);
       });
 
       expect(mockSaveWorkflow).toHaveBeenCalled();
@@ -220,7 +223,7 @@ describe('useAutoSave', () => {
       renderHook(() => useAutoSave());
 
       await act(async () => {
-        vi.advanceTimersByTime(5000);
+        vi.advanceTimersByTime(2500);
       });
 
       expect(logger.error).not.toHaveBeenCalled();

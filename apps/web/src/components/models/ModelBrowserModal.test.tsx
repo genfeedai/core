@@ -5,8 +5,12 @@ import { ModelBrowserModal } from './ModelBrowserModal';
 
 const mockAddRecentModel = vi.fn();
 
-vi.mock('@/store/settingsStore', () => ({
-  useSettingsStore: vi.fn(() => ({
+// The component calls useSettingsStore with individual selectors:
+// useSettingsStore((s) => s.recentModels)
+// useSettingsStore((s) => s.addRecentModel)
+// useSettingsStore((s) => s.providers.replicate.apiKey) etc.
+vi.mock('@/store/settingsStore', () => {
+  const state = {
     recentModels: [{ id: 'flux-dev', displayName: 'FLUX.1-dev', provider: 'replicate' }],
     addRecentModel: mockAddRecentModel,
     providers: {
@@ -14,8 +18,49 @@ vi.mock('@/store/settingsStore', () => ({
       fal: { apiKey: null },
       huggingface: { apiKey: null },
     },
-  })),
+  };
+
+  return {
+    useSettingsStore: vi.fn((selector: (s: unknown) => unknown) => selector(state)),
+  };
+});
+
+// Mock logger to prevent console output in tests
+vi.mock('@/lib/logger', () => ({
+  logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
+
+// Mock UI components
+vi.mock('@/components/ui/button', () => ({
+  Button: ({
+    children,
+    onClick,
+    disabled,
+    className,
+  }: {
+    children: React.ReactNode;
+    onClick?: () => void;
+    disabled?: boolean;
+    className?: string;
+  }) => (
+    <button onClick={onClick} disabled={disabled} className={className}>
+      {children}
+    </button>
+  ),
+}));
+
+vi.mock('@/components/ui/input', () => ({
+  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+}));
+
+// Mock createPortal to render inline instead of into document.body
+vi.mock('react-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-dom')>('react-dom');
+  return {
+    ...actual,
+    createPortal: (node: React.ReactNode) => node,
+  };
+});
 
 describe('ModelBrowserModal', () => {
   const defaultProps = {
@@ -55,7 +100,11 @@ describe('ModelBrowserModal', () => {
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(mockModels),
+        json: () =>
+          Promise.resolve({
+            models: mockModels,
+            configuredProviders: ['replicate', 'fal', 'huggingface'],
+          }),
       })
     );
   });
@@ -85,13 +134,16 @@ describe('ModelBrowserModal', () => {
       expect(screen.getByPlaceholderText('Search models...')).toBeInTheDocument();
     });
 
-    it('should render provider filter buttons', () => {
+    it('should render provider filter buttons', async () => {
       render(<ModelBrowserModal {...defaultProps} />);
 
-      expect(screen.getByText('All')).toBeInTheDocument();
-      expect(screen.getByText('Replicate')).toBeInTheDocument();
-      expect(screen.getByText('fal.ai')).toBeInTheDocument();
-      expect(screen.getByText('Hugging Face')).toBeInTheDocument();
+      // Provider filter buttons appear after models are fetched (configuredProviders)
+      await waitFor(() => {
+        expect(screen.getByText('All')).toBeInTheDocument();
+        expect(screen.getByText('Replicate')).toBeInTheDocument();
+        expect(screen.getByText('fal.ai')).toBeInTheDocument();
+        expect(screen.getByText('Hugging Face')).toBeInTheDocument();
+      });
     });
   });
 
@@ -116,14 +168,19 @@ describe('ModelBrowserModal', () => {
     it('should show loading spinner during fetch', () => {
       vi.stubGlobal(
         'fetch',
-        vi
-          .fn()
-          .mockImplementation(
-            () =>
-              new Promise((resolve) =>
-                setTimeout(() => resolve({ ok: true, json: () => Promise.resolve([]) }), 1000)
+        vi.fn().mockImplementation(
+          () =>
+            new Promise((resolve) =>
+              setTimeout(
+                () =>
+                  resolve({
+                    ok: true,
+                    json: () => Promise.resolve({ models: [], configuredProviders: [] }),
+                  }),
+                1000
               )
-          )
+            )
+        )
       );
 
       render(<ModelBrowserModal {...defaultProps} />);
@@ -176,6 +233,12 @@ describe('ModelBrowserModal', () => {
     it('should filter by provider when clicked', async () => {
       vi.useFakeTimers();
       render(<ModelBrowserModal {...defaultProps} />);
+
+      // Wait for initial fetch and provider buttons to appear
+      vi.advanceTimersByTime(300);
+      await waitFor(() => {
+        expect(screen.getByText('fal.ai')).toBeInTheDocument();
+      });
 
       const falButton = screen.getByText('fal.ai');
       fireEvent.click(falButton);
@@ -251,8 +314,13 @@ describe('ModelBrowserModal', () => {
     it('should close on X button click', () => {
       render(<ModelBrowserModal {...defaultProps} />);
 
-      const closeButtons = screen.getAllByRole('button');
-      const closeButton = closeButtons.find((btn) => btn.querySelector('svg.lucide-x'));
+      // The X button is a Button with an X icon child
+      const buttons = screen.getAllByRole('button');
+      // Find the close button (in the header, contains SVG X icon)
+      const closeButton = buttons.find((btn) => {
+        const svg = btn.querySelector('svg');
+        return svg !== null && btn.textContent === '';
+      });
       if (closeButton) fireEvent.click(closeButton);
 
       expect(defaultProps.onClose).toHaveBeenCalled();
@@ -285,7 +353,7 @@ describe('ModelBrowserModal', () => {
         'fetch',
         vi.fn().mockResolvedValue({
           ok: true,
-          json: () => Promise.resolve([]),
+          json: () => Promise.resolve({ models: [], configuredProviders: [] }),
         })
       );
 
@@ -311,7 +379,11 @@ describe('ModelBrowserModal', () => {
         'fetch',
         vi.fn().mockResolvedValue({
           ok: true,
-          json: () => Promise.resolve([mockModels[0]]),
+          json: () =>
+            Promise.resolve({
+              models: [mockModels[0]],
+              configuredProviders: ['replicate'],
+            }),
         })
       );
 

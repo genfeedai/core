@@ -1,21 +1,41 @@
-import { Test, type TestingModule } from '@nestjs/testing';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppService } from '@/services/app.service';
+
+vi.mock('bullmq', () => ({
+  Queue: vi.fn().mockImplementation(() => ({
+    getWaitingCount: vi.fn().mockResolvedValue(0),
+    getActiveCount: vi.fn().mockResolvedValue(0),
+    getCompletedCount: vi.fn().mockResolvedValue(0),
+    getFailedCount: vi.fn().mockResolvedValue(0),
+  })),
+}));
 
 describe('AppService', () => {
   let service: AppService;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [AppService],
-    }).compile();
+  const mockConnection = {
+    readyState: 1,
+    db: {
+      command: vi.fn().mockResolvedValue({ ok: 1 }),
+      collection: vi.fn().mockReturnValue({
+        countDocuments: vi.fn().mockResolvedValue(0),
+      }),
+    },
+  };
 
-    service = module.get<AppService>(AppService);
+  const mockConfigService = {
+    get: vi.fn().mockImplementation((_key: string, defaultValue: unknown) => defaultValue),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    service = new AppService(mockConnection as never, mockConfigService as never);
   });
 
   describe('getHello', () => {
-    it('should return "Hello World!"', () => {
-      expect(service.getHello()).toBe('Hello World!');
+    it('should return "Genfeed Core API"', () => {
+      expect(service.getHello()).toBe('Genfeed Core API');
     });
   });
 });

@@ -1,7 +1,5 @@
-import { Test, type TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { WorkflowProcessor } from '@/processors/workflow.processor';
 import { JOB_STATUS } from '@/queue/queue.constants';
 
 // Mock BullMQ WorkerHost
@@ -23,7 +21,18 @@ vi.mock('@genfeedai/core', () => ({
   topologicalSort: vi.fn().mockReturnValue(['node-1', 'node-2', 'node-3']),
 }));
 
+// Mock passthrough node types to empty so test nodes are not skipped
+vi.mock('@/queue/queue.constants', async () => {
+  const actual =
+    await vi.importActual<typeof import('@/queue/queue.constants')>('@/queue/queue.constants');
+  return {
+    ...actual,
+    PASSTHROUGH_NODE_TYPES: [],
+  };
+});
+
 import { buildDependencyMap, detectCycles, topologicalSort } from '@genfeedai/core';
+import { WorkflowProcessor } from '@/processors/workflow.processor';
 
 describe('WorkflowProcessor', () => {
   let processor: WorkflowProcessor;
@@ -33,10 +42,14 @@ describe('WorkflowProcessor', () => {
   };
   let mockExecutionsService: {
     updateExecutionStatus: ReturnType<typeof vi.fn>;
+    updateNodeResult: ReturnType<typeof vi.fn>;
+    setPendingNodes: ReturnType<typeof vi.fn>;
+    removeFromPendingNodes: ReturnType<typeof vi.fn>;
   };
   let mockWorkflowsService: {
     findOne: ReturnType<typeof vi.fn>;
   };
+  let mockWorkflowInterfaceService: Record<string, never>;
 
   const mockExecutionId = new Types.ObjectId().toString();
   const mockWorkflowId = new Types.ObjectId().toString();
@@ -47,7 +60,7 @@ describe('WorkflowProcessor', () => {
     nodes: [
       { id: 'node-1', type: 'imageGen', data: { prompt: 'test 1' } },
       { id: 'node-2', type: 'llm', data: { prompt: 'test 2' } },
-      { id: 'node-3', type: 'output', data: {} },
+      { id: 'node-3', type: 'videoGen', data: { model: 'test' } },
     ],
     edges: [
       { source: 'node-1', target: 'node-2' },
@@ -66,7 +79,7 @@ describe('WorkflowProcessor', () => {
     ...overrides,
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
 
     mockQueueManager = {
@@ -76,22 +89,23 @@ describe('WorkflowProcessor', () => {
 
     mockExecutionsService = {
       updateExecutionStatus: vi.fn().mockResolvedValue(undefined),
+      updateNodeResult: vi.fn().mockResolvedValue(undefined),
+      setPendingNodes: vi.fn().mockResolvedValue(undefined),
+      removeFromPendingNodes: vi.fn().mockResolvedValue(undefined),
     };
 
     mockWorkflowsService = {
       findOne: vi.fn().mockResolvedValue(mockWorkflow),
     };
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        WorkflowProcessor,
-        { provide: 'QueueManagerService', useValue: mockQueueManager },
-        { provide: 'ExecutionsService', useValue: mockExecutionsService },
-        { provide: 'WorkflowsService', useValue: mockWorkflowsService },
-      ],
-    }).compile();
+    mockWorkflowInterfaceService = {};
 
-    processor = module.get<WorkflowProcessor>(WorkflowProcessor);
+    processor = new WorkflowProcessor(
+      mockQueueManager as never,
+      mockExecutionsService as never,
+      mockWorkflowsService as never,
+      mockWorkflowInterfaceService as never
+    );
   });
 
   describe('process', () => {
@@ -153,44 +167,45 @@ describe('WorkflowProcessor', () => {
       expect(buildDependencyMap).toHaveBeenCalledWith(mockWorkflow.nodes, mockWorkflow.edges);
     });
 
-    it('should enqueue each node in topological order', async () => {
+    it('should set pending nodes and enqueue only the first ready node', async () => {
       const job = createMockJob();
 
       await processor.process(job as never);
 
-      expect(mockQueueManager.enqueueNode).toHaveBeenCalledTimes(3);
+      // All 3 nodes should be in pending nodes
+      expect(mockExecutionsService.setPendingNodes).toHaveBeenCalledWith(mockExecutionId, [
+        { nodeId: 'node-1', nodeType: 'imageGen', nodeData: { prompt: 'test 1' }, dependsOn: [] },
+        {
+          nodeId: 'node-2',
+          nodeType: 'llm',
+          nodeData: { prompt: 'test 2' },
+          dependsOn: ['node-1'],
+        },
+        {
+          nodeId: 'node-3',
+          nodeType: 'videoGen',
+          nodeData: { model: 'test' },
+          dependsOn: ['node-2'],
+        },
+      ]);
 
-      // First node - no dependencies
-      expect(mockQueueManager.enqueueNode).toHaveBeenNthCalledWith(
-        1,
+      // Sequential execution: only the first ready node (node-1) is enqueued
+      expect(mockQueueManager.enqueueNode).toHaveBeenCalledTimes(1);
+      expect(mockQueueManager.enqueueNode).toHaveBeenCalledWith(
         mockExecutionId,
         mockWorkflowId,
         'node-1',
         'imageGen',
         { prompt: 'test 1' },
-        undefined // No dependencies for first node
+        [],
+        { nodes: mockWorkflow.nodes, edges: mockWorkflow.edges },
+        { debugMode: undefined }
       );
 
-      // Second node - depends on first
-      expect(mockQueueManager.enqueueNode).toHaveBeenNthCalledWith(
-        2,
+      // First node should be removed from pending after enqueue
+      expect(mockExecutionsService.removeFromPendingNodes).toHaveBeenCalledWith(
         mockExecutionId,
-        mockWorkflowId,
-        'node-2',
-        'llm',
-        { prompt: 'test 2' },
-        ['node-1']
-      );
-
-      // Third node - depends on second
-      expect(mockQueueManager.enqueueNode).toHaveBeenNthCalledWith(
-        3,
-        mockExecutionId,
-        mockWorkflowId,
-        'node-3',
-        'output',
-        {},
-        ['node-2']
+        'node-1'
       );
     });
 
@@ -235,7 +250,7 @@ describe('WorkflowProcessor', () => {
 
       await processor.process(job as never);
 
-      // Should only enqueue node-1, nonexistent node is skipped
+      // Only node-1 should be in pending and enqueued (nonexistent is skipped)
       expect(mockQueueManager.enqueueNode).toHaveBeenCalledTimes(1);
     });
   });
