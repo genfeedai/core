@@ -8,10 +8,19 @@ vi.mock('@xyflow/react', () => ({
   Position: { Left: 'left', Right: 'right' },
 }));
 
-// Mock BaseNode
+// Mock BaseNode - render headerActions so buttons are accessible in tests
 vi.mock('../BaseNode', () => ({
-  BaseNode: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="base-node">{children}</div>
+  BaseNode: ({
+    children,
+    headerActions,
+  }: {
+    children: React.ReactNode;
+    headerActions?: React.ReactNode;
+  }) => (
+    <div data-testid="base-node">
+      <div data-testid="header-actions">{headerActions}</div>
+      {children}
+    </div>
   ),
 }));
 
@@ -77,6 +86,51 @@ vi.mock('@/components/ui/label', () => ({
   Label: ({ children }: { children: React.ReactNode }) => <label>{children}</label>,
 }));
 
+// Mock hooks used by the component
+const mockHandleGenerate = vi.fn();
+const mockHandleModelSelect = vi.fn();
+
+vi.mock('@/hooks/useAutoLoadModelSchema', () => ({
+  useAutoLoadModelSchema: vi.fn(),
+}));
+
+vi.mock('@/hooks/useModelSelection', () => ({
+  useModelSelection: () => ({
+    handleModelSelect: mockHandleModelSelect,
+  }),
+}));
+
+vi.mock('@/hooks/useCanGenerate', () => ({
+  useCanGenerate: () => ({
+    canGenerate: true,
+  }),
+}));
+
+vi.mock('@/hooks/useNodeExecution', () => ({
+  useNodeExecution: () => ({
+    handleGenerate: mockHandleGenerate,
+  }),
+}));
+
+// Mock model registry
+vi.mock('@/lib/models/registry', () => ({
+  DEFAULT_IMAGE_MODEL: 'nano-banana',
+  IMAGE_MODEL_ID_MAP: {},
+  IMAGE_MODEL_MAP: {},
+  IMAGE_MODELS: [{ value: 'nano-banana', label: 'Nano Banana' }],
+}));
+
+// Mock schema utilities
+vi.mock('@/lib/utils/schemaUtils', () => ({
+  extractEnumValues: vi.fn().mockReturnValue({}),
+  supportsImageInput: vi.fn().mockReturnValue(false),
+}));
+
+// Mock SchemaInputs - renders nothing since inputs are dynamic
+vi.mock('@/components/nodes/SchemaInputs', () => ({
+  SchemaInputs: () => null,
+}));
+
 // Mock core constants
 vi.mock('@genfeedai/core', () => ({
   ASPECT_RATIOS: ['1:1', '16:9', '9:16', '4:3', '3:4'],
@@ -86,18 +140,33 @@ vi.mock('@genfeedai/core', () => ({
 
 // Mock stores
 const mockUpdateNodeData = vi.fn();
-const mockExecuteNode = vi.fn();
 
 vi.mock('@/store/workflowStore', () => ({
-  useWorkflowStore: (selector: (state: unknown) => unknown) => {
-    const state = { updateNodeData: mockUpdateNodeData };
-    return selector(state);
-  },
+  useWorkflowStore: Object.assign(
+    (selector: (state: unknown) => unknown) => {
+      const state = {
+        updateNodeData: mockUpdateNodeData,
+        edges: [],
+        nodes: [],
+        getConnectedInputs: vi.fn().mockReturnValue({}),
+        getNodeById: vi.fn().mockReturnValue(undefined),
+      };
+      return selector(state);
+    },
+    { getState: () => ({ updateNodeData: mockUpdateNodeData, getNodeById: vi.fn() }) }
+  ),
 }));
 
 vi.mock('@/store/executionStore', () => ({
   useExecutionStore: (selector: (state: unknown) => unknown) => {
-    const state = { executeNode: mockExecuteNode };
+    const state = { executeNode: vi.fn(), isRunning: false };
+    return selector(state);
+  },
+}));
+
+vi.mock('@/store/uiStore', () => ({
+  useUIStore: (selector: (state: unknown) => unknown) => {
+    const state = { openNodeDetailModal: vi.fn() };
     return selector(state);
   },
 }));
@@ -113,6 +182,7 @@ describe('ImageGenNode', () => {
       resolution: '2K',
       outputFormat: 'jpg',
       status: 'idle',
+      inputImages: [],
     },
     selected: false,
     isConnectable: true,
@@ -132,54 +202,30 @@ describe('ImageGenNode', () => {
   });
 
   describe('rendering', () => {
-    it('should render model select', () => {
+    it('should render the base node', () => {
       render(<ImageGenNode {...defaultProps} />);
 
-      expect(screen.getByText('Model')).toBeInTheDocument();
-      expect(screen.getByDisplayValue(/Nano Banana/)).toBeInTheDocument();
+      expect(screen.getByTestId('base-node')).toBeInTheDocument();
     });
 
-    it('should render aspect ratio select', () => {
+    it('should render the Browse button in header actions', () => {
       render(<ImageGenNode {...defaultProps} />);
 
-      expect(screen.getByText('Aspect Ratio')).toBeInTheDocument();
+      expect(screen.getByText('Browse')).toBeInTheDocument();
     });
 
-    it('should render format select', () => {
+    it('should render generate button with correct text', () => {
       render(<ImageGenNode {...defaultProps} />);
 
-      expect(screen.getByText('Format')).toBeInTheDocument();
-    });
-
-    it('should render model browser button', () => {
-      render(<ImageGenNode {...defaultProps} />);
-
-      expect(screen.getByTitle('Browse models')).toBeInTheDocument();
-    });
-
-    it('should render generate button when no output', () => {
-      render(<ImageGenNode {...defaultProps} />);
-
-      expect(screen.getByText('Generate Image')).toBeInTheDocument();
+      expect(screen.getByText('Generate')).toBeInTheDocument();
     });
   });
 
   describe('model selection', () => {
-    it('should update model when select changes', () => {
+    it('should open model browser when Browse button clicked', () => {
       render(<ImageGenNode {...defaultProps} />);
 
-      const select = screen.getByDisplayValue(/Nano Banana -/);
-      fireEvent.change(select, { target: { value: 'nano-banana-pro' } });
-
-      expect(mockUpdateNodeData).toHaveBeenCalledWith('imagegen-1', {
-        model: 'nano-banana-pro',
-      });
-    });
-
-    it('should open model browser when browse button clicked', () => {
-      render(<ImageGenNode {...defaultProps} />);
-
-      fireEvent.click(screen.getByTitle('Browse models'));
+      fireEvent.click(screen.getByText('Browse'));
 
       expect(screen.getByTestId('model-browser')).toBeInTheDocument();
     });
@@ -187,114 +233,42 @@ describe('ImageGenNode', () => {
     it('should close model browser when close clicked', () => {
       render(<ImageGenNode {...defaultProps} />);
 
-      fireEvent.click(screen.getByTitle('Browse models'));
+      fireEvent.click(screen.getByText('Browse'));
       fireEvent.click(screen.getByTestId('close-modal'));
 
       expect(screen.queryByTestId('model-browser')).not.toBeInTheDocument();
     });
 
-    it('should update node data when model selected from browser', () => {
+    it('should call handleModelSelect when model selected from browser', () => {
       render(<ImageGenNode {...defaultProps} />);
 
-      fireEvent.click(screen.getByTitle('Browse models'));
+      fireEvent.click(screen.getByText('Browse'));
       fireEvent.click(screen.getByTestId('select-model'));
 
-      expect(mockUpdateNodeData).toHaveBeenCalledWith('imagegen-1', {
-        model: 'nano-banana-pro',
+      expect(mockHandleModelSelect).toHaveBeenCalledWith({
+        id: 'google/nano-banana-pro',
         provider: 'replicate',
-        selectedModel: {
-          provider: 'replicate',
-          modelId: 'google/nano-banana-pro',
-          displayName: 'Nano Banana Pro',
-        },
-      });
-    });
-  });
-
-  describe('aspect ratio', () => {
-    it('should update aspect ratio when select changes', () => {
-      render(<ImageGenNode {...defaultProps} />);
-
-      const selects = screen.getAllByRole('combobox');
-      const aspectRatioSelect = selects[1]; // Second select is aspect ratio
-      fireEvent.change(aspectRatioSelect, { target: { value: '16:9' } });
-
-      expect(mockUpdateNodeData).toHaveBeenCalledWith('imagegen-1', {
-        aspectRatio: '16:9',
-      });
-    });
-  });
-
-  describe('resolution (nano-banana-pro only)', () => {
-    it('should show resolution select for nano-banana-pro', () => {
-      render(
-        <ImageGenNode {...defaultProps} data={{ ...defaultProps.data, model: 'nano-banana-pro' }} />
-      );
-
-      expect(screen.getByText('Resolution')).toBeInTheDocument();
-    });
-
-    it('should not show resolution select for nano-banana', () => {
-      render(<ImageGenNode {...defaultProps} />);
-
-      expect(screen.queryByText('Resolution')).not.toBeInTheDocument();
-    });
-
-    it('should update resolution when select changes', () => {
-      render(
-        <ImageGenNode {...defaultProps} data={{ ...defaultProps.data, model: 'nano-banana-pro' }} />
-      );
-
-      const selects = screen.getAllByRole('combobox');
-      const resolutionSelect = selects[2]; // Third select is resolution (when visible)
-      fireEvent.change(resolutionSelect, { target: { value: '4K' } });
-
-      expect(mockUpdateNodeData).toHaveBeenCalledWith('imagegen-1', {
-        resolution: '4K',
-      });
-    });
-  });
-
-  describe('output format', () => {
-    it('should update format when select changes', () => {
-      render(<ImageGenNode {...defaultProps} />);
-
-      const selects = screen.getAllByRole('combobox');
-      const formatSelect = selects[selects.length - 1]; // Last select is format
-      fireEvent.change(formatSelect, { target: { value: 'png' } });
-
-      expect(mockUpdateNodeData).toHaveBeenCalledWith('imagegen-1', {
-        outputFormat: 'png',
+        displayName: 'Nano Banana Pro',
       });
     });
   });
 
   describe('generate button', () => {
-    it('should call executeNode when generate button clicked', () => {
+    it('should call handleGenerate when generate button clicked', () => {
       render(<ImageGenNode {...defaultProps} />);
 
-      fireEvent.click(screen.getByText('Generate Image'));
+      fireEvent.click(screen.getByText('Generate'));
 
-      expect(mockExecuteNode).toHaveBeenCalledWith('imagegen-1');
+      expect(mockHandleGenerate).toHaveBeenCalled();
     });
 
-    it('should hide generate button when processing', () => {
+    it('should show Generating text when processing', () => {
       render(
         <ImageGenNode {...defaultProps} data={{ ...defaultProps.data, status: 'processing' }} />
       );
 
-      expect(screen.queryByText('Generate Image')).not.toBeInTheDocument();
-    });
-
-    it('should hide generate button when output exists', () => {
-      render(
-        <ImageGenNode
-          {...defaultProps}
-          data={{ ...defaultProps.data, outputImage: 'https://example.com/image.png' }}
-        />
-      );
-
-      expect(screen.queryByText('Generate Image')).not.toBeInTheDocument();
+      expect(screen.getByText('Generating')).toBeInTheDocument();
+      expect(screen.queryByText('Generate')).not.toBeInTheDocument();
     });
   });
 
@@ -314,7 +288,7 @@ describe('ImageGenNode', () => {
       expect(screen.getByAltText('Generated image')).toBeInTheDocument();
     });
 
-    it('should show regenerate button with output', () => {
+    it('should show expand button when output image exists', () => {
       render(
         <ImageGenNode
           {...defaultProps}
@@ -325,7 +299,20 @@ describe('ImageGenNode', () => {
         />
       );
 
-      // RefreshCw icon should be present in a button
+      expect(screen.getByTitle('Expand preview')).toBeInTheDocument();
+    });
+
+    it('should render action buttons with output', () => {
+      render(
+        <ImageGenNode
+          {...defaultProps}
+          data={{
+            ...defaultProps.data,
+            outputImage: 'https://example.com/image.png',
+          }}
+        />
+      );
+
       const buttons = screen.getAllByTestId('button');
       expect(buttons.length).toBeGreaterThan(0);
     });

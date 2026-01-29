@@ -2,11 +2,44 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsModal } from './SettingsModal';
 
-const mockSetProviderKey = vi.fn();
-const mockClearProviderKey = vi.fn();
 const mockSetDefaultModel = vi.fn();
 const mockSetEdgeStyle = vi.fn();
+const mockSetShowMinimap = vi.fn();
+const mockSetDebugMode = vi.fn();
 const mockCloseModal = vi.fn();
+const mockOpenModal = vi.fn();
+
+vi.mock('@/components/ui/select', () => ({
+  Select: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="select">{children}</div>
+  ),
+  SelectTrigger: ({ children }: { children: React.ReactNode }) => (
+    <button data-testid="select-trigger">{children}</button>
+  ),
+  SelectValue: () => <span data-testid="select-value" />,
+  SelectContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="select-content">{children}</div>
+  ),
+  SelectItem: ({ children, value }: { children: React.ReactNode; value: string }) => (
+    <div data-testid={`select-item-${value}`}>{children}</div>
+  ),
+}));
+
+vi.mock('@/components/ui/button', () => ({
+  Button: ({
+    children,
+    onClick,
+    ...props
+  }: {
+    children: React.ReactNode;
+    onClick?: () => void;
+    [key: string]: unknown;
+  }) => (
+    <button onClick={onClick} {...props}>
+      {children}
+    </button>
+  ),
+}));
 
 vi.mock('@/store/settingsStore', () => ({
   useSettingsStore: vi.fn(() => ({
@@ -21,27 +54,29 @@ vi.mock('@/store/settingsStore', () => ({
       imageProvider: 'replicate',
       videoProvider: 'replicate',
     },
-    edgeStyle: 'bezier',
-    setProviderKey: mockSetProviderKey,
-    clearProviderKey: mockClearProviderKey,
+    edgeStyle: 'default',
+    showMinimap: true,
+    debugMode: false,
     setDefaultModel: mockSetDefaultModel,
     setEdgeStyle: mockSetEdgeStyle,
+    setShowMinimap: mockSetShowMinimap,
+    setDebugMode: mockSetDebugMode,
   })),
   PROVIDER_INFO: {
     replicate: {
       name: 'Replicate',
-      description: 'Run AI models in the cloud',
+      description: 'Access thousands of open-source AI models',
       docsUrl: 'https://replicate.com/docs',
     },
     fal: {
       name: 'fal.ai',
-      description: 'Fast AI inference',
+      description: 'Fast inference for image and video generation',
       docsUrl: 'https://fal.ai/docs',
     },
     huggingface: {
       name: 'Hugging Face',
-      description: 'ML models and datasets',
-      docsUrl: 'https://huggingface.co/docs',
+      description: 'The AI community platform with 500k+ models',
+      docsUrl: 'https://huggingface.co/docs/api-inference',
     },
   },
 }));
@@ -50,12 +85,20 @@ vi.mock('@/store/uiStore', () => ({
   useUIStore: vi.fn(() => ({
     activeModal: 'settings',
     closeModal: mockCloseModal,
+    openModal: mockOpenModal,
   })),
 }));
 
 describe('SettingsModal', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+
+    const { useUIStore } = await import('@/store/uiStore');
+    vi.mocked(useUIStore).mockReturnValue({
+      activeModal: 'settings',
+      closeModal: mockCloseModal,
+      openModal: mockOpenModal,
+    } as unknown as ReturnType<typeof useUIStore>);
   });
 
   describe('rendering', () => {
@@ -68,35 +111,31 @@ describe('SettingsModal', () => {
     it('should render all tabs', () => {
       render(<SettingsModal />);
 
-      expect(screen.getByText('Providers')).toBeInTheDocument();
       expect(screen.getByText('Defaults')).toBeInTheDocument();
+      expect(screen.getByText('API Keys')).toBeInTheDocument();
       expect(screen.getByText('Appearance')).toBeInTheDocument();
+      expect(screen.getByText('Developer')).toBeInTheDocument();
+      expect(screen.getByText('Help')).toBeInTheDocument();
     });
 
-    it('should show providers tab by default', () => {
+    it('should show defaults tab by default', () => {
       render(<SettingsModal />);
 
-      // Providers tab content
-      expect(screen.getByText('Replicate')).toBeInTheDocument();
-      expect(screen.getByText('fal.ai')).toBeInTheDocument();
-      expect(screen.getByText('Hugging Face')).toBeInTheDocument();
-    });
-
-    it('should show security notice', () => {
-      render(<SettingsModal />);
-
-      expect(screen.getByText(/API keys are stored locally in your browser/)).toBeInTheDocument();
+      expect(screen.getByText('Default Image Model')).toBeInTheDocument();
+      expect(screen.getByText('Default Video Model')).toBeInTheDocument();
+      expect(screen.getByText('Default Provider')).toBeInTheDocument();
     });
   });
 
   describe('tab navigation', () => {
-    it('should switch to defaults tab', () => {
+    it('should switch to API Keys tab', () => {
       render(<SettingsModal />);
 
-      fireEvent.click(screen.getByText('Defaults'));
+      fireEvent.click(screen.getByText('API Keys'));
 
-      expect(screen.getByText('Default Image Model')).toBeInTheDocument();
-      expect(screen.getByText('Default Video Model')).toBeInTheDocument();
+      expect(screen.getByText('Replicate')).toBeInTheDocument();
+      expect(screen.getByText('fal.ai')).toBeInTheDocument();
+      expect(screen.getByText('Hugging Face')).toBeInTheDocument();
     });
 
     it('should switch to appearance tab', () => {
@@ -109,14 +148,31 @@ describe('SettingsModal', () => {
       expect(screen.getByText('Smooth Step')).toBeInTheDocument();
       expect(screen.getByText('Straight')).toBeInTheDocument();
     });
+
+    it('should switch to developer tab', () => {
+      render(<SettingsModal />);
+
+      fireEvent.click(screen.getByText('Developer'));
+
+      expect(screen.getByText('Debug Mode')).toBeInTheDocument();
+    });
+
+    it('should switch to help tab', () => {
+      render(<SettingsModal />);
+
+      fireEvent.click(screen.getByText('Help'));
+
+      expect(screen.getByText('Show Welcome Screen')).toBeInTheDocument();
+      expect(screen.getByText('Documentation')).toBeInTheDocument();
+      expect(screen.getByText('Discord Community')).toBeInTheDocument();
+    });
   });
 
   describe('close modal', () => {
     it('should close modal on backdrop click', () => {
       render(<SettingsModal />);
 
-      // Find backdrop (first child with bg-black/50 class)
-      const backdrop = document.querySelector('.bg-black\\/50');
+      const backdrop = document.querySelector('.bg-black\\/70');
       if (backdrop) fireEvent.click(backdrop);
 
       expect(mockCloseModal).toHaveBeenCalled();
@@ -139,7 +195,8 @@ describe('SettingsModal', () => {
       vi.mocked(useUIStore).mockReturnValue({
         activeModal: null,
         closeModal: mockCloseModal,
-      } as ReturnType<typeof useUIStore>);
+        openModal: mockOpenModal,
+      } as unknown as ReturnType<typeof useUIStore>);
 
       const { container } = render(<SettingsModal />);
 
@@ -148,31 +205,57 @@ describe('SettingsModal', () => {
   });
 });
 
-describe('SettingsModal - Provider Tab', () => {
-  beforeEach(() => {
+describe('SettingsModal - API Keys Tab', () => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+
+    const { useUIStore } = await import('@/store/uiStore');
+    vi.mocked(useUIStore).mockReturnValue({
+      activeModal: 'settings',
+      closeModal: mockCloseModal,
+      openModal: mockOpenModal,
+    } as unknown as ReturnType<typeof useUIStore>);
   });
 
-  it('should render provider inputs', () => {
+  it('should show env file configuration notice', () => {
     render(<SettingsModal />);
 
-    // Check for placeholder text in inputs
-    expect(screen.getByPlaceholderText('Enter Replicate API key')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Enter fal.ai API key')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Enter Hugging Face API key')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('API Keys'));
+
+    expect(screen.getByText('API keys must be configured in .env files')).toBeInTheDocument();
   });
 
-  it('should render external links to docs', () => {
+  it('should render provider names in API key status list', () => {
     render(<SettingsModal />);
+
+    fireEvent.click(screen.getByText('API Keys'));
+
+    expect(screen.getByText('Replicate')).toBeInTheDocument();
+    expect(screen.getByText('ElevenLabs')).toBeInTheDocument();
+    expect(screen.getByText('fal.ai')).toBeInTheDocument();
+    expect(screen.getByText('Hugging Face')).toBeInTheDocument();
+  });
+
+  it('should render external links to get API keys', () => {
+    render(<SettingsModal />);
+
+    fireEvent.click(screen.getByText('API Keys'));
 
     const links = screen.getAllByRole('link');
-    expect(links.length).toBeGreaterThanOrEqual(3);
+    expect(links.length).toBeGreaterThanOrEqual(4);
   });
 });
 
 describe('SettingsModal - Appearance Tab', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+
+    const { useUIStore } = await import('@/store/uiStore');
+    vi.mocked(useUIStore).mockReturnValue({
+      activeModal: 'settings',
+      closeModal: mockCloseModal,
+      openModal: mockOpenModal,
+    } as unknown as ReturnType<typeof useUIStore>);
   });
 
   it('should call setEdgeStyle on edge style selection', () => {
@@ -193,5 +276,13 @@ describe('SettingsModal - Appearance Tab', () => {
 
     expect(screen.getByText('Node A')).toBeInTheDocument();
     expect(screen.getByText('Node B')).toBeInTheDocument();
+  });
+
+  it('should render minimap toggle', () => {
+    render(<SettingsModal />);
+
+    fireEvent.click(screen.getByText('Appearance'));
+
+    expect(screen.getByText('Show Minimap')).toBeInTheDocument();
   });
 });

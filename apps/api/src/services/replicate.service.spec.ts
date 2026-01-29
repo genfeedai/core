@@ -73,11 +73,16 @@ describe('ReplicateService', () => {
           useValue: {
             downloadAndSaveOutput: vi.fn(),
             urlsToBase64Async: vi.fn().mockResolvedValue([]),
+            urlToBase64: vi.fn().mockImplementation((url: string) => url),
           },
         },
         {
           provide: SchemaMapperService,
-          useValue: { mapSchemaToInput: vi.fn().mockReturnValue({}) },
+          useValue: {
+            mapSchemaToInput: vi.fn().mockReturnValue({}),
+            mapImageInput: vi.fn().mockReturnValue({ prompt: 'A test image' }),
+            mapVideoInput: vi.fn().mockReturnValue({ prompt: 'A test video' }),
+          },
         },
       ],
     }).compile();

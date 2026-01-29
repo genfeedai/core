@@ -8,29 +8,95 @@ vi.mock('@xyflow/react', () => ({
   Position: { Left: 'left', Right: 'right' },
 }));
 
-// Mock BaseNode
+// Mock BaseNode - render both children and headerActions
 vi.mock('../BaseNode', () => ({
-  BaseNode: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="base-node">{children}</div>
+  BaseNode: ({
+    children,
+    headerActions,
+  }: {
+    children: React.ReactNode;
+    headerActions?: React.ReactNode;
+  }) => (
+    <div data-testid="base-node">
+      <div data-testid="header-actions">{headerActions}</div>
+      {children}
+    </div>
   ),
 }));
 
 // Mock stores
 const mockUpdateNodeData = vi.fn();
-const mockExecuteNode = vi.fn();
+const mockOpenNodeDetailModal = vi.fn();
 
 vi.mock('@/store/workflowStore', () => ({
-  useWorkflowStore: (selector: (state: unknown) => unknown) => {
-    const state = { updateNodeData: mockUpdateNodeData };
+  useWorkflowStore: Object.assign(
+    (selector: (state: unknown) => unknown) => {
+      const state = {
+        updateNodeData: mockUpdateNodeData,
+        edges: [],
+        nodes: [],
+        getConnectedInputs: vi.fn().mockReturnValue({}),
+      };
+      return selector(state);
+    },
+    { getState: () => ({ updateNodeData: mockUpdateNodeData }) }
+  ),
+}));
+
+vi.mock('@/store/uiStore', () => ({
+  useUIStore: (selector: (state: unknown) => unknown) => {
+    const state = { openNodeDetailModal: mockOpenNodeDetailModal };
     return selector(state);
   },
 }));
 
-vi.mock('@/store/executionStore', () => ({
-  useExecutionStore: (selector: (state: unknown) => unknown) => {
-    const state = { executeNode: mockExecuteNode };
-    return selector(state);
-  },
+// Mock hooks used by the component
+const mockHandleGenerate = vi.fn();
+
+vi.mock('@/hooks/useCanGenerate', () => ({
+  useCanGenerate: () => ({
+    canGenerate: true,
+    missingItems: [],
+    hasRequiredConnections: true,
+    hasConnectedData: true,
+    hasRequiredSchemaFields: true,
+  }),
+}));
+
+vi.mock('@/hooks/useNodeExecution', () => ({
+  useNodeExecution: () => ({
+    handleGenerate: mockHandleGenerate,
+  }),
+}));
+
+// Mock Slider to be a native range input
+vi.mock('@/components/ui/slider', () => ({
+  Slider: ({
+    value,
+    min,
+    max,
+    step,
+    onValueChange,
+    className,
+  }: {
+    value: number[];
+    min: number;
+    max: number;
+    step: number;
+    onValueChange: (value: number[]) => void;
+    className?: string;
+  }) => (
+    <input
+      type="range"
+      aria-valuenow={value[0]}
+      value={value[0]}
+      min={min}
+      max={max}
+      step={step}
+      onChange={(e) => onValueChange([parseFloat(e.target.value)])}
+      className={className}
+    />
+  ),
 }));
 
 describe('LLMNode', () => {
@@ -161,18 +227,19 @@ describe('LLMNode', () => {
       expect(screen.getByText('Generate Text')).toBeInTheDocument();
     });
 
-    it('should call executeNode when generate button clicked', () => {
+    it('should call handleGenerate when generate button clicked', () => {
       render(<LLMNode {...defaultProps} />);
 
       fireEvent.click(screen.getByText('Generate Text'));
 
-      expect(mockExecuteNode).toHaveBeenCalledWith('llm-1');
+      expect(mockHandleGenerate).toHaveBeenCalled();
     });
 
-    it('should hide generate button when processing', () => {
+    it('should show Generating text and be disabled when processing', () => {
       render(<LLMNode {...defaultProps} data={{ ...defaultProps.data, status: 'processing' }} />);
 
-      expect(screen.queryByText('Generate Text')).not.toBeInTheDocument();
+      expect(screen.getByText('Generating...')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /generating/i })).toBeDisabled();
     });
 
     it('should hide generate button when output exists', () => {
@@ -199,7 +266,7 @@ describe('LLMNode', () => {
       expect(screen.getByText('Generated output text')).toBeInTheDocument();
     });
 
-    it('should show regenerate button when output exists', () => {
+    it('should show expand button in header actions when output exists', () => {
       render(
         <LLMNode
           {...defaultProps}
@@ -207,13 +274,12 @@ describe('LLMNode', () => {
         />
       );
 
-      // Find the refresh button by its role or aria
-      const buttons = screen.getAllByRole('button');
-      const refreshButton = buttons.find((btn) => btn.querySelector('.lucide-refresh-cw') !== null);
-      expect(refreshButton).toBeDefined();
+      const headerActions = screen.getByTestId('header-actions');
+      const expandButton = headerActions.querySelector('button');
+      expect(expandButton).not.toBeNull();
     });
 
-    it('should regenerate when refresh button clicked', () => {
+    it('should call handleGenerate when refresh button clicked', () => {
       render(
         <LLMNode
           {...defaultProps}
@@ -221,11 +287,16 @@ describe('LLMNode', () => {
         />
       );
 
-      // Click the first button (refresh button)
+      // The refresh button is inside the output display area (not in header-actions)
       const buttons = screen.getAllByRole('button');
-      fireEvent.click(buttons[0]);
+      // Filter to the button inside the output section (not in header-actions)
+      const refreshButton = buttons.find(
+        (btn) => !screen.getByTestId('header-actions').contains(btn)
+      );
+      expect(refreshButton).toBeDefined();
+      fireEvent.click(refreshButton!);
 
-      expect(mockExecuteNode).toHaveBeenCalledWith('llm-1');
+      expect(mockHandleGenerate).toHaveBeenCalled();
     });
 
     it('should disable refresh button when processing', () => {
@@ -241,7 +312,11 @@ describe('LLMNode', () => {
       );
 
       const buttons = screen.getAllByRole('button');
-      expect(buttons[0]).toBeDisabled();
+      const refreshButton = buttons.find(
+        (btn) => !screen.getByTestId('header-actions').contains(btn)
+      );
+      expect(refreshButton).toBeDefined();
+      expect(refreshButton).toBeDisabled();
     });
   });
 });

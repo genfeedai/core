@@ -37,9 +37,21 @@ describe('GenerateWorkflowModal', () => {
     ],
   };
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     vi.stubGlobal('fetch', vi.fn());
+
+    // Reset store mocks to default values (vi.clearAllMocks doesn't reset mockReturnValue)
+    const { useUIStore } = await import('@/store/uiStore');
+    vi.mocked(useUIStore).mockReturnValue({
+      showAIGenerator: true,
+      toggleAIGenerator: mockToggleAIGenerator,
+    } as ReturnType<typeof useUIStore>);
+
+    const { useWorkflowStore } = await import('@/store/workflowStore');
+    vi.mocked(useWorkflowStore).mockReturnValue({
+      loadWorkflow: mockLoadWorkflow,
+    } as ReturnType<typeof useWorkflowStore>);
   });
 
   describe('rendering', () => {
@@ -159,6 +171,7 @@ describe('GenerateWorkflowModal', () => {
           body: JSON.stringify({
             description: 'Test description',
             contentLevel: 'minimal',
+            model: 'meta/meta-llama-3.1-70b-instruct',
           }),
         });
       });
@@ -205,7 +218,7 @@ describe('GenerateWorkflowModal', () => {
       if (generateButton) fireEvent.click(generateButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Generated Workflow')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Generated Workflow' })).toBeInTheDocument();
         expect(screen.getByText('2 nodes, 1 edges')).toBeInTheDocument();
       });
     });

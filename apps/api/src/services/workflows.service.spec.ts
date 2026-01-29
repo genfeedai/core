@@ -20,8 +20,13 @@ describe('WorkflowsService', () => {
     return createConstructableMockModel(
       {
         find: vi.fn().mockReturnValue({
-          sort: vi.fn().mockReturnThis(),
-          exec: vi.fn().mockResolvedValue([mockWorkflow]),
+          sort: vi.fn().mockReturnValue({
+            skip: vi.fn().mockReturnValue({
+              limit: vi.fn().mockReturnValue({
+                exec: vi.fn().mockResolvedValue([mockWorkflow]),
+              }),
+            }),
+          }),
         }),
         findOne: vi.fn().mockReturnValue({
           exec: vi.fn().mockResolvedValue(mockWorkflow),
@@ -49,7 +54,9 @@ describe('WorkflowsService', () => {
         },
         {
           provide: WorkflowInterfaceService,
-          useValue: { computeInterface: vi.fn().mockReturnValue({ inputs: [], outputs: [] }) },
+          useValue: {
+            computeWorkflowInterface: vi.fn().mockReturnValue({ inputs: [], outputs: [] }),
+          },
         },
       ],
     }).compile();
@@ -112,6 +119,12 @@ describe('WorkflowsService', () => {
             provide: getModelToken(Workflow.name),
             useValue: mockModel,
           },
+          {
+            provide: WorkflowInterfaceService,
+            useValue: {
+              computeWorkflowInterface: vi.fn().mockReturnValue({ inputs: [], outputs: [] }),
+            },
+          },
         ],
       }).compile();
 
@@ -144,6 +157,12 @@ describe('WorkflowsService', () => {
           {
             provide: getModelToken(Workflow.name),
             useValue: mockModel,
+          },
+          {
+            provide: WorkflowInterfaceService,
+            useValue: {
+              computeWorkflowInterface: vi.fn().mockReturnValue({ inputs: [], outputs: [] }),
+            },
           },
         ],
       }).compile();
@@ -179,6 +198,12 @@ describe('WorkflowsService', () => {
             provide: getModelToken(Workflow.name),
             useValue: mockModel,
           },
+          {
+            provide: WorkflowInterfaceService,
+            useValue: {
+              computeWorkflowInterface: vi.fn().mockReturnValue({ inputs: [], outputs: [] }),
+            },
+          },
         ],
       }).compile();
 
@@ -210,6 +235,12 @@ describe('WorkflowsService', () => {
           {
             provide: getModelToken(Workflow.name),
             useValue: mockModel,
+          },
+          {
+            provide: WorkflowInterfaceService,
+            useValue: {
+              computeWorkflowInterface: vi.fn().mockReturnValue({ inputs: [], outputs: [] }),
+            },
           },
         ],
       }).compile();

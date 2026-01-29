@@ -10,8 +10,20 @@ vi.mock('@xyflow/react', () => ({
 
 // Mock BaseNode to simplify testing
 vi.mock('../BaseNode', () => ({
-  BaseNode: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="base-node">{children}</div>
+  BaseNode: ({
+    children,
+    titleElement,
+    headerActions,
+  }: {
+    children: React.ReactNode;
+    titleElement?: React.ReactNode;
+    headerActions?: React.ReactNode;
+  }) => (
+    <div data-testid="base-node">
+      {titleElement}
+      {headerActions}
+      {children}
+    </div>
   ),
 }));
 
@@ -30,7 +42,7 @@ const mockOpenCreateModal = vi.fn();
 
 vi.mock('@/store/workflowStore', () => ({
   useWorkflowStore: (selector: (state: unknown) => unknown) => {
-    const state = { updateNodeData: mockUpdateNodeData };
+    const state = { updateNodeData: mockUpdateNodeData, edges: [] };
     return selector(state);
   },
 }));
@@ -38,6 +50,12 @@ vi.mock('@/store/workflowStore', () => ({
 vi.mock('@/store/promptLibraryStore', () => ({
   usePromptLibraryStore: () => ({
     openCreateModal: mockOpenCreateModal,
+  }),
+}));
+
+vi.mock('@/store/promptEditorStore', () => ({
+  usePromptEditorStore: () => ({
+    openEditor: vi.fn(),
   }),
 }));
 
@@ -155,25 +173,18 @@ describe('PromptNode', () => {
   });
 
   describe('tooltip', () => {
-    it('should show tooltip on hover', () => {
+    it('should have title attribute on save button', () => {
       render(<PromptNode {...defaultProps} />);
 
       const saveButton = screen.getByTitle('Save to library');
-      fireEvent.mouseEnter(saveButton);
-
-      expect(screen.getByText('Save to library')).toBeInTheDocument();
+      expect(saveButton).toHaveAttribute('title', 'Save to library');
     });
 
-    it('should hide tooltip on mouse leave', () => {
+    it('should have title attribute on expand button', () => {
       render(<PromptNode {...defaultProps} />);
 
-      const saveButton = screen.getByTitle('Save to library');
-      fireEvent.mouseEnter(saveButton);
-      fireEvent.mouseLeave(saveButton);
-
-      // Tooltip should be hidden (only title attribute version remains)
-      const tooltips = screen.queryAllByText('Save to library');
-      expect(tooltips.length).toBeLessThanOrEqual(1);
+      const expandButton = screen.getByTitle('Expand editor');
+      expect(expandButton).toHaveAttribute('title', 'Expand editor');
     });
   });
 });
