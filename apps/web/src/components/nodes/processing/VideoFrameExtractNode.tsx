@@ -1,8 +1,9 @@
 'use client';
 
 import type { FrameSelectionMode, VideoFrameExtractNodeData } from '@genfeedai/types';
+import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { Film, RefreshCw } from 'lucide-react';
+import { Film, Loader2, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
 import { memo, useCallback } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
@@ -41,8 +42,9 @@ function VideoFrameExtractNodeComponent(props: NodeProps) {
   );
 
   const handleProcess = useCallback(() => {
+    updateNodeData(id, { status: NODE_STATUS.processing });
     executeNode(id);
-  }, [id, executeNode]);
+  }, [id, executeNode, updateNodeData]);
 
   return (
     <BaseNode {...props}>
@@ -95,15 +97,19 @@ function VideoFrameExtractNodeComponent(props: NodeProps) {
         )}
 
         {/* Process Button */}
-        {!nodeData.outputImage && nodeData.status !== 'processing' && (
+        {!nodeData.outputImage && (
           <button
             type="button"
             onClick={handleProcess}
-            disabled={!nodeData.inputVideo}
+            disabled={!nodeData.inputVideo || nodeData.status === 'processing'}
             className="w-full py-2 bg-[var(--primary)] text-white rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Film className="w-4 h-4" />
-            Extract Frame
+            {nodeData.status === 'processing' ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Film className="w-4 h-4" />
+            )}
+            {nodeData.status === 'processing' ? 'Extracting...' : 'Extract Frame'}
           </button>
         )}
       </div>

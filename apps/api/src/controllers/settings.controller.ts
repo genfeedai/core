@@ -1,4 +1,3 @@
-import { Body, Controller, Delete, Get, Headers, Post, Put } from '@nestjs/common';
 import {
   type NodeDefaultsDto,
   type RecentModelDto,
@@ -6,6 +5,7 @@ import {
   type UiPreferencesDto,
   type UpdateSettingsDto,
 } from '@/services/settings.service';
+import { Body, Controller, Delete, Get, Headers, Post, Put } from '@nestjs/common';
 
 // Helper to get user ID from headers (can be session ID or auth token)
 function getUserId(headers: Record<string, string>): string {
@@ -27,8 +27,8 @@ export class SettingsController {
     const settings = await this.settingsService.getSettings(userId);
     return {
       nodeDefaults: settings.nodeDefaults,
-      uiPreferences: settings.uiPreferences,
       recentModels: settings.recentModels,
+      uiPreferences: settings.uiPreferences,
     };
   }
 
@@ -44,8 +44,8 @@ export class SettingsController {
     const settings = await this.settingsService.updateSettings(userId, body);
     return {
       nodeDefaults: settings.nodeDefaults,
-      uiPreferences: settings.uiPreferences,
       recentModels: settings.recentModels,
+      uiPreferences: settings.uiPreferences,
     };
   }
 
@@ -104,8 +104,8 @@ export class SettingsController {
     const settings = await this.settingsService.resetSettings(userId);
     return {
       nodeDefaults: settings.nodeDefaults,
-      uiPreferences: settings.uiPreferences,
       recentModels: settings.recentModels,
+      uiPreferences: settings.uiPreferences,
     };
   }
 }

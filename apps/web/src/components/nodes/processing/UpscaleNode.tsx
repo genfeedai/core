@@ -7,8 +7,9 @@ import type {
   UpscaleModel,
   UpscaleNodeData,
 } from '@genfeedai/types';
+import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { Expand, RefreshCw, SplitSquareHorizontal } from 'lucide-react';
+import { Expand, Loader2, RefreshCw, SplitSquareHorizontal } from 'lucide-react';
 import Image from 'next/image';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
@@ -165,8 +166,9 @@ function UpscaleNodeComponent(props: NodeProps) {
   );
 
   const handleProcess = useCallback(() => {
+    updateNodeData(id, { status: NODE_STATUS.processing });
     executeNode(id);
-  }, [id, executeNode]);
+  }, [id, executeNode, updateNodeData]);
 
   const handleExpand = useCallback(() => {
     openNodeDetailModal(id, 'preview');
@@ -481,14 +483,17 @@ function UpscaleNodeComponent(props: NodeProps) {
         )}
 
         {/* Process Button */}
-        {!hasOutput && nodeData.status !== 'processing' && (
+        {!hasOutput && (
           <button
             onClick={handleProcess}
-            disabled={!hasInput}
-            className="mt-1 w-full py-2 rounded-md text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!hasInput || nodeData.status === 'processing'}
+            className="mt-1 w-full py-2 rounded-md text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
             style={{ backgroundColor: 'var(--node-color)', color: 'var(--background)' }}
           >
-            Upscale {inputType === 'video' ? 'Video' : inputType === 'image' ? 'Image' : 'Media'}
+            {nodeData.status === 'processing' && <Loader2 className="h-4 w-4 animate-spin" />}
+            {nodeData.status === 'processing'
+              ? 'Upscaling...'
+              : `Upscale ${inputType === 'video' ? 'Video' : inputType === 'image' ? 'Image' : 'Media'}`}
           </button>
         )}
       </div>

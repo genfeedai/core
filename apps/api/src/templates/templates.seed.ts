@@ -9,6 +9,7 @@ export const SYSTEM_TEMPLATES = [
     name: 'Single Image',
     description: 'Generate an AI image from a source image (img2img)',
     category: TemplateCategory.IMAGE,
+    thumbnail: 'https://picsum.photos/seed/single-image/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -94,6 +95,7 @@ export const SYSTEM_TEMPLATES = [
     name: 'Single Video',
     description: 'Generate an AI video from a source image (img2video)',
     category: TemplateCategory.VIDEO,
+    thumbnail: 'https://picsum.photos/seed/single-video/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -186,6 +188,7 @@ export const SYSTEM_TEMPLATES = [
     name: 'Image Series',
     description: 'Generate a series of related images from a concept prompt using LLM expansion',
     category: TemplateCategory.IMAGE,
+    thumbnail: 'https://picsum.photos/seed/image-series/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -324,6 +327,7 @@ export const SYSTEM_TEMPLATES = [
     name: 'Image to Video',
     description: 'Create interpolated video between two images with easing animation',
     category: TemplateCategory.VIDEO,
+    thumbnail: 'https://picsum.photos/seed/image-to-video/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -455,6 +459,7 @@ export const SYSTEM_TEMPLATES = [
     name: 'Full Content Pipeline',
     description: 'Complete workflow: concept → images → videos → animation → stitched output',
     category: TemplateCategory.FULL_PIPELINE,
+    thumbnail: 'https://picsum.photos/seed/full-content-pipeline/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -708,6 +713,7 @@ export const SYSTEM_TEMPLATES = [
     name: 'Product Shot',
     description: 'Place a product in a new scene or environment for e-commerce visualization',
     category: TemplateCategory.IMAGE,
+    thumbnail: 'https://picsum.photos/seed/product-shot/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -814,6 +820,7 @@ export const SYSTEM_TEMPLATES = [
     description:
       'Combine a model with a product and custom background for fashion/lifestyle photography',
     category: TemplateCategory.IMAGE,
+    thumbnail: 'https://picsum.photos/seed/model-product/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -941,6 +948,7 @@ export const SYSTEM_TEMPLATES = [
     description:
       'Generate product color variants using reference palettes for product line mockups',
     category: TemplateCategory.IMAGE,
+    thumbnail: 'https://picsum.photos/seed/color-variations/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -1067,6 +1075,7 @@ export const SYSTEM_TEMPLATES = [
     name: 'Background Swap',
     description: 'Replace the background of a subject with a new environment',
     category: TemplateCategory.IMAGE,
+    thumbnail: 'https://picsum.photos/seed/background-swap/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -1173,6 +1182,7 @@ export const SYSTEM_TEMPLATES = [
     name: 'Style Transfer',
     description: 'Apply visual style from a reference image to your content',
     category: TemplateCategory.IMAGE,
+    thumbnail: 'https://picsum.photos/seed/style-transfer/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -1280,6 +1290,7 @@ export const SYSTEM_TEMPLATES = [
     description:
       'Combine multiple elements into a cohesive scene for environmental design and mood boards',
     category: TemplateCategory.IMAGE,
+    thumbnail: 'https://picsum.photos/seed/scene-composite/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -1407,6 +1418,7 @@ export const SYSTEM_TEMPLATES = [
     description:
       'Generate 4 mood-consistent images from reference images and a base prompt. The LLM creates variations while maintaining the overall aesthetic.',
     category: TemplateCategory.IMAGE,
+    thumbnail: 'https://picsum.photos/seed/moodboard-generator/400/240',
     version: 1,
     edgeStyle: 'default',
     nodes: [
@@ -1797,6 +1809,7 @@ export const SYSTEM_TEMPLATES = [
     description:
       'Generate a longer video by chaining video segments: create first segment, extract last frame, generate continuation prompt, create second segment, and stitch together',
     category: TemplateCategory.VIDEO,
+    thumbnail: 'https://picsum.photos/seed/extended-video-pipeline/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -1980,6 +1993,7 @@ export const SYSTEM_TEMPLATES = [
     description:
       'Generate a 3x3 grid image, split into 9 cells, create video from each, apply easing, and stitch into final video',
     category: TemplateCategory.FULL_PIPELINE,
+    thumbnail: 'https://picsum.photos/seed/grid-to-video-pipeline/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -2661,6 +2675,7 @@ export const SYSTEM_TEMPLATES = [
     name: 'Voice to Video',
     description: 'Generate a talking-head video from an image and audio file',
     category: TemplateCategory.AUDIO,
+    thumbnail: 'https://picsum.photos/seed/voice-to-video/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -2750,6 +2765,7 @@ export const SYSTEM_TEMPLATES = [
     description:
       'Generate multiple thumbnail variations for YouTube videos/livestreams using a character image and reference style, plus generate a livestream script from topic context.',
     category: TemplateCategory.IMAGE,
+    thumbnail: 'https://picsum.photos/seed/youtube-thumbnail/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -2986,6 +3002,7 @@ export const SYSTEM_TEMPLATES = [
     description:
       'Generate a complete 10-minute YouTube video: script → images → videos with camera movements → stitch → music → subtitles',
     category: TemplateCategory.FULL_PIPELINE,
+    thumbnail: 'https://picsum.photos/seed/youtube-10min/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -3498,6 +3515,7 @@ export const SYSTEM_TEMPLATES = [
     description:
       'Transform a 1-hour stream into engaging short-form content: transcribe → extract hot takes → generate intro + trim highlights → stitch → export',
     category: TemplateCategory.FULL_PIPELINE,
+    thumbnail: 'https://picsum.photos/seed/stream-short-form/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -3698,6 +3716,7 @@ export const SYSTEM_TEMPLATES = [
     description:
       'Generate a complete brand kit for social media: profile picture, YouTube banner, Facebook cover, and X header with automatic resizing to platform dimensions.',
     category: TemplateCategory.IMAGE,
+    thumbnail: 'https://picsum.photos/seed/social-brand-kit/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -3994,6 +4013,7 @@ export const SYSTEM_TEMPLATES = [
     name: 'Facecam Avatar',
     description: 'Generate talking head videos from text scripts using ElevenLabs TTS and lip sync',
     category: TemplateCategory.VIDEO,
+    thumbnail: 'https://picsum.photos/seed/facecam-avatar/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -4119,6 +4139,7 @@ export const SYSTEM_TEMPLATES = [
     description:
       'Apply dance or motion from a reference video to a static image using Kling v2.6 motion control',
     category: TemplateCategory.VIDEO,
+    thumbnail: 'https://picsum.photos/seed/dance-video/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -4235,6 +4256,7 @@ export const SYSTEM_TEMPLATES = [
     description:
       'Generate 3 pose variations of a subject from a single reference image for Instagram carousel posts',
     category: TemplateCategory.IMAGE,
+    thumbnail: 'https://picsum.photos/seed/instagram-carousel/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [
@@ -4493,6 +4515,7 @@ export const SYSTEM_TEMPLATES = [
     description:
       'Generate a consistent AI influencer avatar and create multiple scene/pose variations using that avatar as reference for character consistency',
     category: TemplateCategory.IMAGE,
+    thumbnail: 'https://picsum.photos/seed/ai-influencer/400/240',
     version: 1,
     edgeStyle: 'smoothstep',
     nodes: [

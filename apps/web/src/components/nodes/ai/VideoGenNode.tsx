@@ -1,10 +1,11 @@
 'use client';
 
 import type { VideoGenNodeData, VideoModel } from '@genfeedai/types';
+import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { AlertCircle, Expand, ImageIcon, Loader2, Play, RefreshCw, Video } from 'lucide-react';
 import Image from 'next/image';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ModelBrowserModal } from '@/components/models/ModelBrowserModal';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { SchemaInputs } from '@/components/nodes/SchemaInputs';
@@ -26,6 +27,12 @@ const VIDEO_MODEL_MAP: Record<string, VideoModel> = {
   'google/veo-3.1': 'veo-3.1',
 };
 
+// Reverse map: internal model type -> API model ID
+const INTERNAL_TO_MODEL_ID: Record<VideoModel, string> = {
+  'veo-3.1-fast': 'google/veo-3.1-fast',
+  'veo-3.1': 'google/veo-3.1',
+};
+
 function VideoGenNodeComponent(props: NodeProps) {
   const { id, type, data } = props;
   const nodeData = data as VideoGenNodeData;
@@ -42,6 +49,47 @@ function VideoGenNodeComponent(props: NodeProps) {
     modelMap: VIDEO_MODEL_MAP,
     fallbackModel: 'veo-3.1-fast',
   });
+
+  // Track if we've already attempted to load the default model schema
+  const hasAttemptedSchemaLoad = useRef(false);
+
+  // Auto-load schema for default model if selectedModel is not set
+  useEffect(() => {
+    // Only run once per node, and only if we have a model but no selectedModel
+    if (hasAttemptedSchemaLoad.current || nodeData.selectedModel || !nodeData.model) {
+      return;
+    }
+
+    hasAttemptedSchemaLoad.current = true;
+
+    const modelId = INTERNAL_TO_MODEL_ID[nodeData.model];
+    if (!modelId) return;
+
+    const controller = new AbortController();
+
+    const loadSchema = async () => {
+      try {
+        const response = await fetch(`/api/providers/models?query=${encodeURIComponent(modelId)}`, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const model = data.models?.find((m: { id: string }) => m.id === modelId);
+
+        if (model) {
+          handleModelSelect(model);
+        }
+      } catch {
+        // Ignore abort errors and other failures
+      }
+    };
+
+    loadSchema();
+
+    return () => controller.abort();
+  }, [nodeData.model, nodeData.selectedModel, handleModelSelect]);
 
   // Get schema properties from selected model
   const schemaProperties = useMemo(() => {
@@ -86,8 +134,9 @@ function VideoGenNodeComponent(props: NodeProps) {
   );
 
   const handleGenerate = useCallback(() => {
+    updateNodeData(id, { status: NODE_STATUS.processing });
     executeNode(id);
-  }, [id, executeNode]);
+  }, [id, executeNode, updateNodeData]);
 
   const handleExpand = useCallback(() => {
     openNodeDetailModal(id, 'preview');
@@ -237,15 +286,19 @@ function VideoGenNodeComponent(props: NodeProps) {
         )}
 
         {/* Generate Button */}
-        {!nodeData.outputVideo && nodeData.status !== 'processing' && (
+        {!nodeData.outputVideo && (
           <button
             onClick={handleGenerate}
-            disabled={!hasRequiredInputs}
+            disabled={!hasRequiredInputs || nodeData.status === 'processing'}
             className="w-full py-2 rounded-md text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
             style={{ backgroundColor: 'var(--node-color)', color: 'var(--background)' }}
           >
-            <Play className="w-4 h-4" />
-            Generate Video
+            {nodeData.status === 'processing' ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Play className="w-4 h-4" />
+            )}
+            {nodeData.status === 'processing' ? 'Generating...' : 'Generate Video'}
           </button>
         )}
 

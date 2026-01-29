@@ -28,6 +28,9 @@ export function createExecutionSubscription(
 ): EventSource {
   const eventSource = new EventSource(`${API_BASE_URL}/executions/${executionId}/stream`);
 
+  // Track nodes that have already propagated to prevent duplicate cascades
+  const propagatedNodeIds = new Set<string>();
+
   set({ eventSource });
 
   eventSource.onmessage = (event) => {
@@ -36,7 +39,9 @@ export function createExecutionSubscription(
       const workflowStore = useWorkflowStore.getState();
 
       // Update node statuses from execution data
-      for (const nodeResult of data.nodeResults || []) {
+      // Only process changed nodeResults if delta updates are available
+      const nodeResults = data.nodeResults || [];
+      for (const nodeResult of nodeResults) {
         const nodeStatus = statusMap[nodeResult.status] ?? NODE_STATUS.idle;
         const isSuccess = nodeResult.status === 'complete' || nodeResult.status === 'succeeded';
 
@@ -49,11 +54,13 @@ export function createExecutionSubscription(
         });
 
         // Propagate output to downstream nodes when complete
-        // Check both 'complete' and 'succeeded' as backend may use either
+        // Only propagate if this node hasn't been propagated yet in this execution
         if (
           (nodeResult.status === 'complete' || nodeResult.status === 'succeeded') &&
-          nodeResult.output
+          nodeResult.output &&
+          !propagatedNodeIds.has(nodeResult.nodeId)
         ) {
+          propagatedNodeIds.add(nodeResult.nodeId);
           workflowStore.propagateOutputsDownstream(nodeResult.nodeId);
         }
 
@@ -124,6 +131,8 @@ export function createExecutionSubscription(
       const isDone = isComplete || (hasFailedNode && !hasPendingNodes && !hasProcessingNodes);
 
       if (isDone) {
+        // Clear propagated nodes tracking when execution completes
+        propagatedNodeIds.clear();
         eventSource.close();
         set({ isRunning: false, eventSource: null, currentNodeId: null, jobs: new Map() });
 

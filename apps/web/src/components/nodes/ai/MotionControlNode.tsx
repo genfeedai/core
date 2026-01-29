@@ -6,8 +6,9 @@ import type {
   MotionControlMode,
   MotionControlNodeData,
 } from '@genfeedai/types';
+import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { AlertCircle, Expand, Play, RefreshCw, Video } from 'lucide-react';
+import { AlertCircle, Expand, Loader2, Play, RefreshCw, Video } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { Button } from '@/components/ui/button';
@@ -125,8 +126,9 @@ function MotionControlNodeComponent(props: NodeProps) {
   );
 
   const handleGenerate = useCallback(() => {
+    updateNodeData(id, { status: NODE_STATUS.processing });
     executeNode(id);
-  }, [id, executeNode]);
+  }, [id, executeNode, updateNodeData]);
 
   const handleExpand = useCallback(() => {
     openNodeDetailModal(id, 'preview');
@@ -303,14 +305,18 @@ function MotionControlNodeComponent(props: NodeProps) {
         )}
 
         {/* Generate Button */}
-        {!nodeData.outputVideo && nodeData.status !== 'processing' && (
+        {!nodeData.outputVideo && (
           <button
             onClick={handleGenerate}
-            disabled={!hasRequiredInputs}
+            disabled={!hasRequiredInputs || nodeData.status === 'processing'}
             className="w-full py-2 bg-[var(--primary)] text-white rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Play className="w-4 h-4" />
-            Generate Motion
+            {nodeData.status === 'processing' ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Play className="w-4 h-4" />
+            )}
+            {nodeData.status === 'processing' ? 'Generating...' : 'Generate Motion'}
           </button>
         )}
 

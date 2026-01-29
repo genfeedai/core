@@ -2,8 +2,9 @@
 
 import { LUMA_ASPECT_RATIOS } from '@genfeedai/core';
 import type { GridPosition, LumaAspectRatio, ResizeNodeData } from '@genfeedai/types';
+import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { ImageIcon, RefreshCw, Video } from 'lucide-react';
+import { ImageIcon, Loader2, RefreshCw, Video } from 'lucide-react';
 import Image from 'next/image';
 import { memo, useCallback } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
@@ -68,8 +69,9 @@ function ResizeNodeComponent(props: NodeProps) {
   );
 
   const handleProcess = useCallback(() => {
+    updateNodeData(id, { status: NODE_STATUS.processing });
     executeNode(id);
-  }, [id, executeNode]);
+  }, [id, executeNode, updateNodeData]);
 
   return (
     <BaseNode {...props}>
@@ -164,14 +166,17 @@ function ResizeNodeComponent(props: NodeProps) {
         )}
 
         {/* Process Button */}
-        {!nodeData.outputMedia && nodeData.status !== 'processing' && (
+        {!nodeData.outputMedia && (
           <button
             onClick={handleProcess}
-            disabled={!nodeData.inputMedia}
-            className="mt-1 w-full py-2 rounded-md text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!nodeData.inputMedia || nodeData.status === 'processing'}
+            className="mt-1 w-full py-2 rounded-md text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
             style={{ backgroundColor: 'var(--node-color)', color: 'var(--background)' }}
           >
-            Resize {mediaType === 'video' ? 'Video' : 'Image'}
+            {nodeData.status === 'processing' && <Loader2 className="h-4 w-4 animate-spin" />}
+            {nodeData.status === 'processing'
+              ? 'Resizing...'
+              : `Resize ${mediaType === 'video' ? 'Video' : 'Image'}`}
           </button>
         )}
       </div>

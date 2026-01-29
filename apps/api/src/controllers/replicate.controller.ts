@@ -1,3 +1,9 @@
+import type { GenerateImageDto } from '@/dto/generate-image.dto';
+import type { GenerateTextDto } from '@/dto/generate-text.dto';
+import type { GenerateVideoDto } from '@/dto/generate-video.dto';
+import type { ProcessDto } from '@/dto/process.dto';
+import { FilesService } from '@/services/files.service';
+import { ReplicateService } from '@/services/replicate.service';
 import {
   Body,
   Controller,
@@ -9,12 +15,6 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import type { GenerateImageDto } from '@/dto/generate-image.dto';
-import type { GenerateTextDto } from '@/dto/generate-text.dto';
-import type { GenerateVideoDto } from '@/dto/generate-video.dto';
-import type { ProcessDto } from '@/dto/process.dto';
-import { FilesService } from '@/services/files.service';
-import { ReplicateService } from '@/services/replicate.service';
 
 @Controller('replicate')
 export class ReplicateController {
@@ -32,22 +32,22 @@ export class ReplicateController {
       dto.nodeId,
       dto.model,
       {
-        prompt: dto.prompt,
-        inputImages: dto.inputImages,
         aspectRatio: dto.aspectRatio,
-        resolution: dto.resolution,
-        outputFormat: dto.outputFormat,
-        selectedModel: dto.selectedModel,
-        schemaParams: dto.schemaParams,
         debugMode: dto.debugMode,
+        inputImages: dto.inputImages,
+        outputFormat: dto.outputFormat,
+        prompt: dto.prompt,
+        resolution: dto.resolution,
+        schemaParams: dto.schemaParams,
+        selectedModel: dto.selectedModel,
       }
     );
 
     return {
+      debugPayload: prediction.debugPayload,
+      output: prediction.debugPayload ? prediction.output : undefined,
       predictionId: prediction.id,
       status: prediction.status,
-      output: prediction.debugPayload ? prediction.output : undefined,
-      debugPayload: prediction.debugPayload,
     };
   }
 
@@ -58,36 +58,36 @@ export class ReplicateController {
       dto.nodeId,
       dto.model,
       {
-        prompt: dto.prompt,
+        aspectRatio: dto.aspectRatio,
+        debugMode: dto.debugMode,
+        duration: dto.duration,
+        generateAudio: dto.generateAudio,
         image: dto.image,
         lastFrame: dto.lastFrame,
-        referenceImages: dto.referenceImages,
-        duration: dto.duration,
-        aspectRatio: dto.aspectRatio,
-        resolution: dto.resolution,
-        generateAudio: dto.generateAudio,
         negativePrompt: dto.negativePrompt,
+        prompt: dto.prompt,
+        referenceImages: dto.referenceImages,
+        resolution: dto.resolution,
+        schemaParams: dto.schemaParams,
         seed: dto.seed,
         selectedModel: dto.selectedModel,
-        schemaParams: dto.schemaParams,
-        debugMode: dto.debugMode,
       }
     );
 
     return {
+      debugPayload: prediction.debugPayload,
+      output: prediction.debugPayload ? prediction.output : undefined,
       predictionId: prediction.id,
       status: prediction.status,
-      output: prediction.debugPayload ? prediction.output : undefined,
-      debugPayload: prediction.debugPayload,
     };
   }
 
   @Post('llm')
   async generateText(@Body() dto: GenerateTextDto) {
     const output = await this.replicateService.generateText({
+      maxTokens: dto.maxTokens,
       prompt: dto.prompt,
       systemPrompt: dto.systemPrompt,
-      maxTokens: dto.maxTokens,
       temperature: dto.temperature,
       topP: dto.topP,
     });
@@ -107,18 +107,18 @@ export class ReplicateController {
         // Unified reframe node - detect input type
         if (dto.inputType === 'video') {
           prediction = await this.replicateService.reframeVideo(dto.executionId, dto.nodeId, {
-            video: dto.video!,
             aspectRatio: dto.aspectRatio!,
-            prompt: dto.prompt,
             gridPosition: dto.gridPosition,
+            prompt: dto.prompt,
+            video: dto.video!,
           });
         } else {
           prediction = await this.replicateService.reframeImage(dto.executionId, dto.nodeId, {
-            image: dto.image!,
             aspectRatio: dto.aspectRatio!,
+            gridPosition: dto.gridPosition,
+            image: dto.image!,
             model: dto.model,
             prompt: dto.prompt,
-            gridPosition: dto.gridPosition,
           });
         }
         break;
@@ -127,19 +127,19 @@ export class ReplicateController {
         // Unified upscale node - detect input type
         if (dto.inputType === 'video') {
           prediction = await this.replicateService.upscaleVideo(dto.executionId, dto.nodeId, {
-            video: dto.video!,
-            targetResolution: dto.targetResolution ?? '1080p',
             targetFps: dto.targetFps ?? 30,
+            targetResolution: dto.targetResolution ?? '1080p',
+            video: dto.video!,
           });
         } else {
           prediction = await this.replicateService.upscaleImage(dto.executionId, dto.nodeId, {
-            image: dto.image!,
             enhanceModel: dto.enhanceModel ?? 'Standard V2',
-            upscaleFactor: dto.upscaleFactor ?? '2x',
-            outputFormat: dto.outputFormat ?? 'jpg',
             faceEnhancement: dto.faceEnhancement,
-            faceEnhancementStrength: dto.faceEnhancementStrength,
             faceEnhancementCreativity: dto.faceEnhancementCreativity,
+            faceEnhancementStrength: dto.faceEnhancementStrength,
+            image: dto.image!,
+            outputFormat: dto.outputFormat ?? 'jpg',
+            upscaleFactor: dto.upscaleFactor ?? '2x',
           });
         }
         break;
@@ -175,7 +175,11 @@ export class ReplicateController {
               urls[0],
               predictionId
             );
-            savedOutput = { image: saved.url, images: [saved.url], localPath: saved.path };
+            savedOutput = {
+              image: saved.url,
+              images: [saved.url],
+              localPath: saved.path,
+            };
             this.logger.log(`Saved output to ${saved.path}`);
           } else {
             const savedFiles = await this.filesService.downloadAndSaveMultipleOutputs(
@@ -199,15 +203,19 @@ export class ReplicateController {
             output,
             predictionId
           );
-          savedOutput = { image: saved.url, images: [saved.url], localPath: saved.path };
+          savedOutput = {
+            image: saved.url,
+            images: [saved.url],
+            localPath: saved.path,
+          };
           this.logger.log(`Saved output to ${saved.path}`);
         }
 
         return {
-          id: prediction.id,
-          status: prediction.status,
-          output: savedOutput,
           error: prediction.error,
+          id: prediction.id,
+          output: savedOutput,
+          status: prediction.status,
         };
       } catch (saveError) {
         this.logger.error(`Failed to save output: ${(saveError as Error).message}`);
@@ -216,10 +224,10 @@ export class ReplicateController {
     }
 
     return {
-      id: prediction.id,
-      status: prediction.status,
-      output: prediction.output,
       error: prediction.error,
+      id: prediction.id,
+      output: prediction.output,
+      status: prediction.status,
     };
   }
 

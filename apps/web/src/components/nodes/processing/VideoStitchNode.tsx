@@ -1,8 +1,9 @@
 'use client';
 
 import type { AudioCodec, TransitionType, VideoStitchNodeData } from '@genfeedai/types';
+import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { Layers, RefreshCw, Zap } from 'lucide-react';
+import { Layers, Loader2, RefreshCw, Zap } from 'lucide-react';
 import { memo, useCallback } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -86,8 +87,9 @@ function VideoStitchNodeComponent(props: NodeProps) {
   );
 
   const handleProcess = useCallback(() => {
+    updateNodeData(id, { status: NODE_STATUS.processing });
     executeNode(id);
-  }, [id, executeNode]);
+  }, [id, executeNode, updateNodeData]);
 
   return (
     <BaseNode {...props}>
@@ -216,14 +218,18 @@ function VideoStitchNodeComponent(props: NodeProps) {
         )}
 
         {/* Process Button */}
-        {!nodeData.outputVideo && nodeData.status !== 'processing' && (
+        {!nodeData.outputVideo && (
           <button
             onClick={handleProcess}
-            disabled={inputVideos.length < 2}
+            disabled={inputVideos.length < 2 || nodeData.status === 'processing'}
             className="w-full py-2 bg-[var(--primary)] text-white rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Layers className="w-4 h-4" />
-            Stitch Videos
+            {nodeData.status === 'processing' ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Layers className="w-4 h-4" />
+            )}
+            {nodeData.status === 'processing' ? 'Stitching...' : 'Stitch Videos'}
           </button>
         )}
 

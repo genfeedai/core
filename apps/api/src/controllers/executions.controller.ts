@@ -50,14 +50,36 @@ export class ExecutionsController {
 
   /**
    * SSE endpoint for real-time execution status updates
+   * Uses delta updates to only send changed nodeResults, preventing duplicate cascades
    */
   @Sse('executions/:id/stream')
   streamExecution(@Param('id') id: string): Observable<SseMessage> {
+    // Track previous node statuses to compute delta updates
+    const previousNodeStatuses = new Map<string, string>();
+
     // Poll every 1 second and emit status until execution completes
     return interval(1000).pipe(
       startWith(0),
       switchMap(() => from(this.getExecutionWithJobs(id))),
-      map((data) => ({ data: JSON.stringify(data) })),
+      map((data) => {
+        // Filter to only include nodeResults whose status has changed
+        const changedNodeResults = (data.nodeResults || []).filter(
+          (nr: { nodeId: string; status: string }) => {
+            const prevStatus = previousNodeStatuses.get(nr.nodeId);
+            const hasChanged = prevStatus !== nr.status;
+            previousNodeStatuses.set(nr.nodeId, nr.status);
+            return hasChanged;
+          }
+        );
+
+        return {
+          data: JSON.stringify({
+            ...data,
+            // Only send changed nodeResults (delta update)
+            nodeResults: changedNodeResults,
+          }),
+        };
+      }),
       takeWhile((msg) => {
         const data = JSON.parse(msg.data);
         return !['completed', 'failed', 'cancelled'].includes(data.status);

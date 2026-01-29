@@ -109,34 +109,123 @@ export class WorkflowProcessor extends WorkerHost {
       }
 
       // If selectedNodeIds is provided, compute the set of nodes to execute
-      // This includes selected nodes AND their required dependencies
+      // This includes selected nodes AND their required dependencies (that don't have cached output)
       const selectedNodeSet =
         selectedNodeIds && selectedNodeIds.length > 0 ? new Set(selectedNodeIds) : null;
 
-      // Helper to get all dependencies recursively (for partial execution)
-      const getAllDependencies = (nodeId: string, visited = new Set<string>()): Set<string> => {
+      // Helper to check if a node already has output cached in its data
+      const hasExistingOutput = (node: WorkflowNode): boolean => {
+        const data = node.data || {};
+        // Check for common output fields across node types
+        return !!(
+          data.outputImage ||
+          data.outputImages?.length ||
+          data.outputVideo ||
+          data.outputAudio ||
+          data.outputText ||
+          data.output
+        );
+      };
+
+      // Helper to convert node.data output format to execution output format
+      // Node data stores: outputImage, outputVideo, etc.
+      // Execution expects: output, text, etc. (accessed via sourceHandle)
+      const getExecutionOutputFormat = (node: WorkflowNode): Record<string, unknown> => {
+        const data = node.data || {};
+        const result: Record<string, unknown> = {};
+
+        // Map outputImage/outputImages -> output/outputs (image nodes use 'output' handle)
+        if (data.outputImage) {
+          result.output = data.outputImage;
+        }
+        if (data.outputImages?.length) {
+          result.outputs = data.outputImages;
+          result.images = data.outputImages;
+          // Also set output to first image for single-image consumers
+          if (!result.output && data.outputImages[0]) {
+            result.output = data.outputImages[0];
+          }
+        }
+
+        // Map outputVideo -> output (video nodes use 'output' handle)
+        if (data.outputVideo) {
+          result.output = data.outputVideo;
+          result.video = data.outputVideo;
+        }
+
+        // Map outputAudio -> output (audio nodes use 'output' handle)
+        if (data.outputAudio) {
+          result.output = data.outputAudio;
+          result.audio = data.outputAudio;
+        }
+
+        // Map outputText -> text (LLM nodes use 'text' handle)
+        if (data.outputText) {
+          result.text = data.outputText;
+        }
+
+        // Keep output as-is if already in correct format
+        if (data.output) {
+          result.output = data.output;
+        }
+
+        return result;
+      };
+
+      // Track nodes with cached output that should be marked complete but not re-executed
+      const cachedOutputNodeIds = new Set<string>();
+
+      // Helper to get dependencies that need execution (don't have cached output)
+      const getDependenciesToExecute = (
+        nodeId: string,
+        visited = new Set<string>()
+      ): Set<string> => {
         if (visited.has(nodeId)) return visited;
         visited.add(nodeId);
+
         const deps = dependencyMap.get(nodeId) ?? [];
-        for (const dep of deps) {
-          getAllDependencies(dep, visited);
+        for (const depId of deps) {
+          const depNode = nodes.find((n) => n.id === depId);
+          if (!depNode) continue;
+
+          // If dependency has cached output, mark it but don't add to execution
+          if (hasExistingOutput(depNode) && !selectedNodeSet?.has(depId)) {
+            cachedOutputNodeIds.add(depId);
+          } else {
+            // Dependency needs execution, recurse to its dependencies
+            getDependenciesToExecute(depId, visited);
+          }
         }
         return visited;
       };
 
-      // Compute the execution set: selected nodes + all their dependencies
+      // Compute the execution set: selected nodes + dependencies WITHOUT cached output
       let executionSet: Set<string> | null = null;
       if (selectedNodeSet) {
         executionSet = new Set<string>();
         for (const nodeId of selectedNodeSet) {
-          const allDeps = getAllDependencies(nodeId);
-          for (const dep of allDeps) {
+          const depsToExecute = getDependenciesToExecute(nodeId);
+          for (const dep of depsToExecute) {
             executionSet.add(dep);
           }
         }
         this.logger.log(
-          `Partial execution: ${selectedNodeSet.size} selected, ${executionSet.size} total with deps`
+          `Partial execution: ${selectedNodeSet.size} selected, ${executionSet.size} to execute, ${cachedOutputNodeIds.size} cached`
         );
+      }
+
+      // Mark cached output nodes as complete first (their outputs are already available)
+      for (const nodeId of cachedOutputNodeIds) {
+        const node = nodes.find((n) => n.id === nodeId);
+        if (node) {
+          // Convert node.data output format to execution output format
+          const executionOutput = getExecutionOutputFormat(node);
+          await this.executionsService.updateNodeResult(executionId, nodeId, 'complete', {
+            ...executionOutput,
+            cached: true,
+          });
+          this.logger.log(`Using cached output for node ${nodeId} (${node.type})`);
+        }
       }
 
       for (const nodeId of executionOrder) {
@@ -149,15 +238,23 @@ export class WorkflowProcessor extends WorkerHost {
           continue;
         }
 
+        // Skip nodes with cached output - already marked complete above
+        if (cachedOutputNodeIds.has(nodeId)) {
+          continue;
+        }
+
         // For partial execution, skip nodes not in the execution set
         if (executionSet && !executionSet.has(nodeId)) {
           continue;
         }
 
-        // Filter out passthrough nodes from dependencies since they're already complete
+        // Filter out passthrough nodes and cached nodes from dependencies since they're already complete
         // Also filter out nodes not in the execution set (for partial execution)
         const dependsOn = (dependencyMap.get(nodeId) ?? []).filter(
-          (depId) => !passthroughNodeIds.has(depId) && (!executionSet || executionSet.has(depId))
+          (depId) =>
+            !passthroughNodeIds.has(depId) &&
+            !cachedOutputNodeIds.has(depId) &&
+            (!executionSet || executionSet.has(depId))
         );
         pendingNodes.push({
           nodeId: node.id,

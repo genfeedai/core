@@ -1,8 +1,9 @@
 'use client';
 
 import type { TextToSpeechNodeData, TTSProvider, TTSVoice } from '@genfeedai/types';
+import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { AlertTriangle, AudioLines, RefreshCw, Volume2 } from 'lucide-react';
+import { AlertTriangle, AudioLines, Loader2, RefreshCw, Volume2 } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { Button } from '@/components/ui/button';
@@ -86,8 +87,9 @@ function TextToSpeechNodeComponent(props: NodeProps) {
   );
 
   const handleGenerate = useCallback(() => {
+    updateNodeData(id, { status: NODE_STATUS.processing });
     executeNode(id);
-  }, [id, executeNode]);
+  }, [id, executeNode, updateNodeData]);
 
   const hasInput = Boolean(nodeData.inputText);
 
@@ -218,14 +220,18 @@ function TextToSpeechNodeComponent(props: NodeProps) {
         {nodeData.outputAudio && <audio src={nodeData.outputAudio} controls className="w-full" />}
 
         {/* Generate Button */}
-        {!nodeData.outputAudio && nodeData.status !== 'processing' && (
+        {!nodeData.outputAudio && (
           <button
             onClick={handleGenerate}
-            disabled={!hasInput || !TTS_ENABLED}
+            disabled={!hasInput || !TTS_ENABLED || nodeData.status === 'processing'}
             className="w-full py-2 bg-[var(--primary)] text-white rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Volume2 className="w-4 h-4" />
-            Generate Speech
+            {nodeData.status === 'processing' ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Volume2 className="w-4 h-4" />
+            )}
+            {nodeData.status === 'processing' ? 'Generating...' : 'Generate Speech'}
           </button>
         )}
 

@@ -1,8 +1,9 @@
 'use client';
 
 import type { TranscribeLanguage, TranscribeNodeData } from '@genfeedai/types';
+import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { AlertCircle, Expand, FileText, RefreshCw } from 'lucide-react';
+import { AlertCircle, Expand, FileText, Loader2, RefreshCw } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { Button } from '@/components/ui/button';
@@ -59,8 +60,9 @@ function TranscribeNodeComponent(props: NodeProps) {
   );
 
   const handleTranscribe = useCallback(() => {
+    updateNodeData(id, { status: NODE_STATUS.processing });
     executeNode(id);
-  }, [id, executeNode]);
+  }, [id, executeNode, updateNodeData]);
 
   const handleExpand = useCallback(() => {
     openNodeDetailModal(id, 'preview');
@@ -137,14 +139,18 @@ function TranscribeNodeComponent(props: NodeProps) {
         )}
 
         {/* Transcribe Button */}
-        {!nodeData.outputText && nodeData.status !== 'processing' && (
+        {!nodeData.outputText && (
           <button
             onClick={handleTranscribe}
-            disabled={!hasInput}
+            disabled={!hasInput || nodeData.status === 'processing'}
             className="w-full py-2 bg-[var(--primary)] text-white rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <FileText className="w-4 h-4" />
-            Transcribe
+            {nodeData.status === 'processing' ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <FileText className="w-4 h-4" />
+            )}
+            {nodeData.status === 'processing' ? 'Transcribing...' : 'Transcribe'}
           </button>
         )}
 

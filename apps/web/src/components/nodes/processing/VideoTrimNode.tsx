@@ -1,8 +1,9 @@
 'use client';
 
 import type { VideoTrimNodeData } from '@genfeedai/types';
+import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { AlertCircle, Expand, RefreshCw, Scissors } from 'lucide-react';
+import { AlertCircle, Expand, Loader2, RefreshCw, Scissors } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { Button } from '@/components/ui/button';
@@ -62,8 +63,9 @@ function VideoTrimNodeComponent(props: NodeProps) {
   );
 
   const handleProcess = useCallback(() => {
+    updateNodeData(id, { status: NODE_STATUS.processing });
     executeNode(id);
-  }, [id, executeNode]);
+  }, [id, executeNode, updateNodeData]);
 
   const handleExpand = useCallback(() => {
     openNodeDetailModal(id, 'preview');
@@ -166,14 +168,18 @@ function VideoTrimNodeComponent(props: NodeProps) {
         )}
 
         {/* Process Button */}
-        {!nodeData.outputVideo && nodeData.status !== 'processing' && (
+        {!nodeData.outputVideo && (
           <button
             onClick={handleProcess}
-            disabled={!hasRequiredInputs}
+            disabled={!hasRequiredInputs || nodeData.status === 'processing'}
             className="w-full py-2 bg-[var(--primary)] text-white rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Scissors className="w-4 h-4" />
-            Trim Video
+            {nodeData.status === 'processing' ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Scissors className="w-4 h-4" />
+            )}
+            {nodeData.status === 'processing' ? 'Trimming...' : 'Trim Video'}
           </button>
         )}
 

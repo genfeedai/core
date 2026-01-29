@@ -1,6 +1,3 @@
-import { readdir, stat } from 'node:fs/promises';
-import path from 'node:path';
-import { NextResponse } from 'next/server';
 import {
   AUDIO_EXTENSIONS,
   type GalleryItem,
@@ -9,65 +6,69 @@ import {
   MIME_TYPES,
   VIDEO_EXTENSIONS,
 } from '@/lib/gallery/types';
+import { NextResponse } from 'next/server';
+import { readdir, stat } from 'node:fs/promises';
+import path from 'node:path';
 
-const OUTPUT_DIR = path.resolve(process.cwd(), '../../output');
+const DATA_DIR = path.resolve(process.cwd(), '../../data/workflows');
 
-async function getFilesFromDirectory(
-  dirPath: string,
-  relativePath: string,
-  type: 'image' | 'video' | 'audio'
-): Promise<GalleryItem[]> {
+function getFileType(ext: string): 'image' | 'video' | 'audio' | null {
+  if ((IMAGE_EXTENSIONS as readonly string[]).includes(ext)) return 'image';
+  if ((VIDEO_EXTENSIONS as readonly string[]).includes(ext)) return 'video';
+  if ((AUDIO_EXTENSIONS as readonly string[]).includes(ext)) return 'audio';
+  return null;
+}
+
+async function getFilesFromWorkflowOutput(workflowId: string): Promise<GalleryItem[]> {
   const items: GalleryItem[] = [];
-  const extensionMap = {
-    image: IMAGE_EXTENSIONS,
-    video: VIDEO_EXTENSIONS,
-    audio: AUDIO_EXTENSIONS,
-  };
-  const extensions: readonly string[] = extensionMap[type];
+  const outputDir = path.join(DATA_DIR, workflowId, 'output');
 
   try {
-    const files = await readdir(dirPath);
+    const files = await readdir(outputDir);
 
     for (const file of files) {
       const ext = path.extname(file).toLowerCase();
-      if (!extensions.includes(ext)) continue;
+      const type = getFileType(ext);
+      if (!type) continue;
 
-      const filePath = path.join(dirPath, file);
+      const filePath = path.join(outputDir, file);
       const fileStat = await stat(filePath);
 
       if (!fileStat.isFile()) continue;
 
+      const relativePath = `${workflowId}/output/${file}`;
       items.push({
-        id: Buffer.from(`${relativePath}/${file}`).toString('base64url'),
-        name: file,
-        path: `${relativePath}/${file}`,
-        type,
-        size: fileStat.size,
+        id: Buffer.from(relativePath).toString('base64url'),
         mimeType: MIME_TYPES[ext] || 'application/octet-stream',
         modifiedAt: fileStat.mtime.toISOString(),
+        name: file,
+        path: relativePath,
+        size: fileStat.size,
+        type,
       });
     }
   } catch {
-    // Directory doesn't exist or is not readable
+    // Output directory doesn't exist or is not readable
   }
 
   return items;
 }
 
 export async function GET(): Promise<NextResponse<GalleryResponse>> {
-  const imagesDir = path.join(OUTPUT_DIR, 'images');
-  const videosDir = path.join(OUTPUT_DIR, 'videos');
-  const audioDir = path.join(OUTPUT_DIR, 'audio');
+  let workflowIds: string[] = [];
 
-  const [images, videos, audio] = await Promise.all([
-    getFilesFromDirectory(imagesDir, 'images', 'image'),
-    getFilesFromDirectory(videosDir, 'videos', 'video'),
-    getFilesFromDirectory(audioDir, 'audio', 'audio'),
-  ]);
+  try {
+    workflowIds = await readdir(DATA_DIR);
+  } catch {
+    // Data directory doesn't exist
+    return NextResponse.json({ items: [], total: 0 });
+  }
 
-  const items = [...images, ...videos, ...audio].sort(
-    (a, b) => new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime()
-  );
+  const allItems = await Promise.all(workflowIds.map((id) => getFilesFromWorkflowOutput(id)));
+
+  const items = allItems
+    .flat()
+    .sort((a, b) => new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime());
 
   return NextResponse.json({
     items,

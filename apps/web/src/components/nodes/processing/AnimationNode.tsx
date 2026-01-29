@@ -1,8 +1,9 @@
 'use client';
 
 import type { AnimationNodeData, EasingPreset } from '@genfeedai/types';
+import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { AlertCircle, Expand, RefreshCw, Wand2 } from 'lucide-react';
+import { AlertCircle, Expand, Loader2, RefreshCw, Wand2 } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { Button } from '@/components/ui/button';
@@ -72,8 +73,9 @@ function AnimationNodeComponent(props: NodeProps) {
   );
 
   const handleProcess = useCallback(() => {
+    updateNodeData(id, { status: NODE_STATUS.processing });
     executeNode(id);
-  }, [id, executeNode]);
+  }, [id, executeNode, updateNodeData]);
 
   const handleExpand = useCallback(() => {
     openNodeDetailModal(id, 'preview');
@@ -204,15 +206,19 @@ function AnimationNodeComponent(props: NodeProps) {
         )}
 
         {/* Process Button */}
-        {!nodeData.outputVideo && nodeData.status !== 'processing' && (
+        {!nodeData.outputVideo && (
           <button
             onClick={handleProcess}
-            disabled={!hasRequiredInputs}
+            disabled={!hasRequiredInputs || nodeData.status === 'processing'}
             className="w-full py-2 rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ backgroundColor: 'var(--node-color)', color: 'var(--background)' }}
           >
-            <Wand2 className="w-4 h-4" />
-            Apply Animation
+            {nodeData.status === 'processing' ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Wand2 className="w-4 h-4" />
+            )}
+            {nodeData.status === 'processing' ? 'Applying...' : 'Apply Animation'}
           </button>
         )}
 

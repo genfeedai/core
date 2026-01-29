@@ -1,6 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import type { CreateTemplateDto } from '@/dto/create-template.dto';
 import { TemplatesService } from '@/services/templates.service';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 
 @Controller('templates')
 export class TemplatesController {

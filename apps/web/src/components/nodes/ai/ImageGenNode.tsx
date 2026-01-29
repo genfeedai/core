@@ -1,6 +1,7 @@
 'use client';
 
 import type { ImageGenNodeData, ImageModel } from '@genfeedai/types';
+import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import {
   AlertCircle,
@@ -12,7 +13,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import Image from 'next/image';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ModelBrowserModal } from '@/components/models/ModelBrowserModal';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { SchemaInputs } from '@/components/nodes/SchemaInputs';
@@ -32,6 +33,12 @@ const MODELS: { value: ImageModel; label: string }[] = [
 const IMAGE_MODEL_MAP: Record<string, ImageModel> = {
   'google/nano-banana': 'nano-banana',
   'google/nano-banana-pro': 'nano-banana-pro',
+};
+
+// Reverse map: internal model type -> API model ID
+const INTERNAL_TO_MODEL_ID: Record<ImageModel, string> = {
+  'nano-banana': 'google/nano-banana',
+  'nano-banana-pro': 'google/nano-banana-pro',
 };
 
 function ImageGenNodeComponent(props: NodeProps) {
@@ -76,6 +83,47 @@ function ImageGenNodeComponent(props: NodeProps) {
     fallbackModel: 'nano-banana-pro',
   });
 
+  // Track if we've already attempted to load the default model schema
+  const hasAttemptedSchemaLoad = useRef(false);
+
+  // Auto-load schema for default model if selectedModel is not set
+  useEffect(() => {
+    // Only run once per node, and only if we have a model but no selectedModel
+    if (hasAttemptedSchemaLoad.current || nodeData.selectedModel || !nodeData.model) {
+      return;
+    }
+
+    hasAttemptedSchemaLoad.current = true;
+
+    const modelId = INTERNAL_TO_MODEL_ID[nodeData.model];
+    if (!modelId) return;
+
+    const controller = new AbortController();
+
+    const loadSchema = async () => {
+      try {
+        const response = await fetch(`/api/providers/models?query=${encodeURIComponent(modelId)}`, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const model = data.models?.find((m: { id: string }) => m.id === modelId);
+
+        if (model) {
+          handleModelSelect(model);
+        }
+      } catch {
+        // Ignore abort errors and other failures
+      }
+    };
+
+    loadSchema();
+
+    return () => controller.abort();
+  }, [nodeData.model, nodeData.selectedModel, handleModelSelect]);
+
   // Get schema properties from selected model
   const schemaProperties = useMemo(() => {
     const schema = nodeData.selectedModel?.inputSchema as
@@ -119,8 +167,9 @@ function ImageGenNodeComponent(props: NodeProps) {
   );
 
   const handleGenerate = useCallback(() => {
+    updateNodeData(id, { status: NODE_STATUS.processing });
     executeNode(id);
-  }, [id, executeNode]);
+  }, [id, executeNode, updateNodeData]);
 
   const handleExpand = useCallback(() => {
     openNodeDetailModal(id, 'preview');
@@ -312,19 +361,21 @@ function ImageGenNodeComponent(props: NodeProps) {
         )}
 
         {/* Generate Button (when no output) */}
-        {!nodeData.outputImage &&
-          !(nodeData.outputImages?.length > 0) &&
-          nodeData.status !== 'processing' && (
-            <button
-              onClick={handleGenerate}
-              disabled={!hasRequiredInputs}
-              className="w-full py-2 rounded-md text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-              style={{ backgroundColor: 'var(--node-color)', color: 'var(--background)' }}
-            >
+        {!nodeData.outputImage && !(nodeData.outputImages?.length > 0) && (
+          <button
+            onClick={handleGenerate}
+            disabled={!hasRequiredInputs || nodeData.status === 'processing'}
+            className="w-full py-2 rounded-md text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+            style={{ backgroundColor: 'var(--node-color)', color: 'var(--background)' }}
+          >
+            {nodeData.status === 'processing' ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
               <Sparkles className="h-4 w-4" />
-              Generate Image
-            </button>
-          )}
+            )}
+            {nodeData.status === 'processing' ? 'Generating...' : 'Generate Image'}
+          </button>
+        )}
 
         {/* Help text for required inputs */}
         {!hasRequiredInputs && nodeData.status !== 'processing' && (

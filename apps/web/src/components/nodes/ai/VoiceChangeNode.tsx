@@ -1,8 +1,9 @@
 'use client';
 
 import type { VoiceChangeNodeData } from '@genfeedai/types';
+import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { AudioLines, Expand, RefreshCw, Video } from 'lucide-react';
+import { AudioLines, Expand, Loader2, RefreshCw, Video } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { Button } from '@/components/ui/button';
@@ -36,8 +37,9 @@ function VoiceChangeNodeComponent(props: NodeProps) {
   );
 
   const handleProcess = useCallback(() => {
+    updateNodeData(id, { status: NODE_STATUS.processing });
     executeNode(id);
-  }, [id, executeNode]);
+  }, [id, executeNode, updateNodeData]);
 
   const handleExpand = useCallback(() => {
     openNodeDetailModal(id, 'preview');
@@ -119,14 +121,22 @@ function VoiceChangeNodeComponent(props: NodeProps) {
         )}
 
         {/* Process Button */}
-        {!nodeData.outputVideo && nodeData.status !== 'processing' && (
+        {!nodeData.outputVideo && (
           <button
             onClick={handleProcess}
-            disabled={!hasRequiredInputs}
+            disabled={!hasRequiredInputs || nodeData.status === 'processing'}
             className="w-full py-2 bg-[var(--primary)] text-white rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Video className="w-4 h-4" />
-            {nodeData.preserveOriginalAudio ? 'Mix Audio' : 'Replace Audio'}
+            {nodeData.status === 'processing' ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Video className="w-4 h-4" />
+            )}
+            {nodeData.status === 'processing'
+              ? 'Processing...'
+              : nodeData.preserveOriginalAudio
+                ? 'Mix Audio'
+                : 'Replace Audio'}
           </button>
         )}
 

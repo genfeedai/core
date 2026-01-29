@@ -15,8 +15,9 @@ import { useExecutionStore } from '@/store/executionStore';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
 import type { LipSyncMode, LipSyncModel, LipSyncNodeData } from '@genfeedai/types';
+import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { Expand, Mic, RefreshCw, Video } from 'lucide-react';
+import { Expand, Loader2, Mic, RefreshCw, Video } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 
 const MODELS: { value: LipSyncModel; label: string; supportsImage: boolean }[] = [
@@ -73,8 +74,9 @@ function LipSyncNodeComponent(props: NodeProps) {
   );
 
   const handleGenerate = useCallback(() => {
+    updateNodeData(id, { status: NODE_STATUS.processing });
     executeNode(id);
-  }, [id, executeNode]);
+  }, [id, executeNode, updateNodeData]);
 
   const handleExpand = useCallback(() => {
     openNodeDetailModal(id, 'preview');
@@ -193,14 +195,18 @@ function LipSyncNodeComponent(props: NodeProps) {
         )}
 
         {/* Generate Button */}
-        {!nodeData.outputVideo && nodeData.status !== 'processing' && (
+        {!nodeData.outputVideo && (
           <button
             onClick={handleGenerate}
-            disabled={!hasRequiredInputs}
+            disabled={!hasRequiredInputs || nodeData.status === 'processing'}
             className="w-full py-2 bg-[var(--primary)] text-white rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Video className="w-4 h-4" />
-            Generate Lip Sync
+            {nodeData.status === 'processing' ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Video className="w-4 h-4" />
+            )}
+            {nodeData.status === 'processing' ? 'Generating...' : 'Generate Lip Sync'}
           </button>
         )}
 

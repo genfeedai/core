@@ -3,7 +3,7 @@ import path from 'node:path';
 import { type NextRequest, NextResponse } from 'next/server';
 import { MIME_TYPES } from '@/lib/gallery/types';
 
-const OUTPUT_DIR = path.resolve(process.cwd(), '../../output');
+const DATA_DIR = path.resolve(process.cwd(), '../../data/workflows');
 
 export async function GET(
   _request: NextRequest,
@@ -13,8 +13,8 @@ export async function GET(
   const requestedPath = pathSegments.join('/');
 
   // Validate path to prevent directory traversal
-  const filePath = path.resolve(OUTPUT_DIR, requestedPath);
-  if (!filePath.startsWith(OUTPUT_DIR)) {
+  const filePath = path.resolve(DATA_DIR, requestedPath);
+  if (!filePath.startsWith(DATA_DIR)) {
     return new NextResponse('Forbidden', { status: 403 });
   }
 
@@ -49,8 +49,8 @@ export async function DELETE(
   const requestedPath = pathSegments.join('/');
 
   // Validate path to prevent directory traversal
-  const filePath = path.resolve(OUTPUT_DIR, requestedPath);
-  if (!filePath.startsWith(OUTPUT_DIR)) {
+  const filePath = path.resolve(DATA_DIR, requestedPath);
+  if (!filePath.startsWith(DATA_DIR)) {
     return new NextResponse('Forbidden', { status: 403 });
   }
 

@@ -1,8 +1,9 @@
 'use client';
 
 import type { SubtitleNodeData, SubtitlePosition, SubtitleStyle } from '@genfeedai/types';
+import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { RefreshCw, Subtitles } from 'lucide-react';
+import { Loader2, RefreshCw, Subtitles } from 'lucide-react';
 import { memo, useCallback } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import {
@@ -64,8 +65,9 @@ function SubtitleNodeComponent(props: NodeProps) {
   );
 
   const handleProcess = useCallback(() => {
+    updateNodeData(id, { status: NODE_STATUS.processing });
     executeNode(id);
-  }, [id, executeNode]);
+  }, [id, executeNode, updateNodeData]);
 
   const hasRequiredInputs = nodeData.inputVideo && nodeData.inputText;
 
@@ -153,15 +155,19 @@ function SubtitleNodeComponent(props: NodeProps) {
         )}
 
         {/* Process Button */}
-        {!nodeData.outputVideo && nodeData.status !== 'processing' && (
+        {!nodeData.outputVideo && (
           <button
             type="button"
             onClick={handleProcess}
-            disabled={!hasRequiredInputs}
+            disabled={!hasRequiredInputs || nodeData.status === 'processing'}
             className="w-full py-2 bg-[var(--primary)] text-white rounded text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Subtitles className="w-4 h-4" />
-            Burn Subtitles
+            {nodeData.status === 'processing' ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Subtitles className="w-4 h-4" />
+            )}
+            {nodeData.status === 'processing' ? 'Burning...' : 'Burn Subtitles'}
           </button>
         )}
       </div>
