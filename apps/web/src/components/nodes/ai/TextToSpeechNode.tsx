@@ -6,6 +6,14 @@ import { AlertTriangle, AudioLines, Expand, RefreshCw, Volume2 } from 'lucide-re
 import { memo, useCallback, useMemo } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 import { useExecutionStore } from '@/store/executionStore';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
@@ -168,7 +176,7 @@ function TextToSpeechNodeComponent(props: NodeProps) {
             step="0.05"
             value={nodeData.stability}
             onChange={handleStabilityChange}
-            className="w-full h-2 bg-[var(--secondary)] rounded-lg appearance-none cursor-pointer"
+            className="nodrag w-full h-2 bg-[var(--secondary)] rounded-lg appearance-none cursor-pointer"
           />
           <div className="flex justify-between text-[10px] text-[var(--muted-foreground)]">
             <span>Variable</span>
@@ -188,7 +196,7 @@ function TextToSpeechNodeComponent(props: NodeProps) {
             step="0.05"
             value={nodeData.similarityBoost}
             onChange={handleSimilarityChange}
-            className="w-full h-2 bg-[var(--secondary)] rounded-lg appearance-none cursor-pointer"
+            className="nodrag w-full h-2 bg-[var(--secondary)] rounded-lg appearance-none cursor-pointer"
           />
           <div className="flex justify-between text-[10px] text-[var(--muted-foreground)]">
             <span>Low</span>
@@ -208,7 +216,7 @@ function TextToSpeechNodeComponent(props: NodeProps) {
             step="0.1"
             value={nodeData.speed}
             onChange={handleSpeedChange}
-            className="w-full h-2 bg-[var(--secondary)] rounded-lg appearance-none cursor-pointer"
+            className="nodrag w-full h-2 bg-[var(--secondary)] rounded-lg appearance-none cursor-pointer"
           />
         </div>
 

@@ -44,7 +44,7 @@ export const createEdgeSlice: StateCreator<WorkflowStore, [], [], EdgeSlice> = (
   },
 
   onConnect: (connection) => {
-    const { isValidConnection } = get();
+    const { isValidConnection, propagateOutputsDownstream } = get();
     if (!isValidConnection(connection)) return;
 
     set((state) => ({
@@ -58,6 +58,17 @@ export const createEdgeSlice: StateCreator<WorkflowStore, [], [], EdgeSlice> = (
       ) as WorkflowEdge[],
       isDirty: true,
     }));
+
+    // Propagate outputs immediately for input-type nodes (they don't "execute")
+    // This ensures Prompt → TextToSpeech connections work without running the workflow
+    if (connection.source) {
+      const { nodes } = get();
+      const sourceNode = nodes.find((n) => n.id === connection.source);
+      const inputNodeTypes = ['prompt', 'image', 'video', 'audio', 'template', 'tweetParser'];
+      if (sourceNode && inputNodeTypes.includes(sourceNode.type as string)) {
+        propagateOutputsDownstream(connection.source);
+      }
+    }
   },
 
   removeEdge: (edgeId) => {

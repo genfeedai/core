@@ -77,7 +77,7 @@ export function WorkflowCanvas() {
   const { selectNode, setHighlightedNodeIds, highlightedNodeIds, showPalette, togglePalette } =
     useUIStore();
   const { edgeStyle, showMinimap } = useSettingsStore();
-  const { isRunning, currentNodeId } = useExecutionStore();
+  const { isRunning, currentNodeId, executingNodeIds } = useExecutionStore();
 
   // Minimap visibility on pan/zoom (n8n-style)
   const [isMinimapVisible, setIsMinimapVisible] = useState(false);
@@ -241,6 +241,9 @@ export function WorkflowCanvas() {
 
   // Compute edges with highlight/dim classes, data type colors, and execution state
   const styledEdges = useMemo(() => {
+    // For partial execution, determine which nodes are in the execution scope
+    const executionScope = executingNodeIds.length > 0 ? new Set(executingNodeIds) : null;
+
     return edges.map((edge) => {
       // Get the data type for coloring (based on source handle)
       const dataType = getEdgeDataType(edge, nodeMap);
@@ -249,8 +252,12 @@ export function WorkflowCanvas() {
       // Check if this edge targets a disabled input
       const isDisabledTarget = isEdgeTargetingDisabledInput(edge);
 
-      // During execution - all edges show "pipe flow" effect
+      // During execution - show "pipe flow" effect only for relevant edges
       if (isRunning) {
+        // For partial execution, only highlight edges connected to executing nodes
+        const isInExecutionScope =
+          !executionScope || executionScope.has(edge.source) || executionScope.has(edge.target);
+
         // Edge connected to currently executing node gets stronger highlight
         const isExecutingEdge =
           currentNodeId && (edge.source === currentNodeId || edge.target === currentNodeId);
@@ -261,6 +268,15 @@ export function WorkflowCanvas() {
             ...edge,
             animated: false,
             className: `${typeClass} edge-disabled`.trim(),
+          };
+        }
+
+        // For partial execution, don't animate edges outside the execution scope
+        if (!isInExecutionScope) {
+          return {
+            ...edge,
+            animated: false,
+            className: typeClass,
           };
         }
 
@@ -295,7 +311,15 @@ export function WorkflowCanvas() {
         className: typeClass,
       };
     });
-  }, [edges, nodeMap, highlightedNodeIds, isRunning, currentNodeId, isEdgeTargetingDisabledInput]);
+  }, [
+    edges,
+    nodeMap,
+    highlightedNodeIds,
+    isRunning,
+    currentNodeId,
+    executingNodeIds,
+    isEdgeTargetingDisabledInput,
+  ]);
 
   const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: WorkflowNode) => {

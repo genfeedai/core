@@ -28,16 +28,22 @@ export class ExecutionsController {
   @Post('workflows/:workflowId/execute')
   async createExecution(
     @Param('workflowId') workflowId: string,
-    @Body() body: { debugMode?: boolean } = {}
+    @Body() body: { debugMode?: boolean; selectedNodeIds?: string[] } = {}
   ) {
-    const { debugMode } = body;
+    const { debugMode, selectedNodeIds } = body;
 
-    // Create execution record with debug mode
-    const execution = await this.executionsService.createExecution(workflowId, { debugMode });
+    // Create execution record with debug mode and selected nodes
+    const execution = await this.executionsService.createExecution(workflowId, {
+      debugMode,
+      selectedNodeIds,
+    });
     const executionId = execution._id?.toString() ?? execution.id;
 
-    // Enqueue the workflow for processing with debug mode
-    await this.queueManager.enqueueWorkflow(executionId, workflowId, { debugMode });
+    // Enqueue the workflow for processing with debug mode and selected nodes
+    await this.queueManager.enqueueWorkflow(executionId, workflowId, {
+      debugMode,
+      selectedNodeIds,
+    });
 
     return execution;
   }

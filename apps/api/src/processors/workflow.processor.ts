@@ -54,11 +54,16 @@ export class WorkflowProcessor extends WorkerHost {
    * Process a workflow orchestration job - sequential execution model
    * Only enqueues nodes that are ready (no unmet dependencies)
    * Webhook handler continues execution when nodes complete
+   *
+   * If selectedNodeIds is provided, only those nodes will be executed.
+   * Dependencies of selected nodes are still included to ensure correct execution.
    */
   private async processWorkflowOrchestration(job: Job<WorkflowJobData>): Promise<void> {
-    const { executionId, workflowId, debugMode } = job.data;
+    const { executionId, workflowId, debugMode, selectedNodeIds } = job.data;
 
-    this.logger.log(`Processing workflow execution: ${executionId}`);
+    this.logger.log(
+      `Processing workflow execution: ${executionId}${selectedNodeIds?.length ? ` (partial: ${selectedNodeIds.length} nodes)` : ''}`
+    );
 
     try {
       // Update execution status to running
@@ -103,6 +108,37 @@ export class WorkflowProcessor extends WorkerHost {
         }
       }
 
+      // If selectedNodeIds is provided, compute the set of nodes to execute
+      // This includes selected nodes AND their required dependencies
+      const selectedNodeSet =
+        selectedNodeIds && selectedNodeIds.length > 0 ? new Set(selectedNodeIds) : null;
+
+      // Helper to get all dependencies recursively (for partial execution)
+      const getAllDependencies = (nodeId: string, visited = new Set<string>()): Set<string> => {
+        if (visited.has(nodeId)) return visited;
+        visited.add(nodeId);
+        const deps = dependencyMap.get(nodeId) ?? [];
+        for (const dep of deps) {
+          getAllDependencies(dep, visited);
+        }
+        return visited;
+      };
+
+      // Compute the execution set: selected nodes + all their dependencies
+      let executionSet: Set<string> | null = null;
+      if (selectedNodeSet) {
+        executionSet = new Set<string>();
+        for (const nodeId of selectedNodeSet) {
+          const allDeps = getAllDependencies(nodeId);
+          for (const dep of allDeps) {
+            executionSet.add(dep);
+          }
+        }
+        this.logger.log(
+          `Partial execution: ${selectedNodeSet.size} selected, ${executionSet.size} total with deps`
+        );
+      }
+
       for (const nodeId of executionOrder) {
         const node = nodes.find((n) => n.id === nodeId);
         if (!node) continue;
@@ -113,9 +149,15 @@ export class WorkflowProcessor extends WorkerHost {
           continue;
         }
 
+        // For partial execution, skip nodes not in the execution set
+        if (executionSet && !executionSet.has(nodeId)) {
+          continue;
+        }
+
         // Filter out passthrough nodes from dependencies since they're already complete
+        // Also filter out nodes not in the execution set (for partial execution)
         const dependsOn = (dependencyMap.get(nodeId) ?? []).filter(
-          (depId) => !passthroughNodeIds.has(depId)
+          (depId) => !passthroughNodeIds.has(depId) && (!executionSet || executionSet.has(depId))
         );
         pendingNodes.push({
           nodeId: node.id,

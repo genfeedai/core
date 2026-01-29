@@ -20,6 +20,7 @@ export const useExecutionStore = create<ExecutionStore>()((...args) => {
     isRunning: false,
     executionId: null,
     currentNodeId: null,
+    executingNodeIds: [],
     validationErrors: null,
     eventSource: null,
     lastFailedNodeId: null,

@@ -69,11 +69,13 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
         let prediction: { id: string };
         if (nodeType === 'motionControl') {
           const data = job.data as MotionControlJobData;
-          // Get prompt/image from input fields (from connection) or direct fields (legacy)
+          // Get prompt/image/video from input fields (from connection) or direct fields (legacy)
           const prompt = data.nodeData.inputPrompt ?? data.nodeData.prompt;
           const image = data.nodeData.inputImage ?? data.nodeData.image;
+          const video = data.nodeData.inputVideo ?? data.nodeData.video;
           prediction = await this.replicateService.generateMotionControlVideo(executionId, nodeId, {
             image,
+            video,
             prompt: prompt ?? '',
             mode: data.nodeData.mode,
             duration: data.nodeData.duration,
@@ -84,6 +86,10 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
             motionStrength: data.nodeData.motionStrength,
             negativePrompt: data.nodeData.negativePrompt,
             seed: data.nodeData.seed,
+            // Video transfer settings
+            keepOriginalSound: data.nodeData.keepOriginalSound,
+            characterOrientation: data.nodeData.characterOrientation,
+            quality: data.nodeData.quality,
           });
         } else {
           // Standard video generation
@@ -157,7 +163,12 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
       // Update execution node result
       if (result.success) {
         // Auto-save output to local storage
-        let localOutput = result.output;
+        let localOutput: Record<string, unknown> | undefined;
+
+        // Check if output is an object (not string or array)
+        const isOutputObject =
+          result.output && typeof result.output === 'object' && !Array.isArray(result.output);
+        const outputObj = isOutputObject ? (result.output as Record<string, unknown>) : undefined;
 
         // Get the video URL - handle all formats:
         // 1. output is a string (URL directly)
@@ -168,8 +179,8 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
           videoUrl = result.output;
         } else if (Array.isArray(result.output) && result.output.length > 0) {
           videoUrl = result.output[0] as string;
-        } else if (result.output?.video) {
-          videoUrl = result.output.video as string;
+        } else if (outputObj?.video) {
+          videoUrl = outputObj.video as string;
         }
 
         if (videoUrl) {
@@ -184,7 +195,7 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
             if (typeof result.output === 'string' || Array.isArray(result.output)) {
               localOutput = { video: saved.url, localPath: saved.path };
             } else {
-              localOutput = { ...result.output, video: saved.url, localPath: saved.path };
+              localOutput = { ...outputObj, video: saved.url, localPath: saved.path };
             }
             this.logger.log(`Saved video output to ${saved.path}`);
           } catch (saveError) {
@@ -199,9 +210,14 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
             if (typeof result.output === 'string' || Array.isArray(result.output)) {
               localOutput = { video: videoUrl, saveError: errorMsg };
             } else {
-              localOutput = { ...result.output, saveError: errorMsg };
+              localOutput = { ...outputObj, saveError: errorMsg };
             }
           }
+        } else if (isOutputObject) {
+          localOutput = outputObj;
+        } else if (result.output) {
+          // Wrap non-object output
+          localOutput = { output: result.output };
         }
 
         await this.executionsService.updateNodeResult(executionId, nodeId, 'complete', localOutput);

@@ -121,7 +121,7 @@ function VideoStitchNodeComponent(props: NodeProps) {
               step="0.1"
               value={nodeData.transitionDuration}
               onChange={handleDurationChange}
-              className="w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer"
+              className="nodrag w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer"
             />
           </div>
         )}

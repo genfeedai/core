@@ -12,7 +12,7 @@ export class Template extends Document {
   @Prop({ default: '' })
   description: string;
 
-  @Prop({ required: true, enum: Object.values(TemplateCategory) })
+  @Prop({ type: String, required: true, enum: Object.values(TemplateCategory) })
   category: TemplateCategory;
 
   @Prop()

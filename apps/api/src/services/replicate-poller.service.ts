@@ -101,7 +101,7 @@ export class ReplicatePollerService {
         }
         return {
           success: true,
-          output: prediction.output,
+          output: prediction.output as string | string[] | Record<string, unknown> | undefined,
           predictionId,
           predictTime: prediction.metrics?.predict_time,
         };

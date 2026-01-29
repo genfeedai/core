@@ -117,7 +117,7 @@ function SubtitleNodeComponent(props: NodeProps) {
             max="72"
             value={nodeData.fontSize}
             onChange={handleFontSizeChange}
-            className="w-full"
+            className="nodrag w-full"
           />
         </div>
 

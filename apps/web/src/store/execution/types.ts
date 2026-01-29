@@ -73,6 +73,8 @@ export interface ExecutionState {
   isRunning: boolean;
   executionId: string | null;
   currentNodeId: string | null;
+  /** Node IDs being executed (for partial execution). Empty = all nodes */
+  executingNodeIds: string[];
   validationErrors: ValidationResult | null;
   eventSource: EventSource | null;
   lastFailedNodeId: string | null;

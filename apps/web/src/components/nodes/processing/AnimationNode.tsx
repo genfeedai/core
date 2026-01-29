@@ -169,7 +169,7 @@ function AnimationNodeComponent(props: NodeProps) {
             step="0.25"
             value={nodeData.speedMultiplier}
             onChange={handleSpeedChange}
-            className="w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer"
+            className="nodrag w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer"
           />
           <div className="flex justify-between text-xs text-[var(--muted-foreground)]">
             <span>0.25x</span>

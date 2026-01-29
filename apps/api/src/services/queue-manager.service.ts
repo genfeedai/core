@@ -52,13 +52,14 @@ export class QueueManagerService {
   async enqueueWorkflow(
     executionId: string,
     workflowId: string,
-    options?: { debugMode?: boolean }
+    options?: { debugMode?: boolean; selectedNodeIds?: string[] }
   ): Promise<string> {
     const jobData: WorkflowJobData = {
       executionId,
       workflowId,
       timestamp: new Date().toISOString(),
       debugMode: options?.debugMode ?? false,
+      selectedNodeIds: options?.selectedNodeIds ?? [],
     };
 
     const job = await this.workflowQueue.add(JOB_TYPES.EXECUTE_WORKFLOW, jobData, {

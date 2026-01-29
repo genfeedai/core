@@ -1,8 +1,8 @@
+import { AppModule } from '@/app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { AppModule } from '@/app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -15,7 +15,7 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT', 3001);
-  const corsOrigin = configService.get<string>('CORS_ORIGIN', 'http://localhost:3000');
+  const corsOrigin = configService.get<string>('CORS_ORIGIN', 'http://local.genfeed.ai:3000');
 
   // Enable CORS
   app.enableCors({
@@ -37,6 +37,6 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   await app.listen(port);
-  logger.log(`API running on http://localhost:${port}`);
+  logger.debug(`API running on http://local.genfeed.ai:${port}`);
 }
 bootstrap();

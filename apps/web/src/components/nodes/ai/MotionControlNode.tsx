@@ -251,7 +251,7 @@ function MotionControlNodeComponent(props: NodeProps) {
             step="5"
             value={nodeData.motionStrength}
             onChange={handleMotionStrengthChange}
-            className="w-full h-2 bg-[var(--secondary)] rounded-lg appearance-none cursor-pointer"
+            className="nodrag w-full h-2 bg-[var(--secondary)] rounded-lg appearance-none cursor-pointer"
           />
           <div className="flex justify-between text-[10px] text-[var(--muted-foreground)]">
             <span>Subtle</span>

@@ -79,12 +79,13 @@ export class ExecutionsService {
   // Execution methods
   async createExecution(
     workflowId: string,
-    options?: { debugMode?: boolean }
+    options?: { debugMode?: boolean; selectedNodeIds?: string[] }
   ): Promise<ExecutionDocument> {
     const execution = new this.executionModel({
       workflowId: new Types.ObjectId(workflowId),
       status: 'pending',
       debugMode: options?.debugMode ?? false,
+      selectedNodeIds: options?.selectedNodeIds ?? [],
     });
     return execution.save();
   }
@@ -601,10 +602,15 @@ export class ExecutionsService {
    * Check if all nodes are complete and update execution status
    * Handles: no pending nodes, blocked nodes (failed dependency), all errors
    * Optimized: Uses single reduce to categorize all node results in one pass
+   *
+   * For partial execution (selectedNodeIds set), completion is based on
+   * whether all nodes in the execution scope are complete, not all workflow nodes.
    */
   async checkExecutionCompletion(executionId: string): Promise<boolean> {
     const execution = await this.findExecution(executionId);
     const pendingNodes = execution.pendingNodes ?? [];
+    const selectedNodeIds = (execution as unknown as { selectedNodeIds?: string[] })
+      .selectedNodeIds;
 
     // Already completed/failed
     if (execution.status === 'completed' || execution.status === 'failed') {
@@ -654,7 +660,20 @@ export class ExecutionsService {
     if (pendingNodes.length === 0 || (readyNodes.length === 0 && blockedNodes.length === 0)) {
       const allProcessed = execution.nodeResults.length > 0;
 
-      if (allProcessed && execution.status === 'running') {
+      // For partial execution, check if all selected nodes are complete
+      if (selectedNodeIds && selectedNodeIds.length > 0) {
+        const allSelectedComplete = selectedNodeIds.every(
+          (nodeId) => completedIds.has(nodeId) || failedIds.has(nodeId)
+        );
+        if (allSelectedComplete && execution.status === 'running') {
+          await this.updateExecutionStatus(
+            executionId,
+            hasError ? 'failed' : 'completed',
+            hasError ? 'One or more nodes failed' : undefined
+          );
+          return true;
+        }
+      } else if (allProcessed && execution.status === 'running') {
         await this.updateExecutionStatus(
           executionId,
           hasError ? 'failed' : 'completed',

@@ -87,7 +87,7 @@ function VoiceChangeNodeComponent(props: NodeProps) {
               step="0.05"
               value={nodeData.audioMixLevel}
               onChange={handleMixLevelChange}
-              className="w-full h-2 bg-[var(--secondary)] rounded-lg appearance-none cursor-pointer"
+              className="nodrag w-full h-2 bg-[var(--secondary)] rounded-lg appearance-none cursor-pointer"
             />
             <div className="flex justify-between text-[10px] text-[var(--muted-foreground)]">
               <span>Original</span>

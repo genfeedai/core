@@ -149,8 +149,9 @@ export interface LipSyncInput {
 
 export interface MotionControlInput {
   image: string;
+  video?: string; // Reference video for video transfer mode
   prompt?: string;
-  mode: 'trajectory' | 'camera' | 'combined';
+  mode: 'trajectory' | 'camera' | 'combined' | 'video_transfer';
   duration: 5 | 10;
   aspectRatio: '16:9' | '9:16' | '1:1';
   // Trajectory points for path-based motion control
@@ -162,6 +163,10 @@ export interface MotionControlInput {
   motionStrength?: number;
   negativePrompt?: string;
   seed?: number;
+  // Video transfer settings
+  keepOriginalSound?: boolean;
+  characterOrientation?: 'from_image' | 'left' | 'right';
+  quality?: 'standard' | 'pro';
 }
 
 export interface PredictionResult {
@@ -457,7 +462,7 @@ export class ReplicateService {
 
   /**
    * Generate video with motion control using Kling AI
-   * Supports trajectory-based motion paths and camera movements
+   * Supports trajectory-based motion paths, camera movements, and video transfer
    */
   async generateMotionControlVideo(
     executionId: string,
@@ -473,7 +478,6 @@ export class ReplicateService {
       prompt: input.prompt || '',
       duration: input.duration ?? 5,
       aspect_ratio: input.aspectRatio ?? '16:9',
-      motion_strength: (input.motionStrength ?? 50) / 100, // Normalize to 0-1
       negative_prompt: input.negativePrompt || '',
     };
 
@@ -482,20 +486,37 @@ export class ReplicateService {
       baseInput.seed = input.seed;
     }
 
-    // Add trajectory points for trajectory or combined mode
-    if ((input.mode === 'trajectory' || input.mode === 'combined') && input.trajectoryPoints) {
-      // Format trajectory points for the API
-      baseInput.trajectory = input.trajectoryPoints.map((pt) => ({
-        x: pt.x,
-        y: pt.y,
-        frame: pt.frame,
-      }));
-    }
+    // Handle video transfer mode
+    if (input.mode === 'video_transfer') {
+      if (!input.video) {
+        throw new Error('Video is required for video transfer mode');
+      }
+      // Convert video URL to base64 if it's a local URL
+      baseInput.video = this.convertLocalUrlToBase64(input.video);
+      baseInput.keep_original_sound = input.keepOriginalSound ?? true;
+      baseInput.character_orientation = input.characterOrientation ?? 'from_image';
+      // Quality: 'standard' or 'pro' maps to model tier
+      if (input.quality === 'pro') {
+        baseInput.quality = 'pro';
+      }
+    } else {
+      // Non-video-transfer modes use motion_strength
+      baseInput.motion_strength = (input.motionStrength ?? 50) / 100; // Normalize to 0-1
 
-    // Add camera movement for camera or combined mode
-    if (input.mode === 'camera' || input.mode === 'combined') {
-      baseInput.camera_movement = input.cameraMovement ?? 'static';
-      baseInput.camera_intensity = (input.cameraIntensity ?? 50) / 100; // Normalize to 0-1
+      // Add trajectory points for trajectory or combined mode
+      if ((input.mode === 'trajectory' || input.mode === 'combined') && input.trajectoryPoints) {
+        baseInput.trajectory = input.trajectoryPoints.map((pt) => ({
+          x: pt.x,
+          y: pt.y,
+          frame: pt.frame,
+        }));
+      }
+
+      // Add camera movement for camera or combined mode
+      if (input.mode === 'camera' || input.mode === 'combined') {
+        baseInput.camera_movement = input.cameraMovement ?? 'static';
+        baseInput.camera_intensity = (input.cameraIntensity ?? 50) / 100; // Normalize to 0-1
+      }
     }
 
     const prediction = await this.replicate.predictions.create({

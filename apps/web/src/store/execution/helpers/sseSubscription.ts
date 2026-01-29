@@ -1,12 +1,12 @@
-import { NODE_STATUS } from '@genfeedai/types';
-import type { StoreApi } from 'zustand';
 import { logger } from '@/lib/logger';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
+import { NODE_STATUS } from '@genfeedai/types';
+import type { StoreApi } from 'zustand';
 import type { DebugPayload, ExecutionData, ExecutionStore, Job } from '../types';
 import { getOutputUpdate } from './outputHelpers';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://local.genfeed.ai:3001/api';
 
 /**
  * Status map for converting execution statuses to node statuses
@@ -43,7 +43,7 @@ export function createExecutionSubscription(
         workflowStore.updateNodeData(nodeResult.nodeId, {
           status: nodeStatus,
           // Clear error on success, otherwise pass the error
-          error: isSuccess ? null : (nodeResult.error ?? null),
+          error: isSuccess ? undefined : nodeResult.error,
           ...(nodeResult.output &&
             getOutputUpdate(nodeResult.nodeId, nodeResult.output, workflowStore)),
         });
@@ -85,7 +85,7 @@ export function createExecutionSubscription(
               const node = workflowStore.getNodeById(job.nodeId);
               newDebugPayloads.push({
                 nodeId: job.nodeId,
-                nodeName: node?.data?.label || node?.data?.name || job.nodeId,
+                nodeName: String(node?.data?.label || node?.data?.name || job.nodeId),
                 nodeType: node?.type || 'unknown',
                 model: job.result.debugPayload.model,
                 input: job.result.debugPayload.input,

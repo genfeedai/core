@@ -15,7 +15,8 @@ export interface BaseJobData {
  * Workflow orchestrator job data
  */
 export interface WorkflowJobData extends BaseJobData {
-  // Workflow execution metadata
+  /** Selected node IDs for partial execution (empty = execute all) */
+  selectedNodeIds?: string[];
 }
 
 /**
@@ -110,9 +111,11 @@ export interface MotionControlJobData extends NodeJobData {
   nodeData: {
     image: string; // Legacy direct image field
     inputImage?: string; // Image from connection
+    video?: string; // Legacy direct video field (for video transfer mode)
+    inputVideo?: string; // Video from connection (for video transfer mode)
     prompt?: string; // Legacy direct prompt field
     inputPrompt?: string; // Prompt from connection
-    mode: 'trajectory' | 'camera' | 'combined';
+    mode: 'trajectory' | 'camera' | 'combined' | 'video_transfer';
     duration: 5 | 10;
     aspectRatio: '16:9' | '9:16' | '1:1';
     // Trajectory points for path-based motion
@@ -124,6 +127,10 @@ export interface MotionControlJobData extends NodeJobData {
     motionStrength?: number;
     negativePrompt?: string;
     seed?: number;
+    // Video transfer settings
+    keepOriginalSound?: boolean;
+    characterOrientation?: 'from_image' | 'left' | 'right';
+    quality?: 'standard' | 'pro';
   };
 }
 

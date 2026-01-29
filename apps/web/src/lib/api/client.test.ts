@@ -1,9 +1,9 @@
+import { server } from '@/test/mocks/server';
 import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { server } from '@/test/mocks/server';
 import { ApiError, apiClient } from './client';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = 'http://local.genfeed.ai:3001/api';
 
 describe('apiClient', () => {
   const mockResponse = { data: 'test' };

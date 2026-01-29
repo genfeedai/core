@@ -155,7 +155,7 @@ function ImageGridSplitNodeComponent(props: NodeProps) {
             max="50"
             value={nodeData.borderInset}
             onChange={handleInsetChange}
-            className="w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer"
+            className="nodrag w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer"
           />
         </div>
 
@@ -185,7 +185,7 @@ function ImageGridSplitNodeComponent(props: NodeProps) {
               max="100"
               value={nodeData.quality}
               onChange={handleQualityChange}
-              className="w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer"
+              className="nodrag w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer"
             />
           </div>
         </div>

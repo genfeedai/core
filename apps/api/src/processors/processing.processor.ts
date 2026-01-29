@@ -177,9 +177,14 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
         // Update execution node result
         if (result.success) {
           // Auto-save output to local storage for Replicate-based operations
-          let localOutput = result.output;
-          const outputUrl = result.output?.image || result.output?.video;
-          const outputType = result.output?.image ? 'image' : 'video';
+          let localOutput: Record<string, unknown> | undefined;
+
+          // Check if output is an object with image/video fields
+          const isOutputObject =
+            result.output && typeof result.output === 'object' && !Array.isArray(result.output);
+          const output = isOutputObject ? (result.output as Record<string, unknown>) : undefined;
+          const outputUrl = output?.image || output?.video;
+          const outputType = output?.image ? 'image' : 'video';
 
           if (outputUrl && typeof outputUrl === 'string') {
             try {
@@ -188,7 +193,7 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
                 nodeId,
                 outputUrl
               );
-              localOutput = { ...result.output, [outputType]: saved.url, localPath: saved.path };
+              localOutput = { ...output, [outputType]: saved.url, localPath: saved.path };
               this.logger.log(`Saved ${outputType} output to ${saved.path}`);
             } catch (saveError) {
               // Log as ERROR - this is a real problem that causes files to expire
@@ -198,8 +203,13 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
                   `Using Replicate URL which WILL EXPIRE. URL: ${outputUrl.substring(0, 100)}...`
               );
               // Continue with remote URL if save fails, but track the error
-              localOutput = { ...result.output, saveError: errorMsg };
+              localOutput = { ...output, saveError: errorMsg };
             }
+          } else if (isOutputObject) {
+            localOutput = output;
+          } else if (result.output) {
+            // Handle string or array output by wrapping in object
+            localOutput = { output: result.output };
           }
 
           await this.executionsService.updateNodeResult(

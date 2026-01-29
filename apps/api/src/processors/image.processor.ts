@@ -225,9 +225,15 @@ export class ImageProcessor extends BaseProcessor<ImageJobData> {
               saveError: errorMsg,
             };
           }
-        } else if (result.output?.image) {
+        } else if (
+          result.output &&
+          typeof result.output === 'object' &&
+          !Array.isArray(result.output) &&
+          'image' in result.output
+        ) {
           // Object with image field
-          const imageUrl = result.output.image as string;
+          const output = result.output as Record<string, unknown>;
+          const imageUrl = output.image as string;
           try {
             const saved = await this.filesService.downloadAndSaveOutput(
               job.data.workflowId,
@@ -236,7 +242,7 @@ export class ImageProcessor extends BaseProcessor<ImageJobData> {
               predictionId
             );
             localOutput = {
-              ...result.output,
+              ...output,
               image: saved.url,
               localPath: saved.path,
               images: [saved.url],
@@ -247,7 +253,7 @@ export class ImageProcessor extends BaseProcessor<ImageJobData> {
             const errorMsg = (saveError as Error).message;
             this.logger.error(`CRITICAL: Failed to save output locally: ${errorMsg}`);
             localOutput = {
-              ...result.output,
+              ...output,
               images: [imageUrl],
               saveError: errorMsg,
             };

@@ -112,6 +112,10 @@ export class Execution extends Document {
   @Prop({ default: false })
   debugMode: boolean;
 
+  // Selected nodes for partial execution (empty = execute all)
+  @Prop({ type: [String], default: [] })
+  selectedNodeIds: string[];
+
   createdAt: Date;
   updatedAt: Date;
 }

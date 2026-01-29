@@ -1,6 +1,6 @@
+import { WorkerModule } from '@/modules/worker.module';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { WorkerModule } from '@/modules/worker.module';
 
 /**
  * Worker Entry Point
@@ -30,7 +30,9 @@ async function bootstrap(): Promise<void> {
 
   logger.log(`Starting worker process...`);
   logger.log(`Worker type: ${workerType}`);
-  logger.log(`Redis: ${process.env.REDIS_HOST ?? 'localhost'}:${process.env.REDIS_PORT ?? 6379}`);
+  logger.log(
+    `Redis: ${process.env.REDIS_HOST ?? 'local.genfeed.ai'}:${process.env.REDIS_PORT ?? 6379}`
+  );
 
   // Create application context (no HTTP server)
   const app = await NestFactory.createApplicationContext(WorkerModule, {

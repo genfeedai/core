@@ -304,7 +304,7 @@ function UpscaleNodeComponent(props: NodeProps) {
                       max="100"
                       value={nodeData.faceEnhancementStrength}
                       onChange={handleStrengthChange}
-                      className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer"
+                      className="nodrag w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer"
                     />
                   </div>
                   <div className="space-y-1">
@@ -320,7 +320,7 @@ function UpscaleNodeComponent(props: NodeProps) {
                       max="100"
                       value={nodeData.faceEnhancementCreativity}
                       onChange={handleCreativityChange}
-                      className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer"
+                      className="nodrag w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer"
                     />
                   </div>
                 </div>

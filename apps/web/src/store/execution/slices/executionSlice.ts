@@ -195,7 +195,7 @@ export const createExecutionSlice: StateCreator<ExecutionStore, [], [], Executio
       if (result.debugPayload) {
         const debugPayload: DebugPayload = {
           nodeId,
-          nodeName: node.data.label || node.data.name || nodeId,
+          nodeName: String(node.data.label || node.data.name || nodeId),
           nodeType: nodeType || 'unknown',
           model: result.debugPayload.model,
           input: result.debugPayload.input,
@@ -295,7 +295,8 @@ export const createExecutionSlice: StateCreator<ExecutionStore, [], [], Executio
       return;
     }
 
-    set({ isRunning: true });
+    // Track which nodes are being executed for edge highlighting
+    set({ isRunning: true, executingNodeIds: selectedNodeIds });
 
     // Open debug panel if debug mode is active
     if (debugMode) {
@@ -313,6 +314,7 @@ export const createExecutionSlice: StateCreator<ExecutionStore, [], [], Executio
     try {
       const execution = await apiClient.post<ExecutionData>(`/workflows/${workflowId}/execute`, {
         debugMode,
+        selectedNodeIds,
       });
       const executionId = execution._id;
 
@@ -434,6 +436,7 @@ export const createExecutionSlice: StateCreator<ExecutionStore, [], [], Executio
       jobs: new Map(),
       executionId: null,
       currentNodeId: null,
+      executingNodeIds: [],
       eventSource: null,
       actualCost: 0,
       lastFailedNodeId: null,

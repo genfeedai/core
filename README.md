@@ -32,7 +32,7 @@ cp apps/api/.env.example apps/api/.env
 bun dev
 ```
 
-Open http://localhost:3000 in your browser.
+Open http://local.genfeed.ai:3000 in your browser.
 
 ## Self-Hosting with Docker
 

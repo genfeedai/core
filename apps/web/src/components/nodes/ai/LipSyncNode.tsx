@@ -1,14 +1,14 @@
 'use client';
 
-import type { LipSyncMode, LipSyncModel, LipSyncNodeData } from '@genfeedai/types';
-import type { NodeProps } from '@xyflow/react';
-import { Expand, Mic, RefreshCw, Video } from 'lucide-react';
-import { memo, useCallback, useMemo } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { Button } from '@/components/ui/button';
 import { useExecutionStore } from '@/store/executionStore';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
+import type { LipSyncMode, LipSyncModel, LipSyncNodeData } from '@genfeedai/types';
+import type { NodeProps } from '@xyflow/react';
+import { Expand, Mic, RefreshCw, Video } from 'lucide-react';
+import { memo, useCallback, useMemo } from 'react';
 
 const MODELS: { value: LipSyncModel; label: string }[] = [
   { value: 'sync/lipsync-2-pro', label: 'Sync Labs Pro' },
@@ -128,6 +128,7 @@ function LipSyncNodeComponent(props: NodeProps) {
           <label className="text-xs text-[var(--muted-foreground)]">
             Temperature: {nodeData.temperature.toFixed(2)}
           </label>
+
           <input
             type="range"
             min="0"
@@ -135,7 +136,7 @@ function LipSyncNodeComponent(props: NodeProps) {
             step="0.05"
             value={nodeData.temperature}
             onChange={handleTemperatureChange}
-            className="w-full h-2 bg-[var(--secondary)] rounded-lg appearance-none cursor-pointer"
+            className="nodrag w-full h-2 bg-[var(--secondary)] rounded-lg appearance-none cursor-pointer"
           />
         </div>
 

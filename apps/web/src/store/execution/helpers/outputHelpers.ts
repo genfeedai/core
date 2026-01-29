@@ -101,7 +101,11 @@ export function getOutputUpdate(
   }
 
   // Video output nodes
-  if (['videoGen', 'animation', 'videoStitch', 'lipSync', 'voiceChange'].includes(nodeType)) {
+  if (
+    ['videoGen', 'animation', 'videoStitch', 'lipSync', 'voiceChange', 'motionControl'].includes(
+      nodeType
+    )
+  ) {
     return { outputVideo: outputValue };
   }
 

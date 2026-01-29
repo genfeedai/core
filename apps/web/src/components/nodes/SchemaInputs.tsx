@@ -1,9 +1,17 @@
 'use client';
 
-import { ChevronDown } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 
 import { NegativePromptSelector } from '@/components/nodes/NegativePromptSelector';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 
 /**
  * JSON Schema property definition
@@ -139,20 +147,18 @@ function EnumSelect({
       <label className="text-xs text-muted-foreground">
         {formatLabel(propertyKey, property.title)}
       </label>
-      <div className="relative">
-        <select
-          value={String(value ?? property.default ?? options[0])}
-          onChange={(e) => onChange(e.target.value)}
-          className="appearance-none w-full h-8 rounded-md border border-input bg-background pl-2 pr-7 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-        >
+      <Select value={String(value ?? property.default ?? options[0])} onValueChange={onChange}>
+        <SelectTrigger className="nodrag h-8 w-full">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
           {options.map((opt) => (
-            <option key={opt} value={opt}>
+            <SelectItem key={opt} value={opt}>
               {opt}
-            </option>
+            </SelectItem>
           ))}
-        </select>
-        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none text-muted-foreground" />
-      </div>
+        </SelectContent>
+      </Select>
     </div>
   );
 }
@@ -181,16 +187,17 @@ function SliderInput({
       <label className="text-xs text-muted-foreground">
         {formatLabel(propertyKey, property.title)}
       </label>
-      <div className="flex items-center gap-2">
-        <input
-          type="range"
+
+      <div className="flex items-center gap-2 nodrag">
+        <Slider
+          value={[currentValue]}
           min={min}
           max={max}
           step={step}
-          value={currentValue}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="flex-1 h-1.5 rounded-full appearance-none bg-secondary cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary"
+          onValueChange={([val]) => onChange(val)}
+          className="flex-1"
         />
+
         <input
           type="number"
           min={min}
@@ -220,17 +227,23 @@ function CheckboxInput({
   onChange: (value: boolean) => void;
 }) {
   const checked = typeof value === 'boolean' ? value : ((property.default as boolean) ?? false);
+  const inputId = `schema-checkbox-${propertyKey}`;
 
   return (
-    <label className="flex items-center gap-2 cursor-pointer">
-      <input
-        type="checkbox"
+    <div className="flex items-center gap-2 nodrag">
+      <Checkbox
+        id={inputId}
         checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="w-4 h-4 rounded border-input bg-background text-primary focus:ring-primary"
+        onCheckedChange={(checkedState) => {
+          if (typeof checkedState === 'boolean') {
+            onChange(checkedState);
+          }
+        }}
       />
-      <span className="text-sm text-foreground">{formatLabel(propertyKey, property.title)}</span>
-    </label>
+      <label htmlFor={inputId} className="text-sm text-foreground cursor-pointer">
+        {formatLabel(propertyKey, property.title)}
+      </label>
+    </div>
   );
 }
 

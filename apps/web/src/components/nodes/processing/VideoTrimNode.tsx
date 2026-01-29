@@ -111,7 +111,7 @@ function VideoTrimNodeComponent(props: NodeProps) {
             step="1"
             value={nodeData.startTime}
             onChange={handleStartSliderChange}
-            className="w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer"
+            className="nodrag w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer"
           />
           <input
             type="text"
@@ -134,7 +134,7 @@ function VideoTrimNodeComponent(props: NodeProps) {
             step="1"
             value={nodeData.endTime}
             onChange={handleEndSliderChange}
-            className="w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer"
+            className="nodrag w-full h-2 bg-[var(--border)] rounded-lg appearance-none cursor-pointer"
           />
           <input
             type="text"
