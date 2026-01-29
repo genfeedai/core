@@ -8,6 +8,7 @@ type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 interface LoggerOptions {
   context?: string;
   metadata?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 class Logger {

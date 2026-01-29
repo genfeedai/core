@@ -6,7 +6,7 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
 import { createExecutionSubscription } from '../helpers/sseSubscription';
-import type { DebugPayload, ExecutionData, ExecutionStore } from '../types';
+import type { ExecutionData, ExecutionStore } from '../types';
 
 export interface ExecutionSlice {
   executeWorkflow: () => Promise<void>;

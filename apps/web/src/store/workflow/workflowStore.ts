@@ -1,5 +1,6 @@
 import { temporal } from 'zundo';
 import { create } from 'zustand';
+import { temporalStateEquals } from './helpers/equality';
 import { createEdgeSlice } from './slices/edgeSlice';
 import { createGroupSlice } from './slices/groupSlice';
 import { createLockingSlice } from './slices/lockingSlice';
@@ -58,9 +59,8 @@ export const useWorkflowStore = create<WorkflowStore>()(
       }),
       // Limit history to prevent memory issues
       limit: 50,
-      // Equality check to avoid duplicate entries for minor changes
-      equality: (pastState, currentState) =>
-        JSON.stringify(pastState) === JSON.stringify(currentState),
+      // Optimized equality check using shallow comparison instead of JSON.stringify
+      equality: temporalStateEquals,
     }
   )
 );

@@ -275,7 +275,7 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
   },
 
   propagateOutputsDownstream: (sourceNodeId, outputValue?) => {
-    const { nodes, edges, updateNodeData } = get();
+    const { nodes, edges } = get();
     const sourceNode = nodes.find((n) => n.id === sourceNodeId);
     if (!sourceNode) return;
 
@@ -283,16 +283,55 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
     const output = outputValue ?? getNodeOutput(sourceNode);
     if (!output) return;
 
-    const downstreamEdges = edges.filter((e) => e.source === sourceNodeId);
+    // Collect all updates using BFS traversal, then apply in a single state change
+    const updates: Map<string, Record<string, unknown>> = new Map();
+    const visited = new Set<string>();
+    const queue: Array<{ nodeId: string; output: string }> = [{ nodeId: sourceNodeId, output }];
 
-    for (const edge of downstreamEdges) {
-      const targetNode = nodes.find((n) => n.id === edge.target);
-      if (!targetNode) continue;
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      if (visited.has(current.nodeId)) continue;
+      visited.add(current.nodeId);
 
-      const inputUpdate = mapOutputToInput(output, sourceNode.type, targetNode.type);
-      if (inputUpdate) {
-        updateNodeData(edge.target, inputUpdate);
+      const currentNode = nodes.find((n) => n.id === current.nodeId);
+      if (!currentNode) continue;
+
+      // Find downstream edges
+      const downstreamEdges = edges.filter((e) => e.source === current.nodeId);
+
+      for (const edge of downstreamEdges) {
+        const targetNode = nodes.find((n) => n.id === edge.target);
+        if (!targetNode) continue;
+
+        const inputUpdate = mapOutputToInput(current.output, currentNode.type, targetNode.type);
+        if (inputUpdate) {
+          // Merge with existing updates for this node
+          const existing = updates.get(edge.target) ?? {};
+          updates.set(edge.target, { ...existing, ...inputUpdate });
+
+          // Check if target node will produce output that needs further propagation
+          // Only continue if this is an input-passthrough node
+          const _targetData = targetNode.data as Record<string, unknown>;
+          const targetOutput = getNodeOutput(targetNode);
+          if (targetOutput && !visited.has(edge.target)) {
+            queue.push({ nodeId: edge.target, output: targetOutput });
+          }
+        }
       }
+    }
+
+    // Apply all updates in a single state change
+    if (updates.size > 0) {
+      set((state) => ({
+        nodes: state.nodes.map((n) => {
+          const update = updates.get(n.id);
+          if (update) {
+            return { ...n, data: { ...n.data, ...update } };
+          }
+          return n;
+        }),
+        isDirty: true,
+      }));
     }
   },
 });

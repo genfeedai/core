@@ -32,6 +32,9 @@ export interface FileUploadResult {
   mimeType: string;
 }
 
+/** Maximum file size for downloads (500MB) */
+const MAX_DOWNLOAD_SIZE = 500 * 1024 * 1024;
+
 @Injectable()
 export class FilesService {
   private readonly logger = new Logger(FilesService.name);
@@ -52,6 +55,9 @@ export class FilesService {
   /**
    * Save a workflow input file (image, video, audio)
    * Files are stored in /data/workflows/{workflowId}/input/
+   *
+   * Uses content-based MD5 hash for deduplication - identical files
+   * are not re-written, saving disk space.
    */
   async saveWorkflowInput(
     workflowId: string,
@@ -62,20 +68,22 @@ export class FilesService {
     const inputDir = join(this.dataPath, workflowId, 'input');
     this.ensureDirectoryExists(inputDir);
 
-    // Generate unique filename using hash of content + timestamp
-    const hash = createHash('md5').update(file.buffer).digest('hex').substring(0, 8);
-    const timestamp = Date.now();
+    // Generate filename using full MD5 hash for content-based deduplication
+    const hash = createHash('md5').update(file.buffer).digest('hex');
     const ext = this.getExtension(file.originalname, file.mimetype);
-    const filename = `${fileType}-${timestamp}-${hash}${ext}`;
-
-    // Write file to disk
+    const filename = `${fileType}-${hash}${ext}`;
     const filePath = join(inputDir, filename);
-    writeFileSync(filePath, file.buffer);
+
+    // Only write if file doesn't already exist (deduplication)
+    if (existsSync(filePath)) {
+      this.logger.log(`Deduplicated ${fileType} file: ${filename} (already exists)`);
+    } else {
+      writeFileSync(filePath, file.buffer);
+      this.logger.log(`Saved ${fileType} file: ${filename} for workflow ${workflowId}`);
+    }
 
     // Generate URL for accessing the file
     const url = `${this.baseUrl}/api/files/workflows/${workflowId}/input/${filename}`;
-
-    this.logger.log(`Saved ${fileType} file: ${filename} for workflow ${workflowId}`);
 
     return {
       filename,
@@ -141,6 +149,21 @@ export class FilesService {
 
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
+        // First, check file size with HEAD request to avoid downloading oversized files
+        const headResponse = await fetch(remoteUrl, {
+          method: 'HEAD',
+          headers: { 'User-Agent': 'Genfeed/1.0' },
+        });
+
+        if (headResponse.ok) {
+          const contentLength = parseInt(headResponse.headers.get('content-length') || '0', 10);
+          if (contentLength > MAX_DOWNLOAD_SIZE) {
+            throw new Error(
+              `File too large: ${Math.round(contentLength / 1024 / 1024)}MB exceeds ${Math.round(MAX_DOWNLOAD_SIZE / 1024 / 1024)}MB limit`
+            );
+          }
+        }
+
         // Fetch the file from remote URL with User-Agent header
         const response = await fetch(remoteUrl, {
           headers: {
@@ -152,7 +175,22 @@ export class FilesService {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
+        // Double-check content-length from actual response (HEAD might have been cached)
+        const actualContentLength = parseInt(response.headers.get('content-length') || '0', 10);
+        if (actualContentLength > MAX_DOWNLOAD_SIZE) {
+          throw new Error(
+            `File too large: ${Math.round(actualContentLength / 1024 / 1024)}MB exceeds ${Math.round(MAX_DOWNLOAD_SIZE / 1024 / 1024)}MB limit`
+          );
+        }
+
         const buffer = Buffer.from(await response.arrayBuffer());
+
+        // Final size check after download (in case Content-Length was missing/wrong)
+        if (buffer.length > MAX_DOWNLOAD_SIZE) {
+          throw new Error(
+            `Downloaded file too large: ${Math.round(buffer.length / 1024 / 1024)}MB exceeds ${Math.round(MAX_DOWNLOAD_SIZE / 1024 / 1024)}MB limit`
+          );
+        }
 
         if (buffer.length === 0) {
           throw new Error('Downloaded file is empty');
@@ -305,6 +343,23 @@ export class FilesService {
     // Remote URL - fetch and convert
     try {
       this.logger.debug(`Fetching remote URL for base64 conversion: ${url.substring(0, 100)}...`);
+
+      // Check file size first with HEAD request
+      const headResponse = await fetch(url, {
+        method: 'HEAD',
+        headers: { 'User-Agent': 'Genfeed/1.0' },
+      });
+
+      if (headResponse.ok) {
+        const contentLength = parseInt(headResponse.headers.get('content-length') || '0', 10);
+        if (contentLength > MAX_DOWNLOAD_SIZE) {
+          this.logger.warn(
+            `File too large for base64 conversion: ${Math.round(contentLength / 1024 / 1024)}MB exceeds limit`
+          );
+          return url;
+        }
+      }
+
       const response = await fetch(url, {
         headers: { 'User-Agent': 'Genfeed/1.0' },
       });
@@ -315,6 +370,15 @@ export class FilesService {
       }
 
       const buffer = Buffer.from(await response.arrayBuffer());
+
+      // Check size after download
+      if (buffer.length > MAX_DOWNLOAD_SIZE) {
+        this.logger.warn(
+          `Downloaded file too large for base64 conversion: ${Math.round(buffer.length / 1024 / 1024)}MB exceeds limit`
+        );
+        return url;
+      }
+
       const contentType = response.headers.get('content-type') || 'image/jpeg';
       const base64 = buffer.toString('base64');
 

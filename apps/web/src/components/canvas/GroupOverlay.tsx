@@ -1,27 +1,30 @@
 'use client';
 
-import { useReactFlow, useViewport, ViewportPortal } from '@xyflow/react';
+import type { WorkflowNode } from '@genfeedai/types';
+import { useNodes, useReactFlow, useViewport, ViewportPortal } from '@xyflow/react';
 import { clsx } from 'clsx';
 import { Lock, Palette, Trash2, Unlock } from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useWorkflowStore } from '@/store/workflowStore';
 import type { GroupColor, NodeGroup } from '@/types/groups';
 import { DEFAULT_GROUP_COLORS, GROUP_COLORS } from '@/types/groups';
 
-interface GroupBounds {
+const HEADER_HEIGHT = 32;
+
+export interface GroupBounds {
   x: number;
   y: number;
   width: number;
   height: number;
 }
 
+/**
+ * Calculate bounds for a group of nodes
+ * Uses a Map for O(1) node lookup instead of O(n) filter
+ */
 function calculateGroupBounds(
   nodeIds: string[],
-  getNode: (
-    id: string
-  ) =>
-    | { position: { x: number; y: number }; measured?: { width?: number; height?: number } }
-    | undefined
+  nodeMap: Map<string, WorkflowNode>
 ): GroupBounds | null {
   if (nodeIds.length === 0) return null;
 
@@ -29,11 +32,13 @@ function calculateGroupBounds(
   let minY = Infinity;
   let maxX = -Infinity;
   let maxY = -Infinity;
+  let foundAny = false;
 
   for (const nodeId of nodeIds) {
-    const node = getNode(nodeId);
+    const node = nodeMap.get(nodeId);
     if (!node) continue;
 
+    foundAny = true;
     const width = node.measured?.width ?? 200;
     const height = node.measured?.height ?? 100;
 
@@ -43,36 +48,27 @@ function calculateGroupBounds(
     maxY = Math.max(maxY, node.position.y + height);
   }
 
-  if (minX === Infinity) return null;
+  if (!foundAny) return null;
 
   const padding = 24;
-  const headerHeight = 32;
   return {
     x: minX - padding,
-    y: minY - padding - headerHeight,
+    y: minY - padding - HEADER_HEIGHT,
     width: maxX - minX + padding * 2,
-    height: maxY - minY + padding * 2 + headerHeight,
+    height: maxY - minY + padding * 2 + HEADER_HEIGHT,
   };
 }
 
 interface GroupBackgroundProps {
   group: NodeGroup;
+  bounds: GroupBounds;
 }
 
 /**
  * Group background - renders BELOW nodes
  * Uses flow coordinates directly (ViewportPortal handles transform)
  */
-function GroupBackground({ group }: GroupBackgroundProps) {
-  const { getNode } = useReactFlow();
-
-  const bounds = useMemo(
-    () => calculateGroupBounds(group.nodeIds, getNode),
-    [group.nodeIds, getNode]
-  );
-
-  if (!bounds) return null;
-
+function GroupBackground({ group, bounds }: GroupBackgroundProps) {
   const colors = GROUP_COLORS[group.color ?? 'purple'];
 
   return (
@@ -95,6 +91,8 @@ function GroupBackground({ group }: GroupBackgroundProps) {
 
 interface GroupControlsProps {
   group: NodeGroup;
+  bounds: GroupBounds;
+  nodeMap: Map<string, WorkflowNode>;
   zoom: number;
 }
 
@@ -102,58 +100,114 @@ interface GroupControlsProps {
  * Group controls (header with drag, buttons) - renders ABOVE nodes
  * Uses flow coordinates directly (ViewportPortal handles transform)
  */
-function GroupControls({ group, zoom }: GroupControlsProps) {
-  const { getNode, setNodes } = useReactFlow();
-  const { toggleGroupLock, deleteGroup, setGroupColor, setDirty } = useWorkflowStore();
+function GroupControls({ group, bounds, nodeMap, zoom }: GroupControlsProps) {
+  const { setNodes } = useReactFlow();
+  const { toggleGroupLock, deleteGroup, setGroupColor, setDirty, renameGroup } = useWorkflowStore();
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(group.name);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const colorPickerRef = useRef<HTMLDivElement>(null);
 
   // Drag state
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [nodeStartPositions, setNodeStartPositions] = useState<
-    Map<string, { x: number; y: number }>
-  >(new Map());
+  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
+  const nodeStartPositionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
 
-  const bounds = useMemo(
-    () => calculateGroupBounds(group.nodeIds, getNode),
-    [group.nodeIds, getNode]
+  // Update edit name when group name changes externally
+  useEffect(() => {
+    if (!isEditing) {
+      setEditName(group.name);
+    }
+  }, [group.name, isEditing]);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  // Close color picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (colorPickerRef.current && !colorPickerRef.current.contains(e.target as Node)) {
+        setShowColorPicker(false);
+      }
+    };
+
+    if (showColorPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showColorPicker]);
+
+  const handleNameSubmit = useCallback(() => {
+    if (editName.trim() && editName !== group.name) {
+      renameGroup(group.id, editName.trim());
+    } else {
+      setEditName(group.name);
+    }
+    setIsEditing(false);
+  }, [editName, group.name, group.id, renameGroup]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        handleNameSubmit();
+      } else if (e.key === 'Escape') {
+        setEditName(group.name);
+        setIsEditing(false);
+      }
+    },
+    [handleNameSubmit, group.name]
   );
 
   // Handle drag start on group header
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       if (group.isLocked) return;
+      // Don't start drag if clicking on buttons or inputs
+      if (
+        (e.target as HTMLElement).closest('button') ||
+        (e.target as HTMLElement).closest('input')
+      ) {
+        return;
+      }
       e.preventDefault();
       e.stopPropagation();
 
       setIsDragging(true);
-      setDragStart({ x: e.clientX, y: e.clientY });
+      dragStartRef.current = { x: e.clientX, y: e.clientY };
 
-      // Save initial positions of all nodes in group
+      // Save initial positions of all nodes in group using O(1) Map lookup
       const positions = new Map<string, { x: number; y: number }>();
       for (const nodeId of group.nodeIds) {
-        const node = getNode(nodeId);
+        const node = nodeMap.get(nodeId);
         if (node) {
           positions.set(nodeId, { x: node.position.x, y: node.position.y });
         }
       }
-      setNodeStartPositions(positions);
+      nodeStartPositionsRef.current = positions;
     },
-    [group.isLocked, group.nodeIds, getNode]
+    [group.isLocked, group.nodeIds, nodeMap]
   );
 
-  // Handle drag move
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (!isDragging) return;
+  // Handle drag move and end
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragStartRef.current) return;
 
       // Convert screen delta to flow coordinates (divide by zoom)
-      const deltaX = (e.clientX - dragStart.x) / zoom;
-      const deltaY = (e.clientY - dragStart.y) / zoom;
+      const deltaX = (e.clientX - dragStartRef.current.x) / zoom;
+      const deltaY = (e.clientY - dragStartRef.current.y) / zoom;
 
-      setNodes((nodes) =>
-        nodes.map((node) => {
-          const startPos = nodeStartPositions.get(node.id);
+      setNodes((currentNodes) =>
+        currentNodes.map((node) => {
+          const startPos = nodeStartPositionsRef.current.get(node.id);
           if (!startPos) return node;
           return {
             ...node,
@@ -164,34 +218,24 @@ function GroupControls({ group, zoom }: GroupControlsProps) {
           };
         })
       );
-    },
-    [isDragging, dragStart, zoom, nodeStartPositions, setNodes]
-  );
-
-  // Handle drag end
-  const handleMouseUp = useCallback(() => {
-    if (isDragging) {
-      setDirty(true);
-    }
-    setIsDragging(false);
-  }, [isDragging, setDirty]);
-
-  // Add/remove document listeners for drag
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, handleMouseMove, handleMouseUp]);
 
-  if (!bounds) return null;
+    const handleMouseUp = () => {
+      setDirty(true);
+      setIsDragging(false);
+      dragStartRef.current = null;
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, zoom, setNodes, setDirty]);
 
   const colors = GROUP_COLORS[group.color ?? 'purple'];
-  const headerHeight = 32;
 
   const handleColorSelect = (color: GroupColor) => {
     setGroupColor(group.id, color);
@@ -216,15 +260,36 @@ function GroupControls({ group, zoom }: GroupControlsProps) {
           left: bounds.x,
           top: bounds.y,
           width: bounds.width,
-          height: headerHeight,
+          height: HEADER_HEIGHT,
         }}
       >
-        <span className={clsx('font-medium truncate', colors.text)} style={{ fontSize: 14 }}>
-          {group.name}
-        </span>
+        {/* Editable Name */}
+        {isEditing ? (
+          <input
+            ref={inputRef}
+            type="text"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            onBlur={handleNameSubmit}
+            onKeyDown={handleKeyDown}
+            className={clsx(
+              'flex-1 bg-transparent border-none outline-none text-sm font-medium px-0 py-0',
+              colors.text
+            )}
+            style={{ minWidth: 0 }}
+          />
+        ) : (
+          <span
+            className={clsx('font-medium truncate cursor-text', colors.text)}
+            style={{ fontSize: 14 }}
+            onClick={() => setIsEditing(true)}
+          >
+            {group.name}
+          </span>
+        )}
         <div className="flex items-center gap-1">
           {/* Color Picker */}
-          <div className="relative">
+          <div className="relative" ref={colorPickerRef}>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -288,7 +353,7 @@ function GroupControls({ group, zoom }: GroupControlsProps) {
           )}
           style={{
             left: bounds.x + 12,
-            top: bounds.y + headerHeight + 8,
+            top: bounds.y + HEADER_HEIGHT + 8,
           }}
         >
           LOCKED
@@ -301,18 +366,38 @@ function GroupControls({ group, zoom }: GroupControlsProps) {
 /**
  * Renders group backgrounds BELOW nodes (z-index: -1)
  * Must be placed inside ReactFlow component
+ *
+ * Optimization: Computes bounds once per group using a shared nodeMap
  */
 function GroupBackgroundsPortalComponent() {
   const { groups } = useWorkflowStore();
+  const nodes = useNodes() as WorkflowNode[];
+
+  // Create node lookup Map once - O(n) instead of O(n²) for all groups
+  const nodeMap = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
+
+  // Pre-compute all bounds once
+  const groupBounds = useMemo(() => {
+    const result = new Map<string, GroupBounds>();
+    for (const group of groups) {
+      const bounds = calculateGroupBounds(group.nodeIds, nodeMap);
+      if (bounds) {
+        result.set(group.id, bounds);
+      }
+    }
+    return result;
+  }, [groups, nodeMap]);
 
   if (groups.length === 0) return null;
 
   return (
     <ViewportPortal>
       <div style={{ position: 'absolute', top: 0, left: 0, zIndex: -1, pointerEvents: 'none' }}>
-        {groups.map((group) => (
-          <GroupBackground key={group.id} group={group} />
-        ))}
+        {groups.map((group) => {
+          const bounds = groupBounds.get(group.id);
+          if (!bounds) return null;
+          return <GroupBackground key={group.id} group={group} bounds={bounds} />;
+        })}
       </div>
     </ViewportPortal>
   );
@@ -321,19 +406,47 @@ function GroupBackgroundsPortalComponent() {
 /**
  * Renders group headers/controls ABOVE nodes (z-index: 1000)
  * Must be placed inside ReactFlow component
+ *
+ * Optimization: Computes bounds once per group using a shared nodeMap
  */
 function GroupControlsOverlayComponent() {
   const { groups } = useWorkflowStore();
+  const nodes = useNodes() as WorkflowNode[];
   const { zoom } = useViewport();
+
+  // Create node lookup Map once - O(n) instead of O(n²) for all groups
+  const nodeMap = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
+
+  // Pre-compute all bounds once
+  const groupBounds = useMemo(() => {
+    const result = new Map<string, GroupBounds>();
+    for (const group of groups) {
+      const bounds = calculateGroupBounds(group.nodeIds, nodeMap);
+      if (bounds) {
+        result.set(group.id, bounds);
+      }
+    }
+    return result;
+  }, [groups, nodeMap]);
 
   if (groups.length === 0) return null;
 
   return (
     <ViewportPortal>
       <div style={{ position: 'absolute', top: 0, left: 0, zIndex: 1000, pointerEvents: 'none' }}>
-        {groups.map((group) => (
-          <GroupControls key={group.id} group={group} zoom={zoom} />
-        ))}
+        {groups.map((group) => {
+          const bounds = groupBounds.get(group.id);
+          if (!bounds) return null;
+          return (
+            <GroupControls
+              key={group.id}
+              group={group}
+              bounds={bounds}
+              nodeMap={nodeMap}
+              zoom={zoom}
+            />
+          );
+        })}
       </div>
     </ViewportPortal>
   );

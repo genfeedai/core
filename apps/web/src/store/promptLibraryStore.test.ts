@@ -27,6 +27,7 @@ describe('usePromptLibraryStore', () => {
     category: 'landscape',
     tags: ['nature'],
     isFeatured: false,
+    isSystem: false,
     thumbnail: undefined,
     useCount: 5,
     isDeleted: false,

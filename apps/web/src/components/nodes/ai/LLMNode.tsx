@@ -1,15 +1,14 @@
 'use client';
 
 import type { LLMNodeData } from '@genfeedai/types';
-import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { AlertCircle, Expand, Loader2, RefreshCw, Sparkles } from 'lucide-react';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { useCanGenerate } from '@/hooks/useCanGenerate';
-import { useExecutionStore } from '@/store/executionStore';
+import { useNodeExecution } from '@/hooks/useNodeExecution';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
 
@@ -17,8 +16,8 @@ function LLMNodeComponent(props: NodeProps) {
   const { id, type, data } = props;
   const nodeData = data as LLMNodeData;
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
-  const executeNode = useExecutionStore((state) => state.executeNode);
   const openNodeDetailModal = useUIStore((state) => state.openNodeDetailModal);
+  const { handleGenerate } = useNodeExecution(id);
   const { canGenerate } = useCanGenerate({
     nodeId: id,
     nodeType: type as 'llm',
@@ -45,20 +44,19 @@ function LLMNodeComponent(props: NodeProps) {
     [id, updateNodeData]
   );
 
-  const handleGenerate = useCallback(() => {
-    updateNodeData(id, { status: NODE_STATUS.processing });
-    executeNode(id);
-  }, [id, executeNode, updateNodeData]);
-
   const handleExpand = useCallback(() => {
     openNodeDetailModal(id, 'preview');
   }, [id, openNodeDetailModal]);
 
-  const headerActions = nodeData.outputText ? (
-    <Button variant="ghost" size="icon-sm" onClick={handleExpand} title="Expand preview">
-      <Expand className="h-3.5 w-3.5" />
-    </Button>
-  ) : null;
+  const headerActions = useMemo(
+    () =>
+      nodeData.outputText ? (
+        <Button variant="ghost" size="icon-sm" onClick={handleExpand} title="Expand preview">
+          <Expand className="h-3.5 w-3.5" />
+        </Button>
+      ) : null,
+    [nodeData.outputText, handleExpand]
+  );
 
   return (
     <BaseNode {...props} headerActions={headerActions}>

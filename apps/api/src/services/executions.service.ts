@@ -426,10 +426,15 @@ export class ExecutionsService {
     }
 
     // Log final resolved inputs (especially arrays)
+    // Truncate data: URLs to avoid bloating logs with base64 content
     const inputImages = resolvedInputs.inputImages;
     if (Array.isArray(inputImages)) {
       this.logger.log(
-        `Final inputImages for ${nodeId}: ${inputImages.length} items - ${JSON.stringify(inputImages.map((img: string) => img?.substring?.(0, 50) ?? img))}`
+        `Final inputImages for ${nodeId}: ${inputImages.length} items - ${JSON.stringify(
+          inputImages.map((img: string) =>
+            img?.startsWith?.('data:') ? '[base64 data]' : (img?.substring?.(0, 50) ?? img)
+          )
+        )}`
       );
     }
 

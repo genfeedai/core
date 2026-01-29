@@ -214,7 +214,8 @@ export class ReplicateService {
   ): Record<string, unknown> | undefined {
     if (!schemaParams) return undefined;
 
-    // Keys that typically contain image/video URLs
+    // Keys that typically contain image/video/audio URLs
+    // This list should be comprehensive to handle various model input schemas
     const urlKeys = [
       'image',
       'input_image',
@@ -224,7 +225,24 @@ export class ReplicateService {
       'last_frame',
       'reference_images',
       'video',
+      'input_video',
+      'video_input',
       'audio',
+      'input_audio',
+      'audio_input',
+      'mask',
+      'mask_image',
+      'control_image',
+      'init_image',
+      'subject_image',
+      'face_image',
+      'style_image',
+      'pose_image',
+      'depth_image',
+      'canny_image',
+      'conditioning_image',
+      'ip_adapter_image',
+      'tail_image_url',
     ];
 
     const converted = { ...schemaParams };
@@ -302,7 +320,8 @@ export class ReplicateService {
     }
 
     // Convert local URLs to base64 (Replicate can't access localhost)
-    this.logger.debug(`Received inputImages: ${JSON.stringify(input.inputImages)}`);
+    // Note: Don't log full image URLs/base64 data to avoid PII exposure in logs
+    this.logger.debug(`Received inputImages: ${input.inputImages?.length ?? 0} items`);
     const inputImages = input.inputImages
       ? input.inputImages.map((url) => this.convertLocalUrlToBase64(url))
       : [];

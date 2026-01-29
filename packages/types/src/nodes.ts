@@ -12,6 +12,8 @@ export interface HandleDefinition {
   label: string;
   multiple?: boolean;
   required?: boolean;
+  /** True if handle was dynamically generated from model schema */
+  fromSchema?: boolean;
 }
 
 // Connection validation rules

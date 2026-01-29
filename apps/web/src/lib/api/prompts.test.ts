@@ -24,6 +24,7 @@ describe('promptsApi', () => {
     tags: ['nature', 'sunset'],
     useCount: 5,
     isFeatured: false,
+    isSystem: false,
     isDeleted: false,
     createdAt: '2026-01-15T00:00:00.000Z',
     updatedAt: '2026-01-15T00:00:00.000Z',

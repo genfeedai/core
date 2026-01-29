@@ -117,9 +117,10 @@ export class WorkflowProcessor extends WorkerHost {
       const hasExistingOutput = (node: WorkflowNode): boolean => {
         const data = node.data || {};
         // Check for common output fields across node types
+        const outputImages = data.outputImages as unknown[] | undefined;
         return !!(
           data.outputImage ||
-          data.outputImages?.length ||
+          (outputImages && outputImages.length > 0) ||
           data.outputVideo ||
           data.outputAudio ||
           data.outputText ||
@@ -138,12 +139,13 @@ export class WorkflowProcessor extends WorkerHost {
         if (data.outputImage) {
           result.output = data.outputImage;
         }
-        if (data.outputImages?.length) {
-          result.outputs = data.outputImages;
-          result.images = data.outputImages;
+        const outputImages = data.outputImages as unknown[] | undefined;
+        if (outputImages && outputImages.length > 0) {
+          result.outputs = outputImages;
+          result.images = outputImages;
           // Also set output to first image for single-image consumers
-          if (!result.output && data.outputImages[0]) {
-            result.output = data.outputImages[0];
+          if (!result.output && outputImages[0]) {
+            result.output = outputImages[0];
           }
         }
 

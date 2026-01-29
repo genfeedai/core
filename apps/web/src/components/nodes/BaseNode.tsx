@@ -1,6 +1,12 @@
 'use client';
 
-import type { HandleDefinition, NodeStatus, NodeType, WorkflowNodeData } from '@genfeedai/types';
+import type {
+  HandleDefinition,
+  NodeStatus,
+  NodeType,
+  SelectedModel,
+  WorkflowNodeData,
+} from '@genfeedai/types';
 import { NODE_DEFINITIONS, NODE_STATUS } from '@genfeedai/types';
 import {
   Handle,
@@ -46,10 +52,12 @@ import {
   Wand2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { memo, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { NodeErrorBoundary } from '@/components/nodes/NodeErrorBoundary';
 import { PreviewTooltip } from '@/components/nodes/PreviewTooltip';
 import { useExecutionStore } from '@/store/executionStore';
 import { useUIStore } from '@/store/uiStore';
+import { generateHandlesFromSchema } from '@/lib/utils/schemaHandles';
 import { useWorkflowStore } from '@/store/workflowStore';
 
 // Icon mapping
@@ -146,12 +154,21 @@ function BaseNodeComponent({
   const [showTooltip, setShowTooltip] = useState(false);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
 
-  // Use static handle order from node definition
-  // Auto-layout handles node positioning to minimize edge crossings
-  const sortedInputs = nodeDef?.inputs ?? [];
+  // Generate dynamic handles from model schema (for AI nodes like imageGen, videoGen)
+  // Falls back to static handles from NODE_DEFINITIONS if no schema present
+  const selectedModel = (nodeData as { selectedModel?: SelectedModel }).selectedModel;
+  const sortedInputs = useMemo(() => {
+    const staticInputs = nodeDef?.inputs ?? [];
+    if (!selectedModel?.inputSchema) return staticInputs;
+    return generateHandlesFromSchema(selectedModel.inputSchema, staticInputs);
+  }, [nodeDef?.inputs, selectedModel?.inputSchema]);
 
-  // Force React Flow to recalculate handle positions when dimensions or handle count changes
-  // Use requestAnimationFrame to ensure DOM has settled before measuring
+  const _outputCount = nodeDef?.outputs?.length ?? 0;
+  const _inputCount = sortedInputs.length;
+  const _disabledInputsKey = disabledInputs?.join(',') ?? '';
+
+  // Force React Flow to recalculate handle positions when handle configuration changes
+  // Only re-run when actual handle-affecting properties change, not on every render
   useEffect(() => {
     const rafId = requestAnimationFrame(() => {
       updateNodeInternals(id);
@@ -334,50 +351,52 @@ function BaseNodeComponent({
             {headerActions}
           </div>
 
-          {/* Content */}
+          {/* Content - wrapped with error boundary to prevent crashes from taking down canvas */}
           <div className="flex-1 flex flex-col p-3 min-h-0">
-            {/* Error message - rendered BEFORE children so it appears at top */}
-            {nodeData.error && (
-              <div className="mb-3 rounded-md border border-destructive/30 bg-destructive/10 p-2">
-                <div className="flex items-start gap-1.5">
-                  <p className="flex-1 text-xs text-destructive break-all">{nodeData.error}</p>
+            <NodeErrorBoundary nodeId={id} nodeType={type as string}>
+              {/* Error message - rendered BEFORE children so it appears at top */}
+              {nodeData.error && (
+                <div className="mb-3 rounded-md border border-destructive/30 bg-destructive/10 p-2">
+                  <div className="flex items-start gap-1.5">
+                    <p className="flex-1 text-xs text-destructive break-all">{nodeData.error}</p>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={handleCopyError}
+                      className="flex-shrink-0 h-5 w-5 text-destructive/70 hover:bg-destructive/20 hover:text-destructive"
+                      title="Copy error"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
                   <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={handleCopyError}
-                    className="flex-shrink-0 h-5 w-5 text-destructive/70 hover:bg-destructive/20 hover:text-destructive"
-                    title="Copy error"
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleRetry}
+                    disabled={isRunning}
+                    className="mt-2 w-full"
                   >
-                    <Copy className="h-3 w-3" />
+                    <RotateCcw className="h-3 w-3" />
+                    Retry
                   </Button>
                 </div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleRetry}
-                  disabled={isRunning}
-                  className="mt-2 w-full"
-                >
-                  <RotateCcw className="h-3 w-3" />
-                  Retry
-                </Button>
-              </div>
-            )}
+              )}
 
-            {children}
+              {children}
 
-            {/* Progress bar */}
-            {nodeData.status === 'processing' && nodeData.progress !== undefined && (
-              <div className="mt-3">
-                <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
-                  <div
-                    className="h-full bg-primary transition-all duration-300"
-                    style={{ width: `${nodeData.progress}%` }}
-                  />
+              {/* Progress bar */}
+              {nodeData.status === 'processing' && nodeData.progress !== undefined && (
+                <div className="mt-3">
+                  <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
+                    <div
+                      className="h-full bg-primary transition-all duration-300"
+                      style={{ width: `${nodeData.progress}%` }}
+                    />
+                  </div>
+                  <span className="mt-1 text-xs text-muted-foreground">{nodeData.progress}%</span>
                 </div>
-                <span className="mt-1 text-xs text-muted-foreground">{nodeData.progress}%</span>
-              </div>
-            )}
+              )}
+            </NodeErrorBoundary>
           </div>
         </div>
 
@@ -400,4 +419,56 @@ function BaseNodeComponent({
   );
 }
 
-export const BaseNode = memo(BaseNodeComponent);
+/**
+ * Custom comparator for BaseNode to prevent unnecessary re-renders.
+ * Only re-renders when meaningful properties change.
+ */
+function arePropsEqual(prev: BaseNodeProps, next: BaseNodeProps): boolean {
+  // Always re-render if selection changes
+  if (prev.selected !== next.selected) return false;
+
+  // Always re-render if id or type changes (shouldn't happen often)
+  if (prev.id !== next.id) return false;
+  if (prev.type !== next.type) return false;
+
+  // Check dimension changes
+  if (prev.width !== next.width || prev.height !== next.height) return false;
+
+  // Check headerActions reference (parent should memoize this)
+  if (prev.headerActions !== next.headerActions) return false;
+
+  // Check title/titleElement
+  if (prev.title !== next.title) return false;
+  if (prev.titleElement !== next.titleElement) return false;
+
+  // Check disabledInputs array (shallow compare)
+  const prevDisabled = prev.disabledInputs ?? [];
+  const nextDisabled = next.disabledInputs ?? [];
+  if (prevDisabled.length !== nextDisabled.length) return false;
+  for (let i = 0; i < prevDisabled.length; i++) {
+    if (prevDisabled[i] !== nextDisabled[i]) return false;
+  }
+
+  // Shallow compare data object - check key properties that affect rendering
+  const prevData = prev.data as Record<string, unknown>;
+  const nextData = next.data as Record<string, unknown>;
+
+  // Status affects StatusIndicator and processing glow
+  if (prevData.status !== nextData.status) return false;
+
+  // Progress affects progress bar
+  if (prevData.progress !== nextData.progress) return false;
+
+  // Error affects error display
+  if (prevData.error !== nextData.error) return false;
+
+  // Label affects title display
+  if (prevData.label !== nextData.label) return false;
+
+  // Children reference
+  if (prev.children !== next.children) return false;
+
+  return true;
+}
+
+export const BaseNode = memo(BaseNodeComponent, arePropsEqual);

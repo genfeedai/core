@@ -39,7 +39,7 @@ export interface NodeActions {
   updateNodeData: <T extends WorkflowNodeData>(nodeId: string, data: Partial<T>) => void;
   removeNode: (nodeId: string) => void;
   duplicateNode: (nodeId: string) => string | null;
-  propagateOutputsDownstream: (sourceNodeId: string) => void;
+  propagateOutputsDownstream: (sourceNodeId: string, outputValue?: string) => void;
 }
 
 export interface ReactFlowActions {

@@ -71,6 +71,20 @@ export function validateWorkflow(
         }
       }
     }
+
+    // Check output nodes have at least one media input
+    if (node.type === 'output') {
+      const hasMediaInput = incomingEdges.some(
+        (e) => e.targetHandle === 'image' || e.targetHandle === 'video'
+      );
+      if (!hasMediaInput) {
+        errors.push({
+          nodeId: node.id,
+          message: 'Output node requires at least one Media input (image or video)',
+          severity: 'error',
+        });
+      }
+    }
   }
 
   // Check for cycles

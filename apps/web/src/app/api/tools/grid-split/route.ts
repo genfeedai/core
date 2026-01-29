@@ -1,12 +1,27 @@
+import { randomUUID } from 'node:crypto';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { type NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
 import { logger } from '@/lib/logger';
 
 interface SplitResult {
   index: number;
-  data: string; // base64 encoded image
+  url: string; // URL to access the cell image
   width: number;
   height: number;
+}
+
+/** Directory for temporary grid cell storage */
+const GRID_CELLS_DIR = join(process.cwd(), 'data', 'tmp', 'grid-cells');
+
+/**
+ * Ensure directory exists, creating it if necessary
+ */
+function ensureDir(dirPath: string): void {
+  if (!existsSync(dirPath)) {
+    mkdirSync(dirPath, { recursive: true });
+  }
 }
 
 /**
@@ -75,8 +90,14 @@ export async function POST(request: NextRequest) {
     const maxInset = Math.min(cellWidth / 2, cellHeight / 2) - 1;
     const safeInset = Math.min(borderInset, Math.max(0, maxInset));
 
+    // Create unique grid ID for this split operation
+    const gridId = randomUUID();
+    const gridDir = join(GRID_CELLS_DIR, gridId);
+    ensureDir(gridDir);
+
     // Split the image into grid cells
     const results: SplitResult[] = [];
+    const fileExt = outputFormat === 'png' ? 'png' : outputFormat === 'webp' ? 'webp' : 'jpg';
 
     for (let row = 0; row < gridRows; row++) {
       for (let col = 0; col < gridCols; col++) {
@@ -105,28 +126,31 @@ export async function POST(request: NextRequest) {
 
         const cellBuffer = await pipeline.toBuffer();
 
-        // Convert to base64 data URL
-        const mimeTypes: Record<string, string> = {
-          png: 'image/png',
-          webp: 'image/webp',
-          jpg: 'image/jpeg',
-          jpeg: 'image/jpeg',
-        };
-        const mimeType = mimeTypes[outputFormat] ?? 'image/jpeg';
-        const base64 = cellBuffer.toString('base64');
-        const dataUrl = `data:${mimeType};base64,${base64}`;
+        // Save cell to file instead of returning inline base64
+        const filename = `cell-${index}.${fileExt}`;
+        const filePath = join(gridDir, filename);
+        writeFileSync(filePath, cellBuffer);
+
+        // Generate URL for gallery access
+        const url = `/api/gallery/tmp/grid-cells/${gridId}/${filename}`;
 
         results.push({
           index,
-          data: dataUrl,
+          url,
           width,
           height,
         });
       }
     }
 
+    logger.info(`Grid split complete: ${gridRows}x${gridCols} = ${results.length} cells`, {
+      gridId,
+      context: 'api/tools/grid-split',
+    });
+
     return NextResponse.json({
       success: true,
+      gridId,
       totalCells: gridRows * gridCols,
       gridRows,
       gridCols,

@@ -1,5 +1,6 @@
-import type { NodeType } from '@genfeedai/types';
-import { useMemo } from 'react';
+import type { NodeType, WorkflowEdge, WorkflowNode } from '@genfeedai/types';
+import { useCallback, useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { CONNECTION_FIELDS, validateRequiredSchemaFields } from '@/lib/utils/schemaValidation';
 import { useWorkflowStore } from '@/store/workflowStore';
 import { useRequiredInputs } from './useRequiredInputs';
@@ -35,6 +36,26 @@ interface UseCanGenerateOptions {
 }
 
 /**
+ * Extract output value from a node based on handle type.
+ */
+function extractOutputValue(
+  node: WorkflowNode,
+  handleType: string | null | undefined
+): string | undefined {
+  const data = node.data as Record<string, unknown>;
+  if (handleType === 'text') {
+    return (data.outputText ?? data.prompt) as string | undefined;
+  } else if (handleType === 'image') {
+    return (data.outputImage ?? data.image) as string | undefined;
+  } else if (handleType === 'video') {
+    return data.outputVideo as string | undefined;
+  } else if (handleType === 'audio') {
+    return (data.outputAudio ?? data.audio) as string | undefined;
+  }
+  return undefined;
+}
+
+/**
  * Hook that performs comprehensive validation for the Generate button.
  *
  * Validates:
@@ -52,6 +73,31 @@ export function useCanGenerate({
 }: UseCanGenerateOptions): CanGenerateResult {
   const { hasRequiredInputs, missingInputs } = useRequiredInputs(nodeId, nodeType);
   const getConnectedInputs = useWorkflowStore((state) => state.getConnectedInputs);
+
+  // Optimized selector: only get edges targeting this node
+  // Uses useShallow to prevent re-renders when unrelated edges change
+  const incomingEdgesSelector = useCallback(
+    (state: { edges: WorkflowEdge[] }) => state.edges.filter((e) => e.target === nodeId),
+    [nodeId]
+  );
+  const incomingEdges = useWorkflowStore(useShallow(incomingEdgesSelector));
+
+  // Optimized selector: only get source nodes connected to this node
+  // Returns a stable object with just the output data we need
+  const connectedOutputsSelector = useCallback(
+    (state: { nodes: WorkflowNode[] }) => {
+      const outputs: Record<string, string | undefined> = {};
+      for (const edge of incomingEdges) {
+        const sourceNode = state.nodes.find((n) => n.id === edge.source);
+        if (sourceNode) {
+          outputs[edge.source] = extractOutputValue(sourceNode, edge.sourceHandle);
+        }
+      }
+      return outputs;
+    },
+    [incomingEdges]
+  );
+  const _connectedNodeData = useWorkflowStore(useShallow(connectedOutputsSelector));
 
   return useMemo(() => {
     const missingItems: MissingItem[] = [];
@@ -72,23 +118,6 @@ export function useCanGenerate({
     // If we have required connections but they don't have data, that's a problem
     // We need to check if any handle that IS connected has empty data
     if (hasRequiredInputs) {
-      // getConnectedInputs returns a Map of handleId -> value
-      // If a connection exists but value is null/undefined/empty, it means the source node has no data
-      // We can't directly know which connections are required here, but we can check if
-      // any connections that exist have empty data
-
-      // A more robust check: if hasRequiredInputs is true, it means edges exist
-      // But we also need to verify those connected source nodes have output data
-      // The getConnectedInputs function only returns values for connections that have data
-      // So if connectedInputs is empty but hasRequiredInputs is true, data is missing
-
-      // Actually, we need to compare what's connected vs what has data
-      // For simplicity, we'll check if any required input handle has no data
-      // by looking at the store edges directly
-
-      const { edges } = useWorkflowStore.getState();
-      const incomingEdges = edges.filter((e) => e.target === nodeId);
-
       for (const edge of incomingEdges) {
         const handleId = edge.targetHandle;
         if (!handleId) continue;
@@ -129,5 +158,13 @@ export function useCanGenerate({
       hasConnectedData,
       hasRequiredSchemaFields: schemaValidation.isValid,
     };
-  }, [nodeId, hasRequiredInputs, missingInputs, inputSchema, schemaParams, getConnectedInputs]);
+  }, [
+    nodeId,
+    hasRequiredInputs,
+    missingInputs,
+    inputSchema,
+    schemaParams,
+    getConnectedInputs,
+    incomingEdges,
+  ]);
 }

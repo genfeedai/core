@@ -12,7 +12,7 @@ import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
 
 // Node types that should open the prompt editor instead of preview
-const PROMPT_NODE_TYPES: NodeType[] = ['prompt', 'negative-prompt'];
+const PROMPT_NODE_TYPES: NodeType[] = ['prompt'];
 
 export function NodeDetailModal() {
   const { activeModal, nodeDetailNodeId, closeNodeDetailModal } = useUIStore();

@@ -53,7 +53,7 @@ export async function pollPrediction(
       // Clear error on success
       workflowStore.updateNodeData(nodeId, {
         status: NODE_STATUS.complete,
-        error: null,
+        error: undefined,
         ...outputUpdate,
       });
       workflowStore.propagateOutputsDownstream(nodeId);

@@ -28,6 +28,7 @@ import { GroupOverlay } from '@/components/canvas/GroupOverlay';
 import { ContextMenu } from '@/components/context-menu';
 import { nodeTypes } from '@/components/nodes';
 import { NodeDetailModal } from '@/components/nodes/NodeDetailModal';
+import { useCanvasKeyboardShortcuts } from '@/hooks/useCanvasKeyboardShortcuts';
 import { useContextMenu } from '@/hooks/useContextMenu';
 import { DEFAULT_NODE_COLOR } from '@/lib/constants/colors';
 import { supportsImageInput } from '@/lib/utils/schemaUtils';
@@ -96,108 +97,16 @@ export function WorkflowCanvas() {
   } = useContextMenu();
 
   // Keyboard shortcuts for lock/group operations
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if typing in input
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-
-      const isMod = e.ctrlKey || e.metaKey;
-
-      // M - Toggle sidebar (Todoist style)
-      if (e.key === 'm' && !isMod && !e.shiftKey) {
-        e.preventDefault();
-        togglePalette();
-      }
-
-      // L - Toggle lock on selected nodes
-      if (e.key === 'l' && !isMod && !e.shiftKey) {
-        e.preventDefault();
-        for (const nodeId of selectedNodeIds) {
-          toggleNodeLock(nodeId);
-        }
-      }
-
-      // Ctrl+G - Create group from selected nodes
-      if (e.key === 'g' && isMod && !e.shiftKey) {
-        e.preventDefault();
-        if (selectedNodeIds.length > 1) {
-          createGroup(selectedNodeIds);
-        }
-      }
-
-      // Ctrl+Shift+G - Ungroup (delete group containing selected nodes)
-      if (e.key === 'g' && isMod && e.shiftKey) {
-        e.preventDefault();
-        for (const nodeId of selectedNodeIds) {
-          const group = groups.find((g) => g.nodeIds.includes(nodeId));
-          if (group) {
-            deleteGroup(group.id);
-            break;
-          }
-        }
-      }
-
-      // Ctrl+Shift+L - Unlock all nodes
-      if (e.key === 'l' && isMod && e.shiftKey) {
-        e.preventDefault();
-        unlockAllNodes();
-      }
-
-      // Shift+I - Add image generator node at viewport center
-      if (e.key === 'I' && e.shiftKey && !isMod) {
-        e.preventDefault();
-        const position = { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 150 };
-        addNode('imageGen', position);
-      }
-
-      // Shift+V - Add video generator node at viewport center
-      if (e.key === 'V' && e.shiftKey && !isMod) {
-        e.preventDefault();
-        const position = { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 150 };
-        addNode('videoGen', position);
-      }
-
-      // Shift+P - Add prompt node at viewport center
-      if (e.key === 'P' && e.shiftKey && !isMod) {
-        e.preventDefault();
-        const position = { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 150 };
-        addNode('prompt', position);
-      }
-
-      // Shift+L - Add LLM node at viewport center
-      if ((e.key === 'L' || e.key === 'l') && e.shiftKey && !isMod) {
-        e.preventDefault();
-        const position = { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 150 };
-        addNode('llm', position);
-      }
-
-      // Cmd/Ctrl+Z - Undo
-      if (e.key === 'z' && isMod && !e.shiftKey) {
-        e.preventDefault();
-        useWorkflowStore.temporal.getState().undo();
-      }
-
-      // Cmd/Ctrl+Shift+Z - Redo
-      if (e.key === 'z' && isMod && e.shiftKey) {
-        e.preventDefault();
-        useWorkflowStore.temporal.getState().redo();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
+  useCanvasKeyboardShortcuts({
     selectedNodeIds,
+    groups,
     toggleNodeLock,
     createGroup,
     deleteGroup,
     unlockAllNodes,
-    groups,
     addNode,
     togglePalette,
-  ]);
+  });
 
   // Update highlighted nodes when selection changes
   useEffect(() => {
@@ -541,6 +450,8 @@ export function WorkflowCanvas() {
         edgesFocusable
         edgesReconnectable
         proOptions={{ hideAttribution: true }}
+        // Enable virtualization for large workflows (only render visible nodes)
+        onlyRenderVisibleElements={nodes.length > 50}
       >
         <GroupOverlay />
         <Background

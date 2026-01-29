@@ -394,7 +394,7 @@ export function Toolbar() {
         {/* Undo/Redo Buttons */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="sm" onClick={undo} disabled={!canUndo}>
+            <Button variant="ghost" size="sm" onClick={() => undo()} disabled={!canUndo}>
               <Undo2 className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
@@ -404,7 +404,7 @@ export function Toolbar() {
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="sm" onClick={redo} disabled={!canRedo}>
+            <Button variant="ghost" size="sm" onClick={() => redo()} disabled={!canRedo}>
               <Redo2 className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
@@ -507,7 +507,7 @@ export function Toolbar() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant={isRunning ? 'destructive' : canRunWorkflow ? 'white' : 'secondary'}
+              variant={isRunning ? 'destructive' : canRunWorkflow ? 'default' : 'secondary'}
               onClick={handleRunStop}
               disabled={!isRunning && !canRunWorkflow}
             >

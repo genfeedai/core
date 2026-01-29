@@ -1,7 +1,6 @@
 'use client';
 
 import type { TextToSpeechNodeData, TTSProvider, TTSVoice } from '@genfeedai/types';
-import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { AlertTriangle, AudioLines, Loader2, RefreshCw, Volume2 } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
@@ -16,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { useCanGenerate } from '@/hooks/useCanGenerate';
-import { useExecutionStore } from '@/store/executionStore';
+import { useNodeExecution } from '@/hooks/useNodeExecution';
 import { useWorkflowStore } from '@/store/workflowStore';
 
 const TTS_ENABLED = process.env.NEXT_PUBLIC_TTS_ENABLED === 'true';
@@ -50,7 +49,7 @@ function TextToSpeechNodeComponent(props: NodeProps) {
   const { id, type, data } = props;
   const nodeData = data as TextToSpeechNodeData;
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
-  const executeNode = useExecutionStore((state) => state.executeNode);
+  const { handleGenerate } = useNodeExecution(id);
   const { canGenerate } = useCanGenerate({
     nodeId: id,
     nodeType: type as 'textToSpeech',
@@ -90,11 +89,6 @@ function TextToSpeechNodeComponent(props: NodeProps) {
     },
     [id, updateNodeData]
   );
-
-  const handleGenerate = useCallback(() => {
-    updateNodeData(id, { status: NODE_STATUS.processing });
-    executeNode(id);
-  }, [id, executeNode, updateNodeData]);
 
   const headerActions = useMemo(
     () =>

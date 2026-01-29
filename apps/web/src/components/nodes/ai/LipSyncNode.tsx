@@ -1,5 +1,9 @@
 'use client';
 
+import type { LipSyncMode, LipSyncModel, LipSyncNodeData } from '@genfeedai/types';
+import type { NodeProps } from '@xyflow/react';
+import { Expand, Loader2, Mic, RefreshCw, Video } from 'lucide-react';
+import { memo, useCallback, useMemo } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -12,37 +16,17 @@ import {
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { useCanGenerate } from '@/hooks/useCanGenerate';
-import { useExecutionStore } from '@/store/executionStore';
+import { useNodeExecution } from '@/hooks/useNodeExecution';
+import { LIPSYNC_MODELS, LIPSYNC_SYNC_MODES } from '@/lib/models/registry';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
-import type { LipSyncMode, LipSyncModel, LipSyncNodeData } from '@genfeedai/types';
-import { NODE_STATUS } from '@genfeedai/types';
-import type { NodeProps } from '@xyflow/react';
-import { Expand, Loader2, Mic, RefreshCw, Video } from 'lucide-react';
-import { memo, useCallback, useMemo } from 'react';
-
-const MODELS: { value: LipSyncModel; label: string; supportsImage: boolean }[] = [
-  { value: 'bytedance/omni-human', label: 'OmniHuman (Image)', supportsImage: true },
-  { value: 'veed/fabric-1.0', label: 'VEED Fabric (Image)', supportsImage: true },
-  { value: 'sync/lipsync-2-pro', label: 'Sync Labs Pro (Video)', supportsImage: false },
-  { value: 'sync/lipsync-2', label: 'Sync Labs (Video)', supportsImage: false },
-  { value: 'pixverse/lipsync', label: 'Pixverse', supportsImage: true },
-];
-
-const SYNC_MODES: { value: LipSyncMode; label: string }[] = [
-  { value: 'loop', label: 'Loop' },
-  { value: 'bounce', label: 'Bounce' },
-  { value: 'cut_off', label: 'Cut Off' },
-  { value: 'silence', label: 'Silence' },
-  { value: 'remap', label: 'Remap' },
-];
 
 function LipSyncNodeComponent(props: NodeProps) {
   const { id, type, data } = props;
   const nodeData = data as LipSyncNodeData;
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
-  const executeNode = useExecutionStore((state) => state.executeNode);
   const openNodeDetailModal = useUIStore((state) => state.openNodeDetailModal);
+  const { handleGenerate } = useNodeExecution(id);
   const { canGenerate } = useCanGenerate({
     nodeId: id,
     nodeType: type as 'lipSync',
@@ -78,16 +62,11 @@ function LipSyncNodeComponent(props: NodeProps) {
     [id, updateNodeData]
   );
 
-  const handleGenerate = useCallback(() => {
-    updateNodeData(id, { status: NODE_STATUS.processing });
-    executeNode(id);
-  }, [id, executeNode, updateNodeData]);
-
   const handleExpand = useCallback(() => {
     openNodeDetailModal(id, 'preview');
   }, [id, openNodeDetailModal]);
 
-  const currentModel = MODELS.find((m) => m.value === nodeData.model);
+  const currentModel = LIPSYNC_MODELS.find((m) => m.value === nodeData.model);
   const isSyncModel = nodeData.model.startsWith('sync/');
   const supportsImage = currentModel?.supportsImage ?? false;
 
@@ -112,7 +91,7 @@ function LipSyncNodeComponent(props: NodeProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {MODELS.map((model) => (
+              {LIPSYNC_MODELS.map((model) => (
                 <SelectItem key={model.value} value={model.value}>
                   {model.label}
                 </SelectItem>
@@ -130,7 +109,7 @@ function LipSyncNodeComponent(props: NodeProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {SYNC_MODES.map((mode) => (
+                {LIPSYNC_SYNC_MODES.map((mode) => (
                   <SelectItem key={mode.value} value={mode.value}>
                     {mode.label}
                   </SelectItem>

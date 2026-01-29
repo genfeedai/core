@@ -1,43 +1,33 @@
 'use client';
 
 import type { VideoGenNodeData, VideoModel } from '@genfeedai/types';
-import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { AlertCircle, Expand, Loader2, Play, Video } from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { ModelBrowserModal } from '@/components/models/ModelBrowserModal';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { SchemaInputs } from '@/components/nodes/SchemaInputs';
 import { Button } from '@/components/ui/button';
+import { useAutoLoadModelSchema } from '@/hooks/useAutoLoadModelSchema';
 import { useCanGenerate } from '@/hooks/useCanGenerate';
 import { useModelSelection } from '@/hooks/useModelSelection';
+import { useNodeExecution } from '@/hooks/useNodeExecution';
+import {
+  DEFAULT_VIDEO_MODEL,
+  VIDEO_MODEL_ID_MAP,
+  VIDEO_MODEL_MAP,
+  VIDEO_MODELS,
+} from '@/lib/models/registry';
 import { extractEnumValues, supportsImageInput } from '@/lib/utils/schemaUtils';
-import { useExecutionStore } from '@/store/executionStore';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
-
-const MODELS: { value: VideoModel; label: string; description: string }[] = [
-  { value: 'veo-3.1-fast', label: 'Veo 3.1 Fast', description: 'Fast' },
-  { value: 'veo-3.1', label: 'Veo 3.1', description: 'High quality' },
-];
-
-const VIDEO_MODEL_MAP: Record<string, VideoModel> = {
-  'google/veo-3.1-fast': 'veo-3.1-fast',
-  'google/veo-3.1': 'veo-3.1',
-};
-
-// Reverse map: internal model type -> API model ID
-const INTERNAL_TO_MODEL_ID: Record<VideoModel, string> = {
-  'veo-3.1-fast': 'google/veo-3.1-fast',
-  'veo-3.1': 'google/veo-3.1',
-};
 
 function VideoGenNodeComponent(props: NodeProps) {
   const { id, type, data } = props;
   const nodeData = data as VideoGenNodeData;
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
-  const executeNode = useExecutionStore((state) => state.executeNode);
   const openNodeDetailModal = useUIStore((state) => state.openNodeDetailModal);
+  const { handleGenerate } = useNodeExecution(id);
   const { canGenerate } = useCanGenerate({
     nodeId: id,
     nodeType: type as 'videoGen',
@@ -51,52 +41,16 @@ function VideoGenNodeComponent(props: NodeProps) {
   const { handleModelSelect } = useModelSelection<VideoModel, VideoGenNodeData>({
     nodeId: id,
     modelMap: VIDEO_MODEL_MAP,
-    fallbackModel: 'veo-3.1-fast',
+    fallbackModel: DEFAULT_VIDEO_MODEL,
   });
 
-  // Track if we've already attempted to load the default model schema
-  const hasAttemptedSchemaLoad = useRef(false);
-
   // Auto-load schema for default model if selectedModel is not set
-  useEffect(() => {
-    // Only run once per node, and only if we have a model but no selectedModel
-    if (hasAttemptedSchemaLoad.current || nodeData.selectedModel || !nodeData.model) {
-      return;
-    }
-
-    const modelId = INTERNAL_TO_MODEL_ID[nodeData.model];
-    if (!modelId) return;
-
-    const controller = new AbortController();
-    let isCancelled = false;
-
-    const loadSchema = async () => {
-      try {
-        const response = await fetch(`/api/providers/models?query=${encodeURIComponent(modelId)}`, {
-          signal: controller.signal,
-        });
-
-        if (!response.ok || isCancelled) return;
-
-        const data = await response.json();
-        const model = data.models?.find((m: { id: string }) => m.id === modelId);
-
-        if (model && !isCancelled) {
-          hasAttemptedSchemaLoad.current = true;
-          handleModelSelect(model);
-        }
-      } catch {
-        // Ignore abort errors and other failures - allows retry on next effect run
-      }
-    };
-
-    loadSchema();
-
-    return () => {
-      isCancelled = true;
-      controller.abort();
-    };
-  }, [nodeData.model, nodeData.selectedModel, handleModelSelect]);
+  useAutoLoadModelSchema({
+    currentModel: nodeData.model,
+    selectedModel: nodeData.selectedModel,
+    modelIdMap: VIDEO_MODEL_ID_MAP,
+    onModelSelect: handleModelSelect,
+  });
 
   // Get schema properties from selected model
   const schemaProperties = useMemo(() => {
@@ -140,18 +94,13 @@ function VideoGenNodeComponent(props: NodeProps) {
     [id, updateNodeData]
   );
 
-  const handleGenerate = useCallback(() => {
-    updateNodeData(id, { status: NODE_STATUS.processing });
-    executeNode(id);
-  }, [id, executeNode, updateNodeData]);
-
   const handleExpand = useCallback(() => {
     openNodeDetailModal(id, 'preview');
   }, [id, openNodeDetailModal]);
 
   const modelDisplayName =
     nodeData.selectedModel?.displayName ||
-    MODELS.find((m) => m.value === nodeData.model)?.label ||
+    VIDEO_MODELS.find((m) => m.value === nodeData.model)?.label ||
     nodeData.model;
 
   const headerActions = useMemo(

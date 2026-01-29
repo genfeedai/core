@@ -12,7 +12,7 @@ vi.mock('@/lib/api', () => ({
       name: 'Loaded Workflow',
       nodes: [],
       edges: [],
-      edgeStyle: 'bezier',
+      edgeStyle: 'default',
     }),
     getAll: vi.fn().mockResolvedValue([]),
     delete: vi.fn().mockResolvedValue({}),
@@ -26,7 +26,7 @@ describe('useWorkflowStore', () => {
     useWorkflowStore.setState({
       nodes: [],
       edges: [],
-      edgeStyle: 'bezier',
+      edgeStyle: 'default',
       workflowName: 'Untitled Workflow',
       workflowId: null,
       isDirty: false,

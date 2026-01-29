@@ -6,7 +6,6 @@ import type {
   MotionControlMode,
   MotionControlNodeData,
 } from '@genfeedai/types';
-import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { AlertCircle, Expand, Loader2, Play, RefreshCw, Video } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
@@ -22,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { useCanGenerate } from '@/hooks/useCanGenerate';
-import { useExecutionStore } from '@/store/executionStore';
+import { useNodeExecution } from '@/hooks/useNodeExecution';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
 
@@ -62,8 +61,8 @@ function MotionControlNodeComponent(props: NodeProps) {
   const { id, type, data } = props;
   const nodeData = data as MotionControlNodeData;
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
-  const executeNode = useExecutionStore((state) => state.executeNode);
   const openNodeDetailModal = useUIStore((state) => state.openNodeDetailModal);
+  const { handleGenerate } = useNodeExecution(id);
   const { canGenerate } = useCanGenerate({
     nodeId: id,
     nodeType: type as 'motionControl',
@@ -127,11 +126,6 @@ function MotionControlNodeComponent(props: NodeProps) {
     },
     [id, updateNodeData]
   );
-
-  const handleGenerate = useCallback(() => {
-    updateNodeData(id, { status: NODE_STATUS.processing });
-    executeNode(id);
-  }, [id, executeNode, updateNodeData]);
 
   const handleExpand = useCallback(() => {
     openNodeDetailModal(id, 'preview');

@@ -38,7 +38,7 @@ describe('useSettingsStore', () => {
         videoModel: 'veo-3.1',
         videoProvider: 'replicate',
       },
-      edgeStyle: 'bezier',
+      edgeStyle: 'default',
       recentModels: [],
     });
   });
@@ -212,13 +212,13 @@ describe('useSettingsStore', () => {
       expect(useSettingsStore.getState().edgeStyle).toBe('straight');
     });
 
-    it('should set edge style back to bezier', () => {
+    it('should set edge style back to default', () => {
       useSettingsStore.setState({ edgeStyle: 'straight' });
       const { setEdgeStyle } = useSettingsStore.getState();
 
-      setEdgeStyle('bezier');
+      setEdgeStyle('default');
 
-      expect(useSettingsStore.getState().edgeStyle).toBe('bezier');
+      expect(useSettingsStore.getState().edgeStyle).toBe('default');
     });
 
     it('should persist to localStorage', () => {

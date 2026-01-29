@@ -243,18 +243,28 @@ export class WorkflowsService {
       delete cleanData.lockTimestamp;
 
       // Remove uploaded file data (users must re-upload)
+      // Log warnings so users know some data was stripped during export
       if (cleanData.image && typeof cleanData.image === 'string') {
         if (cleanData.image.startsWith('data:') || cleanData.image.startsWith('blob:')) {
+          this.logger.warn(
+            `Stripped data/blob URL from workflow export: nodeId=${node.id}, field=image (users must re-upload)`
+          );
           cleanData.image = null;
         }
       }
       if (cleanData.video && typeof cleanData.video === 'string') {
         if (cleanData.video.startsWith('data:') || cleanData.video.startsWith('blob:')) {
+          this.logger.warn(
+            `Stripped data/blob URL from workflow export: nodeId=${node.id}, field=video (users must re-upload)`
+          );
           cleanData.video = null;
         }
       }
       if (cleanData.audio && typeof cleanData.audio === 'string') {
         if (cleanData.audio.startsWith('data:') || cleanData.audio.startsWith('blob:')) {
+          this.logger.warn(
+            `Stripped data/blob URL from workflow export: nodeId=${node.id}, field=audio (users must re-upload)`
+          );
           cleanData.audio = null;
         }
       }

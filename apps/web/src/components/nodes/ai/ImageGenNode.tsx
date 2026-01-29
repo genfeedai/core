@@ -1,44 +1,34 @@
 'use client';
 
 import type { ImageGenNodeData, ImageModel } from '@genfeedai/types';
-import { NODE_STATUS } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { AlertCircle, Download, Expand, ImageIcon, Loader2, Play } from 'lucide-react';
 import Image from 'next/image';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { ModelBrowserModal } from '@/components/models/ModelBrowserModal';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { SchemaInputs } from '@/components/nodes/SchemaInputs';
 import { Button } from '@/components/ui/button';
+import { useAutoLoadModelSchema } from '@/hooks/useAutoLoadModelSchema';
 import { useCanGenerate } from '@/hooks/useCanGenerate';
 import { useModelSelection } from '@/hooks/useModelSelection';
+import { useNodeExecution } from '@/hooks/useNodeExecution';
+import {
+  DEFAULT_IMAGE_MODEL,
+  IMAGE_MODEL_ID_MAP,
+  IMAGE_MODEL_MAP,
+  IMAGE_MODELS,
+} from '@/lib/models/registry';
 import { extractEnumValues, supportsImageInput } from '@/lib/utils/schemaUtils';
-import { useExecutionStore } from '@/store/executionStore';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
-
-const MODELS: { value: ImageModel; label: string }[] = [
-  { value: 'nano-banana', label: 'Nano Banana' },
-  { value: 'nano-banana-pro', label: 'Nano Banana Pro' },
-];
-
-const IMAGE_MODEL_MAP: Record<string, ImageModel> = {
-  'google/nano-banana': 'nano-banana',
-  'google/nano-banana-pro': 'nano-banana-pro',
-};
-
-// Reverse map: internal model type -> API model ID
-const INTERNAL_TO_MODEL_ID: Record<ImageModel, string> = {
-  'nano-banana': 'google/nano-banana',
-  'nano-banana-pro': 'google/nano-banana-pro',
-};
 
 function ImageGenNodeComponent(props: NodeProps) {
   const { id, type, data } = props;
   const nodeData = data as ImageGenNodeData;
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
-  const executeNode = useExecutionStore((state) => state.executeNode);
   const openNodeDetailModal = useUIStore((state) => state.openNodeDetailModal);
+  const { handleGenerate } = useNodeExecution(id);
   const { canGenerate } = useCanGenerate({
     nodeId: id,
     nodeType: type as 'imageGen',
@@ -77,52 +67,16 @@ function ImageGenNodeComponent(props: NodeProps) {
   const { handleModelSelect } = useModelSelection<ImageModel, ImageGenNodeData>({
     nodeId: id,
     modelMap: IMAGE_MODEL_MAP,
-    fallbackModel: 'nano-banana-pro',
+    fallbackModel: DEFAULT_IMAGE_MODEL,
   });
 
-  // Track if we've already attempted to load the default model schema
-  const hasAttemptedSchemaLoad = useRef(false);
-
   // Auto-load schema for default model if selectedModel is not set
-  useEffect(() => {
-    // Only run once per node, and only if we have a model but no selectedModel
-    if (hasAttemptedSchemaLoad.current || nodeData.selectedModel || !nodeData.model) {
-      return;
-    }
-
-    const modelId = INTERNAL_TO_MODEL_ID[nodeData.model];
-    if (!modelId) return;
-
-    const controller = new AbortController();
-    let isCancelled = false;
-
-    const loadSchema = async () => {
-      try {
-        const response = await fetch(`/api/providers/models?query=${encodeURIComponent(modelId)}`, {
-          signal: controller.signal,
-        });
-
-        if (!response.ok || isCancelled) return;
-
-        const data = await response.json();
-        const model = data.models?.find((m: { id: string }) => m.id === modelId);
-
-        if (model && !isCancelled) {
-          hasAttemptedSchemaLoad.current = true;
-          handleModelSelect(model);
-        }
-      } catch {
-        // Ignore abort errors and other failures - allows retry on next effect run
-      }
-    };
-
-    loadSchema();
-
-    return () => {
-      isCancelled = true;
-      controller.abort();
-    };
-  }, [nodeData.model, nodeData.selectedModel, handleModelSelect]);
+  useAutoLoadModelSchema({
+    currentModel: nodeData.model,
+    selectedModel: nodeData.selectedModel,
+    modelIdMap: IMAGE_MODEL_ID_MAP,
+    onModelSelect: handleModelSelect,
+  });
 
   // Get schema properties from selected model
   const schemaProperties = useMemo(() => {
@@ -166,18 +120,13 @@ function ImageGenNodeComponent(props: NodeProps) {
     [id, updateNodeData]
   );
 
-  const handleGenerate = useCallback(() => {
-    updateNodeData(id, { status: NODE_STATUS.processing });
-    executeNode(id);
-  }, [id, executeNode, updateNodeData]);
-
   const handleExpand = useCallback(() => {
     openNodeDetailModal(id, 'preview');
   }, [id, openNodeDetailModal]);
 
   const modelDisplayName =
     nodeData.selectedModel?.displayName ||
-    MODELS.find((m) => m.value === nodeData.model)?.label ||
+    IMAGE_MODELS.find((m) => m.value === nodeData.model)?.label ||
     nodeData.model;
 
   const headerActions = useMemo(

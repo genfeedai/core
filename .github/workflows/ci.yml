@@ -71,9 +71,6 @@ jobs:
       - name: TypeScript check (packages/core)
         run: bunx tsc --noEmit -p packages/core/tsconfig.json
 
-      - name: TypeScript check (packages/storage)
-        run: bunx tsc --noEmit -p packages/storage/tsconfig.json
-
       - name: TypeScript check (apps/api)
         run: bunx tsc --noEmit -p apps/api/tsconfig.json
 
@@ -179,12 +176,6 @@ jobs:
       - name: Run packages/core tests
         run: bunx vitest run --coverage
         working-directory: packages/core
-        env:
-          NODE_ENV: test
-
-      - name: Run packages/storage tests
-        run: bunx vitest run --coverage
-        working-directory: packages/storage
         env:
           NODE_ENV: test
 
