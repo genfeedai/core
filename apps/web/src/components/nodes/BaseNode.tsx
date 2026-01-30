@@ -46,6 +46,7 @@ import {
   Scissors,
   Share2,
   Sparkles,
+  Square,
   Unlock,
   Video,
   Volume2,
@@ -143,7 +144,7 @@ function BaseNodeComponent({
   const isResized = width !== undefined || height !== undefined;
   const { selectNode, selectedNodeId, highlightedNodeIds } = useUIStore();
   const { toggleNodeLock, isNodeLocked, updateNodeData } = useWorkflowStore();
-  const { executeNode, isRunning } = useExecutionStore();
+  const { executeNode, isRunning, stopExecution } = useExecutionStore();
   const updateNodeInternals = useUpdateNodeInternals();
   const nodeDef = NODE_DEFINITIONS[type as NodeType];
   const nodeData = data as WorkflowNodeData;
@@ -189,6 +190,18 @@ function BaseNodeComponent({
       }
     },
     [id, isRunning, executeNode, updateNodeData]
+  );
+
+  const handleStopNode = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (isRunning) {
+        stopExecution();
+      } else {
+        updateNodeData(id, { status: NODE_STATUS.idle, error: undefined });
+      }
+    },
+    [id, isRunning, stopExecution, updateNodeData]
   );
 
   const handleCopyError = useCallback(
@@ -337,7 +350,19 @@ function BaseNodeComponent({
                 {title ?? nodeData.label}
               </span>
             )}
-            <StatusIndicator status={nodeData.status} />
+            {isProcessing ? (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={handleStopNode}
+                className="text-destructive hover:bg-destructive/20 hover:text-destructive"
+                title={isRunning ? 'Stop execution' : 'Reset node'}
+              >
+                <Square className="h-3.5 w-3.5 fill-current" />
+              </Button>
+            ) : (
+              <StatusIndicator status={nodeData.status} />
+            )}
             {/* Lock Toggle Button - before headerActions so icon buttons are on the left */}
             <Button
               variant="ghost"

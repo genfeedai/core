@@ -2,7 +2,7 @@
 
 import type { VideoGenNodeData, VideoModel } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { AlertCircle, Expand, Loader2, Play, Video } from 'lucide-react';
+import { AlertCircle, Expand, Loader2, Play, Square, Video } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { ModelBrowserModal } from '@/components/models/ModelBrowserModal';
 import { BaseNode } from '@/components/nodes/BaseNode';
@@ -27,7 +27,7 @@ function VideoGenNodeComponent(props: NodeProps) {
   const nodeData = data as VideoGenNodeData;
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const openNodeDetailModal = useUIStore((state) => state.openNodeDetailModal);
-  const { handleGenerate } = useNodeExecution(id);
+  const { handleGenerate, handleStop } = useNodeExecution(id);
   const { canGenerate } = useCanGenerate({
     nodeId: id,
     nodeType: type as 'videoGen',
@@ -115,22 +115,25 @@ function VideoGenNodeComponent(props: NodeProps) {
             <Expand className="h-3 w-3" />
           </Button>
         )}
-        <Button
-          variant={canGenerate ? 'default' : 'secondary'}
-          size="sm"
-          onClick={handleGenerate}
-          disabled={!canGenerate || nodeData.status === 'processing'}
-        >
-          {nodeData.status === 'processing' ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
+        {nodeData.status === 'processing' ? (
+          <Button variant="destructive" size="sm" onClick={handleStop}>
+            <Square className="h-4 w-4 fill-current" />
+            Stop
+          </Button>
+        ) : (
+          <Button
+            variant={canGenerate ? 'default' : 'secondary'}
+            size="sm"
+            onClick={handleGenerate}
+            disabled={!canGenerate}
+          >
             <Play className="h-4 w-4 fill-current" />
-          )}
-          {nodeData.status === 'processing' ? 'Generating' : 'Generate'}
-        </Button>
+            Generate
+          </Button>
+        )}
       </>
     ),
-    [nodeData.outputVideo, nodeData.status, handleGenerate, handleExpand, canGenerate]
+    [nodeData.outputVideo, nodeData.status, handleGenerate, handleStop, handleExpand, canGenerate]
   );
 
   // Determine which inputs to disable based on model support
@@ -184,6 +187,10 @@ function VideoGenNodeComponent(props: NodeProps) {
                 <div className="flex flex-col items-center gap-2">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   <span className="text-xs text-white/80">Generating...</span>
+                  <Button variant="destructive" size="sm" onClick={handleStop}>
+                    <Square className="h-3 w-3 fill-current" />
+                    Stop
+                  </Button>
                 </div>
               </div>
             )}
@@ -196,6 +203,10 @@ function VideoGenNodeComponent(props: NodeProps) {
                 <div className="flex flex-col items-center gap-2">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   <span className="text-xs text-white/80">Generating...</span>
+                  <Button variant="destructive" size="sm" onClick={handleStop}>
+                    <Square className="h-3 w-3 fill-current" />
+                    Stop
+                  </Button>
                 </div>
               </div>
             )}

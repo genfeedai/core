@@ -20,6 +20,38 @@ const statusMap: Record<string, (typeof NODE_STATUS)[keyof typeof NODE_STATUS]> 
 };
 
 /**
+ * Fetch the final execution state via REST and reconcile all node statuses.
+ * This recovers from missed SSE deltas (e.g. dropped connections, race conditions).
+ */
+async function reconcileNodeStatuses(executionId: string): Promise<void> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/executions/${executionId}`);
+    if (!response.ok) return;
+
+    const execution = await response.json();
+    const workflowStore = useWorkflowStore.getState();
+
+    for (const nodeResult of execution.nodeResults || []) {
+      const nodeStatus = statusMap[nodeResult.status] ?? NODE_STATUS.idle;
+      const isSuccess = nodeResult.status === 'complete' || nodeResult.status === 'succeeded';
+
+      workflowStore.updateNodeData(nodeResult.nodeId, {
+        status: nodeStatus,
+        error: isSuccess ? undefined : nodeResult.error,
+        ...(nodeResult.output &&
+          getOutputUpdate(nodeResult.nodeId, nodeResult.output, workflowStore)),
+      });
+
+      if (isSuccess && nodeResult.output) {
+        workflowStore.propagateOutputsDownstream(nodeResult.nodeId);
+      }
+    }
+  } catch {
+    // Silent fail — best effort reconciliation
+  }
+}
+
+/**
  * Create an SSE subscription for execution updates
  */
 export function createExecutionSubscription(
@@ -34,123 +66,132 @@ export function createExecutionSubscription(
   set({ eventSource });
 
   eventSource.onmessage = (event) => {
-    try {
-      const data = JSON.parse(event.data) as ExecutionData;
-      const workflowStore = useWorkflowStore.getState();
+    void (async () => {
+      try {
+        const data = JSON.parse(event.data) as ExecutionData;
+        const workflowStore = useWorkflowStore.getState();
 
-      // Update node statuses from execution data
-      // Only process changed nodeResults if delta updates are available
-      const nodeResults = data.nodeResults || [];
-      for (const nodeResult of nodeResults) {
-        const nodeStatus = statusMap[nodeResult.status] ?? NODE_STATUS.idle;
-        const isSuccess = nodeResult.status === 'complete' || nodeResult.status === 'succeeded';
+        // Update node statuses from execution data
+        // Only process changed nodeResults if delta updates are available
+        const nodeResults = data.nodeResults || [];
+        for (const nodeResult of nodeResults) {
+          const nodeStatus = statusMap[nodeResult.status] ?? NODE_STATUS.idle;
+          const isSuccess = nodeResult.status === 'complete' || nodeResult.status === 'succeeded';
 
-        workflowStore.updateNodeData(nodeResult.nodeId, {
-          status: nodeStatus,
-          // Clear error on success, otherwise pass the error
-          error: isSuccess ? undefined : nodeResult.error,
-          ...(nodeResult.output &&
-            getOutputUpdate(nodeResult.nodeId, nodeResult.output, workflowStore)),
-        });
+          workflowStore.updateNodeData(nodeResult.nodeId, {
+            status: nodeStatus,
+            // Clear error on success, otherwise pass the error
+            error: isSuccess ? undefined : nodeResult.error,
+            ...(nodeResult.output &&
+              getOutputUpdate(nodeResult.nodeId, nodeResult.output, workflowStore)),
+          });
 
-        // Propagate output to downstream nodes when complete
-        // Only propagate if this node hasn't been propagated yet in this execution
-        if (
-          (nodeResult.status === 'complete' || nodeResult.status === 'succeeded') &&
-          nodeResult.output &&
-          !propagatedNodeIds.has(nodeResult.nodeId)
-        ) {
-          propagatedNodeIds.add(nodeResult.nodeId);
-          workflowStore.propagateOutputsDownstream(nodeResult.nodeId);
+          // Propagate output to downstream nodes when complete
+          // Only propagate if this node hasn't been propagated yet in this execution
+          if (
+            (nodeResult.status === 'complete' || nodeResult.status === 'succeeded') &&
+            nodeResult.output &&
+            !propagatedNodeIds.has(nodeResult.nodeId)
+          ) {
+            propagatedNodeIds.add(nodeResult.nodeId);
+            workflowStore.propagateOutputsDownstream(nodeResult.nodeId);
+          }
+
+          // Track failed node for resume capability
+          if (nodeResult.status === 'error') {
+            set({ lastFailedNodeId: nodeResult.nodeId });
+          }
         }
 
-        // Track failed node for resume capability
-        if (nodeResult.status === 'error') {
-          set({ lastFailedNodeId: nodeResult.nodeId });
-        }
-      }
+        // Update job statuses and extract debug payloads
+        if (data.jobs) {
+          set((state) => {
+            const newJobs = new Map(state.jobs);
+            const newDebugPayloads: DebugPayload[] = [];
 
-      // Update job statuses and extract debug payloads
-      if (data.jobs) {
-        set((state) => {
-          const newJobs = new Map(state.jobs);
-          const newDebugPayloads: DebugPayload[] = [];
-
-          for (const job of data.jobs || []) {
-            newJobs.set(job.predictionId, {
-              nodeId: job.nodeId,
-              predictionId: job.predictionId,
-              status: job.status as Job['status'],
-              progress: 0,
-              output: job.output ?? null,
-              error: job.error ?? null,
-              createdAt: new Date().toISOString(),
-            });
-
-            // Extract debug payload if present in job result
-            if (job.result?.debugPayload) {
-              const node = workflowStore.getNodeById(job.nodeId);
-              newDebugPayloads.push({
+            for (const job of data.jobs || []) {
+              newJobs.set(job.predictionId, {
                 nodeId: job.nodeId,
-                nodeName: String(node?.data?.label || node?.data?.name || job.nodeId),
-                nodeType: node?.type || 'unknown',
-                model: job.result.debugPayload.model,
-                input: job.result.debugPayload.input,
-                timestamp: job.result.debugPayload.timestamp,
+                predictionId: job.predictionId,
+                status: job.status as Job['status'],
+                progress: 0,
+                output: job.output ?? null,
+                error: job.error ?? null,
+                createdAt: new Date().toISOString(),
               });
+
+              // Extract debug payload if present in job result
+              if (job.result?.debugPayload) {
+                const node = workflowStore.getNodeById(job.nodeId);
+                newDebugPayloads.push({
+                  nodeId: job.nodeId,
+                  nodeName: String(node?.data?.label || node?.data?.name || job.nodeId),
+                  nodeType: node?.type || 'unknown',
+                  model: job.result.debugPayload.model,
+                  input: job.result.debugPayload.input,
+                  timestamp: job.result.debugPayload.timestamp,
+                });
+              }
             }
-          }
 
-          // Open debug panel if we have new debug payloads
-          if (newDebugPayloads.length > 0 && data.debugMode) {
-            useUIStore.getState().setShowDebugPanel(true);
-          }
+            // Open debug panel if we have new debug payloads
+            if (newDebugPayloads.length > 0 && data.debugMode) {
+              useUIStore.getState().setShowDebugPanel(true);
+            }
 
-          return {
-            jobs: newJobs,
-            // Merge new debug payloads with existing ones (avoiding duplicates by nodeId)
-            debugPayloads: [
-              ...state.debugPayloads.filter(
-                (existing) => !newDebugPayloads.some((newP) => newP.nodeId === existing.nodeId)
-              ),
-              ...newDebugPayloads,
-            ],
-          };
-        });
-      }
-
-      // Check if execution is complete (support multiple status formats)
-      const isComplete = ['completed', 'failed', 'cancelled', 'error'].includes(data.status);
-
-      // Also check if any node failed and no more nodes are pending
-      const hasFailedNode = (data.nodeResults || []).some((r) => r.status === 'error');
-      const hasPendingNodes = (data.pendingNodes || []).length > 0;
-      const hasProcessingNodes = (data.nodeResults || []).some((r) => r.status === 'processing');
-
-      // Execution is done when: explicitly complete OR (has failed node with nothing pending/processing)
-      const isDone = isComplete || (hasFailedNode && !hasPendingNodes && !hasProcessingNodes);
-
-      if (isDone) {
-        // Clear propagated nodes tracking when execution completes
-        propagatedNodeIds.clear();
-        eventSource.close();
-        set({ isRunning: false, eventSource: null, currentNodeId: null, jobs: new Map() });
-
-        if (data.status === 'failed' || hasFailedNode) {
-          logger.error('Workflow execution failed', new Error('Execution failed'), {
-            context: 'ExecutionStore',
+            return {
+              jobs: newJobs,
+              // Merge new debug payloads with existing ones (avoiding duplicates by nodeId)
+              debugPayloads: [
+                ...state.debugPayloads.filter(
+                  (existing) => !newDebugPayloads.some((newP) => newP.nodeId === existing.nodeId)
+                ),
+                ...newDebugPayloads,
+              ],
+            };
           });
         }
+
+        // Check if execution is complete (support multiple status formats)
+        const isComplete = ['completed', 'failed', 'cancelled', 'error'].includes(data.status);
+
+        // Also check if any node failed and no more nodes are pending
+        const hasFailedNode = (data.nodeResults || []).some((r) => r.status === 'error');
+        const hasPendingNodes = (data.pendingNodes || []).length > 0;
+        const hasProcessingNodes = (data.nodeResults || []).some((r) => r.status === 'processing');
+
+        // Execution is done when: explicitly complete OR (has failed node with nothing pending/processing)
+        const isDone = isComplete || (hasFailedNode && !hasPendingNodes && !hasProcessingNodes);
+
+        if (isDone) {
+          // Clear propagated nodes tracking when execution completes
+          propagatedNodeIds.clear();
+          eventSource.close();
+
+          // Reconcile final state to catch any missed SSE deltas
+          await reconcileNodeStatuses(executionId);
+
+          set({ isRunning: false, eventSource: null, currentNodeId: null, jobs: new Map() });
+
+          if (data.status === 'failed' || hasFailedNode) {
+            logger.error('Workflow execution failed', new Error('Execution failed'), {
+              context: 'ExecutionStore',
+            });
+          }
+        }
+      } catch (error) {
+        logger.error('Failed to parse SSE message', error, { context: 'ExecutionStore' });
       }
-    } catch (error) {
-      logger.error('Failed to parse SSE message', error, { context: 'ExecutionStore' });
-    }
+    })();
   };
 
   eventSource.onerror = (error) => {
     logger.error('SSE connection error', error, { context: 'ExecutionStore' });
     eventSource.close();
-    set({ isRunning: false, eventSource: null });
+    // Reconcile: fetch final execution state to recover any missed updates
+    void reconcileNodeStatuses(executionId).then(() => {
+      set({ isRunning: false, eventSource: null });
+    });
   };
 
   return eventSource;
