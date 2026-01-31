@@ -1,0 +1,43 @@
+{
+  "id": "product-photography",
+  "title": "Product Photography",
+  "description": "Professional product shots perfect for e-commerce and marketing",
+  "category": "image-generation",
+  "tier": "free",
+  "template": "A professional product photograph of {product}, shot on {background}, {lighting} lighting, {angle} angle, high resolution, commercial quality",
+  "variables": [
+    {
+      "name": "product",
+      "label": "Product",
+      "type": "text",
+      "required": true,
+      "placeholder": "e.g., wireless headphones"
+    },
+    {
+      "name": "background",
+      "label": "Background",
+      "type": "select",
+      "options": ["white", "gradient", "lifestyle", "studio"],
+      "default": "white"
+    },
+    {
+      "name": "lighting",
+      "label": "Lighting",
+      "type": "select",
+      "options": ["soft", "dramatic", "natural", "studio"],
+      "default": "soft"
+    },
+    {
+      "name": "angle",
+      "label": "Camera Angle",
+      "type": "select",
+      "options": ["front", "45-degree", "top-down", "eye-level"],
+      "default": "45-degree"
+    }
+  ],
+  "tags": ["product", "ecommerce", "photography", "commercial"],
+  "icon": "📦",
+  "version": 1,
+  "createdAt": "2025-01-31T00:00:00.000Z",
+  "updatedAt": "2025-01-31T00:00:00.000Z"
+}

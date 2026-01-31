@@ -1,0 +1,43 @@
+{
+  "id": "product-demo",
+  "title": "Product Demo Video",
+  "description": "Engaging product demonstration videos that showcase features",
+  "category": "video-generation",
+  "tier": "free",
+  "template": "Create a {duration} product demo video for {product}, highlighting {features}, {style} presentation, clear call-to-action",
+  "variables": [
+    {
+      "name": "product",
+      "label": "Product",
+      "type": "text",
+      "required": true,
+      "placeholder": "e.g., smartphone app"
+    },
+    {
+      "name": "features",
+      "label": "Key Features",
+      "type": "text",
+      "required": true,
+      "placeholder": "e.g., ease of use, speed"
+    },
+    {
+      "name": "duration",
+      "label": "Duration",
+      "type": "select",
+      "options": ["15-second", "30-second", "60-second"],
+      "default": "30-second"
+    },
+    {
+      "name": "style",
+      "label": "Presentation Style",
+      "type": "select",
+      "options": ["animated", "live-action", "screen-recording", "hybrid"],
+      "default": "animated"
+    }
+  ],
+  "tags": ["product", "demo", "video", "marketing"],
+  "icon": "🎥",
+  "version": 1,
+  "createdAt": "2025-01-31T00:00:00.000Z",
+  "updatedAt": "2025-01-31T00:00:00.000Z"
+}

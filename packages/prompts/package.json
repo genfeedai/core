@@ -1,5 +1,5 @@
 {
-  "name": "@genfeedai/workflows",
+  "name": "@genfeedai/prompts",
   "version": "0.1.0",
   "license": "AGPL-3.0",
   "main": "./dist/index.js",
@@ -10,17 +10,18 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
-    "./workflows/*": "./workflows/*"
+    "./prompts/*": "./prompts/*"
   },
   "files": [
     "dist",
-    "workflows",
+    "prompts",
     "metadata"
   ],
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --clean",
     "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
-    "prepublishOnly": "bun run build"
+    "prepublishOnly": "bun run build",
+    "test": "bun test __tests__/*.spec.ts"
   },
   "dependencies": {
     "@genfeedai/types": "workspace:*"

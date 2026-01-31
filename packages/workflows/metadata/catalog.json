@@ -1,0 +1,76 @@
+{
+  "workflows": [
+    {
+      "slug": "single-image",
+      "title": "Single Image Generation",
+      "description": "Generate an AI image from a source image (img2img) with enhanced styling and effects",
+      "category": "image-generation",
+      "tags": ["image", "simple", "img2img", "enhancement"],
+      "tier": "free",
+      "icon": "🖼️",
+      "defaultModel": "nano-banana-pro",
+      "inputTypes": ["image", "text"],
+      "outputTypes": ["image"]
+    },
+    {
+      "slug": "single-video", 
+      "title": "Single Video Generation",
+      "description": "Generate an AI video from a source image (img2video) with motion effects",
+      "category": "video-generation",
+      "tags": ["video", "simple", "img2video", "animation"],
+      "tier": "free",
+      "icon": "🎬",
+      "defaultModel": "nano-banana-pro", 
+      "inputTypes": ["image", "text"],
+      "outputTypes": ["video"]
+    },
+    {
+      "slug": "image-series",
+      "title": "Image Series Generation",
+      "description": "Generate a series of related images from a concept using LLM-powered prompt expansion",
+      "category": "image-generation",
+      "tags": ["image", "series", "llm", "batch", "automation"],
+      "tier": "free",
+      "icon": "📸",
+      "defaultModel": "nano-banana-pro",
+      "inputTypes": ["text"],
+      "outputTypes": ["image"]
+    },
+    {
+      "slug": "image-to-video",
+      "title": "Image to Video Transition", 
+      "description": "Create smooth interpolated video transitions between two images with easing effects",
+      "category": "video-generation",
+      "tags": ["video", "interpolation", "animation", "transition"],
+      "tier": "free",
+      "icon": "🎞️",
+      "defaultModel": "nano-banana-pro",
+      "inputTypes": ["image"],
+      "outputTypes": ["video"]
+    },
+    {
+      "slug": "full-pipeline",
+      "title": "Full Content Pipeline",
+      "description": "Complete end-to-end workflow: concept development to final video production",
+      "category": "full-pipeline", 
+      "tags": ["pipeline", "advanced", "complete", "automation", "production"],
+      "tier": "free",
+      "icon": "⚡",
+      "defaultModel": "nano-banana-pro",
+      "inputTypes": ["text"],
+      "outputTypes": ["video"]
+    },
+    {
+      "slug": "ugc-factory",
+      "title": "UGC Content Factory",
+      "description": "Automated user-generated content creation for social media and marketing campaigns",
+      "category": "full-pipeline",
+      "tags": ["ugc", "social", "automation", "marketing", "content"],
+      "tier": "free",
+      "icon": "🏭",
+      "defaultModel": "nano-banana-pro",
+      "inputTypes": ["text"],
+      "outputTypes": ["video", "image"]
+    }
+  ]
+}

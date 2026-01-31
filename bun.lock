@@ -166,6 +166,17 @@
         "vitest": "3.0.4",
       },
     },
+    "packages/prompts": {
+      "name": "@genfeedai/prompts",
+      "version": "0.1.0",
+      "dependencies": {
+        "@genfeedai/types": "workspace:*",
+      },
+      "devDependencies": {
+        "tsup": "8.4.0",
+        "typescript": "5.9.3",
+      },
+    },
     "packages/sdk": {
       "name": "@genfeedai/sdk",
       "version": "0.1.0",
@@ -385,6 +396,8 @@
     "@genfeedai/cli": ["@genfeedai/cli@workspace:packages/cli"],
 
     "@genfeedai/core": ["@genfeedai/core@workspace:packages/core"],
+
+    "@genfeedai/prompts": ["@genfeedai/prompts@workspace:packages/prompts"],
 
     "@genfeedai/sdk": ["@genfeedai/sdk@workspace:packages/sdk"],
 

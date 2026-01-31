@@ -1,0 +1,50 @@
+{
+  "id": "brand-ad",
+  "title": "Brand Advertisement",
+  "description": "Professional brand advertisements that convert and engage",
+  "category": "image-generation",
+  "tier": "free",
+  "template": "A {style} advertisement for {brand}, showcasing {product}, {tone} tone, {target} audience, professional marketing photography",
+  "variables": [
+    {
+      "name": "brand",
+      "label": "Brand Name",
+      "type": "text",
+      "required": true,
+      "placeholder": "e.g., Nike, Apple"
+    },
+    {
+      "name": "product",
+      "label": "Product/Service",
+      "type": "text",
+      "required": true,
+      "placeholder": "e.g., running shoes"
+    },
+    {
+      "name": "style",
+      "label": "Ad Style",
+      "type": "select",
+      "options": ["luxury", "casual", "tech", "lifestyle"],
+      "default": "lifestyle"
+    },
+    {
+      "name": "tone",
+      "label": "Brand Tone",
+      "type": "select",
+      "options": ["premium", "friendly", "innovative", "trustworthy"],
+      "default": "premium"
+    },
+    {
+      "name": "target",
+      "label": "Target Audience",
+      "type": "select",
+      "options": ["young adults", "professionals", "families", "athletes"],
+      "default": "young adults"
+    }
+  ],
+  "tags": ["brand", "advertising", "marketing", "commercial"],
+  "icon": "🎯",
+  "version": 1,
+  "createdAt": "2025-01-31T00:00:00.000Z",
+  "updatedAt": "2025-01-31T00:00:00.000Z"
+}

@@ -1,0 +1,43 @@
+{
+  "id": "social-clip",
+  "title": "Social Media Clip",
+  "description": "Short-form video content optimized for social platforms",
+  "category": "video-generation",
+  "tier": "free",
+  "template": "A {duration} social media clip about {topic}, {style} style, {platform} optimized, engaging hook, trending format",
+  "variables": [
+    {
+      "name": "topic",
+      "label": "Topic/Theme",
+      "type": "text",
+      "required": true,
+      "placeholder": "e.g., cooking tips, workout routine"
+    },
+    {
+      "name": "duration",
+      "label": "Duration",
+      "type": "select",
+      "options": ["15 seconds", "30 seconds", "60 seconds"],
+      "default": "30 seconds"
+    },
+    {
+      "name": "style",
+      "label": "Video Style",
+      "type": "select",
+      "options": ["educational", "entertaining", "inspiring", "promotional"],
+      "default": "entertaining"
+    },
+    {
+      "name": "platform",
+      "label": "Target Platform",
+      "type": "select",
+      "options": ["TikTok", "Instagram Reels", "YouTube Shorts", "Twitter"],
+      "default": "Instagram Reels"
+    }
+  ],
+  "tags": ["social", "short-form", "viral", "content"],
+  "icon": "📹",
+  "version": 1,
+  "createdAt": "2025-01-31T00:00:00.000Z",
+  "updatedAt": "2025-01-31T00:00:00.000Z"
+}
