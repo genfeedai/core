@@ -2,10 +2,22 @@
  * GenFeed Telegram Bot — Standalone entry point.
  * Runs on localhost without the cloud. Uses Replicate directly.
  */
+import * as Sentry from '@sentry/node';
 import { readFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { createBot } from './bot';
 import type { WorkflowJson } from './state';
+
+// ── Sentry ──────────────────────────────────────────────
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'development',
+    tracesSampleRate: 1.0,
+    release: `genfeed-telegram-bot@${process.env.VERSION || '1.0.0'}`,
+  });
+  console.log('📡 Sentry initialized');
+}
 
 // ── Config ──────────────────────────────────────────────
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -72,6 +84,7 @@ const bot = createBot(TELEGRAM_BOT_TOKEN, workflows, allowedUserIds);
 
 bot.catch((err) => {
   console.error('Bot error:', err);
+  Sentry.captureException(err);
 });
 
 bot.start({

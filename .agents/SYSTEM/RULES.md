@@ -96,9 +96,12 @@ try {
 
 ---
 
-## Testing
+## Testing Policy
 
-- Write tests for business logic
+- **Write tests FIRST before implementation (TDD)**
+- All new features must include tests before code
+- Aim for 80%+ coverage on new code
+- Run tests before committing
 - Use descriptive test names
 - Mock external dependencies
 - Test edge cases

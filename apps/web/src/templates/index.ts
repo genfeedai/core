@@ -1,4 +1,6 @@
 import { TemplateCategory, type WorkflowTemplate } from '@genfeedai/types';
+import { CAM_PROFILE_PROMO_TEMPLATE } from './cam-profile-promo';
+import { CASINO_PROMO_CLIP_TEMPLATE } from './casino-promo-clip';
 import { FULL_PIPELINE_TEMPLATE } from './full-pipeline';
 import { AI_INFLUENCER_AVATAR_TEMPLATE } from './generated/ai-influencer-avatar';
 import { DANCE_VIDEO_TEMPLATE } from './generated/dance-video';
@@ -13,6 +15,10 @@ import { YOUTUBE_THUMBNAIL_SCRIPT_TEMPLATE } from './generated/youtube-thumbnail
 import { YOUTUBE_VIDEO_GENERATOR_TEMPLATE } from './generated/youtube-video-generator';
 import { IMAGE_SERIES_TEMPLATE } from './image-series';
 import { IMAGE_TO_VIDEO_TEMPLATE } from './image-to-video';
+import { JACKPOT_HIGHLIGHT_TEMPLATE } from './jackpot-highlight';
+import { SOCIAL_TEASER_CLIP_TEMPLATE } from './social-teaser-clip';
+import { SPORTS_BETTING_TEASER_TEMPLATE } from './sports-betting-teaser';
+import { STREAMER_HIGHLIGHT_REEL_TEMPLATE } from './streamer-highlight-reel';
 
 export interface TemplateInfo {
   id: string;
@@ -37,6 +43,12 @@ export const TEMPLATE_REGISTRY: Record<string, WorkflowTemplate> = {
   'dance-video': DANCE_VIDEO_TEMPLATE,
   'instagram-carousel': INSTAGRAM_CAROUSEL_TEMPLATE,
   'ai-influencer-avatar': AI_INFLUENCER_AVATAR_TEMPLATE,
+  'casino-promo-clip': CASINO_PROMO_CLIP_TEMPLATE,
+  'sports-betting-teaser': SPORTS_BETTING_TEASER_TEMPLATE,
+  'jackpot-highlight': JACKPOT_HIGHLIGHT_TEMPLATE,
+  'streamer-highlight-reel': STREAMER_HIGHLIGHT_REEL_TEMPLATE,
+  'cam-profile-promo': CAM_PROFILE_PROMO_TEMPLATE,
+  'social-teaser-clip': SOCIAL_TEASER_CLIP_TEMPLATE,
 };
 
 export const TEMPLATE_INFO: TemplateInfo[] = [
@@ -148,6 +160,54 @@ export const TEMPLATE_INFO: TemplateInfo[] = [
     category: TemplateCategory.IMAGE,
     thumbnail: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&h=400&fit=crop',
   },
+  {
+    id: 'casino-promo-clip',
+    name: 'Casino Promo Clip',
+    description:
+      'Short-form promo video from a concept: expand into visual scenes, generate imagery, animate, stitch with CTA voiceover',
+    category: TemplateCategory.VIDEO,
+    thumbnail: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=600&h=400&fit=crop',
+  },
+  {
+    id: 'sports-betting-teaser',
+    name: 'Sports Betting Teaser',
+    description:
+      'Hype clip for sports betting events: dramatic scenes with fast cuts and bold odds overlay',
+    category: TemplateCategory.VIDEO,
+    thumbnail: 'https://images.unsplash.com/photo-1461896836934-bd45ba8a0326?w=600&h=400&fit=crop',
+  },
+  {
+    id: 'jackpot-highlight',
+    name: 'Jackpot Highlight',
+    description:
+      'Big win celebration clip: hero visual, zoom/pan animation, winner amount overlay with excitement voiceover',
+    category: TemplateCategory.VIDEO,
+    thumbnail: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600&h=400&fit=crop',
+  },
+  {
+    id: 'streamer-highlight-reel',
+    name: 'Streamer Highlight Reel',
+    description:
+      'Repurpose stream footage into social-ready clips with captions and 9:16 resize for TikTok/Reels',
+    category: TemplateCategory.VIDEO,
+    thumbnail: 'https://images.unsplash.com/photo-1614680376593-902f74cf0d41?w=600&h=400&fit=crop',
+  },
+  {
+    id: 'cam-profile-promo',
+    name: 'Cam Profile Promo',
+    description:
+      'Auto-generate profile promo video from photos with cinematic motion, crossfade, and handle overlay',
+    category: TemplateCategory.VIDEO,
+    thumbnail: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&h=400&fit=crop',
+  },
+  {
+    id: 'social-teaser-clip',
+    name: 'Social Teaser Clip',
+    description:
+      'Quick teaser clip for Twitter/Instagram: animate a photo, upscale quality, add bold CTA overlay',
+    category: TemplateCategory.VIDEO,
+    thumbnail: 'https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=600&h=400&fit=crop',
+  },
 ];
 
 export function getTemplate(id: string): WorkflowTemplate | undefined {
@@ -174,4 +234,10 @@ export {
   DANCE_VIDEO_TEMPLATE,
   INSTAGRAM_CAROUSEL_TEMPLATE,
   AI_INFLUENCER_AVATAR_TEMPLATE,
+  CASINO_PROMO_CLIP_TEMPLATE,
+  SPORTS_BETTING_TEASER_TEMPLATE,
+  JACKPOT_HIGHLIGHT_TEMPLATE,
+  STREAMER_HIGHLIGHT_REEL_TEMPLATE,
+  CAM_PROFILE_PROMO_TEMPLATE,
+  SOCIAL_TEASER_CLIP_TEMPLATE,
 };

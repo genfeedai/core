@@ -2,6 +2,7 @@
  * Workflow executor using Replicate npm package directly.
  * No cloud dependency — just needs REPLICATE_API_TOKEN.
  */
+import * as Sentry from '@sentry/node';
 import Replicate from 'replicate';
 import type { WorkflowJson } from './state';
 
@@ -254,6 +255,10 @@ export async function executeWorkflow(
       durationMs: Date.now() - startTime,
     };
   } catch (error) {
+    Sentry.captureException(error, {
+      tags: { component: 'workflow-executor' },
+      extra: { modelUsed, completedNodes, totalNodes },
+    });
     return {
       success: false,
       outputs,

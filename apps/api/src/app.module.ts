@@ -11,6 +11,7 @@ import { ReplicateModule } from '@/modules/replicate.module';
 import { SettingsModule } from '@/modules/settings.module';
 import { TemplatesModule } from '@/modules/templates.module';
 import { TTSModule } from '@/modules/tts.module';
+import { UGCFactoryModule } from '@/modules/ugc-factory.module';
 import { WorkflowsModule } from '@/modules/workflows.module';
 import { AppService } from '@/services/app.service';
 
@@ -37,6 +38,7 @@ import { AppService } from '@/services/app.service';
     ExecutionsModule,
     ReplicateModule,
     TTSModule,
+    UGCFactoryModule,
     PromptsModule,
     ProvidersModule,
     SettingsModule,
