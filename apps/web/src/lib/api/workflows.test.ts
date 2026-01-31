@@ -37,7 +37,7 @@ describe('workflowsApi', () => {
   describe('getAll', () => {
     it('should fetch all workflows', async () => {
       const { apiClient } = await import('./client');
-      vi.mocked(apiClient.get).mockResolvedValueOnce([mockWorkflow]);
+      (apiClient.get as any).mockResolvedValueOnce([mockWorkflow]);
 
       const result = await workflowsApi.getAll();
 
@@ -47,7 +47,7 @@ describe('workflowsApi', () => {
 
     it('should pass abort signal when provided', async () => {
       const { apiClient } = await import('./client');
-      vi.mocked(apiClient.get).mockResolvedValueOnce([]);
+      (apiClient.get as any).mockResolvedValueOnce([]);
 
       const controller = new AbortController();
       await workflowsApi.getAll(controller.signal);
@@ -59,7 +59,7 @@ describe('workflowsApi', () => {
   describe('getById', () => {
     it('should fetch workflow by ID', async () => {
       const { apiClient } = await import('./client');
-      vi.mocked(apiClient.get).mockResolvedValueOnce(mockWorkflow);
+      (apiClient.get as any).mockResolvedValueOnce(mockWorkflow);
 
       const result = await workflowsApi.getById('workflow-1');
 
@@ -71,7 +71,7 @@ describe('workflowsApi', () => {
   describe('create', () => {
     it('should create a new workflow', async () => {
       const { apiClient } = await import('./client');
-      vi.mocked(apiClient.post).mockResolvedValueOnce(mockWorkflow);
+      (apiClient.post as any).mockResolvedValueOnce(mockWorkflow);
 
       const createData = {
         name: 'Test Workflow',
@@ -87,7 +87,7 @@ describe('workflowsApi', () => {
 
     it('should handle optional fields', async () => {
       const { apiClient } = await import('./client');
-      vi.mocked(apiClient.post).mockResolvedValueOnce(mockWorkflow);
+      (apiClient.post as any).mockResolvedValueOnce(mockWorkflow);
 
       const createData = {
         name: 'Full Workflow',
@@ -108,7 +108,7 @@ describe('workflowsApi', () => {
     it('should update an existing workflow', async () => {
       const { apiClient } = await import('./client');
       const updatedWorkflow = { ...mockWorkflow, name: 'Updated Workflow' };
-      vi.mocked(apiClient.put).mockResolvedValueOnce(updatedWorkflow);
+      (apiClient.put as any).mockResolvedValueOnce(updatedWorkflow);
 
       const updateData = { name: 'Updated Workflow' };
       const result = await workflowsApi.update('workflow-1', updateData);
@@ -121,7 +121,7 @@ describe('workflowsApi', () => {
 
     it('should update nodes and edges', async () => {
       const { apiClient } = await import('./client');
-      vi.mocked(apiClient.put).mockResolvedValueOnce(mockWorkflow);
+      (apiClient.put as any).mockResolvedValueOnce(mockWorkflow);
 
       const updateData = {
         nodes: [
@@ -154,7 +154,7 @@ describe('workflowsApi', () => {
   describe('delete', () => {
     it('should delete a workflow', async () => {
       const { apiClient } = await import('./client');
-      vi.mocked(apiClient.delete).mockResolvedValueOnce(undefined);
+      (apiClient.delete as any).mockResolvedValueOnce(undefined);
 
       await workflowsApi.delete('workflow-1');
 
@@ -170,7 +170,7 @@ describe('workflowsApi', () => {
         _id: 'workflow-2',
         name: 'Test Workflow (Copy)',
       };
-      vi.mocked(apiClient.post).mockResolvedValueOnce(duplicatedWorkflow);
+      (apiClient.post as any).mockResolvedValueOnce(duplicatedWorkflow);
 
       const result = await workflowsApi.duplicate('workflow-1');
 

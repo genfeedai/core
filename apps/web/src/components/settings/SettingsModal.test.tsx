@@ -96,7 +96,7 @@ describe('SettingsModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(useUIStore).mockReturnValue({
+    (useUIStore as any).mockReturnValue({
       activeModal: 'settings',
       closeModal: mockCloseModal,
       openModal: mockOpenModal,
@@ -193,7 +193,7 @@ describe('SettingsModal', () => {
 
   describe('hidden when not active', () => {
     it('should not render when activeModal is not settings', () => {
-      vi.mocked(useUIStore).mockReturnValue({
+      (useUIStore as any).mockReturnValue({
         activeModal: null,
         closeModal: mockCloseModal,
         openModal: mockOpenModal,
@@ -210,7 +210,7 @@ describe('SettingsModal - API Keys Tab', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(useUIStore).mockReturnValue({
+    (useUIStore as any).mockReturnValue({
       activeModal: 'settings',
       closeModal: mockCloseModal,
       openModal: mockOpenModal,
@@ -250,7 +250,7 @@ describe('SettingsModal - Appearance Tab', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(useUIStore).mockReturnValue({
+    (useUIStore as any).mockReturnValue({
       activeModal: 'settings',
       closeModal: mockCloseModal,
       openModal: mockOpenModal,

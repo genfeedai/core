@@ -3,6 +3,7 @@ import { useUIStore } from './uiStore';
 
 describe('useUIStore', () => {
   beforeEach(() => {
+    vi.useFakeTimers();
     // Reset store to initial state
     useUIStore.setState({
       showPalette: true,
@@ -15,7 +16,12 @@ describe('useUIStore', () => {
   });
 
   afterEach(() => {
-    vi.clearAllTimers();
+    try {
+      vi.clearAllTimers();
+    } catch {
+      // Ignore if fake timers aren't active
+    }
+    vi.useRealTimers();
   });
 
   describe('initial state', () => {

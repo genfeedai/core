@@ -18,8 +18,17 @@ const localStorageMock = (() => {
   };
 })();
 
-Object.defineProperty(window, 'localStorage', {
+Object.defineProperty(globalThis, 'localStorage', {
   value: localStorageMock,
+  writable: true,
+});
+
+// Mock window object
+Object.defineProperty(globalThis, 'window', {
+  value: {
+    localStorage: localStorageMock,
+  },
+  writable: true,
 });
 
 describe('useSettingsStore', () => {

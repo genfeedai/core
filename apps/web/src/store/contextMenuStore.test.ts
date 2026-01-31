@@ -3,8 +3,9 @@ import { useContextMenuStore } from './contextMenuStore';
 
 describe('contextMenuStore', () => {
   beforeEach(() => {
-    // Reset store state
-    useContextMenuStore.setState({
+    // Reset store state (don't replace methods)
+    const store = useContextMenuStore;
+    store.setState({
       isOpen: false,
       position: { x: 0, y: 0 },
       menuType: null,

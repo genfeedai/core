@@ -3,9 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ModelBrowserModal } from './ModelBrowserModal';
 
-const { mockAddRecentModel } = vi.hoisted(() => ({
-  mockAddRecentModel: vi.fn(),
-}));
+const mockAddRecentModel = vi.fn();
 
 // The component calls useSettingsStore with individual selectors:
 // useSettingsStore((s) => s.recentModels)
@@ -98,7 +96,7 @@ describe('ModelBrowserModal', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(mockFetchResponse));
+    global.fetch = vi.fn().mockResolvedValue(mockFetchResponse);
   });
 
   describe('rendering', () => {
@@ -160,10 +158,7 @@ describe('ModelBrowserModal', () => {
 
     it('should show loading spinner during fetch', async () => {
       // Use a fetch that never resolves so isLoading stays true
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockImplementation(() => new Promise(() => {}))
-      );
+      global.fetch = vi.fn().mockImplementation(() => new Promise(() => {}));
 
       render(<ModelBrowserModal {...defaultProps} />);
 
@@ -303,13 +298,10 @@ describe('ModelBrowserModal', () => {
 
   describe('empty state', () => {
     it('should show empty state when no models found', async () => {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({
-          ok: true,
-          json: () => Promise.resolve({ models: [], configuredProviders: [] }),
-        })
-      );
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ models: [], configuredProviders: [] }),
+      });
 
       render(<ModelBrowserModal {...defaultProps} />);
 
@@ -329,17 +321,14 @@ describe('ModelBrowserModal', () => {
     });
 
     it('should use singular form for one model', async () => {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({
-          ok: true,
-          json: () =>
-            Promise.resolve({
-              models: [mockModels[0]],
-              configuredProviders: ['replicate'],
-            }),
-        })
-      );
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            models: [mockModels[0]],
+            configuredProviders: ['replicate'],
+          }),
+      });
 
       render(<ModelBrowserModal {...defaultProps} />);
 

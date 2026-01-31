@@ -43,7 +43,7 @@ describe('GenerateWorkflowModal', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubGlobal('fetch', vi.fn());
+    global.fetch = vi.fn();
 
     // Reset store mocks to default values (vi.clearAllMocks doesn't reset mockReturnValue)
     vi.mocked(useUIStore).mockReturnValue({
