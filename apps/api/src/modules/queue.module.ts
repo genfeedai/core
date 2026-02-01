@@ -27,6 +27,9 @@ import { ReplicatePollerService } from '@/services/replicate-poller.service';
 import { TTSService } from '@/services/tts.service';
 import { WorkflowInterfaceService } from '@/services/workflow-interface.service';
 import { WorkflowsService } from '@/services/workflows.service';
+import { TelegramOutputNode } from '@/nodes/distribution/telegram-output-node';
+import { DiscordOutputNode } from '@/nodes/distribution/discord-output-node';
+import { GoogleDriveOutputNode } from '@/nodes/distribution/google-drive-output-node';
 
 @Module({
   imports: [
@@ -104,6 +107,11 @@ import { WorkflowsService } from '@/services/workflows.service';
     QueueManagerService,
     JobRecoveryService,
 
+    // Distribution output nodes
+    TelegramOutputNode,
+    DiscordOutputNode,
+    GoogleDriveOutputNode,
+
     // Processors
     WorkflowProcessor,
     ImageProcessor,
@@ -147,6 +155,18 @@ import { WorkflowsService } from '@/services/workflows.service';
     {
       provide: 'FilesService',
       useExisting: FilesService,
+    },
+    {
+      provide: 'TelegramOutputNode',
+      useExisting: TelegramOutputNode,
+    },
+    {
+      provide: 'DiscordOutputNode',
+      useExisting: DiscordOutputNode,
+    },
+    {
+      provide: 'GoogleDriveOutputNode',
+      useExisting: GoogleDriveOutputNode,
     },
   ],
   controllers: [BullBoardController],

@@ -272,6 +272,24 @@ export interface VideoStitchJobData extends NodeJobData {
 }
 
 /**
+ * Distribution node job data (Telegram, Discord, Google Drive, etc.)
+ */
+export interface DistributionJobData extends NodeJobData {
+  nodeType:
+    | 'telegramPost'
+    | 'discordPost'
+    | 'twitterPost'
+    | 'instagramPost'
+    | 'tiktokPost'
+    | 'youtubePost'
+    | 'facebookPost'
+    | 'linkedinPost'
+    | 'googleDriveUpload'
+    | 'webhookPost';
+  nodeData: Record<string, unknown>; // Platform-specific config from node type definitions
+}
+
+/**
  * Workflow reference (subworkflow) job data
  */
 export interface WorkflowRefJobData extends NodeJobData {
@@ -302,6 +320,7 @@ export type ProcessingJobData =
   | TextToSpeechJobData
   | SubtitleJobData
   | VideoStitchJobData
+  | DistributionJobData
   | WorkflowRefJobData;
 
 /**
