@@ -144,7 +144,11 @@ export class GoogleDriveOutputNode extends BaseOutputNode {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
     const rootFolderName = customFolderName || 'UGC_Factory';
 
-    const folderPath = [rootFolderName, today, config.batch_id];
+    const folderPath = [
+      rootFolderName,
+      today,
+      ...(config.batch_id ? [config.batch_id] : [config.execution_id]),
+    ];
     let parentId = 'root';
     const createdFolderIds: string[] = [];
 
@@ -212,13 +216,16 @@ export class GoogleDriveOutputNode extends BaseOutputNode {
 
     // Generate descriptive filename
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `${config.batch_id}_v${config.variation}_${config.format}_${timestamp}.${this.getFileExtension(video.url)}`;
+    const batchPart = config.batch_id ?? config.execution_id;
+    const variationPart = config.variation != null ? `_v${config.variation}` : '';
+    const formatPart = config.format ? `_${config.format}` : '';
+    const filename = `${batchPart}${variationPart}${formatPart}_${timestamp}.${this.getFileExtension(video.url)}`;
 
     const response = await this.drive.files.create({
       requestBody: {
         name: filename,
         parents: [parentId],
-        description: `UGC Factory generated video - Batch: ${config.batch_id}, Variation: ${config.variation}, Format: ${config.format}`,
+        description: `Generated video - Execution: ${config.execution_id}, Node: ${config.node_id}`,
       },
       media: {
         mimeType: 'video/mp4',
@@ -243,12 +250,14 @@ export class GoogleDriveOutputNode extends BaseOutputNode {
 
     const metadata = {
       generation_info: {
+        execution_id: config.execution_id,
+        node_id: config.node_id,
         batch_id: config.batch_id,
         variation: config.variation,
         format: config.format,
         original_script: config.original_script,
         generated_at: new Date().toISOString(),
-        platform: 'UGC Factory',
+        platform: 'Genfeed Workflow',
       },
       video_info: {
         filename: video.filename,
@@ -260,18 +269,21 @@ export class GoogleDriveOutputNode extends BaseOutputNode {
       },
       folder_structure: {
         path: folderPath,
-        description: 'Organized as: UGC_Factory/YYYY-MM-DD/batch_id/',
+        description: 'Organized as: Root/YYYY-MM-DD/execution_id/',
       },
     };
 
     const metadataBuffer = Buffer.from(JSON.stringify(metadata, null, 2), 'utf8');
-    const metadataFilename = `${config.batch_id}_v${config.variation}_${config.format}_metadata.json`;
+    const batchPart = config.batch_id ?? config.execution_id;
+    const variationPart = config.variation != null ? `_v${config.variation}` : '';
+    const formatPart = config.format ? `_${config.format}` : '';
+    const metadataFilename = `${batchPart}${variationPart}${formatPart}_metadata.json`;
 
     const response = await this.drive.files.create({
       requestBody: {
         name: metadataFilename,
         parents: [parentId],
-        description: `Metadata for UGC Factory video - ${config.batch_id}`,
+        description: `Metadata for generated video - Execution: ${config.execution_id}`,
       },
       media: {
         mimeType: 'application/json',

@@ -4,18 +4,20 @@ export interface GeneratedVideo {
   url: string;
   buffer?: Buffer;
   filename: string;
-  format: '16:9' | '9:16' | '1:1';
-  width: number;
-  height: number;
+  format?: '16:9' | '9:16' | '1:1';
+  width?: number;
+  height?: number;
   duration?: number;
   size_bytes?: number;
 }
 
 export interface DeliveryConfig {
-  original_script: string;
-  batch_id: string;
-  variation: number;
-  format: '16:9' | '9:16' | '1:1';
+  original_script?: string;
+  execution_id: string;
+  node_id: string;
+  batch_id?: string;
+  variation?: number;
+  format?: '16:9' | '9:16' | '1:1';
 }
 
 export interface DeliveryResult {
@@ -57,7 +59,11 @@ export abstract class BaseOutputNode {
   /**
    * Generate platform-specific caption from original script
    */
-  protected generateCaption(script: string, platform: string, customCaption?: string): string {
+  protected generateCaption(
+    script: string | undefined,
+    platform: string,
+    customCaption?: string
+  ): string {
     if (customCaption) {
       return customCaption;
     }
@@ -65,13 +71,13 @@ export abstract class BaseOutputNode {
     // Platform-specific caption generation
     switch (platform) {
       case 'telegram':
-        return `🎬 ${script}\n\n#UGC #AI #ContentCreation`;
+        return `🎬 ${script ?? 'Generated content'}\n\n#AI #ContentCreation`;
 
       case 'discord':
-        return `**New UGC Video Generated** 🚀\n\n${script}`;
+        return `**New Video Generated**\n\n${script ?? 'Generated content'}`;
 
       default:
-        return script;
+        return script ?? '';
     }
   }
 

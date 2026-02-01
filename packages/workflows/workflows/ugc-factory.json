@@ -61,7 +61,7 @@
         "mode": "video_transfer",
         "duration": 5,
         "aspectRatio": "16:9",
-        "trajectory": [
+        "trajectoryPoints": [
           {"x": 0.5, "y": 0.5, "frame": 0},
           {"x": 0.52, "y": 0.48, "frame": 30},
           {"x": 0.48, "y": 0.52, "frame": 60},
