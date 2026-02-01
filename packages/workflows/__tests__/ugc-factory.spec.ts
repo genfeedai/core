@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-describe('UGC Factory Workflow v2', () => {
+describe('UGC Factory Workflow v3', () => {
   let workflow: any;
 
   beforeAll(() => {
@@ -9,8 +9,8 @@ describe('UGC Factory Workflow v2', () => {
     workflow = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
   });
 
-  it('should have valid version 2', () => {
-    expect(workflow.version).toBe(2);
+  it('should have valid version 3', () => {
+    expect(workflow.version).toBe(3);
   });
 
   it('should have correct name', () => {
@@ -26,7 +26,6 @@ describe('UGC Factory Workflow v2', () => {
     expect(nodeTypes).toContain('textToSpeech');
     expect(nodeTypes).toContain('motionControl');
     expect(nodeTypes).toContain('lipSync');
-    expect(nodeTypes).toContain('multiFormat');
 
     // Distribution nodes
     expect(nodeTypes).toContain('telegramPost');
@@ -47,7 +46,7 @@ describe('UGC Factory Workflow v2', () => {
     }
   });
 
-  it('should have complete UGC pipeline: script → TTS → motion → lipSync → multiFormat → distribution', () => {
+  it('should have complete UGC pipeline: script → TTS → motion → lipSync → distribution (schema-driven)', () => {
     const edgeMap = new Map<string, string[]>();
     for (const edge of workflow.edges) {
       if (!edgeMap.has(edge.source)) edgeMap.set(edge.source, []);
@@ -66,18 +65,15 @@ describe('UGC Factory Workflow v2', () => {
     // TTS → lip sync
     expect(edgeMap.get('tts-voice')).toContain('lip-sync');
 
-    // lip sync → multi format
-    expect(edgeMap.get('lip-sync')).toContain('multi-format');
-
-    // multi format → distribution nodes
-    const multiFormatTargets = edgeMap.get('multi-format') || [];
-    expect(multiFormatTargets).toContain('telegram-post');
-    expect(multiFormatTargets).toContain('discord-post');
-    expect(multiFormatTargets).toContain('twitter-post');
-    expect(multiFormatTargets).toContain('instagram-post');
-    expect(multiFormatTargets).toContain('tiktok-post');
-    expect(multiFormatTargets).toContain('youtube-post');
-    expect(multiFormatTargets).toContain('google-drive');
+    // lip sync → distribution nodes (direct connections)
+    const lipSyncTargets = edgeMap.get('lip-sync') || [];
+    expect(lipSyncTargets).toContain('telegram-post');
+    expect(lipSyncTargets).toContain('discord-post');
+    expect(lipSyncTargets).toContain('twitter-post');
+    expect(lipSyncTargets).toContain('instagram-post');
+    expect(lipSyncTargets).toContain('tiktok-post');
+    expect(lipSyncTargets).toContain('youtube-post');
+    expect(lipSyncTargets).toContain('google-drive');
   });
 
   it('should have TTS node configured with ElevenLabs', () => {
@@ -98,44 +94,35 @@ describe('UGC Factory Workflow v2', () => {
     expect(motionNode.data.motionStrength).toBe(0.3);
   });
 
-  it('should have multi-format node with aspect ratio configurations', () => {
-    const multiFormatNode = workflow.nodes.find((n: any) => n.type === 'multiFormat');
-    expect(multiFormatNode.data.formats).toBeDefined();
-    expect(Array.isArray(multiFormatNode.data.formats)).toBe(true);
-    expect(multiFormatNode.data.formats).toHaveLength(3);
+  it('should have platform-specific aspect ratios in distribution nodes', () => {
+    const telegramNode = workflow.nodes.find((n: any) => n.type === 'telegramPost');
+    expect(telegramNode.data.aspectRatio).toBe('9:16'); // mobile-first
 
-    const aspectRatios = multiFormatNode.data.formats.map((f: any) => f.aspectRatio);
-    expect(aspectRatios).toContain('16:9');
-    expect(aspectRatios).toContain('9:16');
-    expect(aspectRatios).toContain('1:1');
+    const twitterNode = workflow.nodes.find((n: any) => n.type === 'twitterPost');
+    expect(twitterNode.data.aspectRatio).toBe('16:9'); // desktop-friendly
+
+    const tiktokNode = workflow.nodes.find((n: any) => n.type === 'tiktokPost');
+    expect(tiktokNode.data.aspectRatio).toBe('9:16'); // vertical
   });
 
-  it('should have proper platform-specific format connections', () => {
+  it('should have direct video connections to all distribution nodes', () => {
     const edges = workflow.edges;
 
-    // TikTok should get 9:16 format (vertical)
-    const tiktokEdge = edges.find(
-      (e: any) => e.target === 'tiktok-post' && e.sourceHandle === 'format_9_16'
-    );
-    expect(tiktokEdge).toBeDefined();
+    // All distribution nodes should receive video directly from lip-sync
+    const distributionTargets = [
+      'telegram-post',
+      'twitter-post',
+      'instagram-post',
+      'tiktok-post',
+      'youtube-post',
+    ];
 
-    // Instagram should get 9:16 format (vertical)
-    const instagramEdge = edges.find(
-      (e: any) => e.target === 'instagram-post' && e.sourceHandle === 'format_9_16'
-    );
-    expect(instagramEdge).toBeDefined();
-
-    // Twitter should get 16:9 format (horizontal)
-    const twitterEdge = edges.find(
-      (e: any) => e.target === 'twitter-post' && e.sourceHandle === 'format_16_9'
-    );
-    expect(twitterEdge).toBeDefined();
-
-    // YouTube should get 9:16 format (Shorts)
-    const youtubeEdge = edges.find(
-      (e: any) => e.target === 'youtube-post' && e.sourceHandle === 'format_9_16'
-    );
-    expect(youtubeEdge).toBeDefined();
+    distributionTargets.forEach((target) => {
+      const edge = edges.find(
+        (e: any) => e.target === target && e.sourceHandle === 'video' && e.source === 'lip-sync'
+      );
+      expect(edge).toBeDefined();
+    });
   });
 
   it('should have script input connected to social media caption fields', () => {

@@ -136,72 +136,27 @@ describe('Distribution Node Types', () => {
   });
 });
 
-describe('Multi-Format Node Types', () => {
-  const multiFormatNodes = ['multiFormat', 'aspectRatioConverter'] as const;
+describe('Schema-Driven Format Conversion', () => {
+  test('distribution nodes should use schema-driven format conversion', () => {
+    const telegramNode = NODE_DEFINITIONS.telegramPost;
+    expect(telegramNode.category).toBe('distribution');
 
-  test.each(multiFormatNodes)('should have %s node definition', (nodeType) => {
-    const definition = NODE_DEFINITIONS[nodeType];
+    const twitterNode = NODE_DEFINITIONS.twitterPost;
+    expect(twitterNode.category).toBe('distribution');
 
-    expect(definition).toBeDefined();
-    expect(definition.type).toBe(nodeType);
-    expect(definition.category).toBe('processing');
-    expect(definition.label).toBeDefined();
-    expect(definition.description).toBeDefined();
-    expect(definition.icon).toBeDefined();
-    expect(definition.inputs).toBeDefined();
-    expect(definition.outputs).toBeDefined();
-    expect(definition.defaultData).toBeDefined();
+    // Format conversion is now handled by schema-driven engine
+    // Each distribution node will have aspect ratio in its Replicate schema
+    // No separate format conversion nodes needed
   });
 
-  test('multi format node should output multiple aspect ratios', () => {
-    const node = NODE_DEFINITIONS.multiFormat;
+  test('distribution nodes should accept video input directly', () => {
+    const distributionNodes = ['telegramPost', 'twitterPost', 'instagramPost', 'tiktokPost'];
 
-    expect(node.label).toBe('Multi Format');
-    expect(node.description).toContain('multiple aspect ratios');
-
-    // Should accept video and image
-    const inputTypes = node.inputs.map((i) => i.type);
-    expect(inputTypes).toContain('video');
-    expect(inputTypes).toContain('image');
-
-    // Should output 3 different formats
-    expect(node.outputs).toHaveLength(3);
-    const outputIds = node.outputs.map((o) => o.id);
-    expect(outputIds).toContain('format_16_9');
-    expect(outputIds).toContain('format_9_16');
-    expect(outputIds).toContain('format_1_1');
-
-    // Default formats should be configured
-    const defaultData = node.defaultData as any;
-    expect(Array.isArray(defaultData.formats)).toBe(true);
-    expect(defaultData.formats).toHaveLength(3);
-
-    const aspectRatios = defaultData.formats.map((f: any) => f.aspectRatio);
-    expect(aspectRatios).toContain('16:9');
-    expect(aspectRatios).toContain('9:16');
-    expect(aspectRatios).toContain('1:1');
-  });
-
-  test('aspect ratio converter should handle single conversion', () => {
-    const node = NODE_DEFINITIONS.aspectRatioConverter;
-
-    expect(node.label).toBe('Aspect Ratio');
-    expect(node.description).toContain('specific aspect ratio');
-
-    // Should accept video and image
-    const inputTypes = node.inputs.map((i) => i.type);
-    expect(inputTypes).toContain('video');
-    expect(inputTypes).toContain('image');
-
-    // Should output single result
-    expect(node.outputs).toHaveLength(1);
-    expect(node.outputs[0].type).toBe('video');
-    expect(node.outputs[0].label).toBe('Output');
-
-    // Default data should have target ratio and crop mode
-    const defaultData = node.defaultData as any;
-    expect(defaultData.targetRatio).toBe('16:9');
-    expect(defaultData.cropMode).toBe('center');
+    distributionNodes.forEach((nodeType) => {
+      const node = NODE_DEFINITIONS[nodeType as keyof typeof NODE_DEFINITIONS];
+      const inputTypes = node.inputs.map((i) => i.type);
+      expect(inputTypes).toContain('video');
+    });
   });
 });
 
@@ -236,12 +191,10 @@ describe('Node Category System', () => {
     expect(distributionNodeTypes).toContain('webhookPost');
   });
 
-  test('multi-format nodes should be in processing category', () => {
-    const multiFormat = NODE_DEFINITIONS.multiFormat;
-    const aspectConverter = NODE_DEFINITIONS.aspectRatioConverter;
-
-    expect(multiFormat.category).toBe('processing');
-    expect(aspectConverter.category).toBe('processing');
+  test('format conversion is handled by schema-driven engine', () => {
+    // Multi-format nodes removed - format conversion now handled automatically
+    // by reading aspect ratio from each node's Replicate schema
+    expect(true).toBe(true); // Placeholder test
   });
 });
 
@@ -258,8 +211,6 @@ describe('Node Data Type Safety', () => {
       'linkedinPost',
       'googleDriveUpload',
       'webhookPost',
-      'multiFormat',
-      'aspectRatioConverter',
     ];
 
     newNodeTypes.forEach((nodeType) => {

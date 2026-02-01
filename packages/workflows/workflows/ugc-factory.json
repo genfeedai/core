@@ -1,7 +1,7 @@
 {
-  "version": 2,
+  "version": 3,
   "name": "UGC Factory Pro",
-  "description": "Complete UGC pipeline: script → voice → motion → lip sync → multi-format → social distribution",
+  "description": "Complete UGC pipeline: script → voice → motion → lip sync → multi-platform distribution (schema-driven)",
   "edgeStyle": "smoothstep",
   "createdAt": "2026-01-31T00:00:00.000Z",
   "updatedAt": "2026-02-01T00:00:00.000Z",
@@ -90,27 +90,9 @@
       }
     },
     {
-      "id": "multi-format",
-      "type": "multiFormat",
-      "position": { "x": 800, "y": 275 },
-      "data": {
-        "label": "Multi Format",
-        "status": "idle",
-        "inputVideo": null,
-        "inputImage": null,
-        "formats": [
-          { "aspectRatio": "16:9", "maxDuration": 140, "quality": "high" },
-          { "aspectRatio": "9:16", "maxDuration": 60, "quality": "high" },
-          { "aspectRatio": "1:1", "maxDuration": 90, "quality": "high" }
-        ],
-        "outputs": {},
-        "jobId": null
-      }
-    },
-    {
       "id": "telegram-post",
       "type": "telegramPost",
-      "position": { "x": 1100, "y": 100 },
+      "position": { "x": 800, "y": 50 },
       "data": {
         "label": "Telegram",
         "status": "idle",
@@ -122,13 +104,15 @@
         "asVoice": false,
         "messageId": null,
         "postUrl": null,
-        "jobId": null
+        "jobId": null,
+        "aspectRatio": "9:16",
+        "maxDuration": 60
       }
     },
     {
       "id": "discord-post",
       "type": "discordPost",
-      "position": { "x": 1100, "y": 200 },
+      "position": { "x": 800, "y": 150 },
       "data": {
         "label": "Discord",
         "status": "idle",
@@ -139,13 +123,15 @@
         "message": "Check out this AI-generated UGC! 🚀",
         "messageId": null,
         "postUrl": null,
-        "jobId": null
+        "jobId": null,
+        "aspectRatio": "16:9",
+        "maxDuration": 300
       }
     },
     {
       "id": "twitter-post",
       "type": "twitterPost",
-      "position": { "x": 1300, "y": 100 },
+      "position": { "x": 1000, "y": 50 },
       "data": {
         "label": "Twitter/X",
         "status": "idle",
@@ -156,13 +142,15 @@
         "hashtags": ["#AI", "#UGC", "#viral"],
         "tweetId": null,
         "postUrl": null,
-        "jobId": null
+        "jobId": null,
+        "aspectRatio": "16:9",
+        "maxDuration": 140
       }
     },
     {
       "id": "instagram-post",
       "type": "instagramPost",
-      "position": { "x": 1300, "y": 200 },
+      "position": { "x": 1000, "y": 150 },
       "data": {
         "label": "Instagram",
         "status": "idle",
@@ -173,13 +161,15 @@
         "postType": "reels",
         "postId": null,
         "postUrl": null,
-        "jobId": null
+        "jobId": null,
+        "aspectRatio": "9:16",
+        "maxDuration": 90
       }
     },
     {
       "id": "tiktok-post",
       "type": "tiktokPost",
-      "position": { "x": 1300, "y": 300 },
+      "position": { "x": 1000, "y": 250 },
       "data": {
         "label": "TikTok",
         "status": "idle",
@@ -188,13 +178,15 @@
         "hashtags": ["#viral", "#ai", "#contentcreator", "#fyp"],
         "videoId": null,
         "postUrl": null,
-        "jobId": null
+        "jobId": null,
+        "aspectRatio": "9:16",
+        "maxDuration": 60
       }
     },
     {
       "id": "youtube-post",
       "type": "youtubePost",
-      "position": { "x": 1300, "y": 400 },
+      "position": { "x": 1000, "y": 350 },
       "data": {
         "label": "YouTube Shorts",
         "status": "idle",
@@ -205,13 +197,15 @@
         "visibility": "public",
         "videoId": null,
         "postUrl": null,
-        "jobId": null
+        "jobId": null,
+        "aspectRatio": "9:16",
+        "maxDuration": 60
       }
     },
     {
       "id": "google-drive",
       "type": "googleDriveUpload",
-      "position": { "x": 1100, "y": 400 },
+      "position": { "x": 800, "y": 400 },
       "data": {
         "label": "Google Drive",
         "status": "idle",
@@ -228,7 +222,7 @@
     {
       "id": "webhook-notify",
       "type": "webhookPost",
-      "position": { "x": 1100, "y": 500 },
+      "position": { "x": 800, "y": 500 },
       "data": {
         "label": "Custom Webhook",
         "status": "idle",
@@ -277,82 +271,75 @@
     {
       "id": "e5",
       "source": "lip-sync",
-      "target": "multi-format",
+      "target": "telegram-post",
       "sourceHandle": "video",
       "targetHandle": "video"
     },
     {
       "id": "e6",
-      "source": "multi-format",
-      "target": "telegram-post",
-      "sourceHandle": "format_9_16",
+      "source": "lip-sync",
+      "target": "discord-post",
+      "sourceHandle": "video",
       "targetHandle": "video"
     },
     {
       "id": "e7",
-      "source": "multi-format",
-      "target": "discord-post",
-      "sourceHandle": "format_16_9",
+      "source": "lip-sync",
+      "target": "twitter-post",
+      "sourceHandle": "video",
       "targetHandle": "video"
     },
     {
       "id": "e8",
-      "source": "multi-format",
-      "target": "twitter-post",
-      "sourceHandle": "format_16_9",
+      "source": "lip-sync",
+      "target": "instagram-post",
+      "sourceHandle": "video",
       "targetHandle": "video"
     },
     {
       "id": "e9",
-      "source": "multi-format",
-      "target": "instagram-post",
-      "sourceHandle": "format_9_16",
+      "source": "lip-sync",
+      "target": "tiktok-post",
+      "sourceHandle": "video",
       "targetHandle": "video"
     },
     {
       "id": "e10",
-      "source": "multi-format",
-      "target": "tiktok-post",
-      "sourceHandle": "format_9_16",
+      "source": "lip-sync",
+      "target": "youtube-post",
+      "sourceHandle": "video",
       "targetHandle": "video"
     },
     {
       "id": "e11",
-      "source": "multi-format",
-      "target": "youtube-post",
-      "sourceHandle": "format_9_16",
+      "source": "lip-sync",
+      "target": "google-drive",
+      "sourceHandle": "video",
       "targetHandle": "video"
     },
     {
       "id": "e12",
-      "source": "multi-format",
-      "target": "google-drive",
-      "sourceHandle": "format_16_9",
-      "targetHandle": "video"
+      "source": "script-input",
+      "target": "telegram-post",
+      "sourceHandle": "text",
+      "targetHandle": "text"
     },
     {
       "id": "e13",
       "source": "script-input",
-      "target": "telegram-post",
+      "target": "discord-post",
       "sourceHandle": "text",
       "targetHandle": "text"
     },
     {
       "id": "e14",
       "source": "script-input",
-      "target": "discord-post",
-      "sourceHandle": "text",
-      "targetHandle": "text"
-    },
-    {
-      "id": "e15",
-      "source": "script-input",
       "target": "twitter-post",
       "sourceHandle": "text",
       "targetHandle": "text"
     },
     {
-      "id": "e16",
+      "id": "e15",
       "source": "telegram-post",
       "target": "webhook-notify",
       "sourceHandle": "url",

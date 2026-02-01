@@ -106,9 +106,6 @@ export type NodeType =
   | 'linkedinPost'
   | 'googleDriveUpload'
   | 'webhookPost'
-  // Multi-format nodes
-  | 'multiFormat'
-  | 'aspectRatioConverter'
   // Composition nodes (workflow-as-node)
   | 'workflowInput'
   | 'workflowOutput'
@@ -1002,36 +999,7 @@ export interface WebhookPostNodeData extends BaseNodeData {
   jobId: string | null;
 }
 
-export interface MultiFormatNodeData extends BaseNodeData {
-  // Inputs from connections
-  inputVideo: string | null;
-  inputImage: string | null;
-
-  // Configuration
-  formats: Array<{
-    aspectRatio: '16:9' | '9:16' | '1:1';
-    maxDuration?: number;
-    quality?: 'low' | 'medium' | 'high';
-  }>;
-
-  // Runtime - outputs for each format
-  outputs: Record<string, string | null>; // format key -> file URL
-  jobId: string | null;
-}
-
-export interface AspectRatioConverterNodeData extends BaseNodeData {
-  // Inputs from connections
-  inputVideo: string | null;
-  inputImage: string | null;
-
-  // Configuration
-  targetRatio: '16:9' | '9:16' | '1:1' | '4:3' | '3:4';
-  cropMode: 'center' | 'smart' | 'top' | 'bottom';
-
-  // Runtime
-  outputMedia: string | null;
-  jobId: string | null;
-}
+// Multi-format nodes removed - format conversion now handled by schema-driven engine
 
 // =============================================================================
 // NODE DATA UNION
@@ -1074,9 +1042,6 @@ export type WorkflowNodeData =
   | LinkedInPostNodeData
   | GoogleDriveUploadNodeData
   | WebhookPostNodeData
-  // Multi-format nodes
-  | MultiFormatNodeData
-  | AspectRatioConverterNodeData
   // Composition nodes
   | WorkflowInputNodeData
   | WorkflowOutputNodeData
@@ -1984,55 +1949,7 @@ export const NODE_DEFINITIONS: Record<NodeType, NodeDefinition> = {
     },
   },
 
-  // Multi-format nodes
-  multiFormat: {
-    type: 'multiFormat',
-    label: 'Multi Format',
-    description: 'Convert media to multiple aspect ratios',
-    category: 'processing',
-    icon: 'Grid3x3',
-    inputs: [
-      { id: 'video', type: 'video', label: 'Video' },
-      { id: 'image', type: 'image', label: 'Image' },
-    ],
-    outputs: [
-      { id: 'format_16_9', type: 'video', label: '16:9' },
-      { id: 'format_9_16', type: 'video', label: '9:16' },
-      { id: 'format_1_1', type: 'video', label: '1:1' },
-    ],
-    defaultData: {
-      label: 'Multi Format',
-      status: 'idle',
-      inputVideo: null,
-      inputImage: null,
-      formats: [{ aspectRatio: '16:9' }, { aspectRatio: '9:16' }, { aspectRatio: '1:1' }],
-      outputs: {},
-      jobId: null,
-    },
-  },
-
-  aspectRatioConverter: {
-    type: 'aspectRatioConverter',
-    label: 'Aspect Ratio',
-    description: 'Convert media to specific aspect ratio',
-    category: 'processing',
-    icon: 'RectangleHorizontal',
-    inputs: [
-      { id: 'video', type: 'video', label: 'Video' },
-      { id: 'image', type: 'image', label: 'Image' },
-    ],
-    outputs: [{ id: 'output', type: 'video', label: 'Output' }],
-    defaultData: {
-      label: 'Aspect Ratio',
-      status: 'idle',
-      inputVideo: null,
-      inputImage: null,
-      targetRatio: '16:9',
-      cropMode: 'center',
-      outputMedia: null,
-      jobId: null,
-    },
-  },
+  // Multi-format nodes removed - format conversion now handled by schema-driven engine
 };
 
 // Explicit ordering for each category (most used first)
@@ -2059,8 +1976,6 @@ const NODE_ORDER: Record<NodeCategory, NodeType[]> = {
     'annotation',
     'subtitle',
     'animation',
-    'multiFormat',
-    'aspectRatioConverter',
   ],
   output: ['output'],
   distribution: [
