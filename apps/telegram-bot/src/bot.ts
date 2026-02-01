@@ -564,10 +564,9 @@ async function handleRun(
       await ctx.reply('⚠️ Workflow completed but produced no output files.');
     }
   } else {
-    await ctx.reply(
-      `❌ *Workflow failed*\n\n` + `Error: ${result.error}\n` + `Duration: ${duration}`,
-      { parse_mode: 'Markdown' }
-    );
+    await ctx.reply(`❌ *Workflow failed*\n\nError: ${result.error}\nDuration: ${duration}`, {
+      parse_mode: 'Markdown',
+    });
   }
 
   deleteSession(chatId);

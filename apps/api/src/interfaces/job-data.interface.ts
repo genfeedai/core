@@ -1,5 +1,5 @@
 import type { Types } from 'mongoose';
-import { ProcessingNodeType, ReframeNodeType, UpscaleNodeType } from '@genfeedai/types';
+import { ReframeNodeType, UpscaleNodeType } from '@genfeedai/types';
 
 /**
  * Base job data interface

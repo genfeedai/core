@@ -6,7 +6,6 @@ import {
   searchPromptsByTag,
   getPromptCategories,
   PROMPT_REGISTRY,
-  PROMPT_CATEGORIES,
 } from '../src/index';
 
 describe('Prompt Registry', () => {

@@ -95,7 +95,7 @@ export class UGCFactoryService {
     const totalJobs = variations * formats.length;
 
     // Queue individual generation jobs
-    const queuedJobs = [];
+    const queuedJobs: Awaited<ReturnType<typeof this.queueUGCGeneration>>[] = [];
     for (let variation = 0; variation < variations; variation++) {
       for (const format of formats) {
         const job = await this.queueUGCGeneration(batchId, variation, format, input);

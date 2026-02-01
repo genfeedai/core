@@ -4,7 +4,6 @@ import {
   IsBoolean,
   IsIn,
   IsNumber,
-  IsObject,
   IsOptional,
   IsString,
   IsUrl,
@@ -325,14 +324,26 @@ export interface UGCVideoResult {
 }
 
 export interface DeliveryResults {
-  telegram?: { success: boolean; results: any[] };
-  discord?: { success: boolean; results: any[] };
+  telegram?: {
+    success: boolean;
+    results: any[];
+    error?: string;
+    delivered_count?: number;
+    total_targets?: number;
+  };
+  discord?: {
+    success: boolean;
+    results: any[];
+    error?: string;
+    delivered_count?: number;
+    total_targets?: number;
+  };
   twitter?: { success: boolean; tweet_id?: string; url?: string; error?: string };
   instagram?: { success: boolean; reels_id?: string; stories?: any[]; error?: string };
   tiktok?: { success: boolean; video_id?: string; url?: string; error?: string };
   youtube_shorts?: { success: boolean; video_id?: string; url?: string; error?: string };
   facebook?: { success: boolean; post_id?: string; error?: string };
   linkedin?: { success: boolean; post_id?: string; error?: string };
-  google_drive?: { success: boolean; folder_url?: string; error?: string };
+  google_drive?: { success: boolean; folder_url?: string; error?: string; files_uploaded?: number };
   webhook?: { success: boolean; response?: any; error?: string };
 }

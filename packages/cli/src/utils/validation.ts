@@ -98,8 +98,8 @@ export function validateWorkflow(data: unknown): { valid: boolean; errors: strin
  */
 export function formatWorkflowInfo(metadata: WorkflowMetadata): string[] {
   return [
-    `Name: ${metadata.name}`,
-    `ID: ${metadata.id}`,
+    `Name: ${metadata.title}`,
+    `ID: ${metadata.slug}`,
     `Category: ${metadata.category}`,
     `Version: ${metadata.version}`,
     `Description: ${metadata.description}`,

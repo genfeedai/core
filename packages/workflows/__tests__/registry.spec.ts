@@ -2,7 +2,6 @@ import { describe, test, expect } from 'bun:test';
 import {
   getAllWorkflows,
   getWorkflow,
-  getWorkflowJson,
   getWorkflowIds,
   getWorkflowMetadata,
   getWorkflowsByCategory,

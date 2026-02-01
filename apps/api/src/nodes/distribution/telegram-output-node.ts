@@ -85,7 +85,7 @@ export class TelegramOutputNode extends BaseOutputNode {
       };
     }
 
-    const results = [];
+    const results: Array<Record<string, unknown>> = [];
     let successCount = 0;
 
     for (const target of platformConfig.targets) {
@@ -108,12 +108,13 @@ export class TelegramOutputNode extends BaseOutputNode {
         if (platformConfig.targets.length > 1) {
           await new Promise((resolve) => setTimeout(resolve, 1000));
         }
-      } catch (error) {
-        this.logger.error(`Failed to send to Telegram target ${target}: ${error.message}`);
+      } catch (error: unknown) {
+        const err = error as Error;
+        this.logger.error(`Failed to send to Telegram target ${target}: ${err.message}`);
         results.push({
           target,
           success: false,
-          error: error.message,
+          error: err.message,
         });
       }
     }

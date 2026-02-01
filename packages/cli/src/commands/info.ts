@@ -16,9 +16,9 @@ export async function infoCommand(workflowId: string): Promise<void> {
     process.exit(1);
   }
 
-  logger.title(metadata.name);
+  logger.title(metadata.title);
 
-  logger.item('ID', pc.green(metadata.id));
+  logger.item('ID', pc.green(metadata.slug));
   logger.item('Category', metadata.category);
   logger.item('Version', String(metadata.version));
   logger.item('Description', metadata.description);

@@ -28,7 +28,7 @@ export async function addCommand(workflowId: string, options: AddOptions): Promi
     process.exit(1);
   }
 
-  logger.title(`Adding "${metadata.name}"`);
+  logger.title(`Adding "${metadata.title}"`);
 
   // Determine output path
   const outputPath = options.output || getWorkflowPath(workflowId);
@@ -94,7 +94,7 @@ export async function addCommand(workflowId: string, options: AddOptions): Promi
 
   // Success message
   logger.newline();
-  logger.success(`Workflow "${metadata.name}" added successfully!`);
+  logger.success(`Workflow "${metadata.title}" added successfully!`);
   logger.newline();
 
   console.log(pc.dim('  To use this workflow:'));

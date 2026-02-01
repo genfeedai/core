@@ -39,7 +39,7 @@ const allowedUserIds = new Set<number>();
 if (ALLOWED_IDS) {
   for (const id of ALLOWED_IDS.split(',')) {
     const parsed = parseInt(id.trim(), 10);
-    if (!isNaN(parsed)) allowedUserIds.add(parsed);
+    if (!Number.isNaN(parsed)) allowedUserIds.add(parsed);
   }
   console.log(`🔒 Restricted to user IDs: ${[...allowedUserIds].join(', ')}`);
 } else {

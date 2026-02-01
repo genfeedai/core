@@ -78,7 +78,7 @@ export class GoogleDriveOutputNode extends BaseOutputNode {
             file_name: uploadResult.name,
             view_url: uploadResult.webViewLink,
             download_url: uploadResult.webContentLink,
-            size_bytes: parseInt(uploadResult.size || '0'),
+            size_bytes: parseInt(uploadResult.size || '0', 10),
             folder_path: folderPath,
           },
           {
@@ -113,7 +113,7 @@ export class GoogleDriveOutputNode extends BaseOutputNode {
         credentials = JSON.parse(this.credentialsPath);
       } else {
         // File path to credentials
-        const fs = await import('fs/promises');
+        const fs = await import('node:fs/promises');
         const credentialsContent = await fs.readFile(this.credentialsPath, 'utf8');
         credentials = JSON.parse(credentialsContent);
       }
@@ -335,8 +335,8 @@ export class GoogleDriveOutputNode extends BaseOutputNode {
         total: response.data.storageQuota?.limit,
         used: response.data.storageQuota?.usage,
         available: response.data.storageQuota?.limit
-          ? parseInt(response.data.storageQuota.limit) -
-            parseInt(response.data.storageQuota.usage || '0')
+          ? parseInt(response.data.storageQuota.limit, 10) -
+            parseInt(response.data.storageQuota.usage || '0', 10)
           : 'unlimited',
         user_email: response.data.user?.emailAddress,
       };

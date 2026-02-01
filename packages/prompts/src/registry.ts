@@ -2,8 +2,8 @@
  * Prompt Registry for @genfeedai/prompts
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { PromptTemplate, PromptCategory } from './types.js';
 
 /**
@@ -505,7 +505,7 @@ export function getPromptJson(id: string): PromptTemplate | undefined {
     const promptPath = path.join(__dirname, '..', 'prompts', category, `${id}.json`);
     const jsonContent = fs.readFileSync(promptPath, 'utf-8');
     return JSON.parse(jsonContent);
-  } catch (error) {
+  } catch (_error) {
     return PROMPT_REGISTRY[id];
   }
 }

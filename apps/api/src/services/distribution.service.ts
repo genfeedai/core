@@ -85,7 +85,10 @@ export class DistributionService {
     if (deliveryConfig.telegram?.enabled && this.telegramNode.enabled) {
       deliveryPromises.push(
         this.deliverToPlatform('telegram', () =>
-          this.telegramNode.deliver(video, deliveryCtx, deliveryConfig.telegram!)
+          this.telegramNode.deliver(video, deliveryCtx, {
+            ...deliveryConfig.telegram!,
+            targets: deliveryConfig.telegram!.targets || [],
+          })
         )
       );
     }
@@ -93,7 +96,10 @@ export class DistributionService {
     if (deliveryConfig.discord?.enabled && this.discordNode.enabled) {
       deliveryPromises.push(
         this.deliverToPlatform('discord', () =>
-          this.discordNode.deliver(video, deliveryCtx, deliveryConfig.discord!)
+          this.discordNode.deliver(video, deliveryCtx, {
+            ...deliveryConfig.discord!,
+            channels: deliveryConfig.discord!.channels || [],
+          })
         )
       );
     }
@@ -208,7 +214,12 @@ export class DistributionService {
       error?: string;
     }[]
   > {
-    const testResults = [];
+    const testResults: Array<{
+      platform: string;
+      enabled: boolean;
+      connected: boolean;
+      error?: string;
+    }> = [];
 
     // Test Telegram
     try {
@@ -218,12 +229,12 @@ export class DistributionService {
         enabled: this.telegramNode.enabled,
         connected: telegramConnected,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       testResults.push({
         platform: 'telegram',
         enabled: this.telegramNode.enabled,
         connected: false,
-        error: error.message,
+        error: (error as Error).message,
       });
     }
 
@@ -235,12 +246,12 @@ export class DistributionService {
         enabled: this.discordNode.enabled,
         connected: discordConnected,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       testResults.push({
         platform: 'discord',
         enabled: this.discordNode.enabled,
         connected: false,
-        error: error.message,
+        error: (error as Error).message,
       });
     }
 
@@ -252,12 +263,12 @@ export class DistributionService {
         enabled: this.googleDriveNode.enabled,
         connected: driveConnected,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       testResults.push({
         platform: 'google_drive',
         enabled: this.googleDriveNode.enabled,
         connected: false,
-        error: error.message,
+        error: (error as Error).message,
       });
     }
 

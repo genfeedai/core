@@ -5,8 +5,8 @@
  * The actual workflow JSON files are stored in the `workflows/` directory.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 export interface WorkflowJson {
   version: number;
@@ -141,7 +141,7 @@ export function getWorkflowJson(slug: string): WorkflowJson | undefined {
     const workflowPath = path.join(__dirname, '..', 'workflows', `${slug}.json`);
     const jsonContent = fs.readFileSync(workflowPath, 'utf-8');
     return JSON.parse(jsonContent);
-  } catch (error) {
+  } catch (_error) {
     return undefined;
   }
 }

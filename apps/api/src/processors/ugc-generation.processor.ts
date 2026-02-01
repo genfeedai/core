@@ -219,7 +219,7 @@ export class UGCGenerationProcessor extends WorkerHost {
       mode: 'trajectory',
       duration: preset.duration as 5 | 10,
       aspectRatio: aspectRatio.replicate_format as '16:9' | '9:16' | '1:1',
-      trajectoryPoints: preset.trajectory,
+      trajectoryPoints: [...preset.trajectory] as { x: number; y: number; frame: number }[],
       motionStrength: Math.round(preset.motion_strength * 100), // Convert to 0-100 scale
       cameraMovement: preset.camera_movement === 'slight_zoom' ? 'zoom_in' : 'static',
     });

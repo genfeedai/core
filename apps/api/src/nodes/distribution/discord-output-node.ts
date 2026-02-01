@@ -90,7 +90,7 @@ export class DiscordOutputNode extends BaseOutputNode {
       };
     }
 
-    const results = [];
+    const results: Array<Record<string, unknown>> = [];
     let successCount = 0;
 
     for (const channel of platformConfig.channels) {
@@ -118,12 +118,13 @@ export class DiscordOutputNode extends BaseOutputNode {
         if (platformConfig.channels.length > 1) {
           await new Promise((resolve) => setTimeout(resolve, 1000));
         }
-      } catch (error) {
-        this.logger.error(`Failed to send to Discord channel ${channel}: ${error.message}`);
+      } catch (error: unknown) {
+        const err = error as Error;
+        this.logger.error(`Failed to send to Discord channel ${channel}: ${err.message}`);
         results.push({
           channel,
           success: false,
-          error: error.message,
+          error: err.message,
         });
       }
     }
