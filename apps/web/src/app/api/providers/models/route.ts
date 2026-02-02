@@ -146,37 +146,35 @@ function detectUseCases(schema: Record<string, unknown> | undefined): ModelUseCa
   return detected;
 }
 
-// Build Replicate models from cached schemas
-function getReplicateModels(): ProviderModel[] {
-  return replicateSchemas
-    .filter((schema) => MODEL_METADATA[schema.modelId])
-    .map((schema) => {
-      const meta = MODEL_METADATA[schema.modelId];
-      // Extract component schemas that contain enum definitions (aspect_ratio, duration, etc.)
-      const componentSchemas = (schema as { componentSchemas?: Record<string, unknown> })
-        .componentSchemas;
+// Build Replicate models from cached schemas (module-level cache)
+const REPLICATE_MODELS: ProviderModel[] = replicateSchemas
+  .filter((schema) => MODEL_METADATA[schema.modelId])
+  .map((schema) => {
+    const meta = MODEL_METADATA[schema.modelId];
+    // Extract component schemas that contain enum definitions (aspect_ratio, duration, etc.)
+    const componentSchemas = (schema as { componentSchemas?: Record<string, unknown> })
+      .componentSchemas;
 
-      // Merge explicit use cases with auto-detected ones from schema
-      const explicitUseCases = meta.useCases || [];
-      const schemaUseCases = detectUseCases(
-        schema.inputSchema as Record<string, unknown> | undefined
-      );
-      const allUseCases = [...new Set([...explicitUseCases, ...schemaUseCases])];
+    // Merge explicit use cases with auto-detected ones from schema
+    const explicitUseCases = meta.useCases || [];
+    const schemaUseCases = detectUseCases(
+      schema.inputSchema as Record<string, unknown> | undefined
+    );
+    const allUseCases = [...new Set([...explicitUseCases, ...schemaUseCases])];
 
-      return {
-        id: schema.modelId,
-        displayName: meta.displayName || schema.name,
-        provider: 'replicate' as ProviderType,
-        capabilities: meta.capabilities,
-        description: schema.description?.slice(0, 100) || '',
-        pricing: meta.pricing,
-        thumbnail: (schema as { coverImageUrl?: string }).coverImageUrl || undefined,
-        inputSchema: schema.inputSchema as Record<string, unknown> | undefined,
-        componentSchemas: componentSchemas as Record<string, unknown> | undefined,
-        useCases: allUseCases.length > 0 ? allUseCases : undefined,
-      };
-    });
-}
+    return {
+      id: schema.modelId,
+      displayName: meta.displayName || schema.name,
+      provider: 'replicate' as ProviderType,
+      capabilities: meta.capabilities,
+      description: schema.description?.slice(0, 100) || '',
+      pricing: meta.pricing,
+      thumbnail: (schema as { coverImageUrl?: string }).coverImageUrl || undefined,
+      inputSchema: schema.inputSchema as Record<string, unknown> | undefined,
+      componentSchemas: componentSchemas as Record<string, unknown> | undefined,
+      useCases: allUseCases.length > 0 ? allUseCases : undefined,
+    };
+  });
 
 // fal.ai models (static - they don't have a public model listing API)
 const FAL_MODELS: ProviderModel[] = [
@@ -228,7 +226,7 @@ export async function GET(request: NextRequest) {
 
   // Add Replicate models from cached schemas (includes cover images)
   if (configuredProviders.has('replicate')) {
-    allModels.push(...getReplicateModels());
+    allModels.push(...REPLICATE_MODELS);
   }
 
   // Add fal.ai models if configured

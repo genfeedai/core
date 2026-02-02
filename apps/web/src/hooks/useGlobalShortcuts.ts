@@ -12,7 +12,9 @@ import { useWorkflowStore } from '@/store/workflowStore';
 export function useGlobalShortcuts() {
   const router = useRouter();
   const { toggle: toggleCommandPalette, isOpen: isCommandPaletteOpen } = useCommandPaletteStore();
-  const { executeWorkflow, executeSelectedNodes, isRunning } = useExecutionStore();
+  const executeWorkflow = useExecutionStore((state) => state.executeWorkflow);
+  const executeSelectedNodes = useExecutionStore((state) => state.executeSelectedNodes);
+  const isRunning = useExecutionStore((state) => state.isRunning);
   const { openModal } = useUIStore();
   const { selectedNodeIds, exportWorkflow } = useWorkflowStore();
 

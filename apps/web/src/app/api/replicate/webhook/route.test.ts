@@ -10,6 +10,8 @@ vi.mock('@/lib/replicate/webhook-store', () => ({
 import { setWebhookResult } from '@/lib/replicate/webhook-store';
 
 describe('POST /api/replicate/webhook', () => {
+  const mockedSetWebhookResult = vi.mocked(setWebhookResult);
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -31,7 +33,7 @@ describe('POST /api/replicate/webhook', () => {
     const data = await response.json();
 
     expect(data.received).toBe(true);
-    expect(setWebhookResult as any).toHaveBeenCalledWith('pred-123', {
+    expect(mockedSetWebhookResult).toHaveBeenCalledWith('pred-123', {
       status: 'succeeded',
       output: ['https://example.com/image.png'],
       error: null,
@@ -55,7 +57,7 @@ describe('POST /api/replicate/webhook', () => {
     const data = await response.json();
 
     expect(data.received).toBe(true);
-    expect(setWebhookResult as any).toHaveBeenCalledWith('pred-456', {
+    expect(mockedSetWebhookResult).toHaveBeenCalledWith('pred-456', {
       status: 'failed',
       output: null,
       error: 'Model error: Out of memory',
@@ -78,7 +80,7 @@ describe('POST /api/replicate/webhook', () => {
     const response = await POST(request);
 
     expect(response.status).toBe(200);
-    expect(setWebhookResult as any).toHaveBeenCalledWith('pred-789', {
+    expect(mockedSetWebhookResult).toHaveBeenCalledWith('pred-789', {
       status: 'processing',
       output: null,
       error: null,
@@ -114,7 +116,7 @@ describe('POST /api/replicate/webhook', () => {
     const data = await response.json();
 
     expect(data.received).toBe(true);
-    expect(setWebhookResult as any).toHaveBeenCalledWith('pred-empty', {
+    expect(mockedSetWebhookResult).toHaveBeenCalledWith('pred-empty', {
       status: 'succeeded',
       output: undefined,
       error: undefined,

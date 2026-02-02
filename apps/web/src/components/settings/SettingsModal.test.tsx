@@ -11,6 +11,7 @@ const mockOpenModal = vi.fn();
 
 // Import mocked modules at top level (vi.mock is hoisted above these imports)
 import { useUIStore } from '@/store/uiStore';
+const mockedUIStore = vi.mocked(useUIStore);
 
 vi.mock('@/components/ui/select', () => ({
   Select: ({ children }: { children: React.ReactNode }) => (
@@ -96,7 +97,7 @@ describe('SettingsModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    (useUIStore as any).mockReturnValue({
+    mockedUIStore.mockReturnValue({
       activeModal: 'settings',
       closeModal: mockCloseModal,
       openModal: mockOpenModal,
@@ -193,7 +194,7 @@ describe('SettingsModal', () => {
 
   describe('hidden when not active', () => {
     it('should not render when activeModal is not settings', () => {
-      (useUIStore as any).mockReturnValue({
+      mockedUIStore.mockReturnValue({
         activeModal: null,
         closeModal: mockCloseModal,
         openModal: mockOpenModal,
@@ -210,7 +211,7 @@ describe('SettingsModal - API Keys Tab', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    (useUIStore as any).mockReturnValue({
+    mockedUIStore.mockReturnValue({
       activeModal: 'settings',
       closeModal: mockCloseModal,
       openModal: mockOpenModal,
@@ -250,7 +251,7 @@ describe('SettingsModal - Appearance Tab', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    (useUIStore as any).mockReturnValue({
+    mockedUIStore.mockReturnValue({
       activeModal: 'settings',
       closeModal: mockCloseModal,
       openModal: mockOpenModal,

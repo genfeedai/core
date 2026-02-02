@@ -78,7 +78,9 @@ export function WorkflowCanvas() {
   const { selectNode, setHighlightedNodeIds, highlightedNodeIds, showPalette, togglePalette } =
     useUIStore();
   const { edgeStyle, showMinimap } = useSettingsStore();
-  const { isRunning, currentNodeId, executingNodeIds } = useExecutionStore();
+  const isRunning = useExecutionStore((state) => state.isRunning);
+  const currentNodeId = useExecutionStore((state) => state.currentNodeId);
+  const executingNodeIds = useExecutionStore((state) => state.executingNodeIds);
 
   // Minimap visibility on pan/zoom (n8n-style)
   const [isMinimapVisible, setIsMinimapVisible] = useState(false);

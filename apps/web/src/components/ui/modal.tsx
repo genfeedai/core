@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { memo, useCallback, useEffect, type ReactNode } from 'react';
+import { memo, useEffect, type ReactNode } from 'react';
 
 interface ModalProps {
   isOpen: boolean;

@@ -1,4 +1,10 @@
 import { describe, test, expect } from 'bun:test';
+import type {
+  BaseNodeData,
+  GoogleDriveUploadNodeData,
+  TelegramPostNodeData,
+  WebhookPostNodeData,
+} from '../src/nodes';
 import { NODE_DEFINITIONS, NodeCategory } from '../src/nodes';
 
 describe('Distribution Node Types', () => {
@@ -48,7 +54,7 @@ describe('Distribution Node Types', () => {
     expect(node.outputs[0].label).toBe('Post URL');
 
     // Default data should have required fields
-    const defaultData = node.defaultData as any;
+    const defaultData = node.defaultData as TelegramPostNodeData;
     expect(defaultData.status).toBe('idle');
     expect(defaultData.chatId).toBe('');
     expect(defaultData.caption).toBe('');
@@ -87,7 +93,7 @@ describe('Distribution Node Types', () => {
     expect(inputTypes).toContain('text'); // data input
 
     // Default data should have webhook configuration
-    const defaultData = webhook.defaultData as any;
+    const defaultData = webhook.defaultData as WebhookPostNodeData;
     expect(defaultData.webhookUrl).toBe('');
     expect(defaultData.method).toBe('POST');
     expect(typeof defaultData.headers).toBe('object');
@@ -106,7 +112,7 @@ describe('Distribution Node Types', () => {
     expect(inputTypes).toContain('text'); // for generic files
 
     // Default data should have folder and filename
-    const defaultData = gdrive.defaultData as any;
+    const defaultData = gdrive.defaultData as GoogleDriveUploadNodeData;
     expect(defaultData.folderId).toBe('');
     expect(defaultData.fileName).toBe('');
   });
@@ -126,7 +132,7 @@ describe('Distribution Node Types', () => {
   test('all distribution nodes should have job tracking', () => {
     distributionNodes.forEach((nodeType) => {
       const node = NODE_DEFINITIONS[nodeType];
-      const defaultData = node.defaultData as any;
+      const defaultData = node.defaultData as BaseNodeData & { jobId: string | null };
 
       expect(defaultData).toHaveProperty('jobId');
       expect(defaultData.jobId).toBe(null);
@@ -215,7 +221,7 @@ describe('Node Data Type Safety', () => {
 
     newNodeTypes.forEach((nodeType) => {
       const node = NODE_DEFINITIONS[nodeType as keyof typeof NODE_DEFINITIONS];
-      const defaultData = node.defaultData as any;
+      const defaultData = node.defaultData as BaseNodeData & { jobId: string | null };
 
       // All should have base properties
       expect(defaultData).toHaveProperty('label');

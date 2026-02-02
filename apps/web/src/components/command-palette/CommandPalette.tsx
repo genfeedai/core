@@ -61,7 +61,10 @@ export function CommandPalette() {
     addRecentCommand,
   } = useCommandPaletteStore();
 
-  const { executeWorkflow, executeSelectedNodes, stopExecution, isRunning } = useExecutionStore();
+  const executeWorkflow = useExecutionStore((state) => state.executeWorkflow);
+  const executeSelectedNodes = useExecutionStore((state) => state.executeSelectedNodes);
+  const stopExecution = useExecutionStore((state) => state.stopExecution);
+  const isRunning = useExecutionStore((state) => state.isRunning);
   const { openModal, toggleAIGenerator } = useUIStore();
   const { addNode, exportWorkflow, selectedNodeIds } = useWorkflowStore();
 

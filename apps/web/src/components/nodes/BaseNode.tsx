@@ -147,8 +147,10 @@ function BaseNodeComponent({
   const isResized = width !== undefined || height !== undefined;
   const { selectNode, selectedNodeId, highlightedNodeIds } = useUIStore();
   const { toggleNodeLock, isNodeLocked, updateNodeData } = useWorkflowStore();
-  const { executeNode, isRunning, stopExecution, stopNodeExecution, isNodeExecuting } =
-    useExecutionStore();
+  const executeNode = useExecutionStore((state) => state.executeNode);
+  const isRunning = useExecutionStore((state) => state.isRunning);
+  const stopExecution = useExecutionStore((state) => state.stopExecution);
+  const stopNodeExecution = useExecutionStore((state) => state.stopNodeExecution);
   const updateNodeInternals = useUpdateNodeInternals();
   const nodeDef = NODE_DEFINITIONS[type as NodeType];
   const nodeData = data as WorkflowNodeData;
@@ -168,34 +170,39 @@ function BaseNodeComponent({
     return generateHandlesFromSchema(selectedModel.inputSchema, staticInputs);
   }, [nodeDef?.inputs, selectedModel?.inputSchema]);
 
-  const _outputCount = nodeDef?.outputs?.length ?? 0;
-  const _inputCount = sortedInputs.length;
   const _disabledInputsKey = disabledInputs?.join(',') ?? '';
+  const handlesKey = useMemo(() => {
+    const inputKey = sortedInputs.map((input) => `${input.id}:${input.type}`).join('|');
+    const outputKey =
+      nodeDef?.outputs?.map((output) => `${output.id}:${output.type}`).join('|') ?? '';
+    return `${inputKey}__${outputKey}__${_disabledInputsKey}`;
+  }, [sortedInputs, nodeDef?.outputs, _disabledInputsKey]);
 
   // Force React Flow to recalculate handle positions when handle configuration changes
   // Only re-run when actual handle-affecting properties change, not on every render
   useEffect(() => {
+    void handlesKey;
     const rafId = requestAnimationFrame(() => {
       updateNodeInternals(id);
     });
     return () => cancelAnimationFrame(rafId);
-  }, [id, updateNodeInternals]);
+  }, [id, updateNodeInternals, handlesKey]);
 
   // Determine if this node should be highlighted (no selection = all highlighted)
   const isHighlighted = highlightedNodeIds.length === 0 || highlightedNodeIds.includes(id);
 
-  const nodeExecuting = isNodeExecuting(id);
+  const nodeExecuting = useExecutionStore((state) => state.activeNodeExecutions.has(id));
 
   const handleRetry = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      if (!isNodeExecuting(id)) {
+      if (!nodeExecuting) {
         // Clear error and set to processing before retrying
         updateNodeData(id, { error: undefined, status: NODE_STATUS.processing });
         executeNode(id);
       }
     },
-    [id, isNodeExecuting, executeNode, updateNodeData]
+    [id, nodeExecuting, executeNode, updateNodeData]
   );
 
   const handleStopNode = useCallback(
@@ -204,7 +211,7 @@ function BaseNodeComponent({
       if (isRunning) {
         // Global workflow execution — stop everything
         stopExecution();
-      } else if (isNodeExecuting(id)) {
+      } else if (nodeExecuting) {
         // Independent node execution — stop only this node
         stopNodeExecution(id);
       } else {
@@ -212,7 +219,7 @@ function BaseNodeComponent({
         updateNodeData(id, { status: NODE_STATUS.idle, error: undefined });
       }
     },
-    [id, isRunning, isNodeExecuting, stopExecution, stopNodeExecution, updateNodeData]
+    [id, isRunning, nodeExecuting, stopExecution, stopNodeExecution, updateNodeData]
   );
 
   const handleCopyError = useCallback(

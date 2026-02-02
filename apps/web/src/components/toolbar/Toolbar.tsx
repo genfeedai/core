@@ -89,19 +89,17 @@ export function Toolbar() {
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
-  const {
-    isRunning,
-    executeWorkflow,
-    executeSelectedNodes,
-    resumeFromFailed,
-    canResumeFromFailed,
-    stopExecution,
-    validationErrors,
-    clearValidationErrors,
-    estimatedCost,
-    actualCost,
-    setEstimatedCost,
-  } = useExecutionStore();
+  const isRunning = useExecutionStore((state) => state.isRunning);
+  const executeWorkflow = useExecutionStore((state) => state.executeWorkflow);
+  const executeSelectedNodes = useExecutionStore((state) => state.executeSelectedNodes);
+  const resumeFromFailed = useExecutionStore((state) => state.resumeFromFailed);
+  const canResumeFromFailed = useExecutionStore((state) => state.canResumeFromFailed);
+  const stopExecution = useExecutionStore((state) => state.stopExecution);
+  const validationErrors = useExecutionStore((state) => state.validationErrors);
+  const clearValidationErrors = useExecutionStore((state) => state.clearValidationErrors);
+  const estimatedCost = useExecutionStore((state) => state.estimatedCost);
+  const actualCost = useExecutionStore((state) => state.actualCost);
+  const setEstimatedCost = useExecutionStore((state) => state.setEstimatedCost);
   const { toggleAIGenerator, openModal } = useUIStore();
   const debugMode = useSettingsStore((s) => s.debugMode);
   const { autoLayout } = usePaneActions();

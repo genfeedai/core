@@ -188,7 +188,7 @@ describe('usePromptLibraryStore', () => {
     describe('loadItems', () => {
       it('should load items and update state', async () => {
         const { promptsApi } = await import('@/lib/api');
-        (promptsApi.getAll as any).mockResolvedValueOnce([mockItem]);
+        vi.mocked(promptsApi.getAll).mockResolvedValueOnce([mockItem]);
 
         const { loadItems } = usePromptLibraryStore.getState();
         await loadItems();
@@ -220,7 +220,7 @@ describe('usePromptLibraryStore', () => {
 
       it('should set error on failure', async () => {
         const { promptsApi } = await import('@/lib/api');
-        (promptsApi.getAll as any).mockRejectedValueOnce(new Error('API Error'));
+        vi.mocked(promptsApi.getAll).mockRejectedValueOnce(new Error('API Error'));
 
         const { loadItems } = usePromptLibraryStore.getState();
         await loadItems();
@@ -234,7 +234,7 @@ describe('usePromptLibraryStore', () => {
         const { promptsApi } = await import('@/lib/api');
         const abortError = new Error('Aborted');
         abortError.name = 'AbortError';
-        (promptsApi.getAll as any).mockRejectedValueOnce(abortError);
+        vi.mocked(promptsApi.getAll).mockRejectedValueOnce(abortError);
 
         const { loadItems } = usePromptLibraryStore.getState();
         await loadItems();
@@ -248,7 +248,7 @@ describe('usePromptLibraryStore', () => {
       it('should load featured items', async () => {
         const { promptsApi } = await import('@/lib/api');
         const featuredItem = { ...mockItem, isFeatured: true };
-        (promptsApi.getFeatured as any).mockResolvedValueOnce([featuredItem]);
+        vi.mocked(promptsApi.getFeatured).mockResolvedValueOnce([featuredItem]);
 
         const { loadFeatured } = usePromptLibraryStore.getState();
         await loadFeatured();
@@ -260,7 +260,7 @@ describe('usePromptLibraryStore', () => {
     describe('createItem', () => {
       it('should create an item and add to list', async () => {
         const { promptsApi } = await import('@/lib/api');
-        (promptsApi.create as any).mockResolvedValueOnce(mockItem);
+        vi.mocked(promptsApi.create).mockResolvedValueOnce(mockItem);
 
         const { createItem } = usePromptLibraryStore.getState();
         const result = await createItem({
@@ -276,7 +276,7 @@ describe('usePromptLibraryStore', () => {
 
       it('should throw and set error on failure', async () => {
         const { promptsApi } = await import('@/lib/api');
-        (promptsApi.create as any).mockRejectedValueOnce(new Error('Create failed'));
+        vi.mocked(promptsApi.create).mockRejectedValueOnce(new Error('Create failed'));
 
         const { createItem } = usePromptLibraryStore.getState();
 
@@ -296,7 +296,7 @@ describe('usePromptLibraryStore', () => {
         usePromptLibraryStore.setState({ items: [mockItem] });
         const { promptsApi } = await import('@/lib/api');
         const updatedItem = { ...mockItem, name: 'Updated Name' };
-        (promptsApi.update as any).mockResolvedValueOnce(updatedItem);
+        vi.mocked(promptsApi.update).mockResolvedValueOnce(updatedItem);
 
         const { updateItem } = usePromptLibraryStore.getState();
         const result = await updateItem('item-1', { name: 'Updated Name' });
@@ -313,7 +313,7 @@ describe('usePromptLibraryStore', () => {
         });
         const { promptsApi } = await import('@/lib/api');
         const updatedItem = { ...mockItem, name: 'Updated' };
-        (promptsApi.update as any).mockResolvedValueOnce(updatedItem);
+        vi.mocked(promptsApi.update).mockResolvedValueOnce(updatedItem);
 
         const { updateItem } = usePromptLibraryStore.getState();
         await updateItem('item-1', { name: 'Updated' });
@@ -350,7 +350,7 @@ describe('usePromptLibraryStore', () => {
         usePromptLibraryStore.setState({ items: [mockItem] });
         const { promptsApi } = await import('@/lib/api');
         const duplicatedItem = { ...mockItem, _id: 'item-2', name: 'Test Prompt (Copy)' };
-        (promptsApi.duplicate as any).mockResolvedValueOnce(duplicatedItem);
+        vi.mocked(promptsApi.duplicate).mockResolvedValueOnce(duplicatedItem);
 
         const { duplicateItem } = usePromptLibraryStore.getState();
         const result = await duplicateItem('item-1');
@@ -368,7 +368,7 @@ describe('usePromptLibraryStore', () => {
         });
         const { promptsApi } = await import('@/lib/api');
         const usedItem = { ...mockItem, useCount: 6 };
-        (promptsApi.use as any).mockResolvedValueOnce(usedItem);
+        vi.mocked(promptsApi.use).mockResolvedValueOnce(usedItem);
 
         const { recordItemUsage } = usePromptLibraryStore.getState();
         const result = await recordItemUsage('item-1');

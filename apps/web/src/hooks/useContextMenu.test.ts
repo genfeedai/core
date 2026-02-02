@@ -85,6 +85,11 @@ import {
   getSelectionMenuItems,
 } from '@/components/context-menu/menus';
 import { useContextMenuStore } from '@/store/contextMenuStore';
+const mockedUseContextMenuStore = vi.mocked(useContextMenuStore);
+const mockedGetNodeMenuItems = vi.mocked(getNodeMenuItems);
+const mockedGetEdgeMenuItems = vi.mocked(getEdgeMenuItems);
+const mockedGetPaneMenuItems = vi.mocked(getPaneMenuItems);
+const mockedGetSelectionMenuItems = vi.mocked(getSelectionMenuItems);
 
 describe('useContextMenu', () => {
   beforeEach(() => {
@@ -119,7 +124,7 @@ describe('useContextMenu', () => {
     });
 
     it('should return node menu items when menuType is node', () => {
-      (useContextMenuStore as any).mockReturnValue({
+      mockedUseContextMenuStore.mockReturnValue({
         isOpen: true,
         position: { x: 100, y: 100 },
         menuType: 'node',
@@ -134,13 +139,13 @@ describe('useContextMenu', () => {
 
       const { result } = renderHook(() => useContextMenu());
 
-      expect(getNodeMenuItems as any).toHaveBeenCalled();
+      expect(mockedGetNodeMenuItems).toHaveBeenCalled();
       expect(result.current.menuItems).toHaveLength(1);
       expect(result.current.menuItems[0].id).toBe('node-menu-item');
     });
 
     it('should return edge menu items when menuType is edge', () => {
-      (useContextMenuStore as any).mockReturnValue({
+      mockedUseContextMenuStore.mockReturnValue({
         isOpen: true,
         position: { x: 100, y: 100 },
         menuType: 'edge',
@@ -155,12 +160,12 @@ describe('useContextMenu', () => {
 
       const { result } = renderHook(() => useContextMenu());
 
-      expect(getEdgeMenuItems as any).toHaveBeenCalled();
+      expect(mockedGetEdgeMenuItems).toHaveBeenCalled();
       expect(result.current.menuItems[0].id).toBe('edge-menu-item');
     });
 
     it('should return pane menu items when menuType is pane', () => {
-      (useContextMenuStore as any).mockReturnValue({
+      mockedUseContextMenuStore.mockReturnValue({
         isOpen: true,
         position: { x: 200, y: 300 },
         menuType: 'pane',
@@ -175,12 +180,12 @@ describe('useContextMenu', () => {
 
       const { result } = renderHook(() => useContextMenu());
 
-      expect(getPaneMenuItems as any).toHaveBeenCalled();
+      expect(mockedGetPaneMenuItems).toHaveBeenCalled();
       expect(result.current.menuItems[0].id).toBe('pane-menu-item');
     });
 
     it('should return selection menu items when menuType is selection', () => {
-      (useContextMenuStore as any).mockReturnValue({
+      mockedUseContextMenuStore.mockReturnValue({
         isOpen: true,
         position: { x: 100, y: 100 },
         menuType: 'selection',
@@ -195,12 +200,12 @@ describe('useContextMenu', () => {
 
       const { result } = renderHook(() => useContextMenu());
 
-      expect(getSelectionMenuItems as any).toHaveBeenCalled();
+      expect(mockedGetSelectionMenuItems).toHaveBeenCalled();
       expect(result.current.menuItems[0].id).toBe('selection-menu-item');
     });
 
     it('should return empty array for node menu without targetId', () => {
-      (useContextMenuStore as any).mockReturnValue({
+      mockedUseContextMenuStore.mockReturnValue({
         isOpen: true,
         position: { x: 100, y: 100 },
         menuType: 'node',
@@ -219,7 +224,7 @@ describe('useContextMenu', () => {
     });
 
     it('should return empty array for selection menu without targetIds', () => {
-      (useContextMenuStore as any).mockReturnValue({
+      mockedUseContextMenuStore.mockReturnValue({
         isOpen: true,
         position: { x: 100, y: 100 },
         menuType: 'selection',

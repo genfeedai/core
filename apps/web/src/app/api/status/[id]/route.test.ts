@@ -16,13 +16,15 @@ import { getWebhookResult } from '@/lib/replicate/webhook-store';
 
 describe('GET /api/status/[id]', () => {
   const mockPredictionId = 'pred-123';
+  const mockedGetPredictionStatus = vi.mocked(getPredictionStatus);
+  const mockedGetWebhookResult = vi.mocked(getWebhookResult);
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('should return webhook result if available', async () => {
-    (getWebhookResult as any).mockReturnValue({
+    mockedGetWebhookResult.mockReturnValue({
       status: 'succeeded',
       output: ['https://example.com/image.png'],
       error: undefined,
@@ -39,8 +41,8 @@ describe('GET /api/status/[id]', () => {
   });
 
   it('should fall back to Replicate API when no webhook result', async () => {
-    (getWebhookResult as any).mockReturnValue(undefined);
-    (getPredictionStatus as any).mockResolvedValue({
+    mockedGetWebhookResult.mockReturnValue(undefined);
+    mockedGetPredictionStatus.mockResolvedValue({
       id: mockPredictionId,
       status: 'succeeded',
       output: ['https://api.com/output.png'],
@@ -54,12 +56,12 @@ describe('GET /api/status/[id]', () => {
 
     expect(data.status).toBe('succeeded');
     expect(data.output).toEqual(['https://api.com/output.png']);
-    expect(getPredictionStatus as any).toHaveBeenCalledWith(mockPredictionId);
+    expect(mockedGetPredictionStatus).toHaveBeenCalledWith(mockPredictionId);
   });
 
   it('should return processing status with progress', async () => {
-    (getWebhookResult as any).mockReturnValue(undefined);
-    (getPredictionStatus as any).mockResolvedValue({
+    mockedGetWebhookResult.mockReturnValue(undefined);
+    mockedGetPredictionStatus.mockResolvedValue({
       id: mockPredictionId,
       status: 'processing',
       output: undefined,
@@ -76,7 +78,7 @@ describe('GET /api/status/[id]', () => {
   });
 
   it('should return failed status with error', async () => {
-    (getWebhookResult as any).mockReturnValue({
+    mockedGetWebhookResult.mockReturnValue({
       status: 'failed',
       output: undefined,
       error: 'Model failed to generate output',
@@ -92,8 +94,8 @@ describe('GET /api/status/[id]', () => {
   });
 
   it('should handle API errors', async () => {
-    (getWebhookResult as any).mockReturnValue(undefined);
-    (getPredictionStatus as any).mockRejectedValue(new Error('Network error'));
+    mockedGetWebhookResult.mockReturnValue(undefined);
+    mockedGetPredictionStatus.mockRejectedValue(new Error('Network error'));
 
     const request = new NextRequest(`http://localhost/api/status/${mockPredictionId}`);
     const response = await GET(request, { params: Promise.resolve({ id: mockPredictionId }) });

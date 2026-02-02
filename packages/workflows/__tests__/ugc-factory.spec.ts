@@ -1,8 +1,24 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import type {
+  InstagramPostNodeData,
+  MotionControlNodeData,
+  NodeType,
+  TextToSpeechNodeData,
+  TikTokPostNodeData,
+  WorkflowNode,
+  YouTubePostNodeData,
+} from '@genfeedai/types';
+import type { WorkflowJson } from '../src';
 
 describe('UGC Factory Workflow v3', () => {
-  let workflow: any;
+  let workflow: WorkflowJson;
+
+  const getNodeData = <TData>(nodes: WorkflowNode[], nodeType: NodeType): TData => {
+    const node = nodes.find((n) => n.type === nodeType);
+    expect(node).toBeDefined();
+    return (node as { data: TData }).data;
+  };
 
   beforeAll(() => {
     const filePath = path.resolve(__dirname, '../workflows/ugc-factory.json');
@@ -18,7 +34,7 @@ describe('UGC Factory Workflow v3', () => {
   });
 
   it('should have all required node types for full pipeline', () => {
-    const nodeTypes = workflow.nodes.map((n: any) => n.type);
+    const nodeTypes = workflow.nodes.map((node) => node.type);
 
     // Core UGC nodes
     expect(nodeTypes).toContain('prompt');
@@ -39,7 +55,7 @@ describe('UGC Factory Workflow v3', () => {
   });
 
   it('should have valid edges connecting all nodes', () => {
-    const nodeIds = new Set(workflow.nodes.map((n: any) => n.id));
+    const nodeIds = new Set(workflow.nodes.map((node) => node.id));
     for (const edge of workflow.edges) {
       expect(nodeIds.has(edge.source)).toBe(true);
       expect(nodeIds.has(edge.target)).toBe(true);
@@ -77,32 +93,32 @@ describe('UGC Factory Workflow v3', () => {
   });
 
   it('should have TTS node configured with ElevenLabs', () => {
-    const ttsNode = workflow.nodes.find((n: any) => n.type === 'textToSpeech');
-    expect(ttsNode.data.provider).toBe('elevenlabs');
-    expect(ttsNode.data.voice).toBe('rachel');
-    expect(ttsNode.data.stability).toBe(0.6);
-    expect(ttsNode.data.similarityBoost).toBe(0.8);
+    const ttsData = getNodeData<TextToSpeechNodeData>(workflow.nodes, 'textToSpeech');
+    expect(ttsData.provider).toBe('elevenlabs');
+    expect(ttsData.voice).toBe('rachel');
+    expect(ttsData.stability).toBe(0.6);
+    expect(ttsData.similarityBoost).toBe(0.8);
   });
 
   it('should have motion control node with trajectory settings', () => {
-    const motionNode = workflow.nodes.find((n: any) => n.type === 'motionControl');
-    expect(motionNode.data.mode).toBe('video_transfer');
-    expect(motionNode.data.duration).toBe(5);
-    expect(motionNode.data.aspectRatio).toBe('16:9');
-    expect(motionNode.data.trajectory).toBeDefined();
-    expect(Array.isArray(motionNode.data.trajectory)).toBe(true);
-    expect(motionNode.data.motionStrength).toBe(0.3);
+    const motionData = getNodeData<MotionControlNodeData>(workflow.nodes, 'motionControl');
+    expect(motionData.mode).toBe('video_transfer');
+    expect(motionData.duration).toBe(5);
+    expect(motionData.aspectRatio).toBe('16:9');
+    expect(motionData.trajectory).toBeDefined();
+    expect(Array.isArray(motionData.trajectory)).toBe(true);
+    expect(motionData.motionStrength).toBe(0.3);
   });
 
   it('should have platform-specific aspect ratios in distribution nodes', () => {
-    const telegramNode = workflow.nodes.find((n: any) => n.type === 'telegramPost');
-    expect(telegramNode.data.aspectRatio).toBe('9:16'); // mobile-first
+    const telegramData = getNodeData<{ aspectRatio: string }>(workflow.nodes, 'telegramPost');
+    expect(telegramData.aspectRatio).toBe('9:16'); // mobile-first
 
-    const twitterNode = workflow.nodes.find((n: any) => n.type === 'twitterPost');
-    expect(twitterNode.data.aspectRatio).toBe('16:9'); // desktop-friendly
+    const twitterData = getNodeData<{ aspectRatio: string }>(workflow.nodes, 'twitterPost');
+    expect(twitterData.aspectRatio).toBe('16:9'); // desktop-friendly
 
-    const tiktokNode = workflow.nodes.find((n: any) => n.type === 'tiktokPost');
-    expect(tiktokNode.data.aspectRatio).toBe('9:16'); // vertical
+    const tiktokData = getNodeData<{ aspectRatio: string }>(workflow.nodes, 'tiktokPost');
+    expect(tiktokData.aspectRatio).toBe('9:16'); // vertical
   });
 
   it('should have direct video connections to all distribution nodes', () => {
@@ -119,7 +135,8 @@ describe('UGC Factory Workflow v3', () => {
 
     distributionTargets.forEach((target) => {
       const edge = edges.find(
-        (e: any) => e.target === target && e.sourceHandle === 'video' && e.source === 'lip-sync'
+        (edge) =>
+          edge.target === target && edge.sourceHandle === 'video' && edge.source === 'lip-sync'
       );
       expect(edge).toBeDefined();
     });
@@ -139,22 +156,24 @@ describe('UGC Factory Workflow v3', () => {
   });
 
   it('should have webhook notification connected to social media outputs', () => {
-    const webhookEdge = workflow.edges.find((e: any) => e.target === 'webhook-notify');
+    const webhookEdge = workflow.edges.find((edge) => edge.target === 'webhook-notify');
     expect(webhookEdge).toBeDefined();
-    expect(webhookEdge.source).toBe('telegram-post');
-    expect(webhookEdge.sourceHandle).toBe('url');
+    if (webhookEdge) {
+      expect(webhookEdge.source).toBe('telegram-post');
+      expect(webhookEdge.sourceHandle).toBe('url');
+    }
   });
 
   it('should have social media nodes configured with platform-specific settings', () => {
-    const tiktokNode = workflow.nodes.find((n: any) => n.type === 'tiktokPost');
-    expect(tiktokNode.data.hashtags).toContain('#viral');
-    expect(tiktokNode.data.hashtags).toContain('#ai');
+    const tiktokData = getNodeData<TikTokPostNodeData>(workflow.nodes, 'tiktokPost');
+    expect(tiktokData.hashtags).toContain('#viral');
+    expect(tiktokData.hashtags).toContain('#ai');
 
-    const youtubeNode = workflow.nodes.find((n: any) => n.type === 'youtubePost');
-    expect(youtubeNode.data.visibility).toBe('public');
-    expect(youtubeNode.data.tags).toContain('AI');
+    const youtubeData = getNodeData<YouTubePostNodeData>(workflow.nodes, 'youtubePost');
+    expect(youtubeData.visibility).toBe('public');
+    expect(youtubeData.tags).toContain('AI');
 
-    const instagramNode = workflow.nodes.find((n: any) => n.type === 'instagramPost');
-    expect(instagramNode.data.postType).toBe('reels');
+    const instagramData = getNodeData<InstagramPostNodeData>(workflow.nodes, 'instagramPost');
+    expect(instagramData.postType).toBe('reels');
   });
 });

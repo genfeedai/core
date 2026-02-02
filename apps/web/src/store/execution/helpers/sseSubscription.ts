@@ -19,6 +19,87 @@ const statusMap: Record<string, (typeof NODE_STATUS)[keyof typeof NODE_STATUS]> 
   error: NODE_STATUS.error,
 };
 
+function applyJobUpdates(
+  jobs: ExecutionData['jobs'] | undefined,
+  workflowStore: ReturnType<typeof useWorkflowStore.getState>,
+  debugMode: boolean | undefined,
+  set: StoreApi<ExecutionStore>['setState'],
+  filterNodeId?: string
+): void {
+  if (!jobs || jobs.length === 0) return;
+
+  set((state) => {
+    let didChange = false;
+    const newJobs = new Map(state.jobs);
+    const newDebugPayloads: DebugPayload[] = [];
+
+    for (const job of jobs) {
+      if (filterNodeId && job.nodeId !== filterNodeId) continue;
+
+      const status = job.status as Job['status'];
+      const output = job.output ?? null;
+      const error = job.error ?? null;
+      const existing = state.jobs.get(job.predictionId);
+
+      if (!existing) {
+        didChange = true;
+        newJobs.set(job.predictionId, {
+          nodeId: job.nodeId,
+          predictionId: job.predictionId,
+          status,
+          progress: 0,
+          output,
+          error,
+          createdAt: new Date().toISOString(),
+        });
+      } else if (
+        existing.status !== status ||
+        existing.output !== output ||
+        existing.error !== error
+      ) {
+        didChange = true;
+        newJobs.set(job.predictionId, {
+          ...existing,
+          status,
+          output,
+          error,
+        });
+      }
+
+      if (job.result?.debugPayload) {
+        const node = workflowStore.getNodeById(job.nodeId);
+        newDebugPayloads.push({
+          nodeId: job.nodeId,
+          nodeName: String(node?.data?.label || node?.data?.name || job.nodeId),
+          nodeType: node?.type || 'unknown',
+          model: job.result.debugPayload.model,
+          input: job.result.debugPayload.input,
+          timestamp: job.result.debugPayload.timestamp,
+        });
+      }
+    }
+
+    if (!didChange && newDebugPayloads.length === 0) return state;
+
+    if (newDebugPayloads.length > 0 && debugMode) {
+      useUIStore.getState().setShowDebugPanel(true);
+    }
+
+    return {
+      jobs: didChange ? newJobs : state.jobs,
+      debugPayloads:
+        newDebugPayloads.length > 0
+          ? [
+              ...state.debugPayloads.filter(
+                (existing) => !newDebugPayloads.some((newP) => newP.nodeId === existing.nodeId)
+              ),
+              ...newDebugPayloads,
+            ]
+          : state.debugPayloads,
+    };
+  });
+}
+
 /**
  * Fetch the final execution state via REST and reconcile all node statuses.
  * This recovers from missed SSE deltas (e.g. dropped connections, race conditions).
@@ -103,54 +184,7 @@ export function createExecutionSubscription(
           }
         }
 
-        // Update job statuses and extract debug payloads
-        if (data.jobs) {
-          set((state) => {
-            const newJobs = new Map(state.jobs);
-            const newDebugPayloads: DebugPayload[] = [];
-
-            for (const job of data.jobs || []) {
-              newJobs.set(job.predictionId, {
-                nodeId: job.nodeId,
-                predictionId: job.predictionId,
-                status: job.status as Job['status'],
-                progress: 0,
-                output: job.output ?? null,
-                error: job.error ?? null,
-                createdAt: new Date().toISOString(),
-              });
-
-              // Extract debug payload if present in job result
-              if (job.result?.debugPayload) {
-                const node = workflowStore.getNodeById(job.nodeId);
-                newDebugPayloads.push({
-                  nodeId: job.nodeId,
-                  nodeName: String(node?.data?.label || node?.data?.name || job.nodeId),
-                  nodeType: node?.type || 'unknown',
-                  model: job.result.debugPayload.model,
-                  input: job.result.debugPayload.input,
-                  timestamp: job.result.debugPayload.timestamp,
-                });
-              }
-            }
-
-            // Open debug panel if we have new debug payloads
-            if (newDebugPayloads.length > 0 && data.debugMode) {
-              useUIStore.getState().setShowDebugPanel(true);
-            }
-
-            return {
-              jobs: newJobs,
-              // Merge new debug payloads with existing ones (avoiding duplicates by nodeId)
-              debugPayloads: [
-                ...state.debugPayloads.filter(
-                  (existing) => !newDebugPayloads.some((newP) => newP.nodeId === existing.nodeId)
-                ),
-                ...newDebugPayloads,
-              ],
-            };
-          });
-        }
+        applyJobUpdates(data.jobs, workflowStore, data.debugMode, set);
 
         // Check if execution is complete (support multiple status formats)
         const isComplete = ['completed', 'failed', 'cancelled', 'error'].includes(data.status);
@@ -243,51 +277,7 @@ export function createNodeExecutionSubscription(
           }
         }
 
-        // Update job statuses and extract debug payloads
-        if (data.jobs) {
-          set((state) => {
-            const newJobs = new Map(state.jobs);
-            const newDebugPayloads: DebugPayload[] = [];
-
-            for (const job of data.jobs || []) {
-              newJobs.set(job.predictionId, {
-                nodeId: job.nodeId,
-                predictionId: job.predictionId,
-                status: job.status as Job['status'],
-                progress: 0,
-                output: job.output ?? null,
-                error: job.error ?? null,
-                createdAt: new Date().toISOString(),
-              });
-
-              if (job.result?.debugPayload) {
-                const node = workflowStore.getNodeById(job.nodeId);
-                newDebugPayloads.push({
-                  nodeId: job.nodeId,
-                  nodeName: String(node?.data?.label || node?.data?.name || job.nodeId),
-                  nodeType: node?.type || 'unknown',
-                  model: job.result.debugPayload.model,
-                  input: job.result.debugPayload.input,
-                  timestamp: job.result.debugPayload.timestamp,
-                });
-              }
-            }
-
-            if (newDebugPayloads.length > 0 && data.debugMode) {
-              useUIStore.getState().setShowDebugPanel(true);
-            }
-
-            return {
-              jobs: newJobs,
-              debugPayloads: [
-                ...state.debugPayloads.filter(
-                  (existing) => !newDebugPayloads.some((newP) => newP.nodeId === existing.nodeId)
-                ),
-                ...newDebugPayloads,
-              ],
-            };
-          });
-        }
+        applyJobUpdates(data.jobs, workflowStore, data.debugMode, set, nodeId);
 
         const isComplete = ['completed', 'failed', 'cancelled', 'error'].includes(data.status);
         const hasFailedNode = (data.nodeResults || []).some((r) => r.status === 'error');

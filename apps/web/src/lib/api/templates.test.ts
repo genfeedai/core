@@ -39,7 +39,7 @@ describe('templatesApi', () => {
   describe('getAll', () => {
     it('should get all templates', async () => {
       const { apiClient } = await import('./client');
-      (apiClient.get as any).mockResolvedValueOnce([mockTemplate]);
+      vi.mocked(apiClient.get).mockResolvedValueOnce([mockTemplate]);
 
       const result = await templatesApi.getAll();
 
@@ -50,7 +50,7 @@ describe('templatesApi', () => {
 
     it('should return empty array when no templates', async () => {
       const { apiClient } = await import('./client');
-      (apiClient.get as any).mockResolvedValueOnce([]);
+      vi.mocked(apiClient.get).mockResolvedValueOnce([]);
 
       const result = await templatesApi.getAll();
       expect(result).toEqual([]);
@@ -60,7 +60,7 @@ describe('templatesApi', () => {
   describe('getByCategory', () => {
     it('should get templates by category', async () => {
       const { apiClient } = await import('./client');
-      (apiClient.get as any).mockResolvedValueOnce([mockTemplate]);
+      vi.mocked(apiClient.get).mockResolvedValueOnce([mockTemplate]);
 
       const result = await templatesApi.getByCategory(TemplateCategory.IMAGE);
 
@@ -74,7 +74,7 @@ describe('templatesApi', () => {
     it('should filter video templates', async () => {
       const { apiClient } = await import('./client');
       const videoTemplate = { ...mockTemplate, category: TemplateCategory.VIDEO };
-      (apiClient.get as any).mockResolvedValueOnce([videoTemplate]);
+      vi.mocked(apiClient.get).mockResolvedValueOnce([videoTemplate]);
 
       const result = await templatesApi.getByCategory('video');
       expect(result[0].category).toBe('video');
@@ -84,7 +84,7 @@ describe('templatesApi', () => {
   describe('getById', () => {
     it('should get a single template by ID', async () => {
       const { apiClient } = await import('./client');
-      (apiClient.get as any).mockResolvedValueOnce(mockTemplate);
+      vi.mocked(apiClient.get).mockResolvedValueOnce(mockTemplate);
 
       const result = await templatesApi.getById('template-1');
 
@@ -97,7 +97,7 @@ describe('templatesApi', () => {
   describe('create', () => {
     it('should create a new template', async () => {
       const { apiClient } = await import('./client');
-      (apiClient.post as any).mockResolvedValueOnce(mockTemplate);
+      vi.mocked(apiClient.post).mockResolvedValueOnce(mockTemplate);
 
       const createData = {
         name: 'New Template',
@@ -115,7 +115,7 @@ describe('templatesApi', () => {
     it('should create template with edgeStyle', async () => {
       const { apiClient } = await import('./client');
       const templateWithStyle = { ...mockTemplate, edgeStyle: 'smoothstep' };
-      (apiClient.post as any).mockResolvedValueOnce(templateWithStyle);
+      vi.mocked(apiClient.post).mockResolvedValueOnce(templateWithStyle);
 
       const createData = {
         name: 'Complex Template',
@@ -134,7 +134,7 @@ describe('templatesApi', () => {
   describe('delete', () => {
     it('should delete a template', async () => {
       const { apiClient } = await import('./client');
-      (apiClient.delete as any).mockResolvedValueOnce(undefined);
+      vi.mocked(apiClient.delete).mockResolvedValueOnce(undefined);
 
       await templatesApi.delete('template-1');
 
@@ -145,7 +145,7 @@ describe('templatesApi', () => {
   describe('seed', () => {
     it('should seed system templates', async () => {
       const { apiClient } = await import('./client');
-      (apiClient.post as any).mockResolvedValueOnce({
+      vi.mocked(apiClient.post).mockResolvedValueOnce({
         message: 'System templates seeded successfully',
       });
 
@@ -161,7 +161,7 @@ describe('templatesApi', () => {
   describe('abort signal handling', () => {
     it('should pass abort signal to all methods', async () => {
       const { apiClient } = await import('./client');
-      (apiClient.get as any).mockResolvedValueOnce([]);
+      vi.mocked(apiClient.get).mockResolvedValueOnce([]);
 
       const controller = new AbortController();
       await templatesApi.getAll(controller.signal);
