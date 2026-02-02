@@ -61,7 +61,8 @@ core/
 │   ├── types/               # TypeScript definitions
 │   │   └── src/
 │   │       └── nodes.ts     # 36 node type definitions
-│   └── sdk/                 # Client SDK
+│   ├── prompts/             # Prompt templates
+│   └── workflows/            # Workflow definitions
 └── turbo.json
 ```
 
@@ -110,6 +111,8 @@ core/
 │  │  React   │───▶│  Zustand │───▶│ REST API │                  │
 │  │  Flow    │    │  Store   │    │  Client  │                  │
 │  └──────────┘    └──────────┘    └────┬─────┘                  │
+│                                                                  │
+│  Trigger: User clicks "Run" in the web UI (only trigger method) │
 └────────────────────────────────────────┼────────────────────────┘
                                          │
                                          ▼
@@ -190,7 +193,7 @@ Incompatible connections are rejected at the editor level.
 - **Input:** ImageInput, TextInput, VideoInput, AudioInput
 - **Generation:** TextToImage, ImageToImage, TextToVideo, TextToAudio
 - **Processing:** ImageResize, VideoTrim, AudioMix
-- **Output:** FileOutput, APIOutput, WebhookOutput
+- **Output:** FileOutput, Preview
 
 ---
 

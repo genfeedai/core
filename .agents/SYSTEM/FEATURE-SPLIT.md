@@ -1,6 +1,6 @@
 # Core OSS vs Cloud SaaS Feature Split
 
-**Last Updated:** 2026-01-20
+**Last Updated:** 2026-02-02
 
 This document defines which features belong in Core OSS vs Cloud SaaS. AI agents should reference this before implementing features.
 
@@ -48,8 +48,6 @@ This document defines which features belong in Core OSS vs Cloud SaaS. AI agents
 - Animation
 
 ### Execution & Infrastructure
-- Webhook triggers
-- Scheduled execution
 - Cost tracking & analytics
 - BullMQ job queue
 - Real-time SSE streaming
@@ -59,7 +57,6 @@ This document defines which features belong in Core OSS vs Cloud SaaS. AI agents
 ### Extensibility
 - **Ollama integration** (local LLMs)
 - **Custom node SDK** (community nodes)
-- CLI for workflow management
 
 ### Planned Additions
 - **Kling Motion Control** (advanced video animation)
@@ -83,6 +80,9 @@ These features require multi-tenant infrastructure and are monetization drivers:
 | SSO/SAML | Enterprise authentication |
 | Audit logs | Compliance feature |
 | White-labeling | Enterprise customization |
+| Telegram Bot | Managed bot for workflow execution via chat |
+| Webhook triggers | Public webhook endpoints for external integrations |
+| Scheduled execution | Cron-based workflow scheduling |
 
 ---
 
@@ -111,3 +111,5 @@ These features require multi-tenant infrastructure and are monetization drivers:
 3. **No billing/quota code** - Core is free/unlimited
 4. **No cloud storage integration** - Use local filesystem
 5. **Self-contained is key** - All features must work offline
+6. **No bot/trigger integrations** - Core is manually triggered from the UI only (no webhooks, no bots, no scheduled execution)
+7. **No CLI or SDK packages** - Removed from core scope (CLI and SDK have been deleted)

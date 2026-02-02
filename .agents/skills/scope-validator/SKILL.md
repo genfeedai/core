@@ -85,6 +85,16 @@ Helps users and contributors understand whether a feature belongs in:
 | Tweet Input | `tweetInput` | Twitter API dependency, feed feature |
 | Tweet Remix | `tweetRemix` | Depends on tweet input, social-focused |
 
+### Cloud-Only Features (EXCLUDED from OSS)
+
+| Feature | Reason |
+|---------|--------|
+| Telegram Bot | Managed bot requiring public infrastructure |
+| Webhook triggers | Requires publicly reachable endpoints |
+| Scheduled execution | Cron-based scheduling is Cloud infrastructure |
+| CLI | Removed from core scope |
+| SDK | Removed from core scope |
+
 ### Cloud-Only Providers (EXCLUDED from OSS)
 
 | Provider | Reason |
@@ -122,6 +132,13 @@ THEN FAIL: "Template uses Cloud-only nodes. Remove: {cloud_nodes}"
 ```
 IF request mentions [publish, social, twitter, rss, feed, youtube upload]
 THEN WARN: "Social publishing and feed features are Cloud-only."
+```
+
+### Rule 5: Bot/Trigger Check
+
+```
+IF request mentions [telegram, bot, webhook trigger, cron, scheduled, external trigger]
+THEN FAIL: "Bot and trigger integrations are Cloud-only. Core workflows are triggered from the UI only."
 ```
 
 ## Validation Examples
@@ -202,6 +219,14 @@ These achieve similar results within the OSS scope.
 
 **Response:** Tweet remix is Cloud-only. In OSS, use the `llm` node with a custom prompt to rewrite text in different tones.
 
+### "Can I trigger workflows from Telegram?"
+
+**Response:** Telegram bot integration is Cloud-only. In OSS, workflows are triggered manually from the web UI. Cloud provides a managed Telegram bot at `cloud/apps/server/api/src/services/telegram-bot/`.
+
+### "Can I set up webhook triggers?"
+
+**Response:** Webhook triggers are Cloud-only. Core runs on localhost where external services can't reach it without tunnels. In OSS, trigger workflows from the web UI.
+
 ## Integration
 
 When validating:
@@ -223,8 +248,14 @@ OSS Node Types (26):
               topazVideoUpscale, imageGridSplit, annotation, subtitle
   Output:     output, preview
 
-Cloud-Only (4):
+Cloud-Only Nodes (4):
   socialPublish, rssInput, tweetInput, tweetRemix
+
+Cloud-Only Features:
+  telegramBot, webhookTriggers, scheduledExecution, cli, sdk
+
+Triggers:
+  UI only (no webhooks, no bots, no scheduled)
 
 OSS Provider:
   replicate (only)

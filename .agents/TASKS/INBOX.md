@@ -21,21 +21,17 @@ Process into proper task files or complete directly.
 
 <!-- Add quick tasks below -->
 
-- [ ] **Telegram Bot for Workflow Execution** @high
-  - New app: `apps/telegram-bot/` — Telegram bot that lets users trigger GenFeed workflows
-  - Bot shows available workflows as inline buttons (Single Image, Image Series, Image-to-Video, Full Pipeline, Single Video)
-  - User selects workflow → bot asks for required inputs (images via photo upload, prompts via text)
-  - Bot runs the workflow via `@genfeedai/core` SDK and returns results
-  - Support: photo attachments as workflow image inputs, text prompts, workflow status updates
-  - Tech: `grammy` or `telegraf`, `@genfeedai/sdk`, runs as standalone service
-  - PRD: [telegram-bot-workflow.md](../PRDS/telegram-bot-workflow.md)
+- [x] ~~**Telegram Bot for Workflow Execution**~~ → **Moved to Cloud SaaS** (2026-02-02)
+  - Bot integrations are Cloud-only. Core is UI-triggered only.
+  - Cloud location: `cloud/apps/server/api/src/services/telegram-bot/`
+  - See: `.agents/SYSTEM/FEATURE-SPLIT.md` for scope decision
 
 - [ ] **UGC Factory Integration** @high
   - Integrate UGC Factory into the core workflow system
   - The implementation exists (services, processors, controllers, DTOs) per UGC_FACTORY_README.md
   - Needs: wiring into the monorepo build, API routes, web UI for batch creation/monitoring
   - Connect TTS (ElevenLabs), motion video (Kling AI), lip sync pipeline
-  - Add UGC Factory as a Telegram bot workflow option
+  - ~~Add UGC Factory as a Telegram bot workflow option~~ (moved to Cloud)
   - PRD: [ugc-factory-integration.md](../PRDS/ugc-factory-integration.md)
 
 - [ ] **Replace direct LLM calls with provider abstraction for AI workflow generator** @medium

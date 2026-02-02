@@ -121,6 +121,22 @@ export type NodeCategory =
 
 export type NodeStatus = 'idle' | 'pending' | 'processing' | 'complete' | 'error';
 
+export enum NodeStatusEnum {
+  IDLE = 'idle',
+  PENDING = 'pending',
+  PROCESSING = 'processing',
+  COMPLETE = 'complete',
+  ERROR = 'error',
+}
+
+export enum HandleTypeEnum {
+  IMAGE = 'image',
+  TEXT = 'text',
+  VIDEO = 'video',
+  NUMBER = 'number',
+  AUDIO = 'audio',
+}
+
 // NodeStatus constants to avoid 'as NodeStatus' assertions
 export const NODE_STATUS: Record<NodeStatus, NodeStatus> = {
   idle: 'idle',
