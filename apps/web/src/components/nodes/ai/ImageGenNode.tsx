@@ -2,13 +2,15 @@
 
 import type { ImageGenNodeData, ImageModel } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { AlertCircle, Download, Expand, ImageIcon, Loader2, Play } from 'lucide-react';
+import { AlertCircle, ChevronDown, Download, Expand, ImageIcon, Play, Square } from 'lucide-react';
 import Image from 'next/image';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { ModelBrowserModal } from '@/components/models/ModelBrowserModal';
 import { BaseNode } from '@/components/nodes/BaseNode';
+import { ProcessingOverlay } from '@/components/nodes/ProcessingOverlay';
 import { SchemaInputs } from '@/components/nodes/SchemaInputs';
 import { Button } from '@/components/ui/button';
+import { useAIGenNode } from '@/hooks/useAIGenNode';
 import { useAutoLoadModelSchema } from '@/hooks/useAutoLoadModelSchema';
 import { useCanGenerate } from '@/hooks/useCanGenerate';
 import { useModelSelection } from '@/hooks/useModelSelection';
@@ -19,16 +21,13 @@ import {
   IMAGE_MODEL_MAP,
   IMAGE_MODELS,
 } from '@/lib/models/registry';
-import { extractEnumValues, supportsImageInput } from '@/lib/utils/schemaUtils';
 import { useUIStore } from '@/store/uiStore';
-import { useWorkflowStore } from '@/store/workflowStore';
 
 function ImageGenNodeComponent(props: NodeProps) {
   const { id, type, data } = props;
   const nodeData = data as ImageGenNodeData;
-  const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const openNodeDetailModal = useUIStore((state) => state.openNodeDetailModal);
-  const { handleGenerate } = useNodeExecution(id);
+  const { handleGenerate, handleStop } = useNodeExecution(id);
   const { canGenerate } = useCanGenerate({
     nodeId: id,
     nodeType: type as 'imageGen',
@@ -78,48 +77,18 @@ function ImageGenNodeComponent(props: NodeProps) {
     onModelSelect: handleModelSelect,
   });
 
-  // Get schema properties from selected model
-  // Type assertion needed because inputSchema comes from API with unknown types
-  const schemaProperties = useMemo(() => {
-    const schema = nodeData.selectedModel?.inputSchema as
-      | {
-          properties?: Record<string, unknown>;
-        }
-      | undefined;
-    return schema?.properties as Parameters<typeof SchemaInputs>[0]['schema'];
-  }, [nodeData.selectedModel?.inputSchema]);
-
-  // Extract enum values from component schemas for SchemaInputs
-  const enumValues = useMemo(
-    () =>
-      extractEnumValues(
-        nodeData.selectedModel?.componentSchemas as
-          | Record<string, { enum?: unknown[]; type?: string }>
-          | undefined
-      ),
-    [nodeData.selectedModel?.componentSchemas]
-  );
-
-  // Check if model supports image input
-  const modelSupportsImageInput = useMemo(
-    () => supportsImageInput(nodeData.selectedModel?.inputSchema),
-    [nodeData.selectedModel?.inputSchema]
-  );
-
-  const handleSchemaParamChange = useCallback(
-    (key: string, value: unknown) => {
-      // Get fresh state to avoid stale closure issues with rapid changes
-      const currentNode = useWorkflowStore.getState().getNodeById(id);
-      const currentData = currentNode?.data as ImageGenNodeData | undefined;
-      updateNodeData<ImageGenNodeData>(id, {
-        schemaParams: {
-          ...(currentData?.schemaParams ?? {}),
-          [key]: value,
-        },
-      });
-    },
-    [id, updateNodeData]
-  );
+  // Shared schema/enum/image-support logic
+  const {
+    schemaProperties,
+    enumValues,
+    modelSupportsImageInput,
+    handleSchemaParamChange,
+    componentSchemas,
+  } = useAIGenNode<ImageGenNodeData>({
+    nodeId: id,
+    selectedModel: nodeData.selectedModel,
+    schemaParams: nodeData.schemaParams,
+  });
 
   const handleExpand = useCallback(() => {
     openNodeDetailModal(id, 'preview');
@@ -130,40 +99,55 @@ function ImageGenNodeComponent(props: NodeProps) {
     IMAGE_MODELS.find((m) => m.value === nodeData.model)?.label ||
     nodeData.model;
 
+  const titleElement = useMemo(
+    () => (
+      <button
+        className="flex flex-1 items-center gap-1 text-sm font-medium text-left text-foreground hover:text-foreground/80 cursor-pointer"
+        onClick={() => setIsModelBrowserOpen(true)}
+        title="Browse models"
+      >
+        <span className="truncate">{modelDisplayName}</span>
+        <ChevronDown className="h-3 w-3 shrink-0" />
+      </button>
+    ),
+    [modelDisplayName]
+  );
+
   const headerActions = useMemo(
     () => (
       <>
-        <Button variant="secondary" size="sm" onClick={() => setIsModelBrowserOpen(true)}>
-          Browse
-        </Button>
         {nodeData.outputImage && (
           <Button variant="ghost" size="icon-sm" onClick={handleExpand} title="Expand preview">
             <Expand className="h-3 w-3" />
           </Button>
         )}
-        <Button
-          variant={canGenerate ? 'default' : 'secondary'}
-          size="sm"
-          onClick={handleGenerate}
-          disabled={!canGenerate || nodeData.status === 'processing'}
-        >
-          {nodeData.status === 'processing' ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
+        {nodeData.status === 'processing' ? (
+          <Button variant="destructive" size="sm" onClick={handleStop}>
+            <Square className="h-4 w-4 fill-current" />
+            Generating
+          </Button>
+        ) : (
+          <Button
+            variant={canGenerate ? 'default' : 'secondary'}
+            size="sm"
+            onClick={handleGenerate}
+            disabled={!canGenerate}
+          >
             <Play className="h-4 w-4 fill-current" />
-          )}
-          {nodeData.status === 'processing' ? 'Generating' : 'Generate'}
-        </Button>
+            Generate
+          </Button>
+        )}
       </>
     ),
-    [nodeData.outputImage, nodeData.status, handleGenerate, handleExpand, canGenerate]
+    [nodeData.outputImage, nodeData.status, handleGenerate, handleStop, handleExpand, canGenerate]
   );
 
   return (
     <BaseNode
       {...props}
-      title={modelDisplayName}
+      titleElement={titleElement}
       headerActions={headerActions}
+      hideStatusIndicator
       disabledInputs={modelSupportsImageInput ? undefined : ['images']}
     >
       <div className="flex-1 flex flex-col gap-3 min-h-0">
@@ -174,11 +158,7 @@ function ImageGenNodeComponent(props: NodeProps) {
             values={nodeData.schemaParams ?? {}}
             onChange={handleSchemaParamChange}
             enumValues={enumValues}
-            componentSchemas={
-              nodeData.selectedModel?.componentSchemas as
-                | Record<string, { enum?: unknown[]; type?: string }>
-                | undefined
-            }
+            componentSchemas={componentSchemas}
           />
         )}
 
@@ -253,19 +233,12 @@ function ImageGenNodeComponent(props: NodeProps) {
                   onClick={() => setSelectedPreview(null)}
                   className="absolute top-1 right-1 h-5 w-5 bg-black/50 hover:bg-black/70 text-white"
                 >
-                  ×
+                  x
                 </Button>
               </div>
             )}
             {/* Processing overlay */}
-            {nodeData.status === 'processing' && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-md">
-                <div className="flex flex-col items-center gap-2">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <span className="text-xs text-white/80">Generating...</span>
-                </div>
-              </div>
-            )}
+            {nodeData.status === 'processing' && <ProcessingOverlay />}
           </div>
         ) : nodeData.outputImage ? (
           <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-black/20">
@@ -278,26 +251,12 @@ function ImageGenNodeComponent(props: NodeProps) {
               unoptimized
             />
             {/* Processing overlay spinner */}
-            {nodeData.status === 'processing' && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                <div className="flex flex-col items-center gap-2">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <span className="text-xs text-white/80">Generating...</span>
-                </div>
-              </div>
-            )}
+            {nodeData.status === 'processing' && <ProcessingOverlay />}
           </div>
         ) : (
           <div className="relative flex aspect-[4/3] w-full flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border/50 bg-secondary/20">
             <ImageIcon className="h-6 w-6 text-muted-foreground/50" />
-            {nodeData.status === 'processing' && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-md">
-                <div className="flex flex-col items-center gap-2">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <span className="text-xs text-white/80">Generating...</span>
-                </div>
-              </div>
-            )}
+            {nodeData.status === 'processing' && <ProcessingOverlay />}
           </div>
         )}
 

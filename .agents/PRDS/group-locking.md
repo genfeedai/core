@@ -1,6 +1,6 @@
 # PRD: Group Locking - Skip Node Groups During Execution
 
-**Status:** Doing
+**Status:** Buggy — implemented but has reported issues, needs investigation
 **Priority:** Medium
 **Complexity:** Low-Medium
 

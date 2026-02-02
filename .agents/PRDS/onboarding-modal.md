@@ -1,6 +1,6 @@
 # PRD: Onboarding Modal & Template Gallery
 
-**Status:** Planning
+**Status:** Partial (WelcomeModal exists, template gallery wizard not implemented)
 **Priority:** High
 **Complexity:** Medium
 **Created:** 2026-01-15

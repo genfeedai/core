@@ -39,6 +39,10 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
   protected readonly logger = new Logger(ProcessingProcessor.name);
   protected readonly queueName = QUEUE_NAMES.PROCESSING;
 
+  protected get filesService(): FilesService {
+    return this._filesService;
+  }
+
   constructor(
     @Inject(forwardRef(() => 'QueueManagerService'))
     protected readonly queueManager: QueueManagerService,
@@ -53,7 +57,7 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
     @Inject(forwardRef(() => 'FFmpegService'))
     private readonly ffmpegService: FFmpegService,
     @Inject(forwardRef(() => 'FilesService'))
-    private readonly filesService: FilesService,
+    private readonly _filesService: FilesService,
     @Inject(forwardRef(() => 'DistributionNodeRegistry'))
     private readonly distributionNodeRegistry: DistributionNodeRegistry
   ) {
@@ -106,15 +110,7 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
     this.logger.log(`Processing ${nodeType} job: ${job.id} for node ${nodeId}`);
 
     try {
-      // Update job status
-      await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.ACTIVE);
-
-      // Update node status in execution
-      await this.executionsService.updateNodeResult(executionId, nodeId, 'processing');
-
-      // Update progress
-      await job.updateProgress({ percent: 10, message: `Starting ${nodeType}` });
-      await this.queueManager.addJobLog(job.id as string, `Starting ${nodeType}`);
+      await this.startJob(job, `Starting ${nodeType}`);
 
       // Check for existing prediction (retry scenario) - only for Replicate-based operations
       const replicateNodeTypes: string[] = [
@@ -215,20 +211,8 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
 
         // Update execution node result
         if (result.success) {
-          // Auto-save output to local storage for Replicate-based operations
-          let localOutput: Record<string, unknown> | undefined;
-
-          // Handle all output formats (matching video.processor.ts pattern):
-          // 1. output is a string (URL directly)
-          // 2. output is an array (first element)
-          // 3. output.video is a string
-          // 4. output.image is a string
-          // 5. output.output is a string
-
-          let outputUrl: string | undefined;
-          let outputType: 'image' | 'video' = 'video'; // Default to video for lipSync
-
           // Determine output type based on node type
+          let outputType: 'image' | 'video' = 'video';
           if (
             nodeType === ReframeNodeType.LUMA_REFRAME_IMAGE ||
             nodeType === UpscaleNodeType.TOPAZ_IMAGE_UPSCALE
@@ -243,47 +227,12 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
             outputType = nodeData.inputType === 'video' ? 'video' : 'image';
           }
 
-          // Extract URL from all possible formats
-          if (typeof result.output === 'string') {
-            outputUrl = result.output;
-          } else if (Array.isArray(result.output) && result.output.length > 0) {
-            outputUrl = result.output[0] as string;
-          } else if (result.output && typeof result.output === 'object') {
-            const outputObj = result.output as Record<string, unknown>;
-            outputUrl = (outputObj.video || outputObj.image || outputObj.output) as
-              | string
-              | undefined;
-            // Override outputType if explicitly present in the response
-            if (outputObj.image) outputType = 'image';
-            if (outputObj.video) outputType = 'video';
-          }
-
-          if (outputUrl && typeof outputUrl === 'string') {
-            try {
-              const saved = await this.filesService.downloadAndSaveOutput(
-                job.data.workflowId,
-                nodeId,
-                outputUrl
-              );
-              localOutput = { [outputType]: saved.url, localPath: saved.path };
-              this.logger.log(`Saved ${outputType} output to ${saved.path}`);
-            } catch (saveError) {
-              // Log as ERROR - this is a real problem that causes files to expire
-              const errorMsg = (saveError as Error).message;
-              this.logger.error(
-                `CRITICAL: Failed to save output locally: ${errorMsg}. ` +
-                  `URL: ${outputUrl.substring(0, 100)}...`
-              );
-              // Continue with remote URL if save fails, but track the error
-              localOutput = { [outputType]: outputUrl, saveError: errorMsg };
-            }
-          } else if (result.output) {
-            // Fallback for unrecognized formats
-            localOutput =
-              typeof result.output === 'object'
-                ? (result.output as Record<string, unknown>)
-                : { output: result.output };
-          }
+          const localOutput = await this.saveAndNormalizeOutput(
+            result.output,
+            job.data.workflowId,
+            nodeId,
+            outputType
+          );
 
           await this.executionsService.updateNodeResult(
             executionId,
@@ -301,15 +250,11 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
           );
         }
 
-        // Update job status
-        await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.COMPLETED, {
-          result: result as unknown as Record<string, unknown>,
-        });
-
-        await this.queueManager.addJobLog(job.id as string, `${nodeType} completed`);
-
-        // Continue workflow execution to next node
-        await this.queueManager.continueExecution(executionId, job.data.workflowId);
+        await this.completeJob(
+          job,
+          result as unknown as Record<string, unknown>,
+          `${nodeType} completed`
+        );
 
         return result;
       }
@@ -587,14 +532,7 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
     // Extract platform-specific config from nodeData
     const platformConfig = nodeData as Record<string, unknown>;
 
-    await job.updateProgress({
-      percent: 50,
-      message: `Delivering to ${distributionNode.platform}`,
-    });
-    await this.queueManager.addJobLog(
-      job.id as string,
-      `Delivering to ${distributionNode.platform}`
-    );
+    await this.updateProgressWithLog(job, 50, `Delivering to ${distributionNode.platform}`);
 
     const deliveryResult: DeliveryResult = await distributionNode.node.deliver(
       video,

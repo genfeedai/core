@@ -24,6 +24,10 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
   protected readonly logger = new Logger(VideoProcessor.name);
   protected readonly queueName = QUEUE_NAMES.VIDEO_GENERATION;
 
+  protected get filesService(): FilesService {
+    return this._filesService;
+  }
+
   constructor(
     @Inject(forwardRef(() => 'QueueManagerService'))
     protected readonly queueManager: QueueManagerService,
@@ -34,7 +38,7 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
     @Inject(forwardRef(() => 'ReplicatePollerService'))
     private readonly replicatePollerService: ReplicatePollerService,
     @Inject(forwardRef(() => 'FilesService'))
-    private readonly filesService: FilesService
+    private readonly _filesService: FilesService
   ) {
     super();
   }
@@ -45,15 +49,7 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
     this.logger.log(`Processing ${nodeType} job: ${job.id} for node ${nodeId}`);
 
     try {
-      // Update job status
-      await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.ACTIVE);
-
-      // Update node status in execution
-      await this.executionsService.updateNodeResult(executionId, nodeId, 'processing');
-
-      // Update progress
-      await job.updateProgress({ percent: 5, message: `Starting ${nodeType} generation` });
-      await this.queueManager.addJobLog(job.id as string, `Starting ${nodeType} generation`);
+      await this.startJob(job, `Starting ${nodeType} generation`);
 
       // Check for existing prediction (retry scenario)
       const existingJob = await this.executionsService.findExistingJob(executionId, nodeId);
@@ -162,63 +158,13 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
 
       // Update execution node result
       if (result.success) {
-        // Auto-save output to local storage
-        let localOutput: Record<string, unknown> | undefined;
-
-        // Check if output is an object (not string or array)
-        const isOutputObject =
-          result.output && typeof result.output === 'object' && !Array.isArray(result.output);
-        const outputObj = isOutputObject ? (result.output as Record<string, unknown>) : undefined;
-
-        // Get the video URL - handle all formats:
-        // 1. output is a string (URL directly)
-        // 2. output is an array (most common from Replicate)
-        // 3. output.video is a string (some models return { video: "url" })
-        let videoUrl: string | undefined;
-        if (typeof result.output === 'string') {
-          videoUrl = result.output;
-        } else if (Array.isArray(result.output) && result.output.length > 0) {
-          videoUrl = result.output[0] as string;
-        } else if (outputObj?.video) {
-          videoUrl = outputObj.video as string;
-        }
-
-        if (videoUrl) {
-          try {
-            const saved = await this.filesService.downloadAndSaveOutput(
-              job.data.workflowId,
-              nodeId,
-              videoUrl,
-              predictionId
-            );
-            // Normalize output to always have { video: "url" } format
-            if (typeof result.output === 'string' || Array.isArray(result.output)) {
-              localOutput = { video: saved.url, localPath: saved.path };
-            } else {
-              localOutput = { ...outputObj, video: saved.url, localPath: saved.path };
-            }
-            this.logger.log(`Saved video output to ${saved.path}`);
-          } catch (saveError) {
-            // Log as ERROR - this is a real problem that causes videos to expire
-            const errorMsg = (saveError as Error).message;
-            this.logger.error(
-              `CRITICAL: Failed to save output locally after retries: ${errorMsg}. ` +
-                `Using Replicate URL which WILL EXPIRE. URL: ${videoUrl.substring(0, 100)}...`
-            );
-            // Continue with remote URL if save fails
-            // Normalize output format even on save failure
-            if (typeof result.output === 'string' || Array.isArray(result.output)) {
-              localOutput = { video: videoUrl, saveError: errorMsg };
-            } else {
-              localOutput = { ...outputObj, saveError: errorMsg };
-            }
-          }
-        } else if (isOutputObject) {
-          localOutput = outputObj;
-        } else if (result.output) {
-          // Wrap non-object output
-          localOutput = { output: result.output };
-        }
+        const localOutput = await this.saveAndNormalizeOutput(
+          result.output,
+          job.data.workflowId,
+          nodeId,
+          'video',
+          predictionId
+        );
 
         await this.executionsService.updateNodeResult(executionId, nodeId, 'complete', localOutput);
       } else {
@@ -231,15 +177,11 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
         );
       }
 
-      // Update job status
-      await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.COMPLETED, {
-        result: result as unknown as Record<string, unknown>,
-      });
-
-      await this.queueManager.addJobLog(job.id as string, 'Video generation completed');
-
-      // Continue workflow execution to next node
-      await this.queueManager.continueExecution(executionId, job.data.workflowId);
+      await this.completeJob(
+        job,
+        result as unknown as Record<string, unknown>,
+        'Video generation completed'
+      );
 
       return result;
     } catch (error) {

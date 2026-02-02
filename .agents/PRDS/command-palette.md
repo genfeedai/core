@@ -1,6 +1,6 @@
 # PRD: Command Palette
 
-**Status:** Planning
+**Status:** Done
 **Priority:** High
 **Complexity:** Medium
 **Created:** 2026-01-15

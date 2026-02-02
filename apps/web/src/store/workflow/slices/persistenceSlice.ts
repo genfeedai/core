@@ -87,6 +87,9 @@ export const createPersistenceSlice: StateCreator<WorkflowStore, [], [], Persist
         propagateOutputsDownstream(node.id);
       }
     }
+
+    // Propagation after load is idempotent; don't trigger save cycle
+    set({ isDirty: false });
   },
 
   clearWorkflow: () => {
@@ -412,6 +415,9 @@ export const createPersistenceSlice: StateCreator<WorkflowStore, [], [], Persist
           propagateOutputsDownstream(node.id);
         }
       }
+
+      // Propagation after load is idempotent; don't trigger save cycle
+      set({ isDirty: false });
     } catch (error) {
       set({ isLoading: false });
       throw error;

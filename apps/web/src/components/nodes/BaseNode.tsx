@@ -120,6 +120,8 @@ interface BaseNodeProps extends NodeProps {
   headerActions?: ReactNode;
   title?: string;
   titleElement?: ReactNode;
+  /** When true, hides the status indicator / stop button in the header (AI gen nodes manage their own) */
+  hideStatusIndicator?: boolean;
   /** Input handle IDs that should appear disabled (reduced opacity) when model doesn't support them */
   disabledInputs?: string[];
 }
@@ -136,6 +138,7 @@ function BaseNodeComponent({
   headerActions,
   title,
   titleElement,
+  hideStatusIndicator,
   width,
   height,
   disabledInputs,
@@ -350,19 +353,20 @@ function BaseNodeComponent({
                 {title ?? nodeData.label}
               </span>
             )}
-            {isProcessing ? (
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={handleStopNode}
-                className="text-destructive hover:bg-destructive/20 hover:text-destructive"
-                title={isRunning ? 'Stop execution' : 'Reset node'}
-              >
-                <Square className="h-3.5 w-3.5 fill-current" />
-              </Button>
-            ) : (
-              <StatusIndicator status={nodeData.status} />
-            )}
+            {!hideStatusIndicator &&
+              (isProcessing ? (
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={handleStopNode}
+                  className="text-destructive hover:bg-destructive/20 hover:text-destructive"
+                  title={isRunning ? 'Stop execution' : 'Reset node'}
+                >
+                  <Square className="h-3.5 w-3.5 fill-current" />
+                </Button>
+              ) : (
+                <StatusIndicator status={nodeData.status} />
+              ))}
             {/* Lock Toggle Button - before headerActions so icon buttons are on the left */}
             <Button
               variant="ghost"
@@ -465,6 +469,9 @@ function arePropsEqual(prev: BaseNodeProps, next: BaseNodeProps): boolean {
   // Check title/titleElement
   if (prev.title !== next.title) return false;
   if (prev.titleElement !== next.titleElement) return false;
+
+  // Check hideStatusIndicator
+  if (prev.hideStatusIndicator !== next.hideStatusIndicator) return false;
 
   // Check disabledInputs array (shallow compare)
   const prevDisabled = prev.disabledInputs ?? [];

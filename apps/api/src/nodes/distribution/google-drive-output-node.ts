@@ -25,7 +25,7 @@ export class GoogleDriveOutputNode extends BaseOutputNode implements OnModuleIni
   readonly enabled: boolean;
 
   private readonly credentialsPath: string;
-  private drive: any;
+  private drive: ReturnType<typeof google.drive> | null = null;
 
   constructor(
     private readonly configService: ConfigService,
@@ -184,7 +184,7 @@ export class GoogleDriveOutputNode extends BaseOutputNode implements OnModuleIni
    */
   private async findFolder(name: string, parentId: string): Promise<DriveFile | null> {
     try {
-      const response = await this.drive.files.list({
+      const response = await this.drive!.files.list({
         q: `name='${name}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
         fields: 'files(id, name)',
       });
@@ -200,7 +200,7 @@ export class GoogleDriveOutputNode extends BaseOutputNode implements OnModuleIni
    * Create new folder
    */
   private async createFolder(name: string, parentId: string): Promise<DriveFile> {
-    const response = await this.drive.files.create({
+    const response = await this.drive!.files.create({
       requestBody: {
         name,
         parents: [parentId],
@@ -230,7 +230,7 @@ export class GoogleDriveOutputNode extends BaseOutputNode implements OnModuleIni
     const formatPart = config.format ? `_${config.format}` : '';
     const filename = `${batchPart}${variationPart}${formatPart}_${timestamp}.${this.getFileExtension(video.url)}`;
 
-    const response = await this.drive.files.create({
+    const response = await this.drive!.files.create({
       requestBody: {
         name: filename,
         parents: [parentId],
@@ -288,7 +288,7 @@ export class GoogleDriveOutputNode extends BaseOutputNode implements OnModuleIni
     const formatPart = config.format ? `_${config.format}` : '';
     const metadataFilename = `${batchPart}${variationPart}${formatPart}_metadata.json`;
 
-    const response = await this.drive.files.create({
+    const response = await this.drive!.files.create({
       requestBody: {
         name: metadataFilename,
         parents: [parentId],
@@ -309,7 +309,7 @@ export class GoogleDriveOutputNode extends BaseOutputNode implements OnModuleIni
    */
   async getFolderUrl(folderId: string): Promise<string> {
     try {
-      const response = await this.drive.files.get({
+      const response = await this.drive!.files.get({
         fileId: folderId,
         fields: 'webViewLink',
       });
@@ -331,7 +331,7 @@ export class GoogleDriveOutputNode extends BaseOutputNode implements OnModuleIni
       }
 
       // Test by listing files (should return successfully even if empty)
-      await this.drive.files.list({
+      await this.drive!.files.list({
         pageSize: 1,
         fields: 'files(id, name)',
       });
@@ -346,9 +346,9 @@ export class GoogleDriveOutputNode extends BaseOutputNode implements OnModuleIni
   /**
    * Get storage usage info
    */
-  async getStorageInfo(): Promise<any> {
+  async getStorageInfo(): Promise<Record<string, unknown> | null> {
     try {
-      const response = await this.drive.about.get({
+      const response = await this.drive!.about.get({
         fields: 'storageQuota, user',
       });
 

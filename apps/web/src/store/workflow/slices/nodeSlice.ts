@@ -194,9 +194,14 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
     const { nodes, propagateOutputsDownstream } = get();
     const node = nodes.find((n) => n.id === nodeId);
 
+    // Execution-only fields that don't need persistence
+    const TRANSIENT_KEYS = new Set(['status', 'progress', 'error', 'jobId']);
+    const dataKeys = Object.keys(data as Record<string, unknown>);
+    const hasPersistedChange = dataKeys.some((key) => !TRANSIENT_KEYS.has(key));
+
     set((state) => ({
       nodes: state.nodes.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, ...data } } : n)),
-      isDirty: true,
+      ...(hasPersistedChange && { isDirty: true }),
     }));
 
     // Propagate outputs when:
@@ -320,18 +325,34 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
       }
     }
 
-    // Apply all updates in a single state change
+    // Apply all updates in a single state change, but only if data actually changed
     if (updates.size > 0) {
-      set((state) => ({
-        nodes: state.nodes.map((n) => {
-          const update = updates.get(n.id);
-          if (update) {
-            return { ...n, data: { ...n.data, ...update } };
+      let hasRealChange = false;
+      for (const [nodeId, update] of updates) {
+        const existingNode = nodes.find((n) => n.id === nodeId);
+        if (!existingNode) continue;
+        const existingData = existingNode.data as Record<string, unknown>;
+        for (const [key, value] of Object.entries(update)) {
+          if (existingData[key] !== value) {
+            hasRealChange = true;
+            break;
           }
-          return n;
-        }),
-        isDirty: true,
-      }));
+        }
+        if (hasRealChange) break;
+      }
+
+      if (hasRealChange) {
+        set((state) => ({
+          nodes: state.nodes.map((n) => {
+            const update = updates.get(n.id);
+            if (update) {
+              return { ...n, data: { ...n.data, ...update } };
+            }
+            return n;
+          }),
+          isDirty: true,
+        }));
+      }
     }
   },
 });

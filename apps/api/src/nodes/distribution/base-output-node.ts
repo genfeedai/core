@@ -1,5 +1,9 @@
 import { Logger } from '@nestjs/common';
 
+export interface PlatformConfig {
+  enabled: boolean;
+}
+
 export interface GeneratedVideo {
   url: string;
   buffer?: Buffer;
@@ -23,7 +27,7 @@ export interface DeliveryConfig {
 export interface DeliveryResult {
   platform: string;
   success: boolean;
-  results?: any[];
+  results?: Array<Record<string, unknown>>;
   error?: string;
   delivered_count?: number;
   total_targets?: number;
@@ -35,11 +39,119 @@ export abstract class BaseOutputNode {
   abstract readonly platform: string;
   abstract readonly enabled: boolean;
 
-  abstract deliver(
+  abstract deliver<TPlatformConfig extends PlatformConfig>(
     video: GeneratedVideo,
     config: DeliveryConfig,
-    platformConfig: any
+    platformConfig: TPlatformConfig
   ): Promise<DeliveryResult>;
+
+  /**
+   * Ensure video buffer is available, downloading if necessary
+   */
+  protected async ensureBuffer(video: GeneratedVideo): Promise<Buffer> {
+    if (video.buffer) return video.buffer;
+    video.buffer = await this.downloadVideo(video.url);
+    return video.buffer;
+  }
+
+  /**
+   * Template method that encapsulates the shared delivery loop pattern.
+   * Used by Discord, Telegram, and similar multi-target output nodes.
+   */
+  protected async deliverToTargets<TTarget>(
+    video: GeneratedVideo,
+    config: DeliveryConfig,
+    targets: TTarget[],
+    options: {
+      maxFileSizeMB: number;
+      emptyTargetsError: string;
+      sendToTarget: (
+        target: TTarget,
+        video: GeneratedVideo,
+        config: DeliveryConfig
+      ) => Promise<Record<string, unknown>>;
+      formatTargetResult: (
+        target: TTarget,
+        result: Record<string, unknown>
+      ) => Record<string, unknown>;
+      formatTargetError: (target: TTarget, error: Error) => Record<string, unknown>;
+    }
+  ): Promise<DeliveryResult> {
+    // Step 1: Check if platform is enabled
+    if (!this.enabled) {
+      return {
+        platform: this.platform,
+        success: false,
+        error: `${this.platform} not configured`,
+      };
+    }
+
+    // Step 2: Check targets not empty
+    if (!targets || targets.length === 0) {
+      return {
+        platform: this.platform,
+        success: false,
+        error: options.emptyTargetsError,
+      };
+    }
+
+    this.logger.log(
+      `Delivering ${video.format ?? 'unknown format'} video to ${targets.length} ${this.platform} targets`
+    );
+
+    // Step 3: Ensure buffer is available
+    try {
+      await this.ensureBuffer(video);
+    } catch (error) {
+      const err = error as Error;
+      return {
+        platform: this.platform,
+        success: false,
+        error: `Failed to download video: ${err.message}`,
+      };
+    }
+
+    // Step 4: Validate file size
+    const maxSizeBytes = options.maxFileSizeMB * 1024 * 1024;
+    if (video.buffer && video.buffer.length > maxSizeBytes) {
+      return {
+        platform: this.platform,
+        success: false,
+        error: `Video file too large: ${(video.buffer.length / 1024 / 1024).toFixed(1)}MB (max ${options.maxFileSizeMB}MB)`,
+      };
+    }
+
+    // Step 5-8: Loop targets, collect results
+    const results: Array<Record<string, unknown>> = [];
+    let successCount = 0;
+
+    for (const target of targets) {
+      try {
+        const result = await this.withRetry(() => options.sendToTarget(target, video, config));
+        results.push(options.formatTargetResult(target, result));
+        successCount++;
+
+        // Rate-limit delay between targets
+        if (targets.length > 1) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      } catch (error: unknown) {
+        const err = error as Error;
+        this.logger.error(`Failed to send to ${this.platform} target: ${err.message}`);
+        results.push(options.formatTargetError(target, err));
+      }
+    }
+
+    // Step 9: Return DeliveryResult
+    return {
+      platform: this.platform,
+      success: successCount > 0,
+      results,
+      delivered_count: successCount,
+      total_targets: targets.length,
+      error: successCount === 0 ? 'All deliveries failed' : undefined,
+    };
+  }
 
   /**
    * Download video from URL and convert to buffer
@@ -135,7 +247,7 @@ export abstract class BaseOutputNode {
         return await operation();
       } catch (error) {
         lastError = error as Error;
-        this.logger.warn(`Delivery attempt ${attempt}/${maxAttempts} failed: ${error.message}`);
+        this.logger.warn(`Delivery attempt ${attempt}/${maxAttempts} failed: ${lastError.message}`);
 
         if (attempt < maxAttempts) {
           await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));

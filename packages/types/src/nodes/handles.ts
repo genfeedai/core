@@ -1,0 +1,32 @@
+// =============================================================================
+// HANDLE TYPES
+// =============================================================================
+
+export type HandleType = 'image' | 'text' | 'video' | 'number' | 'audio';
+
+export interface HandleDefinition {
+  id: string;
+  type: HandleType;
+  label: string;
+  multiple?: boolean;
+  required?: boolean;
+  /** True if handle was dynamically generated from model schema */
+  fromSchema?: boolean;
+}
+
+export enum HandleTypeEnum {
+  IMAGE = 'image',
+  TEXT = 'text',
+  VIDEO = 'video',
+  NUMBER = 'number',
+  AUDIO = 'audio',
+}
+
+// Connection validation rules
+export const CONNECTION_RULES: Record<HandleType, HandleType[]> = {
+  image: ['image'],
+  text: ['text'],
+  video: ['video'],
+  number: ['number'],
+  audio: ['audio'],
+};

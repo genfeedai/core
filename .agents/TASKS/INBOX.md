@@ -1,7 +1,7 @@
 # Task Inbox
 
 **Purpose:** Quick capture for tasks. Process regularly.
-**Last Updated:** 2026-01-21
+**Last Updated:** 2026-02-02
 
 ---
 
@@ -26,27 +26,24 @@ Process into proper task files or complete directly.
   - Cloud location: `cloud/apps/server/api/src/services/telegram-bot/`
   - See: `.agents/SYSTEM/FEATURE-SPLIT.md` for scope decision
 
-- [ ] **UGC Factory Integration** @high
-  - Integrate UGC Factory into the core workflow system
-  - The implementation exists (services, processors, controllers, DTOs) per UGC_FACTORY_README.md
-  - Needs: wiring into the monorepo build, API routes, web UI for batch creation/monitoring
-  - Connect TTS (ElevenLabs), motion video (Kling AI), lip sync pipeline
-  - ~~Add UGC Factory as a Telegram bot workflow option~~ (moved to Cloud)
-  - PRD: [ugc-factory-integration.md](../PRDS/ugc-factory-integration.md)
+- [x] ~~**UGC Factory Integration**~~ → **Done** (2026-02-02)
+  - Processing pipeline wired: TTS, lip sync, video stitch, reframe, upscale all in `processing.processor.ts`
+  - Distribution nodes implemented (Telegram, Discord, Google Drive) via `DistributionNodeRegistry` (`5042aef`)
 
-- [ ] **Replace direct LLM calls with provider abstraction for AI workflow generator** @medium
-  - Currently the workflow generator (`apps/web/src/app/api/ai/generate-workflow/route.ts`) calls Replicate directly via `@/lib/replicate/client`
-  - Policy: ALL model interactions must go through inference providers (Replicate, fal.ai, Hugging Face) — never call model APIs directly (no Google Gemini SDK, no OpenAI SDK, etc.)
-  - Evaluate adding fal.ai and Hugging Face as alternative LLM providers alongside Replicate
-  - The existing `ProviderType` in `packages/types/src/nodes.ts` already defines `'replicate' | 'fal' | 'huggingface'`
-  - Consider cost/speed tradeoffs: Replicate Llama 405B is expensive (~$3-5/M input tokens); fal.ai and HF may offer cheaper hosted open-source models
-  - Scope: provider selection logic, fallback strategy, shared client interface
+- [x] ~~**Replace direct LLM calls with provider abstraction**~~ → **Done** (2026-02-02)
+  - Provider selector in SettingsModal with `ProviderType` (`replicate | fal | huggingface`) in use
+  - Settings UI allows switching between inference providers
 
 ---
 
 ## Processed
 
 <!-- Move completed/processed items here with date -->
+
+### 2026-02-02
+
+- [x] UGC Factory Integration — processing pipeline wired, distribution nodes implemented (`5042aef`)
+- [x] Replace direct LLM calls with provider abstraction — provider selector in SettingsModal, `ProviderType` in use
 
 ### 2026-01-21
 

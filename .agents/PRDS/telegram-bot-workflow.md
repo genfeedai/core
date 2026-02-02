@@ -1,6 +1,6 @@
 # PRD: Telegram Bot for Workflow Execution
 
-**Status:** In Progress
+**Status:** Superseded — Cloud-only, no bot in core
 **Priority:** High
 **Created:** 2026-01-31
 **Updated:** 2026-01-31

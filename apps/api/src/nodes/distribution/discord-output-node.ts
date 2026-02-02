@@ -1,11 +1,16 @@
 import { Injectable, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { BaseOutputNode, GeneratedVideo, DeliveryConfig, DeliveryResult } from './base-output-node';
+import {
+  BaseOutputNode,
+  GeneratedVideo,
+  DeliveryConfig,
+  DeliveryResult,
+  PlatformConfig,
+} from './base-output-node';
 import { DistributionNodeRegistry } from './distribution-node-registry';
 
 // Discord webhook types
-interface DiscordConfig {
-  enabled: boolean;
+interface DiscordConfig extends PlatformConfig {
   channels: string[]; // Webhook URLs or channel IDs
   caption?: string;
 }
@@ -56,96 +61,32 @@ export class DiscordOutputNode extends BaseOutputNode implements OnModuleInit {
     config: DeliveryConfig,
     platformConfig: DiscordConfig
   ): Promise<DeliveryResult> {
-    if (!this.enabled) {
-      return {
-        platform: this.platform,
-        success: false,
-        error: 'Discord bot token not configured',
-      };
-    }
-
-    if (!platformConfig.channels || platformConfig.channels.length === 0) {
-      return {
-        platform: this.platform,
-        success: false,
-        error: 'No Discord channels specified',
-      };
-    }
-
-    this.logger.log(
-      `Delivering ${video.format} video to ${platformConfig.channels.length} Discord channels`
-    );
-
-    // Download video buffer if not already available
-    if (!video.buffer) {
-      try {
-        video.buffer = await this.downloadVideo(video.url);
-      } catch (error) {
-        return {
-          platform: this.platform,
-          success: false,
-          error: `Failed to download video: ${error.message}`,
-        };
-      }
-    }
-
-    // Check Discord file size limit (25MB for regular uploads, 100MB for Nitro)
-    const maxSize = 25 * 1024 * 1024; // 25MB (conservative limit)
-    if (video.buffer.length > maxSize) {
-      return {
-        platform: this.platform,
-        success: false,
-        error: `Video file too large: ${(video.buffer.length / 1024 / 1024).toFixed(1)}MB (max 25MB)`,
-      };
-    }
-
-    const results: Array<Record<string, unknown>> = [];
-    let successCount = 0;
-
-    for (const channel of platformConfig.channels) {
-      try {
-        const result = await this.withRetry(async () => {
-          // Check if it's a webhook URL or channel ID
-          if (channel.includes('discord.com/api/webhooks/')) {
-            return this.sendViaWebhook(channel, video, config, platformConfig.caption);
-          } else {
-            return this.sendViaChannelId(channel, video, config, platformConfig.caption);
-          }
-        });
-
-        results.push({
-          channel,
-          success: true,
-          message_id: result.id,
-          channel_id: result.channel_id,
-          url: `https://discord.com/channels/@me/${result.channel_id}/${result.id}`,
-        });
-
-        successCount++;
-
-        // Small delay between messages to avoid rate limits
-        if (platformConfig.channels.length > 1) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+    return this.deliverToTargets(video, config, platformConfig.channels, {
+      maxFileSizeMB: 25,
+      emptyTargetsError: 'No Discord channels specified',
+      sendToTarget: async (channel, vid, cfg) => {
+        if (channel.includes('discord.com/api/webhooks/')) {
+          return this.sendViaWebhook(channel, vid, cfg, platformConfig.caption) as Promise<
+            Record<string, unknown>
+          >;
         }
-      } catch (error: unknown) {
-        const err = error as Error;
-        this.logger.error(`Failed to send to Discord channel ${channel}: ${err.message}`);
-        results.push({
-          channel,
-          success: false,
-          error: err.message,
-        });
-      }
-    }
-
-    return {
-      platform: this.platform,
-      success: successCount > 0,
-      results,
-      delivered_count: successCount,
-      total_targets: platformConfig.channels.length,
-      error: successCount === 0 ? 'All deliveries failed' : undefined,
-    };
+        return this.sendViaChannelId(channel, vid, cfg, platformConfig.caption) as Promise<
+          Record<string, unknown>
+        >;
+      },
+      formatTargetResult: (channel, result) => ({
+        channel,
+        success: true,
+        message_id: result.id,
+        channel_id: result.channel_id,
+        url: `https://discord.com/channels/@me/${result.channel_id}/${result.id}`,
+      }),
+      formatTargetError: (channel, error) => ({
+        channel,
+        success: false,
+        error: error.message,
+      }),
+    });
   }
 
   /**
@@ -212,7 +153,7 @@ export class DiscordOutputNode extends BaseOutputNode implements OnModuleInit {
   /**
    * Get channel information (useful for validation)
    */
-  async getChannelInfo(channelId: string): Promise<any> {
+  async getChannelInfo(channelId: string): Promise<Record<string, unknown>> {
     if (!this.enabled) {
       throw new Error('Discord bot not configured');
     }
@@ -249,7 +190,8 @@ export class DiscordOutputNode extends BaseOutputNode implements OnModuleInit {
 
       return response.ok;
     } catch (error) {
-      this.logger.error(`Discord connection test failed: ${error.message}`);
+      const err = error as Error;
+      this.logger.error(`Discord connection test failed: ${err.message}`);
       return false;
     }
   }

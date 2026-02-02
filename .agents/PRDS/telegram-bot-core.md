@@ -1,6 +1,6 @@
 # PRD: Telegram Bot — Core + Cloud
 
-**Status:** Draft → In Progress
+**Status:** Superseded — Bot removed from core (`747800b`), moved to Cloud SaaS
 **Priority:** High
 **Created:** 2026-01-31
 **Author:** Vincent (via Blaise)

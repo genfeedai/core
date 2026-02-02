@@ -1,6 +1,6 @@
 # PRD: Image Annotation Editor
 
-**Status:** Backlog
+**Status:** Done
 **Priority:** Medium
 **Complexity:** High
 

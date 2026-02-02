@@ -2,12 +2,14 @@
 
 import type { VideoGenNodeData, VideoModel } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { AlertCircle, Expand, Loader2, Play, Square, Video } from 'lucide-react';
+import { AlertCircle, ChevronDown, Expand, Play, Square, Video } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { ModelBrowserModal } from '@/components/models/ModelBrowserModal';
 import { BaseNode } from '@/components/nodes/BaseNode';
+import { ProcessingOverlay } from '@/components/nodes/ProcessingOverlay';
 import { SchemaInputs } from '@/components/nodes/SchemaInputs';
 import { Button } from '@/components/ui/button';
+import { useAIGenNode } from '@/hooks/useAIGenNode';
 import { useAutoLoadModelSchema } from '@/hooks/useAutoLoadModelSchema';
 import { useCanGenerate } from '@/hooks/useCanGenerate';
 import { useModelSelection } from '@/hooks/useModelSelection';
@@ -18,14 +20,11 @@ import {
   VIDEO_MODEL_MAP,
   VIDEO_MODELS,
 } from '@/lib/models/registry';
-import { extractEnumValues, supportsImageInput } from '@/lib/utils/schemaUtils';
 import { useUIStore } from '@/store/uiStore';
-import { useWorkflowStore } from '@/store/workflowStore';
 
 function VideoGenNodeComponent(props: NodeProps) {
   const { id, type, data } = props;
   const nodeData = data as VideoGenNodeData;
-  const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const openNodeDetailModal = useUIStore((state) => state.openNodeDetailModal);
   const { handleGenerate, handleStop } = useNodeExecution(id);
   const { canGenerate } = useCanGenerate({
@@ -52,48 +51,18 @@ function VideoGenNodeComponent(props: NodeProps) {
     onModelSelect: handleModelSelect,
   });
 
-  // Get schema properties from selected model
-  // Type assertion needed because inputSchema comes from API with unknown types
-  const schemaProperties = useMemo(() => {
-    const schema = nodeData.selectedModel?.inputSchema as
-      | {
-          properties?: Record<string, unknown>;
-        }
-      | undefined;
-    return schema?.properties as Parameters<typeof SchemaInputs>[0]['schema'];
-  }, [nodeData.selectedModel?.inputSchema]);
-
-  // Extract enum values from component schemas for SchemaInputs
-  const enumValues = useMemo(
-    () =>
-      extractEnumValues(
-        nodeData.selectedModel?.componentSchemas as
-          | Record<string, { enum?: unknown[]; type?: string }>
-          | undefined
-      ),
-    [nodeData.selectedModel?.componentSchemas]
-  );
-
-  // Check if model supports image input
-  const modelSupportsImageInput = useMemo(
-    () => supportsImageInput(nodeData.selectedModel?.inputSchema),
-    [nodeData.selectedModel?.inputSchema]
-  );
-
-  const handleSchemaParamChange = useCallback(
-    (key: string, value: unknown) => {
-      // Get fresh state to avoid stale closure issues with rapid changes
-      const currentNode = useWorkflowStore.getState().getNodeById(id);
-      const currentData = currentNode?.data as VideoGenNodeData | undefined;
-      updateNodeData<VideoGenNodeData>(id, {
-        schemaParams: {
-          ...(currentData?.schemaParams ?? {}),
-          [key]: value,
-        },
-      });
-    },
-    [id, updateNodeData]
-  );
+  // Shared schema/enum/image-support logic
+  const {
+    schemaProperties,
+    enumValues,
+    modelSupportsImageInput,
+    handleSchemaParamChange,
+    componentSchemas,
+  } = useAIGenNode<VideoGenNodeData>({
+    nodeId: id,
+    selectedModel: nodeData.selectedModel,
+    schemaParams: nodeData.schemaParams,
+  });
 
   const handleExpand = useCallback(() => {
     openNodeDetailModal(id, 'preview');
@@ -104,12 +73,23 @@ function VideoGenNodeComponent(props: NodeProps) {
     VIDEO_MODELS.find((m) => m.value === nodeData.model)?.label ||
     nodeData.model;
 
+  const titleElement = useMemo(
+    () => (
+      <button
+        className="flex flex-1 items-center gap-1 text-sm font-medium text-left text-foreground hover:text-foreground/80 cursor-pointer"
+        onClick={() => setIsModelBrowserOpen(true)}
+        title="Browse models"
+      >
+        <span className="truncate">{modelDisplayName}</span>
+        <ChevronDown className="h-3 w-3 shrink-0" />
+      </button>
+    ),
+    [modelDisplayName]
+  );
+
   const headerActions = useMemo(
     () => (
       <>
-        <Button variant="secondary" size="sm" onClick={() => setIsModelBrowserOpen(true)}>
-          Browse
-        </Button>
         {nodeData.outputVideo && (
           <Button variant="ghost" size="icon-sm" onClick={handleExpand} title="Expand preview">
             <Expand className="h-3 w-3" />
@@ -118,7 +98,7 @@ function VideoGenNodeComponent(props: NodeProps) {
         {nodeData.status === 'processing' ? (
           <Button variant="destructive" size="sm" onClick={handleStop}>
             <Square className="h-4 w-4 fill-current" />
-            Stop
+            Generating
           </Button>
         ) : (
           <Button
@@ -145,8 +125,9 @@ function VideoGenNodeComponent(props: NodeProps) {
   return (
     <BaseNode
       {...props}
-      title={modelDisplayName}
+      titleElement={titleElement}
       headerActions={headerActions}
+      hideStatusIndicator
       disabledInputs={disabledInputs}
     >
       <div className="flex-1 flex flex-col gap-3 min-h-0">
@@ -157,11 +138,7 @@ function VideoGenNodeComponent(props: NodeProps) {
             values={nodeData.schemaParams ?? {}}
             onChange={handleSchemaParamChange}
             enumValues={enumValues}
-            componentSchemas={
-              nodeData.selectedModel?.componentSchemas as
-                | Record<string, { enum?: unknown[]; type?: string }>
-                | undefined
-            }
+            componentSchemas={componentSchemas}
           />
         )}
 
@@ -182,34 +159,12 @@ function VideoGenNodeComponent(props: NodeProps) {
               controls
             />
             {/* Processing overlay spinner */}
-            {nodeData.status === 'processing' && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-md">
-                <div className="flex flex-col items-center gap-2">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <span className="text-xs text-white/80">Generating...</span>
-                  <Button variant="destructive" size="sm" onClick={handleStop}>
-                    <Square className="h-3 w-3 fill-current" />
-                    Stop
-                  </Button>
-                </div>
-              </div>
-            )}
+            {nodeData.status === 'processing' && <ProcessingOverlay onStop={handleStop} />}
           </div>
         ) : (
           <div className="relative flex aspect-video w-full flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border/50 bg-secondary/20">
             <Video className="h-6 w-6 text-muted-foreground/50" />
-            {nodeData.status === 'processing' && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-md">
-                <div className="flex flex-col items-center gap-2">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <span className="text-xs text-white/80">Generating...</span>
-                  <Button variant="destructive" size="sm" onClick={handleStop}>
-                    <Square className="h-3 w-3 fill-current" />
-                    Stop
-                  </Button>
-                </div>
-              </div>
-            )}
+            {nodeData.status === 'processing' && <ProcessingOverlay onStop={handleStop} />}
           </div>
         )}
 

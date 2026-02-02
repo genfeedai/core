@@ -185,27 +185,32 @@ function saveToStorage(state: {
 
 const initialState = { ...DEFAULT_SETTINGS, ...loadFromStorage() };
 
-export const useSettingsStore = create<SettingsStore>((set, get) => ({
-  providers: initialState.providers,
-  defaults: initialState.defaults,
-  edgeStyle: initialState.edgeStyle,
-  showMinimap: initialState.showMinimap,
-  autoSaveEnabled: initialState.autoSaveEnabled,
-  recentModels: initialState.recentModels,
-  hasSeenWelcome: initialState.hasSeenWelcome,
-  debugMode: initialState.debugMode,
-
-  toggleAutoSave: () => {
+export const useSettingsStore = create<SettingsStore>((set, get) => {
+  // Helper to set state and persist in one call
+  const setAndPersist = (updater: (state: SettingsStore) => Partial<SettingsStore>) => {
     set((state) => {
-      const newState = { autoSaveEnabled: !state.autoSaveEnabled };
-      saveToStorage({ ...state, ...newState });
+      const newState = updater(state);
+      saveToStorage({ ...state, ...newState } as Parameters<typeof saveToStorage>[0]);
       return newState;
     });
-  },
+  };
 
-  setProviderKey: (provider, key) => {
-    set((state) => {
-      const newState = {
+  return {
+    providers: initialState.providers,
+    defaults: initialState.defaults,
+    edgeStyle: initialState.edgeStyle,
+    showMinimap: initialState.showMinimap,
+    autoSaveEnabled: initialState.autoSaveEnabled,
+    recentModels: initialState.recentModels,
+    hasSeenWelcome: initialState.hasSeenWelcome,
+    debugMode: initialState.debugMode,
+
+    toggleAutoSave: () => {
+      setAndPersist((state) => ({ autoSaveEnabled: !state.autoSaveEnabled }));
+    },
+
+    setProviderKey: (provider, key) => {
+      setAndPersist((state) => ({
         providers: {
           ...state.providers,
           [provider]: {
@@ -214,15 +219,11 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
             enabled: key ? true : state.providers[provider].enabled,
           },
         },
-      };
-      saveToStorage({ ...state, ...newState });
-      return newState;
-    });
-  },
+      }));
+    },
 
-  setProviderEnabled: (provider, enabled) => {
-    set((state) => {
-      const newState = {
+    setProviderEnabled: (provider, enabled) => {
+      setAndPersist((state) => ({
         providers: {
           ...state.providers,
           [provider]: {
@@ -230,69 +231,50 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
             enabled,
           },
         },
-      };
-      saveToStorage({ ...state, ...newState });
-      return newState;
-    });
-  },
+      }));
+    },
 
-  setDefaultModel: (type, model, provider) => {
-    set((state) => {
-      const newState = {
+    setDefaultModel: (type, model, provider) => {
+      setAndPersist((state) => ({
         defaults: {
           ...state.defaults,
           ...(type === 'image'
             ? { imageModel: model, imageProvider: provider }
             : { videoModel: model, videoProvider: provider }),
         },
-      };
-      saveToStorage({ ...state, ...newState });
-      return newState;
-    });
-  },
+      }));
+    },
 
-  setEdgeStyle: (style) => {
-    set((state) => {
-      const newState = { edgeStyle: style };
-      saveToStorage({ ...state, ...newState });
-      return newState;
-    });
-    // Also update the current workflow's edges
-    // Import dynamically to avoid circular dependency
-    import('@/store/workflowStore').then(({ useWorkflowStore }) => {
-      useWorkflowStore.getState().setEdgeStyle(style);
-    });
-  },
+    setEdgeStyle: (style) => {
+      setAndPersist(() => ({ edgeStyle: style }));
+      // Also update the current workflow's edges
+      // Import dynamically to avoid circular dependency
+      import('@/store/workflowStore').then(({ useWorkflowStore }) => {
+        useWorkflowStore.getState().setEdgeStyle(style);
+      });
+    },
 
-  setShowMinimap: (show) => {
-    set((state) => {
-      const newState = { showMinimap: show };
-      saveToStorage({ ...state, ...newState });
-      return newState;
-    });
-  },
+    setShowMinimap: (show) => {
+      setAndPersist(() => ({ showMinimap: show }));
+    },
 
-  addRecentModel: (model) => {
-    set((state) => {
-      // Remove existing entry for same model
-      const filtered = state.recentModels.filter(
-        (m) => !(m.id === model.id && m.provider === model.provider)
-      );
-      // Add to front with timestamp
-      const newRecentModels = [{ ...model, timestamp: Date.now() }, ...filtered].slice(
-        0,
-        MAX_RECENT_MODELS
-      );
+    addRecentModel: (model) => {
+      setAndPersist((state) => {
+        // Remove existing entry for same model
+        const filtered = state.recentModels.filter(
+          (m) => !(m.id === model.id && m.provider === model.provider)
+        );
+        // Add to front with timestamp
+        const newRecentModels = [{ ...model, timestamp: Date.now() }, ...filtered].slice(
+          0,
+          MAX_RECENT_MODELS
+        );
+        return { recentModels: newRecentModels };
+      });
+    },
 
-      const newState = { recentModels: newRecentModels };
-      saveToStorage({ ...state, ...newState });
-      return newState;
-    });
-  },
-
-  clearProviderKey: (provider) => {
-    set((state) => {
-      const newState = {
+    clearProviderKey: (provider) => {
+      setAndPersist((state) => ({
         providers: {
           ...state.providers,
           [provider]: {
@@ -300,133 +282,119 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
             apiKey: null,
           },
         },
-      };
-      saveToStorage({ ...state, ...newState });
-      return newState;
-    });
-  },
+      }));
+    },
 
-  clearAllKeys: () => {
-    set((state) => {
-      const newState = {
+    clearAllKeys: () => {
+      setAndPersist((state) => ({
         providers: {
           replicate: { ...state.providers.replicate, apiKey: null },
           fal: { ...state.providers.fal, apiKey: null },
           huggingface: { ...state.providers.huggingface, apiKey: null },
         },
+      }));
+    },
+
+    setHasSeenWelcome: (seen) => {
+      setAndPersist(() => ({ hasSeenWelcome: seen }));
+    },
+
+    setDebugMode: (enabled) => {
+      setAndPersist(() => ({ debugMode: enabled }));
+    },
+
+    isProviderConfigured: (provider) => {
+      const state = get();
+      return !!state.providers[provider].apiKey;
+    },
+
+    getProviderHeader: (provider) => {
+      const state = get();
+      const key = state.providers[provider].apiKey;
+      if (!key) return {};
+
+      const headerMap: Record<ProviderType, string> = {
+        replicate: 'X-Replicate-Key',
+        fal: 'X-Fal-Key',
+        huggingface: 'X-HF-Key',
       };
-      saveToStorage({ ...state, ...newState });
-      return newState;
-    });
-  },
 
-  setHasSeenWelcome: (seen) => {
-    set((state) => {
-      const newState = { hasSeenWelcome: seen };
-      saveToStorage({ ...state, ...newState });
-      return newState;
-    });
-  },
+      return { [headerMap[provider]]: key };
+    },
 
-  setDebugMode: (enabled) => {
-    set((state) => {
-      const newState = { debugMode: enabled };
-      saveToStorage({ ...state, ...newState });
-      return newState;
-    });
-  },
+    // API Sync
+    isSyncing: false,
 
-  isProviderConfigured: (provider) => {
-    const state = get();
-    return !!state.providers[provider].apiKey;
-  },
+    syncFromServer: async () => {
+      const { isSyncing } = get();
+      if (isSyncing) return;
 
-  getProviderHeader: (provider) => {
-    const state = get();
-    const key = state.providers[provider].apiKey;
-    if (!key) return {};
+      set({ isSyncing: true });
 
-    const headerMap: Record<ProviderType, string> = {
-      replicate: 'X-Replicate-Key',
-      fal: 'X-Fal-Key',
-      huggingface: 'X-HF-Key',
-    };
+      try {
+        const serverSettings = await settingsApi.getAll();
 
-    return { [headerMap[provider]]: key };
-  },
+        // Merge server settings with local (server wins for node defaults/UI prefs)
+        set((state) => {
+          const merged = {
+            defaults: {
+              ...state.defaults,
+              imageModel: serverSettings.nodeDefaults.imageModel || state.defaults.imageModel,
+              imageProvider:
+                (serverSettings.nodeDefaults.imageProvider as ProviderType) ||
+                state.defaults.imageProvider,
+              videoModel: serverSettings.nodeDefaults.videoModel || state.defaults.videoModel,
+              videoProvider:
+                (serverSettings.nodeDefaults.videoProvider as ProviderType) ||
+                state.defaults.videoProvider,
+            },
+            edgeStyle: (serverSettings.uiPreferences.edgeStyle as EdgeStyle) || state.edgeStyle,
+            showMinimap: serverSettings.uiPreferences.showMinimap ?? state.showMinimap,
+            hasSeenWelcome: serverSettings.uiPreferences.hasSeenWelcome ?? state.hasSeenWelcome,
+            recentModels: serverSettings.recentModels.map((m) => ({
+              ...m,
+              provider: m.provider as ProviderType,
+              timestamp: m.timestamp || Date.now(),
+            })),
+          };
+          saveToStorage({ ...state, ...merged });
+          return { ...merged, isSyncing: false };
+        });
+      } catch (error) {
+        logger.error('Failed to sync settings from server', error, { context: 'SettingsStore' });
+        set({ isSyncing: false });
+      }
+    },
 
-  // API Sync
-  isSyncing: false,
+    syncToServer: async () => {
+      const state = get();
+      if (state.isSyncing) return;
 
-  syncFromServer: async () => {
-    const { isSyncing } = get();
-    if (isSyncing) return;
+      set({ isSyncing: true });
 
-    set({ isSyncing: true });
-
-    try {
-      const serverSettings = await settingsApi.getAll();
-
-      // Merge server settings with local (server wins for node defaults/UI prefs)
-      set((state) => {
-        const merged = {
-          defaults: {
-            ...state.defaults,
-            imageModel: serverSettings.nodeDefaults.imageModel || state.defaults.imageModel,
-            imageProvider:
-              (serverSettings.nodeDefaults.imageProvider as ProviderType) ||
-              state.defaults.imageProvider,
-            videoModel: serverSettings.nodeDefaults.videoModel || state.defaults.videoModel,
-            videoProvider:
-              (serverSettings.nodeDefaults.videoProvider as ProviderType) ||
-              state.defaults.videoProvider,
+      try {
+        await settingsApi.update({
+          nodeDefaults: {
+            imageModel: state.defaults.imageModel,
+            imageProvider: state.defaults.imageProvider,
+            videoModel: state.defaults.videoModel,
+            videoProvider: state.defaults.videoProvider,
           },
-          edgeStyle: (serverSettings.uiPreferences.edgeStyle as EdgeStyle) || state.edgeStyle,
-          showMinimap: serverSettings.uiPreferences.showMinimap ?? state.showMinimap,
-          hasSeenWelcome: serverSettings.uiPreferences.hasSeenWelcome ?? state.hasSeenWelcome,
-          recentModels: serverSettings.recentModels.map((m) => ({
-            ...m,
-            provider: m.provider as ProviderType,
-            timestamp: m.timestamp || Date.now(),
-          })),
-        };
-        saveToStorage({ ...state, ...merged });
-        return { ...merged, isSyncing: false };
-      });
-    } catch (error) {
-      logger.error('Failed to sync settings from server', error, { context: 'SettingsStore' });
-      set({ isSyncing: false });
-    }
-  },
+          uiPreferences: {
+            edgeStyle: state.edgeStyle,
+            showMinimap: state.showMinimap,
+            hasSeenWelcome: state.hasSeenWelcome,
+          },
+        });
 
-  syncToServer: async () => {
-    const state = get();
-    if (state.isSyncing) return;
-
-    set({ isSyncing: true });
-
-    try {
-      await settingsApi.update({
-        nodeDefaults: {
-          imageModel: state.defaults.imageModel,
-          imageProvider: state.defaults.imageProvider,
-          videoModel: state.defaults.videoModel,
-          videoProvider: state.defaults.videoProvider,
-        },
-        uiPreferences: {
-          edgeStyle: state.edgeStyle,
-          showMinimap: state.showMinimap,
-          hasSeenWelcome: state.hasSeenWelcome,
-        },
-      });
-
-      set({ isSyncing: false });
-    } catch (error) {
-      logger.error('Failed to sync settings to server', error, { context: 'SettingsStore' });
-      set({ isSyncing: false });
-    }
-  },
-}));
+        set({ isSyncing: false });
+      } catch (error) {
+        logger.error('Failed to sync settings to server', error, { context: 'SettingsStore' });
+        set({ isSyncing: false });
+      }
+    },
+  };
+});
 
 // =============================================================================
 // PROVIDER DISPLAY INFO

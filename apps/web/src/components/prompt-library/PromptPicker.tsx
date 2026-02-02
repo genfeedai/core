@@ -1,7 +1,7 @@
 'use client';
 
 import type { IPrompt } from '@genfeedai/types';
-import { BookMarked, ChevronDown, ExternalLink, Sparkles } from 'lucide-react';
+import { BookMarked, ChevronDown, ChevronUp, ExternalLink, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -87,7 +87,11 @@ function PromptPickerComponent({ onSelect, label }: PromptPickerProps) {
           className="flex flex-1 items-center gap-1 text-sm font-medium text-foreground hover:text-foreground/80 transition"
         >
           <span className="truncate">{label}</span>
-          <ChevronDown className="h-3 w-3 shrink-0" />
+          {isOpen ? (
+            <ChevronUp className="h-3 w-3 shrink-0" />
+          ) : (
+            <ChevronDown className="h-3 w-3 shrink-0" />
+          )}
         </button>
       ) : (
         <Button
@@ -99,7 +103,7 @@ function PromptPickerComponent({ onSelect, label }: PromptPickerProps) {
           className="gap-1 px-2"
         >
           <BookMarked className="h-3.5 w-3.5" />
-          <ChevronDown className="h-3 w-3" />
+          {isOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
         </Button>
       )}
 

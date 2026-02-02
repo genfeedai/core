@@ -1,11 +1,16 @@
 import { Injectable, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { BaseOutputNode, GeneratedVideo, DeliveryConfig, DeliveryResult } from './base-output-node';
+import {
+  BaseOutputNode,
+  GeneratedVideo,
+  DeliveryConfig,
+  DeliveryResult,
+  PlatformConfig,
+} from './base-output-node';
 import { DistributionNodeRegistry } from './distribution-node-registry';
 
 // Telegram Bot API types
-interface TelegramConfig {
-  enabled: boolean;
+interface TelegramConfig extends PlatformConfig {
   targets: string[]; // [@channel_username, chat_id, group_id]
   caption?: string;
 }
@@ -51,91 +56,27 @@ export class TelegramOutputNode extends BaseOutputNode implements OnModuleInit {
     config: DeliveryConfig,
     platformConfig: TelegramConfig
   ): Promise<DeliveryResult> {
-    if (!this.enabled) {
-      return {
-        platform: this.platform,
+    return this.deliverToTargets(video, config, platformConfig.targets, {
+      maxFileSizeMB: 50,
+      emptyTargetsError: 'No Telegram targets specified',
+      sendToTarget: async (target, vid, cfg) => {
+        return this.sendVideo(target, vid, cfg, platformConfig.caption) as Promise<
+          Record<string, unknown>
+        >;
+      },
+      formatTargetResult: (target, result) => ({
+        target,
+        success: true,
+        message_id: result.message_id,
+        chat_id: (result.chat as Record<string, unknown>)?.id,
+        url: this.generateMessageUrl(target, result.message_id as number),
+      }),
+      formatTargetError: (target, error) => ({
+        target,
         success: false,
-        error: 'Telegram bot token not configured',
-      };
-    }
-
-    if (!platformConfig.targets || platformConfig.targets.length === 0) {
-      return {
-        platform: this.platform,
-        success: false,
-        error: 'No Telegram targets specified',
-      };
-    }
-
-    this.logger.log(
-      `Delivering ${video.format} video to ${platformConfig.targets.length} Telegram targets`
-    );
-
-    // Download video buffer if not already available
-    if (!video.buffer) {
-      try {
-        video.buffer = await this.downloadVideo(video.url);
-      } catch (error) {
-        return {
-          platform: this.platform,
-          success: false,
-          error: `Failed to download video: ${error.message}`,
-        };
-      }
-    }
-
-    // Check Telegram file size limit (50MB for videos)
-    const maxSize = 50 * 1024 * 1024; // 50MB
-    if (video.buffer.length > maxSize) {
-      return {
-        platform: this.platform,
-        success: false,
-        error: `Video file too large: ${(video.buffer.length / 1024 / 1024).toFixed(1)}MB (max 50MB)`,
-      };
-    }
-
-    const results: Array<Record<string, unknown>> = [];
-    let successCount = 0;
-
-    for (const target of platformConfig.targets) {
-      try {
-        const result = await this.withRetry(async () => {
-          return this.sendVideo(target, video, config, platformConfig.caption);
-        });
-
-        results.push({
-          target,
-          success: true,
-          message_id: result.message_id,
-          chat_id: result.chat.id,
-          url: this.generateMessageUrl(target, result.message_id),
-        });
-
-        successCount++;
-
-        // Small delay between messages to avoid rate limits
-        if (platformConfig.targets.length > 1) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
-      } catch (error: unknown) {
-        const err = error as Error;
-        this.logger.error(`Failed to send to Telegram target ${target}: ${err.message}`);
-        results.push({
-          target,
-          success: false,
-          error: err.message,
-        });
-      }
-    }
-
-    return {
-      platform: this.platform,
-      success: successCount > 0,
-      results,
-      delivered_count: successCount,
-      total_targets: platformConfig.targets.length,
-      error: successCount === 0 ? 'All deliveries failed' : undefined,
-    };
+        error: error.message,
+      }),
+    });
   }
 
   /**
@@ -204,7 +145,7 @@ export class TelegramOutputNode extends BaseOutputNode implements OnModuleInit {
   /**
    * Get bot information (useful for health checks)
    */
-  async getBotInfo(): Promise<any> {
+  async getBotInfo(): Promise<Record<string, unknown>> {
     if (!this.enabled) {
       throw new Error('Telegram bot not configured');
     }
@@ -227,7 +168,8 @@ export class TelegramOutputNode extends BaseOutputNode implements OnModuleInit {
       await this.getBotInfo();
       return true;
     } catch (error) {
-      this.logger.error(`Telegram connection test failed: ${error.message}`);
+      const err = error as Error;
+      this.logger.error(`Telegram connection test failed: ${err.message}`);
       return false;
     }
   }
