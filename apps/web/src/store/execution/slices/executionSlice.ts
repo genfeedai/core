@@ -5,8 +5,11 @@ import { logger } from '@/lib/logger';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
-import { createExecutionSubscription } from '../helpers/sseSubscription';
-import type { ExecutionData, ExecutionStore } from '../types';
+import {
+  createExecutionSubscription,
+  createNodeExecutionSubscription,
+} from '../helpers/sseSubscription';
+import type { ExecutionData, ExecutionStore, NodeExecution } from '../types';
 
 export interface ExecutionSlice {
   executeWorkflow: () => Promise<void>;
@@ -14,6 +17,8 @@ export interface ExecutionSlice {
   executeNode: (nodeId: string) => Promise<void>;
   resumeFromFailed: () => Promise<void>;
   stopExecution: () => void;
+  stopNodeExecution: (nodeId: string) => void;
+  isNodeExecuting: (nodeId: string) => boolean;
   clearValidationErrors: () => void;
   resetExecution: () => void;
   canResumeFromFailed: () => boolean;
@@ -115,11 +120,64 @@ export const createExecutionSlice: StateCreator<ExecutionStore, [], [], Executio
 
   executeNode: async (nodeId: string) => {
     const workflowStore = useWorkflowStore.getState();
+    const debugMode = useSettingsStore.getState().debugMode;
 
-    // Delegate to executeSelectedNodes - uses the BullMQ queue path
-    // which provides rate limiting (concurrency=1) and retry with backoff
-    workflowStore.setSelectedNodeIds([nodeId]);
-    await get().executeSelectedNodes();
+    // Save workflow if dirty (idempotent if already saving)
+    if (workflowStore.isDirty || !workflowStore.workflowId) {
+      try {
+        await workflowStore.saveWorkflow();
+      } catch (error) {
+        logger.error('Failed to save workflow before node execution', error, {
+          context: 'ExecutionStore',
+        });
+        workflowStore.updateNodeData(nodeId, {
+          status: NODE_STATUS.error,
+          error: 'Failed to save workflow',
+        });
+        return;
+      }
+    }
+
+    const workflowId = workflowStore.workflowId;
+    if (!workflowId) {
+      workflowStore.updateNodeData(nodeId, {
+        status: NODE_STATUS.error,
+        error: 'Workflow must be saved first',
+      });
+      return;
+    }
+
+    if (debugMode) {
+      useUIStore.getState().setShowDebugPanel(true);
+    }
+
+    try {
+      const execution = await apiClient.post<ExecutionData>(`/workflows/${workflowId}/execute`, {
+        debugMode,
+        selectedNodeIds: [nodeId],
+      });
+      const executionId = execution._id;
+
+      const eventSource = createNodeExecutionSubscription(executionId, nodeId, set, get);
+
+      const nodeExecution: NodeExecution = {
+        executionId,
+        nodeIds: [nodeId],
+        eventSource,
+      };
+
+      set((state) => {
+        const newMap = new Map(state.activeNodeExecutions);
+        newMap.set(nodeId, nodeExecution);
+        return { activeNodeExecutions: newMap };
+      });
+    } catch (error) {
+      logger.error('Failed to start node execution', error, { context: 'ExecutionStore' });
+      workflowStore.updateNodeData(nodeId, {
+        status: NODE_STATUS.error,
+        error: error instanceof Error ? error.message : 'Node execution failed',
+      });
+    }
   },
 
   executeSelectedNodes: async () => {
@@ -299,15 +357,47 @@ export const createExecutionSlice: StateCreator<ExecutionStore, [], [], Executio
     });
   },
 
+  stopNodeExecution: (nodeId: string) => {
+    const { activeNodeExecutions } = get();
+    const nodeExecution = activeNodeExecutions.get(nodeId);
+
+    if (nodeExecution) {
+      nodeExecution.eventSource.close();
+
+      apiClient.post(`/executions/${nodeExecution.executionId}/stop`).catch((error) => {
+        logger.error('Failed to stop node execution', error, { context: 'ExecutionStore' });
+      });
+
+      set((state) => {
+        const newMap = new Map(state.activeNodeExecutions);
+        newMap.delete(nodeId);
+        return { activeNodeExecutions: newMap };
+      });
+    }
+
+    const workflowStore = useWorkflowStore.getState();
+    workflowStore.updateNodeData(nodeId, { status: NODE_STATUS.idle, error: undefined });
+  },
+
+  isNodeExecuting: (nodeId: string) => {
+    const { activeNodeExecutions } = get();
+    return activeNodeExecutions.has(nodeId);
+  },
+
   clearValidationErrors: () => {
     set({ validationErrors: null });
   },
 
   resetExecution: () => {
-    const { eventSource } = get();
+    const { eventSource, activeNodeExecutions } = get();
 
     if (eventSource) {
       eventSource.close();
+    }
+
+    // Close all active node execution SSE connections
+    for (const nodeExecution of activeNodeExecutions.values()) {
+      nodeExecution.eventSource.close();
     }
 
     set({
@@ -320,6 +410,7 @@ export const createExecutionSlice: StateCreator<ExecutionStore, [], [], Executio
       actualCost: 0,
       lastFailedNodeId: null,
       debugPayloads: [],
+      activeNodeExecutions: new Map(),
     });
 
     const workflowStore = useWorkflowStore.getState();

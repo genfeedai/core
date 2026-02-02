@@ -18,7 +18,7 @@ import { useWorkflowStore } from '@/store/workflowStore';
 export function useNodeExecution(nodeId: string) {
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const executeNode = useExecutionStore((state) => state.executeNode);
-  const stopExecution = useExecutionStore((state) => state.stopExecution);
+  const stopNodeExecution = useExecutionStore((state) => state.stopNodeExecution);
 
   const handleGenerate = useCallback(() => {
     updateNodeData(nodeId, { status: NODE_STATUS.processing });
@@ -26,9 +26,8 @@ export function useNodeExecution(nodeId: string) {
   }, [nodeId, executeNode, updateNodeData]);
 
   const handleStop = useCallback(() => {
-    stopExecution();
-    updateNodeData(nodeId, { status: NODE_STATUS.idle });
-  }, [nodeId, stopExecution, updateNodeData]);
+    stopNodeExecution(nodeId);
+  }, [nodeId, stopNodeExecution]);
 
   return { handleGenerate, handleStop };
 }

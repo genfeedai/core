@@ -28,6 +28,7 @@ export const useExecutionStore = create<ExecutionStore>()((...args) => {
     estimatedCost: 0,
     actualCost: 0,
     debugPayloads: [],
+    activeNodeExecutions: new Map(),
 
     // Debug payload actions
     addDebugPayload: (payload: DebugPayload) => {

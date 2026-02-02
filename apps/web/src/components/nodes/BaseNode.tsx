@@ -1,5 +1,12 @@
 'use client';
 
+import { NodeErrorBoundary } from '@/components/nodes/NodeErrorBoundary';
+import { PreviewTooltip } from '@/components/nodes/PreviewTooltip';
+import { Button } from '@/components/ui/button';
+import { generateHandlesFromSchema } from '@/lib/utils/schemaHandles';
+import { useExecutionStore } from '@/store/executionStore';
+import { useUIStore } from '@/store/uiStore';
+import { useWorkflowStore } from '@/store/workflowStore';
 import type {
   HandleDefinition,
   NodeStatus,
@@ -52,14 +59,7 @@ import {
   Volume2,
   Wand2,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { memo, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { NodeErrorBoundary } from '@/components/nodes/NodeErrorBoundary';
-import { PreviewTooltip } from '@/components/nodes/PreviewTooltip';
-import { useExecutionStore } from '@/store/executionStore';
-import { useUIStore } from '@/store/uiStore';
-import { generateHandlesFromSchema } from '@/lib/utils/schemaHandles';
-import { useWorkflowStore } from '@/store/workflowStore';
 
 // Icon mapping
 const ICON_MAP: Record<string, typeof Image> = {
@@ -147,7 +147,8 @@ function BaseNodeComponent({
   const isResized = width !== undefined || height !== undefined;
   const { selectNode, selectedNodeId, highlightedNodeIds } = useUIStore();
   const { toggleNodeLock, isNodeLocked, updateNodeData } = useWorkflowStore();
-  const { executeNode, isRunning, stopExecution } = useExecutionStore();
+  const { executeNode, isRunning, stopExecution, stopNodeExecution, isNodeExecuting } =
+    useExecutionStore();
   const updateNodeInternals = useUpdateNodeInternals();
   const nodeDef = NODE_DEFINITIONS[type as NodeType];
   const nodeData = data as WorkflowNodeData;
@@ -183,28 +184,35 @@ function BaseNodeComponent({
   // Determine if this node should be highlighted (no selection = all highlighted)
   const isHighlighted = highlightedNodeIds.length === 0 || highlightedNodeIds.includes(id);
 
+  const nodeExecuting = isNodeExecuting(id);
+
   const handleRetry = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      if (!isRunning) {
+      if (!isNodeExecuting(id)) {
         // Clear error and set to processing before retrying
         updateNodeData(id, { error: undefined, status: NODE_STATUS.processing });
         executeNode(id);
       }
     },
-    [id, isRunning, executeNode, updateNodeData]
+    [id, isNodeExecuting, executeNode, updateNodeData]
   );
 
   const handleStopNode = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
       if (isRunning) {
+        // Global workflow execution — stop everything
         stopExecution();
+      } else if (isNodeExecuting(id)) {
+        // Independent node execution — stop only this node
+        stopNodeExecution(id);
       } else {
+        // No execution running — just reset UI status
         updateNodeData(id, { status: NODE_STATUS.idle, error: undefined });
       }
     },
-    [id, isRunning, stopExecution, updateNodeData]
+    [id, isRunning, isNodeExecuting, stopExecution, stopNodeExecution, updateNodeData]
   );
 
   const handleCopyError = useCallback(
@@ -360,7 +368,7 @@ function BaseNodeComponent({
                   size="icon-sm"
                   onClick={handleStopNode}
                   className="text-destructive hover:bg-destructive/20 hover:text-destructive"
-                  title={isRunning ? 'Stop execution' : 'Reset node'}
+                  title={isRunning ? 'Stop execution' : nodeExecuting ? 'Stop node' : 'Reset node'}
                 >
                   <Square className="h-3.5 w-3.5 fill-current" />
                 </Button>
@@ -402,7 +410,7 @@ function BaseNodeComponent({
                     variant="destructive"
                     size="sm"
                     onClick={handleRetry}
-                    disabled={isRunning}
+                    disabled={nodeExecuting}
                     className="mt-2 w-full"
                   >
                     <RotateCcw className="h-3 w-3" />

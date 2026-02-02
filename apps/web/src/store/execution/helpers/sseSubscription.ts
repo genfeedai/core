@@ -196,3 +196,137 @@ export function createExecutionSubscription(
 
   return eventSource;
 }
+
+/**
+ * Create a node-scoped SSE subscription for independent node execution.
+ * Does NOT set global isRunning/eventSource state — only manages per-node state
+ * via the activeNodeExecutions map.
+ */
+export function createNodeExecutionSubscription(
+  executionId: string,
+  nodeId: string,
+  set: StoreApi<ExecutionStore>['setState'],
+  get: StoreApi<ExecutionStore>['getState']
+): EventSource {
+  const eventSource = new EventSource(`${API_BASE_URL}/executions/${executionId}/stream`);
+  const propagatedNodeIds = new Set<string>();
+
+  eventSource.onmessage = (event) => {
+    void (async () => {
+      try {
+        const data = JSON.parse(event.data) as ExecutionData;
+        const workflowStore = useWorkflowStore.getState();
+
+        const nodeResults = data.nodeResults || [];
+        for (const nodeResult of nodeResults) {
+          const nodeStatus = statusMap[nodeResult.status] ?? NODE_STATUS.idle;
+          const isSuccess = nodeResult.status === 'complete' || nodeResult.status === 'succeeded';
+
+          workflowStore.updateNodeData(nodeResult.nodeId, {
+            status: nodeStatus,
+            error: isSuccess ? undefined : nodeResult.error,
+            ...(nodeResult.output &&
+              getOutputUpdate(nodeResult.nodeId, nodeResult.output, workflowStore)),
+          });
+
+          if (
+            (nodeResult.status === 'complete' || nodeResult.status === 'succeeded') &&
+            nodeResult.output &&
+            !propagatedNodeIds.has(nodeResult.nodeId)
+          ) {
+            propagatedNodeIds.add(nodeResult.nodeId);
+            workflowStore.propagateOutputsDownstream(nodeResult.nodeId);
+          }
+
+          if (nodeResult.status === 'error') {
+            set({ lastFailedNodeId: nodeResult.nodeId });
+          }
+        }
+
+        // Update job statuses and extract debug payloads
+        if (data.jobs) {
+          set((state) => {
+            const newJobs = new Map(state.jobs);
+            const newDebugPayloads: DebugPayload[] = [];
+
+            for (const job of data.jobs || []) {
+              newJobs.set(job.predictionId, {
+                nodeId: job.nodeId,
+                predictionId: job.predictionId,
+                status: job.status as Job['status'],
+                progress: 0,
+                output: job.output ?? null,
+                error: job.error ?? null,
+                createdAt: new Date().toISOString(),
+              });
+
+              if (job.result?.debugPayload) {
+                const node = workflowStore.getNodeById(job.nodeId);
+                newDebugPayloads.push({
+                  nodeId: job.nodeId,
+                  nodeName: String(node?.data?.label || node?.data?.name || job.nodeId),
+                  nodeType: node?.type || 'unknown',
+                  model: job.result.debugPayload.model,
+                  input: job.result.debugPayload.input,
+                  timestamp: job.result.debugPayload.timestamp,
+                });
+              }
+            }
+
+            if (newDebugPayloads.length > 0 && data.debugMode) {
+              useUIStore.getState().setShowDebugPanel(true);
+            }
+
+            return {
+              jobs: newJobs,
+              debugPayloads: [
+                ...state.debugPayloads.filter(
+                  (existing) => !newDebugPayloads.some((newP) => newP.nodeId === existing.nodeId)
+                ),
+                ...newDebugPayloads,
+              ],
+            };
+          });
+        }
+
+        const isComplete = ['completed', 'failed', 'cancelled', 'error'].includes(data.status);
+        const hasFailedNode = (data.nodeResults || []).some((r) => r.status === 'error');
+        const hasPendingNodes = (data.pendingNodes || []).length > 0;
+        const hasProcessingNodes = (data.nodeResults || []).some((r) => r.status === 'processing');
+        const isDone = isComplete || (hasFailedNode && !hasPendingNodes && !hasProcessingNodes);
+
+        if (isDone) {
+          propagatedNodeIds.clear();
+          eventSource.close();
+
+          await reconcileNodeStatuses(executionId);
+
+          // Remove this node execution from the active map
+          set((state) => {
+            const newMap = new Map(state.activeNodeExecutions);
+            newMap.delete(nodeId);
+            return { activeNodeExecutions: newMap };
+          });
+        }
+      } catch (error) {
+        logger.error('Failed to parse SSE message (node execution)', error, {
+          context: 'ExecutionStore',
+        });
+      }
+    })();
+  };
+
+  eventSource.onerror = (error) => {
+    logger.error('SSE connection error (node execution)', error, { context: 'ExecutionStore' });
+    eventSource.close();
+    void reconcileNodeStatuses(executionId).then(() => {
+      set((state) => {
+        const newMap = new Map(state.activeNodeExecutions);
+        newMap.delete(nodeId);
+        return { activeNodeExecutions: newMap };
+      });
+    });
+  };
+
+  return eventSource;
+}

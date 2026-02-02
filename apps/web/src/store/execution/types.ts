@@ -66,6 +66,16 @@ export interface ExecutionData {
 }
 
 // =============================================================================
+// NODE EXECUTION TYPES
+// =============================================================================
+
+export interface NodeExecution {
+  executionId: string;
+  nodeIds: string[];
+  eventSource: EventSource;
+}
+
+// =============================================================================
 // STORE TYPES
 // =============================================================================
 
@@ -82,6 +92,8 @@ export interface ExecutionState {
   estimatedCost: number;
   actualCost: number;
   debugPayloads: DebugPayload[];
+  /** Independent per-node executions (Generate button clicks) */
+  activeNodeExecutions: Map<string, NodeExecution>;
 }
 
 export interface ExecutionActions {
@@ -90,6 +102,8 @@ export interface ExecutionActions {
   executeNode: (nodeId: string) => Promise<void>;
   resumeFromFailed: () => Promise<void>;
   stopExecution: () => void;
+  stopNodeExecution: (nodeId: string) => void;
+  isNodeExecuting: (nodeId: string) => boolean;
   clearValidationErrors: () => void;
 }
 
