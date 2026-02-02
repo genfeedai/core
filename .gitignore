@@ -52,6 +52,9 @@ coverage/
 # Next.js auto-generated
 next-env.d.ts
 
+# Worktrees
+.worktrees/
+
 # User workflow data (uploads and generated outputs)
 data/*
 !data/.gitkeep
