@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BaseOutputNode, GeneratedVideo, DeliveryConfig, DeliveryResult } from './base-output-node';
+import { DistributionNodeRegistry } from './distribution-node-registry';
 import { google } from 'googleapis';
 
 // Google Drive configuration
@@ -19,14 +20,18 @@ interface DriveFile {
 }
 
 @Injectable()
-export class GoogleDriveOutputNode extends BaseOutputNode {
+export class GoogleDriveOutputNode extends BaseOutputNode implements OnModuleInit {
   readonly platform = 'google_drive';
   readonly enabled: boolean;
 
   private readonly credentialsPath: string;
   private drive: any;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    @Inject(forwardRef(() => DistributionNodeRegistry))
+    private readonly registry: DistributionNodeRegistry
+  ) {
     super();
     this.credentialsPath = this.configService.get<string>('GOOGLE_DRIVE_CREDENTIALS') || '';
     this.enabled = !!this.credentialsPath;
@@ -38,6 +43,10 @@ export class GoogleDriveOutputNode extends BaseOutputNode {
     } else {
       this.initializeDriveClient();
     }
+  }
+
+  onModuleInit(): void {
+    this.registry.register('googleDriveUpload', 'google_drive', this);
   }
 
   async deliver(

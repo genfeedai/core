@@ -27,6 +27,7 @@ import { ReplicatePollerService } from '@/services/replicate-poller.service';
 import { TTSService } from '@/services/tts.service';
 import { WorkflowInterfaceService } from '@/services/workflow-interface.service';
 import { WorkflowsService } from '@/services/workflows.service';
+import { DistributionNodeRegistry } from '@/nodes/distribution/distribution-node-registry';
 import { TelegramOutputNode } from '@/nodes/distribution/telegram-output-node';
 import { DiscordOutputNode } from '@/nodes/distribution/discord-output-node';
 import { GoogleDriveOutputNode } from '@/nodes/distribution/google-drive-output-node';
@@ -107,7 +108,8 @@ import { GoogleDriveOutputNode } from '@/nodes/distribution/google-drive-output-
     QueueManagerService,
     JobRecoveryService,
 
-    // Distribution output nodes
+    // Distribution node registry + concrete nodes (self-register via OnModuleInit)
+    DistributionNodeRegistry,
     TelegramOutputNode,
     DiscordOutputNode,
     GoogleDriveOutputNode,
@@ -157,16 +159,8 @@ import { GoogleDriveOutputNode } from '@/nodes/distribution/google-drive-output-
       useExisting: FilesService,
     },
     {
-      provide: 'TelegramOutputNode',
-      useExisting: TelegramOutputNode,
-    },
-    {
-      provide: 'DiscordOutputNode',
-      useExisting: DiscordOutputNode,
-    },
-    {
-      provide: 'GoogleDriveOutputNode',
-      useExisting: GoogleDriveOutputNode,
+      provide: 'DistributionNodeRegistry',
+      useExisting: DistributionNodeRegistry,
     },
   ],
   controllers: [BullBoardController],

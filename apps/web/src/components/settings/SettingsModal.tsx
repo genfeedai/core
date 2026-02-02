@@ -1,5 +1,17 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { InfoBox, LinkCard, SettingsField } from '@/components/ui/settings-section';
+import { ToggleSwitch } from '@/components/ui/toggle-switch';
+import { type EdgeStyle, type ProviderType, useSettingsStore } from '@/store/settingsStore';
+import { useUIStore } from '@/store/uiStore';
 import {
   AlertTriangle,
   BookOpen,
@@ -13,18 +25,6 @@ import {
   X,
 } from 'lucide-react';
 import { memo, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { ToggleSwitch } from '@/components/ui/toggle-switch';
-import { InfoBox, LinkCard, SettingsField } from '@/components/ui/settings-section';
-import { type EdgeStyle, type ProviderType, useSettingsStore } from '@/store/settingsStore';
-import { useUIStore } from '@/store/uiStore';
 
 // =============================================================================
 // TYPES

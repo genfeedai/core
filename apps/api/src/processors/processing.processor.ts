@@ -15,14 +15,13 @@ import type {
   VideoStitchJobData,
   VoiceChangeJobData,
 } from '@/interfaces/job-data.interface';
-import type { TelegramOutputNode } from '@/nodes/distribution/telegram-output-node';
-import type { DiscordOutputNode } from '@/nodes/distribution/discord-output-node';
-import type { GoogleDriveOutputNode } from '@/nodes/distribution/google-drive-output-node';
 import type {
+  BaseOutputNode,
   GeneratedVideo,
   DeliveryConfig,
   DeliveryResult,
 } from '@/nodes/distribution/base-output-node';
+import type { DistributionNodeRegistry } from '@/nodes/distribution/distribution-node-registry';
 import { BaseProcessor } from '@/processors/base.processor';
 import { JOB_STATUS, QUEUE_CONCURRENCY, QUEUE_NAMES } from '@/queue/queue.constants';
 import type { ExecutionsService } from '@/services/executions.service';
@@ -55,12 +54,8 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
     private readonly ffmpegService: FFmpegService,
     @Inject(forwardRef(() => 'FilesService'))
     private readonly filesService: FilesService,
-    @Inject(forwardRef(() => 'TelegramOutputNode'))
-    private readonly telegramOutputNode: TelegramOutputNode,
-    @Inject(forwardRef(() => 'DiscordOutputNode'))
-    private readonly discordOutputNode: DiscordOutputNode,
-    @Inject(forwardRef(() => 'GoogleDriveOutputNode'))
-    private readonly googleDriveOutputNode: GoogleDriveOutputNode
+    @Inject(forwardRef(() => 'DistributionNodeRegistry'))
+    private readonly distributionNodeRegistry: DistributionNodeRegistry
   ) {
     super();
   }
@@ -537,22 +532,8 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
   /**
    * Map distribution node type to its output node implementation
    */
-  private getDistributionNode(
-    nodeType: string
-  ): {
-    node: TelegramOutputNode | DiscordOutputNode | GoogleDriveOutputNode;
-    platform: string;
-  } | null {
-    switch (nodeType) {
-      case 'telegramPost':
-        return { node: this.telegramOutputNode, platform: 'telegram' };
-      case 'discordPost':
-        return { node: this.discordOutputNode, platform: 'discord' };
-      case 'googleDriveUpload':
-        return { node: this.googleDriveOutputNode, platform: 'google_drive' };
-      default:
-        return null;
-    }
+  private getDistributionNode(nodeType: string): { node: BaseOutputNode; platform: string } | null {
+    return this.distributionNodeRegistry.get(nodeType);
   }
 
   /**

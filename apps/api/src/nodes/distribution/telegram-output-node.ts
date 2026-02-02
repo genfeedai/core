@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BaseOutputNode, GeneratedVideo, DeliveryConfig, DeliveryResult } from './base-output-node';
+import { DistributionNodeRegistry } from './distribution-node-registry';
 
 // Telegram Bot API types
 interface TelegramConfig {
@@ -20,14 +21,18 @@ interface TelegramMessage {
 }
 
 @Injectable()
-export class TelegramOutputNode extends BaseOutputNode {
+export class TelegramOutputNode extends BaseOutputNode implements OnModuleInit {
   readonly platform = 'telegram';
   readonly enabled: boolean;
 
   private readonly botToken: string;
   private readonly apiBaseUrl = 'https://api.telegram.org/bot';
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    @Inject(forwardRef(() => DistributionNodeRegistry))
+    private readonly registry: DistributionNodeRegistry
+  ) {
     super();
     this.botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN') || '';
     this.enabled = !!this.botToken;
@@ -35,6 +40,10 @@ export class TelegramOutputNode extends BaseOutputNode {
     if (!this.enabled) {
       this.logger.warn('Telegram output node disabled: TELEGRAM_BOT_TOKEN not configured');
     }
+  }
+
+  onModuleInit(): void {
+    this.registry.register('telegramPost', 'telegram', this);
   }
 
   async deliver(

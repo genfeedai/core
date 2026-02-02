@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BaseOutputNode, GeneratedVideo, DeliveryConfig, DeliveryResult } from './base-output-node';
+import { DistributionNodeRegistry } from './distribution-node-registry';
 
 // Discord webhook types
 interface DiscordConfig {
@@ -26,13 +27,17 @@ interface DiscordWebhookMessage {
 }
 
 @Injectable()
-export class DiscordOutputNode extends BaseOutputNode {
+export class DiscordOutputNode extends BaseOutputNode implements OnModuleInit {
   readonly platform = 'discord';
   readonly enabled: boolean;
 
   private readonly botToken: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    @Inject(forwardRef(() => DistributionNodeRegistry))
+    private readonly registry: DistributionNodeRegistry
+  ) {
     super();
     this.botToken = this.configService.get<string>('DISCORD_BOT_TOKEN') || '';
     this.enabled = !!this.botToken;
@@ -40,6 +45,10 @@ export class DiscordOutputNode extends BaseOutputNode {
     if (!this.enabled) {
       this.logger.warn('Discord output node disabled: DISCORD_BOT_TOKEN not configured');
     }
+  }
+
+  onModuleInit(): void {
+    this.registry.register('discordPost', 'discord', this);
   }
 
   async deliver(
