@@ -49,6 +49,9 @@ coverage/
 .vercel
 .netlify
 
+# Next.js auto-generated
+next-env.d.ts
+
 # User workflow data (uploads and generated outputs)
 data/*
 !data/.gitkeep
