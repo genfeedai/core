@@ -241,60 +241,64 @@ function MotionControlNodeComponent(props: NodeProps) {
           </>
         )}
 
-        <div className="grid grid-cols-2 gap-2">
-          {/* Duration */}
-          <div>
-            <label className="text-xs text-[var(--muted-foreground)]">Duration</label>
-            <Select value={String(nodeData.duration)} onValueChange={handleDurationChange}>
-              <SelectTrigger className="nodrag h-8 w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {DURATIONS.map((d) => (
-                  <SelectItem key={d.value} value={String(d.value)}>
-                    {d.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        {!isVideoTransferMode && (
+          <>
+            <div className="grid grid-cols-2 gap-2">
+              {/* Duration */}
+              <div>
+                <label className="text-xs text-[var(--muted-foreground)]">Duration</label>
+                <Select value={String(nodeData.duration)} onValueChange={handleDurationChange}>
+                  <SelectTrigger className="nodrag h-8 w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DURATIONS.map((d) => (
+                      <SelectItem key={d.value} value={String(d.value)}>
+                        {d.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* Aspect Ratio */}
-          <div>
-            <label className="text-xs text-[var(--muted-foreground)]">Aspect Ratio</label>
-            <Select value={nodeData.aspectRatio} onValueChange={handleAspectRatioChange}>
-              <SelectTrigger className="nodrag h-8 w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ASPECT_RATIOS.map((ratio) => (
-                  <SelectItem key={ratio.value} value={ratio.value}>
-                    {ratio.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+              {/* Aspect Ratio */}
+              <div>
+                <label className="text-xs text-[var(--muted-foreground)]">Aspect Ratio</label>
+                <Select value={nodeData.aspectRatio} onValueChange={handleAspectRatioChange}>
+                  <SelectTrigger className="nodrag h-8 w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ASPECT_RATIOS.map((ratio) => (
+                      <SelectItem key={ratio.value} value={ratio.value}>
+                        {ratio.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-        {/* Motion Strength Slider */}
-        <div>
-          <label className="text-xs text-[var(--muted-foreground)]">
-            Motion Strength: {nodeData.motionStrength}%
-          </label>
-          <Slider
-            value={[nodeData.motionStrength]}
-            min={0}
-            max={100}
-            step={5}
-            onValueChange={handleMotionStrengthChange}
-            className="nodrag w-full"
-          />
-          <div className="flex justify-between text-[10px] text-[var(--muted-foreground)]">
-            <span>Subtle</span>
-            <span>Strong</span>
-          </div>
-        </div>
+            {/* Motion Strength Slider */}
+            <div>
+              <label className="text-xs text-[var(--muted-foreground)]">
+                Motion Strength: {nodeData.motionStrength}%
+              </label>
+              <Slider
+                value={[nodeData.motionStrength]}
+                min={0}
+                max={100}
+                step={5}
+                onValueChange={handleMotionStrengthChange}
+                className="nodrag w-full"
+              />
+              <div className="flex justify-between text-[10px] text-[var(--muted-foreground)]">
+                <span>Subtle</span>
+                <span>Strong</span>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Output Preview */}
         {nodeData.outputVideo && (

@@ -200,7 +200,7 @@ function WorkflowSwitcherComponent({ className }: WorkflowSwitcherProps) {
         createPortal(
           <div
             ref={dropdownRef}
-            className="fixed z-[100] w-72 overflow-hidden rounded-lg border border-border bg-card shadow-lg"
+            className="fixed z-[100] w-80 overflow-hidden rounded-lg border border-border bg-card shadow-lg"
             style={{ top: dropdownPosition.top, left: dropdownPosition.left }}
           >
             {/* Header */}
@@ -209,7 +209,7 @@ function WorkflowSwitcherComponent({ className }: WorkflowSwitcherProps) {
             </div>
 
             {/* Content */}
-            <div className="max-h-64 overflow-auto">
+            <div className="max-h-80 overflow-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-4">
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />

@@ -508,9 +508,6 @@ export class ReplicateService {
     const baseInput: Record<string, unknown> = {
       image,
       prompt: input.prompt || '',
-      duration: input.duration ?? 5,
-      aspect_ratio: input.aspectRatio ?? '16:9',
-      negative_prompt: input.negativePrompt || '',
     };
 
     // Add seed if specified
@@ -518,7 +515,7 @@ export class ReplicateService {
       baseInput.seed = input.seed;
     }
 
-    // Handle video transfer mode
+    // Handle video transfer mode - only send params accepted by the model
     if (input.mode === 'video_transfer') {
       if (!input.video) {
         throw new Error('Video is required for video transfer mode');
@@ -527,12 +524,14 @@ export class ReplicateService {
       baseInput.video = this.convertLocalUrlToBase64(input.video);
       baseInput.keep_original_sound = input.keepOriginalSound ?? true;
       baseInput.character_orientation = input.characterOrientation ?? 'from_image';
-      // Quality: 'standard' or 'pro' maps to model tier
-      if (input.quality === 'pro') {
-        baseInput.quality = 'pro';
+      if (input.quality) {
+        baseInput.quality = input.quality;
       }
     } else {
-      // Non-video-transfer modes use motion_strength
+      // Non-video-transfer modes include duration, aspect_ratio, negative_prompt, motion_strength
+      baseInput.duration = input.duration ?? 5;
+      baseInput.aspect_ratio = input.aspectRatio ?? '16:9';
+      baseInput.negative_prompt = input.negativePrompt || '';
       baseInput.motion_strength = (input.motionStrength ?? 50) / 100; // Normalize to 0-1
 
       // Add trajectory points for trajectory or combined mode

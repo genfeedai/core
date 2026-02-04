@@ -10,7 +10,6 @@ import {
   FolderOpen,
   LayoutGrid,
   LayoutTemplate,
-  Plus,
   Redo2,
   Save,
   SaveAll,
@@ -178,6 +177,19 @@ export function Toolbar() {
     };
     input.click();
   }, []);
+
+  const handleOpenFolder = useCallback(async () => {
+    if (!workflowId) return;
+    try {
+      await fetch('/api/open-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workflowId }),
+      });
+    } catch (error) {
+      logger.error('Failed to open output folder', error, { context: 'Toolbar' });
+    }
+  }, [workflowId]);
 
   const handleDuplicate = useCallback(async () => {
     if (!workflowId) return;
@@ -391,6 +403,24 @@ export function Toolbar() {
         {/* Spacer */}
         <div className="flex-1" />
 
+        {/* Open Output Folder */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground"
+              onClick={handleOpenFolder}
+              disabled={!workflowId}
+            >
+              <FolderOpen className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p>Open output folder</p>
+          </TooltipContent>
+        </Tooltip>
+
         {/* Settings */}
         <Tooltip>
           <TooltipTrigger asChild>
@@ -405,24 +435,6 @@ export function Toolbar() {
           </TooltipTrigger>
           <TooltipContent side="bottom">
             <p>Settings</p>
-          </TooltipContent>
-        </Tooltip>
-
-        {/* Divider */}
-        <div className="h-8 w-px bg-border" />
-
-        {/* New Workflow */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Link href="/workflows/new">
-              <Button variant="secondary">
-                <Plus className="h-4 w-4 mr-1" />
-                New
-              </Button>
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>Create new workflow</p>
           </TooltipContent>
         </Tooltip>
 

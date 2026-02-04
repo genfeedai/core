@@ -85,7 +85,7 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
             // Video transfer settings
             keepOriginalSound: data.nodeData.keepOriginalSound,
             characterOrientation: data.nodeData.characterOrientation,
-            quality: data.nodeData.quality,
+            quality: data.nodeData.qualityMode === 'pro' ? 'pro' : 'standard',
           });
         } else {
           // Standard video generation

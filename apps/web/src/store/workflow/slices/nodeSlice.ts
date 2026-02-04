@@ -11,6 +11,11 @@ import type { WorkflowStore } from '../types';
 function getNodeOutput(node: WorkflowNode): string | null {
   const data = node.data as Record<string, unknown>;
   // Check standard outputs first, then input-type nodes that pass through their values
+  // Check outputImages array before outputImage — multi-output nodes (imageGen) may have
+  // outputImage: null with all results in outputImages
+  const outputImages = data.outputImages as string[] | undefined;
+  if (outputImages?.length) return outputImages[0];
+
   const output =
     data.outputImage ??
     data.outputVideo ??
@@ -104,18 +109,15 @@ function mapOutputToInput(
 
   // Image propagation
   if (outputType === 'image') {
+    // Upscale/reframe need inputType set to switch modes
+    if (['upscale', 'reframe'].includes(targetType)) {
+      return { inputImage: output, inputVideo: null, inputType: 'image' };
+    }
     // Nodes that accept single image input
     if (
-      [
-        'videoGen',
-        'lipSync',
-        'voiceChange',
-        'motionControl',
-        'reframe',
-        'upscale',
-        'resize',
-        'animation',
-      ].includes(targetType)
+      ['videoGen', 'lipSync', 'voiceChange', 'motionControl', 'resize', 'animation'].includes(
+        targetType
+      )
     ) {
       return { inputImage: output };
     }
@@ -127,12 +129,14 @@ function mapOutputToInput(
 
   // Video propagation
   if (outputType === 'video') {
+    // Upscale/reframe need inputType set to switch modes
+    if (['upscale', 'reframe'].includes(targetType)) {
+      return { inputVideo: output, inputImage: null, inputType: 'video' };
+    }
     if (
       [
         'lipSync',
         'voiceChange',
-        'reframe',
-        'upscale',
         'resize',
         'videoStitch',
         'videoTrim',
@@ -220,6 +224,7 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
     ];
     const hasOutputUpdate =
       'outputImage' in data ||
+      'outputImages' in data ||
       'outputVideo' in data ||
       'outputAudio' in data ||
       'outputText' in data;
@@ -229,13 +234,18 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
       // This fixes timing issues where get() reads state before set() commits
       if (hasOutputUpdate) {
         const dataRecord = data as Record<string, unknown>;
-        const outputValue =
-          dataRecord.outputImage ??
-          dataRecord.outputVideo ??
-          dataRecord.outputAudio ??
-          dataRecord.outputText;
-        if (typeof outputValue === 'string') {
-          propagateOutputsDownstream(nodeId, outputValue);
+        if ('outputImages' in dataRecord) {
+          // Let propagation read full array from node state
+          propagateOutputsDownstream(nodeId);
+        } else {
+          const outputValue =
+            dataRecord.outputImage ??
+            dataRecord.outputVideo ??
+            dataRecord.outputAudio ??
+            dataRecord.outputText;
+          if (typeof outputValue === 'string') {
+            propagateOutputsDownstream(nodeId, outputValue);
+          }
         }
       } else {
         propagateOutputsDownstream(nodeId);
@@ -327,6 +337,29 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
       for (const edge of downstreamEdges) {
         const targetNode = nodes.find((n) => n.id === edge.target);
         if (!targetNode) continue;
+
+        // OutputGallery: collect ALL images from source, not just first
+        if (targetNode.type === 'outputGallery') {
+          const sourceData = currentNode.data as Record<string, unknown>;
+          const allImages: string[] = [];
+
+          const outputImagesArr = sourceData.outputImages as string[] | undefined;
+          if (outputImagesArr?.length) {
+            allImages.push(...outputImagesArr);
+          } else if (typeof current.output === 'string') {
+            allImages.push(current.output);
+          }
+
+          if (allImages.length > 0) {
+            const existing = updates.get(edge.target) ?? {};
+            const existingImages = (existing.images as string[]) ?? [];
+            updates.set(edge.target, {
+              ...existing,
+              images: [...new Set([...existingImages, ...allImages])],
+            });
+          }
+          continue;
+        }
 
         const inputUpdate = mapOutputToInput(current.output, currentNode.type, targetNode.type);
         if (inputUpdate) {

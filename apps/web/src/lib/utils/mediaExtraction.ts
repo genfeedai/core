@@ -1,6 +1,7 @@
 import type {
   ImageGenNodeData,
   ImageInputNodeData,
+  MotionControlNodeData,
   NodeType,
   OutputNodeData,
   VideoGenNodeData,
@@ -39,6 +40,10 @@ export function getMediaFromNode(nodeType: NodeType, data: WorkflowNodeData): Me
     case 'videoInput': {
       const vidInputData = data as VideoInputNodeData;
       return { url: vidInputData.video, type: vidInputData.video ? 'video' : null };
+    }
+    case 'motionControl': {
+      const mcData = data as MotionControlNodeData;
+      return { url: mcData.outputVideo, type: mcData.outputVideo ? 'video' : null };
     }
     case 'output': {
       const outData = data as OutputNodeData;

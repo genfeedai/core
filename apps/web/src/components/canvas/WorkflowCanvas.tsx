@@ -10,6 +10,7 @@ import {
   type Node,
   ReactFlow,
   SelectionMode,
+  useReactFlow,
 } from '@xyflow/react';
 import { PanelLeft } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -77,6 +78,7 @@ export function WorkflowCanvas() {
 
   const { selectNode, setHighlightedNodeIds, highlightedNodeIds, showPalette, togglePalette } =
     useUIStore();
+  const reactFlow = useReactFlow();
   const { edgeStyle, showMinimap } = useSettingsStore();
   const isRunning = useExecutionStore((state) => state.isRunning);
   const currentNodeId = useExecutionStore((state) => state.currentNodeId);
@@ -299,16 +301,14 @@ export function WorkflowCanvas() {
       const nodeType = event.dataTransfer.getData('nodeType') as NodeType;
       if (!nodeType) return;
 
-      // Get the position relative to the canvas
-      const reactFlowBounds = event.currentTarget.getBoundingClientRect();
-      const position = {
-        x: event.clientX - reactFlowBounds.left,
-        y: event.clientY - reactFlowBounds.top,
-      };
+      const position = reactFlow.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
 
       addNode(nodeType, position);
     },
-    [addNode]
+    [addNode, reactFlow]
   );
 
   const handleDragOver = useCallback((event: React.DragEvent) => {

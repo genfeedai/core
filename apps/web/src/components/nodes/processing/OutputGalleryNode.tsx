@@ -26,21 +26,23 @@ function OutputGalleryNodeComponent(props: NodeProps) {
         if (!sourceNode) return;
 
         const sourceData = sourceNode.data as Record<string, unknown>;
-        let image: string | null = null;
 
-        if (sourceNode.type === 'imageInput') {
-          image = sourceData.image as string | null;
-        } else if (sourceNode.type === 'annotation') {
-          image = sourceData.outputImage as string | null;
-        } else if (sourceNode.type === 'imageGen') {
-          const images = sourceData.outputImages as string[] | undefined;
-          if (images?.length) {
-            connectedImages.push(...images);
-          } else {
-            image = sourceData.outputImage as string | null;
-          }
+        // Check outputImages array first (imageGen, imageGridSplit, etc.)
+        const images = sourceData.outputImages as string[] | undefined;
+        if (images?.length) {
+          connectedImages.push(...images);
+          return;
         }
 
+        // Check outputImage (annotation, upscale, reframe, resize, videoFrameExtract, etc.)
+        const outputImage = sourceData.outputImage as string | null;
+        if (outputImage) {
+          connectedImages.push(outputImage);
+          return;
+        }
+
+        // Check image field (imageInput nodes)
+        const image = sourceData.image as string | null;
         if (image) {
           connectedImages.push(image);
         }
