@@ -577,7 +577,7 @@ export class ReplicateService {
       ...input.schemaParams,
     };
 
-    const output = await this.replicate.run(modelId, {
+    const output = await this.replicate.run(modelId as `${string}/${string}`, {
       input: replicateInput,
     });
 
