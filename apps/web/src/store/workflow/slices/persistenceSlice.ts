@@ -143,6 +143,7 @@ export const createPersistenceSlice: StateCreator<WorkflowStore, [], [], Persist
         outputAudio?: string;
         prompt?: string;
         image?: string;
+        video?: string;
         audio?: string;
       };
 
@@ -151,7 +152,7 @@ export const createPersistenceSlice: StateCreator<WorkflowStore, [], [], Persist
       if (edge.sourceHandle === 'image') {
         value = sourceData.outputImage ?? sourceData.image ?? null;
       } else if (edge.sourceHandle === 'video') {
-        value = sourceData.outputVideo ?? null;
+        value = sourceData.outputVideo ?? sourceData.video ?? null;
       } else if (edge.sourceHandle === 'text') {
         value = sourceData.outputText ?? sourceData.prompt ?? null;
       } else if (edge.sourceHandle === 'audio') {

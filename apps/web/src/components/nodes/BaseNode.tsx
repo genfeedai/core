@@ -226,7 +226,18 @@ function BaseNodeComponent({
     async (e: React.MouseEvent) => {
       e.stopPropagation();
       if (nodeData.error) {
-        await navigator.clipboard.writeText(nodeData.error);
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(nodeData.error);
+        } else {
+          const textArea = document.createElement('textarea');
+          textArea.value = nodeData.error;
+          textArea.style.position = 'fixed';
+          textArea.style.opacity = '0';
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+        }
       }
     },
     [nodeData.error]

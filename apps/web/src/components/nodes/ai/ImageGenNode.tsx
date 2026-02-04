@@ -91,8 +91,8 @@ function ImageGenNodeComponent(props: NodeProps) {
   });
 
   const handleExpand = useCallback(() => {
-    openNodeDetailModal(id, 'preview');
-  }, [id, openNodeDetailModal]);
+    openNodeDetailModal(id, 'preview', selectedPreview ?? 0);
+  }, [id, openNodeDetailModal, selectedPreview]);
 
   const modelDisplayName =
     nodeData.selectedModel?.displayName ||

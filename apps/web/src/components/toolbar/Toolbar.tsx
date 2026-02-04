@@ -10,16 +10,12 @@ import {
   FolderOpen,
   LayoutGrid,
   LayoutTemplate,
-  Play,
-  PlayCircle,
   Plus,
   Redo2,
-  RotateCcw,
   Save,
   SaveAll,
   Settings,
   Sparkles,
-  Square,
   Store,
   Undo2,
   X,
@@ -76,25 +72,12 @@ function isValidWorkflow(data: unknown): data is WorkflowFile {
 
 export function Toolbar() {
   const router = useRouter();
-  const {
-    exportWorkflow,
-    selectedNodeIds,
-    workflowId,
-    workflowName,
-    duplicateWorkflowApi,
-    nodes,
-    validateWorkflow,
-  } = useWorkflowStore();
+  const { exportWorkflow, workflowId, workflowName, duplicateWorkflowApi, nodes } =
+    useWorkflowStore();
   const { undo, redo } = useWorkflowStore.temporal.getState();
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [showSaveAsDialog, setShowSaveAsDialog] = useState(false);
-  const isRunning = useExecutionStore((state) => state.isRunning);
-  const executeWorkflow = useExecutionStore((state) => state.executeWorkflow);
-  const executeSelectedNodes = useExecutionStore((state) => state.executeSelectedNodes);
-  const resumeFromFailed = useExecutionStore((state) => state.resumeFromFailed);
-  const canResumeFromFailed = useExecutionStore((state) => state.canResumeFromFailed);
-  const stopExecution = useExecutionStore((state) => state.stopExecution);
   const validationErrors = useExecutionStore((state) => state.validationErrors);
   const clearValidationErrors = useExecutionStore((state) => state.clearValidationErrors);
   const estimatedCost = useExecutionStore((state) => state.estimatedCost);
@@ -108,13 +91,6 @@ export function Toolbar() {
     if (!validationErrors?.errors.length) return [];
     return [...new Set(validationErrors.errors.map((e) => e.message))];
   }, [validationErrors]);
-
-  // Check if workflow can be executed (has nodes and passes validation)
-  const canRunWorkflow = useMemo(() => {
-    if (nodes.length === 0) return false;
-    const validation = validateWorkflow();
-    return validation.isValid;
-  }, [nodes, validateWorkflow]);
 
   // Subscribe to temporal state changes for undo/redo button states
   useEffect(() => {
@@ -202,29 +178,6 @@ export function Toolbar() {
     };
     input.click();
   }, []);
-
-  const handleRunStop = useCallback(() => {
-    if (isRunning) {
-      stopExecution();
-    } else {
-      executeWorkflow();
-    }
-  }, [isRunning, executeWorkflow, stopExecution]);
-
-  const handleRunSelected = useCallback(() => {
-    if (!isRunning && selectedNodeIds.length > 0) {
-      executeSelectedNodes();
-    }
-  }, [isRunning, selectedNodeIds.length, executeSelectedNodes]);
-
-  const handleResume = useCallback(() => {
-    if (canResumeFromFailed()) {
-      resumeFromFailed();
-    }
-  }, [canResumeFromFailed, resumeFromFailed]);
-
-  const hasSelection = selectedNodeIds.length > 0;
-  const showResumeButton = canResumeFromFailed();
 
   const handleDuplicate = useCallback(async () => {
     if (!workflowId) return;
@@ -470,60 +423,6 @@ export function Toolbar() {
           </TooltipTrigger>
           <TooltipContent side="bottom">
             <p>Create new workflow</p>
-          </TooltipContent>
-        </Tooltip>
-
-        {/* Run Controls */}
-        {showResumeButton && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" onClick={handleResume} disabled={isRunning}>
-                <RotateCcw className="h-4 w-4" />
-                Resume
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>Resume from failed node</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
-        {hasSelection && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="secondary" onClick={handleRunSelected} disabled={isRunning}>
-                <PlayCircle className="h-4 w-4" />
-                Run Selected ({selectedNodeIds.length})
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>Execute only selected nodes</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
-
-        {/* Run Workflow */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant={isRunning ? 'destructive' : canRunWorkflow ? 'default' : 'secondary'}
-              onClick={handleRunStop}
-              disabled={!isRunning && !canRunWorkflow}
-            >
-              {isRunning ? (
-                <>
-                  <Square className="h-4 w-4" />
-                  Stop
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4 fill-current" />
-                  Run Workflow
-                </>
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>{isRunning ? 'Stop execution' : 'Execute all nodes'}</p>
           </TooltipContent>
         </Tooltip>
 

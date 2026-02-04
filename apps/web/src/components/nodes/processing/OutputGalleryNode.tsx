@@ -33,7 +33,12 @@ function OutputGalleryNodeComponent(props: NodeProps) {
         } else if (sourceNode.type === 'annotation') {
           image = sourceData.outputImage as string | null;
         } else if (sourceNode.type === 'imageGen') {
-          image = sourceData.outputImage as string | null;
+          const images = sourceData.outputImages as string[] | undefined;
+          if (images?.length) {
+            connectedImages.push(...images);
+          } else {
+            image = sourceData.outputImage as string | null;
+          }
         }
 
         if (image) {

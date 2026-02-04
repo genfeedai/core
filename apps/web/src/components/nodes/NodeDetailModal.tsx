@@ -2,7 +2,7 @@
 
 import type { NodeType, PromptNodeData, WorkflowNodeData } from '@genfeedai/types';
 import { NODE_DEFINITIONS } from '@genfeedai/types';
-import { Download, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, X, ZoomIn, ZoomOut } from 'lucide-react';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,8 @@ import { useWorkflowStore } from '@/store/workflowStore';
 const PROMPT_NODE_TYPES: NodeType[] = ['prompt'];
 
 export function NodeDetailModal() {
-  const { activeModal, nodeDetailNodeId, closeNodeDetailModal } = useUIStore();
+  const { activeModal, nodeDetailNodeId, nodeDetailStartIndex, closeNodeDetailModal } =
+    useUIStore();
   const { getNodeById } = useWorkflowStore();
   const { openEditor } = usePromptEditorStore();
 
@@ -23,6 +24,7 @@ export function NodeDetailModal() {
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   // Get the node being displayed
   const node = useMemo(() => {
@@ -53,11 +55,30 @@ export function NodeDetailModal() {
     return NODE_DEFINITIONS[node.type as NodeType];
   }, [node]);
 
-  // Reset zoom and pan when node changes
-  useEffect(() => {
+  // Derive display URL and image count for pagination
+  const imageUrls = mediaInfo.urls ?? [];
+  const hasMultipleImages = imageUrls.length > 1;
+  const displayUrl = hasMultipleImages ? (imageUrls[currentIndex] ?? mediaInfo.url) : mediaInfo.url;
+
+  const goToPrevious = useCallback(() => {
+    setCurrentIndex((prev) => Math.max(prev - 1, 0));
     setZoomLevel(1);
     setPanOffset({ x: 0, y: 0 });
   }, []);
+
+  const goToNext = useCallback(() => {
+    setCurrentIndex((prev) => Math.min(prev + 1, imageUrls.length - 1));
+    setZoomLevel(1);
+    setPanOffset({ x: 0, y: 0 });
+  }, [imageUrls.length]);
+
+  // Reset zoom, pan, and image index when node changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: nodeDetailNodeId is an intentional trigger to reset state when a different node opens
+  useEffect(() => {
+    setZoomLevel(1);
+    setPanOffset({ x: 0, y: 0 });
+    setCurrentIndex(nodeDetailStartIndex);
+  }, [nodeDetailNodeId, nodeDetailStartIndex]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -77,11 +98,17 @@ export function NodeDetailModal() {
         setZoomLevel(1);
         setPanOffset({ x: 0, y: 0 });
       }
+      if (e.key === 'ArrowLeft') {
+        goToPrevious();
+      }
+      if (e.key === 'ArrowRight') {
+        goToNext();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeModal, closeNodeDetailModal]);
+  }, [activeModal, closeNodeDetailModal, goToPrevious, goToNext]);
 
   // Pan handlers
   const handleMouseDown = useCallback(
@@ -112,15 +139,17 @@ export function NodeDetailModal() {
 
   // Download handler
   const handleDownload = useCallback(() => {
-    if (!mediaInfo.url) return;
+    const url = displayUrl ?? mediaInfo.url;
+    if (!url) return;
 
     const link = document.createElement('a');
-    link.href = mediaInfo.url;
-    link.download = `${node?.data.label || 'output'}.${mediaInfo.type === 'video' ? 'mp4' : 'png'}`;
+    link.href = url;
+    const suffix = hasMultipleImages ? `_${currentIndex + 1}` : '';
+    link.download = `${node?.data.label || 'output'}${suffix}.${mediaInfo.type === 'video' ? 'mp4' : 'png'}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  }, [mediaInfo, node]);
+  }, [displayUrl, mediaInfo, node, hasMultipleImages, currentIndex]);
 
   // Don't render for prompt nodes (they redirect to prompt editor)
   if (activeModal !== 'nodeDetail' || !node || !nodeDef) {
@@ -150,7 +179,7 @@ export function NodeDetailModal() {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {mediaInfo.url && (
+            {displayUrl && (
               <Button variant="outline" size="sm" onClick={handleDownload}>
                 <Download className="h-4 w-4 mr-1" />
                 Download
@@ -172,7 +201,7 @@ export function NodeDetailModal() {
             onMouseLeave={handleMouseUp}
             style={{ cursor: zoomLevel > 1 ? (isPanning ? 'grabbing' : 'grab') : 'default' }}
           >
-            {mediaInfo.url ? (
+            {displayUrl ? (
               <div
                 className="transition-transform duration-100"
                 style={{
@@ -181,7 +210,7 @@ export function NodeDetailModal() {
               >
                 {mediaInfo.type === 'image' && (
                   <Image
-                    src={mediaInfo.url}
+                    src={displayUrl}
                     alt={nodeData.label}
                     width={800}
                     height={600}
@@ -191,7 +220,7 @@ export function NodeDetailModal() {
                 )}
                 {mediaInfo.type === 'video' && (
                   <video
-                    src={mediaInfo.url}
+                    src={displayUrl}
                     controls
                     autoPlay
                     loop
@@ -206,8 +235,39 @@ export function NodeDetailModal() {
               </div>
             )}
 
+            {/* Previous/Next navigation arrows */}
+            {hasMultipleImages && currentIndex > 0 && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={goToPrevious}
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-card/80 hover:bg-card border border-border shadow-md"
+                title="Previous image (←)"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+            )}
+            {hasMultipleImages && currentIndex < imageUrls.length - 1 && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={goToNext}
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-card/80 hover:bg-card border border-border shadow-md"
+                title="Next image (→)"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </Button>
+            )}
+
+            {/* Image counter */}
+            {hasMultipleImages && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-card/80 border border-border rounded-full px-3 py-1 text-xs text-muted-foreground shadow-md">
+                {currentIndex + 1} / {imageUrls.length}
+              </div>
+            )}
+
             {/* Zoom controls */}
-            {mediaInfo.url && mediaInfo.type === 'image' && (
+            {displayUrl && mediaInfo.type === 'image' && (
               <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-card border border-border rounded-lg p-1">
                 <Button
                   variant="ghost"

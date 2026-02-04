@@ -52,8 +52,8 @@
     "packages/*"
   ],
   "dependencies": {
-    "@sentry/nextjs": "^10.38.0",
-    "@sentry/node": "^10.38.0",
+    "@sentry/nextjs": "10.38.0",
+    "@sentry/node": "10.38.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "zundo": "2.3.0"

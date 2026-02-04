@@ -7,7 +7,7 @@ import type {
   MotionControlNodeData,
 } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { AlertCircle, Expand, Loader2, Play, RefreshCw, Video } from 'lucide-react';
+import { AlertCircle, Expand, Play, RefreshCw, Square, Video } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { Button } from '@/components/ui/button';
@@ -62,7 +62,7 @@ function MotionControlNodeComponent(props: NodeProps) {
   const nodeData = data as MotionControlNodeData;
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const openNodeDetailModal = useUIStore((state) => state.openNodeDetailModal);
-  const { handleGenerate } = useNodeExecution(id);
+  const { handleGenerate, handleStop } = useNodeExecution(id);
   const { canGenerate } = useCanGenerate({
     nodeId: id,
     nodeType: type as 'motionControl',
@@ -134,17 +134,36 @@ function MotionControlNodeComponent(props: NodeProps) {
   const isVideoTransferMode = nodeData.mode === 'video_transfer';
 
   const headerActions = useMemo(
-    () =>
-      nodeData.outputVideo ? (
-        <Button variant="ghost" size="icon-sm" onClick={handleExpand} title="Expand preview">
-          <Expand className="h-3 w-3" />
-        </Button>
-      ) : null,
-    [nodeData.outputVideo, handleExpand]
+    () => (
+      <>
+        {nodeData.outputVideo && (
+          <Button variant="ghost" size="icon-sm" onClick={handleExpand} title="Expand preview">
+            <Expand className="h-3 w-3" />
+          </Button>
+        )}
+        {nodeData.status === 'processing' ? (
+          <Button variant="destructive" size="sm" onClick={handleStop}>
+            <Square className="h-4 w-4 fill-current" />
+            Generating
+          </Button>
+        ) : (
+          <Button
+            variant={canGenerate ? 'default' : 'secondary'}
+            size="sm"
+            onClick={handleGenerate}
+            disabled={!canGenerate}
+          >
+            <Play className="h-4 w-4 fill-current" />
+            Generate
+          </Button>
+        )}
+      </>
+    ),
+    [nodeData.outputVideo, nodeData.status, handleGenerate, handleStop, handleExpand, canGenerate]
   );
 
   return (
-    <BaseNode {...props} headerActions={headerActions}>
+    <BaseNode {...props} headerActions={headerActions} hideStatusIndicator>
       <div className="space-y-3">
         {/* Mode Selection */}
         <div>
@@ -295,24 +314,6 @@ function MotionControlNodeComponent(props: NodeProps) {
               <RefreshCw className="w-3 h-3" />
             </Button>
           </div>
-        )}
-
-        {/* Generate Button */}
-        {!nodeData.outputVideo && (
-          <Button
-            variant={canGenerate ? 'default' : 'secondary'}
-            size="sm"
-            onClick={handleGenerate}
-            disabled={!canGenerate || nodeData.status === 'processing'}
-            className="w-full"
-          >
-            {nodeData.status === 'processing' ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Play className="w-4 h-4" />
-            )}
-            {nodeData.status === 'processing' ? 'Generating...' : 'Generate Motion'}
-          </Button>
         )}
 
         {/* Help text for required inputs */}

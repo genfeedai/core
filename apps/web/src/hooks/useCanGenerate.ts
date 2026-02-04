@@ -48,7 +48,7 @@ function extractOutputValue(
   } else if (handleType === 'image') {
     return (data.outputImage ?? data.image) as string | undefined;
   } else if (handleType === 'video') {
-    return data.outputVideo as string | undefined;
+    return (data.outputVideo ?? data.video) as string | undefined;
   } else if (handleType === 'audio') {
     return (data.outputAudio ?? data.audio) as string | undefined;
   }
@@ -97,7 +97,7 @@ export function useCanGenerate({
     },
     [incomingEdges]
   );
-  const connectedNodeData = useWorkflowStore(useShallow(connectedOutputsSelector));
+  useWorkflowStore(useShallow(connectedOutputsSelector));
 
   return useMemo(() => {
     const missingItems: MissingItem[] = [];

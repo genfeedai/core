@@ -10,6 +10,7 @@ import type {
 
 export interface MediaInfo {
   url: string | null;
+  urls?: string[];
   type: 'image' | 'video' | null;
 }
 
@@ -20,7 +21,12 @@ export function getMediaFromNode(nodeType: NodeType, data: WorkflowNodeData): Me
   switch (nodeType) {
     case 'imageGen': {
       const imgData = data as ImageGenNodeData;
-      return { url: imgData.outputImage, type: imgData.outputImage ? 'image' : null };
+      const urls = imgData.outputImages?.length ? imgData.outputImages : [];
+      return {
+        url: imgData.outputImage,
+        urls,
+        type: imgData.outputImage || urls.length ? 'image' : null,
+      };
     }
     case 'videoGen': {
       const vidData = data as VideoGenNodeData;

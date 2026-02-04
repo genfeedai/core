@@ -32,6 +32,7 @@ interface UIStore {
   // Node detail modal
   nodeDetailNodeId: string | null;
   nodeDetailActiveTab: NodeDetailTab;
+  nodeDetailStartIndex: number;
 
   // Notifications
   notifications: Notification[];
@@ -47,7 +48,7 @@ interface UIStore {
   setHighlightedNodeIds: (ids: string[]) => void;
   openModal: (modal: ModalType) => void;
   closeModal: () => void;
-  openNodeDetailModal: (nodeId: string, tab?: NodeDetailTab) => void;
+  openNodeDetailModal: (nodeId: string, tab?: NodeDetailTab, startIndex?: number) => void;
   closeNodeDetailModal: () => void;
   setNodeDetailTab: (tab: NodeDetailTab) => void;
   addNotification: (notification: Omit<Notification, 'id'>) => void;
@@ -75,6 +76,7 @@ export const useUIStore = create<UIStore>((set) => ({
   activeModal: null,
   nodeDetailNodeId: null,
   nodeDetailActiveTab: 'preview',
+  nodeDetailStartIndex: 0,
   notifications: [],
 
   togglePalette: () => {
@@ -117,12 +119,22 @@ export const useUIStore = create<UIStore>((set) => ({
     set({ activeModal: null });
   },
 
-  openNodeDetailModal: (nodeId, tab = 'preview') => {
-    set({ activeModal: 'nodeDetail', nodeDetailNodeId: nodeId, nodeDetailActiveTab: tab });
+  openNodeDetailModal: (nodeId, tab = 'preview', startIndex = 0) => {
+    set({
+      activeModal: 'nodeDetail',
+      nodeDetailNodeId: nodeId,
+      nodeDetailActiveTab: tab,
+      nodeDetailStartIndex: startIndex,
+    });
   },
 
   closeNodeDetailModal: () => {
-    set({ activeModal: null, nodeDetailNodeId: null, nodeDetailActiveTab: 'preview' });
+    set({
+      activeModal: null,
+      nodeDetailNodeId: null,
+      nodeDetailActiveTab: 'preview',
+      nodeDetailStartIndex: 0,
+    });
   },
 
   setNodeDetailTab: (tab) => {

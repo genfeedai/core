@@ -11,7 +11,7 @@ import { DebugPanel } from '@/components/panels/DebugPanel';
 import { NodePalette } from '@/components/panels/NodePalette';
 import { PromptEditorModal } from '@/components/prompt-editor/PromptEditorModal';
 import { CreatePromptModal, PromptLibraryModal } from '@/components/prompt-library';
-import { Toolbar } from '@/components/toolbar';
+import { BottomBar, Toolbar } from '@/components/toolbar';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useGlobalShortcuts } from '@/hooks/useGlobalShortcuts';
 import { usePromptLibraryStore } from '@/store/promptLibraryStore';
@@ -182,6 +182,7 @@ export default function WorkflowEditorPage() {
           {showAIGenerator && <AIGeneratorPanel />}
           {debugMode && showDebugPanel && <DebugPanel />}
         </div>
+        <BottomBar />
       </main>
       <PromptLibraryModal />
       {/* Render CreatePromptModal independently when library modal is closed (e.g., saving from PromptNode) */}
