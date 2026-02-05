@@ -1,6 +1,7 @@
 import { OnWorkerEvent, Processor } from '@nestjs/bullmq';
 import { forwardRef, Inject, Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
+import { KlingQuality } from '@genfeedai/types';
 import type {
   JobResult,
   MotionControlJobData,
@@ -85,7 +86,10 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
             // Video transfer settings
             keepOriginalSound: data.nodeData.keepOriginalSound,
             characterOrientation: data.nodeData.characterOrientation,
-            quality: data.nodeData.qualityMode === 'pro' ? 'pro' : 'standard',
+            quality:
+              data.nodeData.qualityMode === KlingQuality.PRO
+                ? KlingQuality.PRO
+                : KlingQuality.STANDARD,
           });
         } else {
           // Standard video generation

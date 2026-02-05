@@ -1,5 +1,5 @@
 import type { Types } from 'mongoose';
-import { ReframeNodeType, UpscaleNodeType } from '@genfeedai/types';
+import { KlingQuality, ReframeNodeType, UpscaleNodeType } from '@genfeedai/types';
 
 export interface BaseJobData {
   executionId: string;
@@ -102,7 +102,7 @@ export interface MotionControlJobData extends NodeJobData {
     seed?: number;
     keepOriginalSound?: boolean;
     characterOrientation?: 'from_image' | 'left' | 'right';
-    quality?: 'standard' | 'pro';
+    qualityMode?: KlingQuality;
   };
 }
 

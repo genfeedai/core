@@ -1,4 +1,5 @@
 import { PRICING } from '@genfeedai/core';
+import { KlingQuality } from '@genfeedai/types';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Replicate from 'replicate';
@@ -170,7 +171,7 @@ export interface MotionControlInput {
   // Video transfer settings
   keepOriginalSound?: boolean;
   characterOrientation?: 'from_image' | 'left' | 'right';
-  quality?: 'standard' | 'pro';
+  quality?: KlingQuality;
 }
 
 export interface PredictionResult {

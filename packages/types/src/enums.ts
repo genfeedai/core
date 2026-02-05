@@ -26,6 +26,11 @@ export enum UpscaleNodeType {
 /**
  * Processing node types - all nodes handled by the processing processor
  */
+export enum KlingQuality {
+  STANDARD = 'std',
+  PRO = 'pro',
+}
+
 export enum ProcessingNodeType {
   // Reframe (Luma)
   REFRAME = 'reframe',

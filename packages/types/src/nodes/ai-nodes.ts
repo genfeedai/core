@@ -269,8 +269,9 @@ export type CameraMovement =
   | 'dolly_in'
   | 'dolly_out';
 
-// Kling v2.6 Motion Control quality mode
-export type KlingQualityMode = 'std' | 'pro';
+// Re-export enum as type alias for backwards compat
+export { KlingQuality } from '../enums';
+export type KlingQualityMode = `${import('../enums').KlingQuality}`;
 
 // Character orientation for video transfer
 export type CharacterOrientation = 'image' | 'video';
