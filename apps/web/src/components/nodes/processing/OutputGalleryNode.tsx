@@ -2,19 +2,21 @@
 
 import type { OutputGalleryNodeData } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useShallow } from 'zustand/react/shallow';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { useWorkflowStore } from '@/store/workflowStore';
 
 function OutputGalleryNodeComponent(props: NodeProps) {
   const { id, data } = props;
   const nodeData = data as OutputGalleryNodeData;
-  const edges = useWorkflowStore((state) => state.edges);
-  const nodes = useWorkflowStore((state) => state.nodes);
+  const { edges, nodes } = useWorkflowStore(
+    useShallow((state) => ({ edges: state.edges, nodes: state.nodes }))
+  );
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const isLightboxOpen = lightboxIndex !== null;
 
-  // Collect images in real-time from connected nodes
   const displayImages = useMemo(() => {
     const executionImages = [...(nodeData.images || [])];
 
@@ -27,21 +29,18 @@ function OutputGalleryNodeComponent(props: NodeProps) {
 
         const sourceData = sourceNode.data as Record<string, unknown>;
 
-        // Check outputImages array first (imageGen, imageGridSplit, etc.)
         const images = sourceData.outputImages as string[] | undefined;
         if (images?.length) {
           connectedImages.push(...images);
           return;
         }
 
-        // Check outputImage (annotation, upscale, reframe, resize, videoFrameExtract, etc.)
         const outputImage = sourceData.outputImage as string | null;
         if (outputImage) {
           connectedImages.push(outputImage);
           return;
         }
 
-        // Check image field (imageInput nodes)
         const image = sourceData.image as string | null;
         if (image) {
           connectedImages.push(image);
@@ -59,21 +58,24 @@ function OutputGalleryNodeComponent(props: NodeProps) {
     setLightboxIndex(null);
   }, []);
 
-  const navigateLightbox = useCallback(
-    (direction: 'prev' | 'next') => {
-      if (lightboxIndex === null) return;
-      if (direction === 'prev' && lightboxIndex > 0) {
-        setLightboxIndex(lightboxIndex - 1);
-      } else if (direction === 'next' && lightboxIndex < displayImages.length - 1) {
-        setLightboxIndex(lightboxIndex + 1);
-      }
-    },
-    [lightboxIndex, displayImages.length]
-  );
+  const imageCountRef = useRef(displayImages.length);
+  imageCountRef.current = displayImages.length;
+
+  const navigateLightbox = useCallback((direction: 'prev' | 'next') => {
+    setLightboxIndex((prev) => {
+      if (prev === null) return null;
+      if (direction === 'prev' && prev > 0) return prev - 1;
+      if (direction === 'next' && prev < imageCountRef.current - 1) return prev + 1;
+      return prev;
+    });
+  }, []);
+
+  const displayImagesRef = useRef(displayImages);
+  displayImagesRef.current = displayImages;
 
   const downloadImage = useCallback(() => {
     if (lightboxIndex === null) return;
-    const image = displayImages[lightboxIndex];
+    const image = displayImagesRef.current[lightboxIndex];
     if (!image) return;
 
     const link = document.createElement('a');
@@ -82,11 +84,10 @@ function OutputGalleryNodeComponent(props: NodeProps) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  }, [lightboxIndex, displayImages]);
+  }, [lightboxIndex]);
 
-  // Keyboard navigation for lightbox
   useEffect(() => {
-    if (lightboxIndex === null) return;
+    if (!isLightboxOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
@@ -104,7 +105,7 @@ function OutputGalleryNodeComponent(props: NodeProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [lightboxIndex, closeLightbox, navigateLightbox]);
+  }, [isLightboxOpen, closeLightbox, navigateLightbox]);
 
   return (
     <>
@@ -120,7 +121,7 @@ function OutputGalleryNodeComponent(props: NodeProps) {
             <div className="grid grid-cols-3 gap-1.5 p-1">
               {displayImages.map((img, idx) => (
                 <button
-                  key={idx}
+                  key={img}
                   onClick={() => openLightbox(idx)}
                   className="aspect-square rounded border border-border hover:border-primary overflow-hidden transition-colors"
                 >
@@ -132,8 +133,7 @@ function OutputGalleryNodeComponent(props: NodeProps) {
         )}
       </BaseNode>
 
-      {/* Lightbox Portal */}
-      {lightboxIndex !== null &&
+      {isLightboxOpen &&
         typeof document !== 'undefined' &&
         createPortal(
           <div
@@ -147,7 +147,6 @@ function OutputGalleryNodeComponent(props: NodeProps) {
                 className="max-w-full max-h-[90vh] object-contain rounded"
               />
 
-              {/* Close button */}
               <button
                 onClick={closeLightbox}
                 className="absolute top-4 right-4 w-8 h-8 bg-white/10 hover:bg-white/20 rounded text-white text-sm transition-colors flex items-center justify-center"
@@ -163,7 +162,6 @@ function OutputGalleryNodeComponent(props: NodeProps) {
                 </svg>
               </button>
 
-              {/* Download button */}
               <button
                 onClick={downloadImage}
                 className="absolute top-4 left-4 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded text-white text-xs font-medium transition-colors flex items-center gap-1.5"
@@ -184,7 +182,6 @@ function OutputGalleryNodeComponent(props: NodeProps) {
                 Download
               </button>
 
-              {/* Left arrow */}
               {lightboxIndex > 0 && (
                 <button
                   onClick={() => navigateLightbox('prev')}
@@ -202,7 +199,6 @@ function OutputGalleryNodeComponent(props: NodeProps) {
                 </button>
               )}
 
-              {/* Right arrow */}
               {lightboxIndex < displayImages.length - 1 && (
                 <button
                   onClick={() => navigateLightbox('next')}
@@ -220,7 +216,6 @@ function OutputGalleryNodeComponent(props: NodeProps) {
                 </button>
               )}
 
-              {/* Image counter */}
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/50 rounded text-white text-xs font-medium">
                 {lightboxIndex + 1} / {displayImages.length}
               </div>

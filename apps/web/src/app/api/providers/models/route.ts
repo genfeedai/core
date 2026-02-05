@@ -1,9 +1,7 @@
 import type { ModelCapability, ModelUseCase, ProviderModel, ProviderType } from '@genfeedai/types';
-// Import the cached schemas (includes cover images from Replicate API)
 import replicateSchemas from '@genfeedai/types/replicate/schemas.json';
 import { type NextRequest, NextResponse } from 'next/server';
 
-// Helper to check which providers have env credentials
 function getConfiguredProviders(): Set<ProviderType> {
   const configured = new Set<ProviderType>();
 
@@ -20,7 +18,6 @@ function getConfiguredProviders(): Set<ProviderType> {
   return configured;
 }
 
-// Model metadata (capabilities and pricing not in schema)
 const MODEL_METADATA: Record<
   string,
   {
@@ -30,7 +27,6 @@ const MODEL_METADATA: Record<
     useCases?: ModelUseCase[];
   }
 > = {
-  // Image models
   'google/nano-banana': {
     capabilities: ['text-to-image'],
     pricing: '$0.039/image',
@@ -73,7 +69,6 @@ const MODEL_METADATA: Record<
     displayName: 'FLUX Kontext [dev]',
     useCases: ['style-transfer', 'character-consistent', 'image-variation'],
   },
-  // Video models
   'google/veo-3.1-fast': {
     capabilities: ['text-to-video', 'image-to-video'],
     pricing: '$0.10-0.15/sec',
@@ -110,13 +105,16 @@ const MODEL_METADATA: Record<
     displayName: 'Luma Ray',
     useCases: ['general'],
   },
-  // LLM (text generation)
   'meta/meta-llama-3.1-405b-instruct': {
     capabilities: ['text-generation'],
     pricing: '$0.0032/1K tokens',
     displayName: 'Llama 3.1 405B Instruct',
   },
-  // Lip-sync
+  'anthropic/claude-4.5-sonnet': {
+    capabilities: ['text-generation'],
+    pricing: '$0.003/$0.015 per 1K tokens',
+    displayName: 'Claude 4.5 Sonnet',
+  },
   'sync/lipsync-2': {
     capabilities: ['image-to-video'],
     pricing: '$0.05/sec',
@@ -129,7 +127,6 @@ const MODEL_METADATA: Record<
   },
 };
 
-// Auto-detect use cases from input schema fields
 function detectUseCases(schema: Record<string, unknown> | undefined): ModelUseCase[] {
   if (!schema) return [];
 
@@ -152,16 +149,12 @@ function detectUseCases(schema: Record<string, unknown> | undefined): ModelUseCa
   return detected;
 }
 
-// Build Replicate models from cached schemas (module-level cache)
 const REPLICATE_MODELS: ProviderModel[] = replicateSchemas
   .filter((schema) => MODEL_METADATA[schema.modelId])
   .map((schema) => {
     const meta = MODEL_METADATA[schema.modelId];
-    // Extract component schemas that contain enum definitions (aspect_ratio, duration, etc.)
     const componentSchemas = (schema as { componentSchemas?: Record<string, unknown> })
       .componentSchemas;
-
-    // Merge explicit use cases with auto-detected ones from schema
     const explicitUseCases = meta.useCases || [];
     const schemaUseCases = detectUseCases(
       schema.inputSchema as Record<string, unknown> | undefined
@@ -182,7 +175,6 @@ const REPLICATE_MODELS: ProviderModel[] = replicateSchemas
     };
   });
 
-// fal.ai models (static - they don't have a public model listing API)
 const FAL_MODELS: ProviderModel[] = [
   {
     id: 'fal-ai/flux/schnell',
@@ -210,6 +202,18 @@ const FAL_MODELS: ProviderModel[] = [
   },
 ];
 
+const REPLICATE_LLM_MODELS: ProviderModel[] = [
+  {
+    id: 'anthropic/claude-4.5-sonnet',
+    displayName: 'Claude 4.5 Sonnet',
+    provider: 'replicate',
+    capabilities: ['text-generation'],
+    description: 'Anthropic Claude 4.5 Sonnet — fast, intelligent text generation',
+    pricing: '$0.003/$0.015 per 1K tokens',
+    useCases: ['general'],
+  },
+];
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
@@ -218,49 +222,44 @@ export async function GET(request: NextRequest) {
   const useCaseParam = searchParams.get('useCase') as ModelUseCase | null;
   const query = searchParams.get('query')?.toLowerCase();
 
-  // Parse capabilities filter
   const capabilities = capabilitiesParam
     ? (capabilitiesParam.split(',') as ModelCapability[])
     : null;
 
-  // Get configured providers from env
   const configuredProviders = getConfiguredProviders();
-  const configuredProvidersList = Array.from(configuredProviders) as ProviderType[];
 
-  // Build models list from configured providers
   const allModels: ProviderModel[] = [];
 
-  // Add Replicate models from cached schemas (includes cover images)
   if (configuredProviders.has('replicate')) {
     allModels.push(...REPLICATE_MODELS);
+    const existingIds = new Set(allModels.map((m) => m.id));
+    for (const model of REPLICATE_LLM_MODELS) {
+      if (!existingIds.has(model.id)) {
+        allModels.push(model);
+      }
+    }
   }
 
-  // Add fal.ai models if configured
   if (configuredProviders.has('fal')) {
     allModels.push(...FAL_MODELS);
   }
 
-  // Filter to only configured providers
   let filteredModels = allModels.filter((m) => configuredProviders.has(m.provider));
 
-  // Filter by specific provider (if requested and configured)
   if (provider && configuredProviders.has(provider)) {
     filteredModels = filteredModels.filter((m) => m.provider === provider);
   }
 
-  // Filter by capabilities
   if (capabilities?.length) {
     filteredModels = filteredModels.filter((m) =>
       m.capabilities.some((c) => capabilities.includes(c))
     );
   }
 
-  // Filter by use case
   if (useCaseParam) {
     filteredModels = filteredModels.filter((m) => m.useCases?.includes(useCaseParam));
   }
 
-  // Filter by search query
   if (query) {
     filteredModels = filteredModels.filter(
       (m) =>
@@ -272,6 +271,6 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     models: filteredModels,
-    configuredProviders: configuredProvidersList,
+    configuredProviders: Array.from(configuredProviders),
   });
 }

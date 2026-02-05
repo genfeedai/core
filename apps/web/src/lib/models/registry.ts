@@ -1,14 +1,5 @@
 import type { ImageModel, LipSyncModel, TextModel, VideoModel } from '@genfeedai/types';
 
-/**
- * Centralized Model Registry
- *
- * Defines all available AI models and their mappings between:
- * - Internal type identifiers (used in node data)
- * - API model IDs (used when calling provider APIs)
- * - Display labels (shown in UI)
- */
-
 // =============================================================================
 // IMAGE MODELS
 // =============================================================================
@@ -24,12 +15,10 @@ export const IMAGE_MODELS: ImageModelConfig[] = [
   { value: 'nano-banana-pro', label: 'Nano Banana Pro', apiId: 'google/nano-banana-pro' },
 ];
 
-/** Maps API model ID -> internal model type */
 export const IMAGE_MODEL_MAP: Record<string, ImageModel> = Object.fromEntries(
   IMAGE_MODELS.map((m) => [m.apiId, m.value])
 ) as Record<string, ImageModel>;
 
-/** Maps internal model type -> API model ID */
 export const IMAGE_MODEL_ID_MAP: Record<ImageModel, string> = Object.fromEntries(
   IMAGE_MODELS.map((m) => [m.value, m.apiId])
 ) as Record<ImageModel, string>;
@@ -57,12 +46,10 @@ export const VIDEO_MODELS: VideoModelConfig[] = [
   { value: 'veo-3.1', label: 'Veo 3.1', description: 'High quality', apiId: 'google/veo-3.1' },
 ];
 
-/** Maps API model ID -> internal model type */
 export const VIDEO_MODEL_MAP: Record<string, VideoModel> = Object.fromEntries(
   VIDEO_MODELS.map((m) => [m.apiId, m.value])
 ) as Record<string, VideoModel>;
 
-/** Maps internal model type -> API model ID */
 export const VIDEO_MODEL_ID_MAP: Record<VideoModel, string> = Object.fromEntries(
   VIDEO_MODELS.map((m) => [m.value, m.apiId])
 ) as Record<VideoModel, string>;
@@ -113,14 +100,17 @@ export const LLM_MODELS: TextModelConfig[] = [
     label: 'Llama 3.1 405B',
     apiId: 'meta/meta-llama-3.1-405b-instruct',
   },
+  {
+    value: 'claude-4.5-sonnet',
+    label: 'Claude 4.5 Sonnet',
+    apiId: 'anthropic/claude-4.5-sonnet',
+  },
 ];
 
-/** Maps API model ID -> internal model type */
 export const LLM_MODEL_MAP: Record<string, TextModel> = Object.fromEntries(
   LLM_MODELS.map((m) => [m.apiId, m.value])
 ) as Record<string, TextModel>;
 
-/** Maps internal model type -> API model ID */
 export const LLM_MODEL_ID_MAP: Record<TextModel, string> = Object.fromEntries(
   LLM_MODELS.map((m) => [m.value, m.apiId])
 ) as Record<TextModel, string>;
@@ -131,27 +121,22 @@ export const DEFAULT_LLM_MODEL: TextModel = 'meta-llama-3.1-405b-instruct';
 // UTILITY FUNCTIONS
 // =============================================================================
 
-/** Get display label for an image model */
 export function getImageModelLabel(model: ImageModel): string {
   return IMAGE_MODELS.find((m) => m.value === model)?.label ?? model;
 }
 
-/** Get display label for a video model */
 export function getVideoModelLabel(model: VideoModel): string {
   return VIDEO_MODELS.find((m) => m.value === model)?.label ?? model;
 }
 
-/** Get display label for a lip sync model */
 export function getLipSyncModelLabel(model: LipSyncModel): string {
   return LIPSYNC_MODELS.find((m) => m.value === model)?.label ?? model;
 }
 
-/** Get display label for an LLM model */
 export function getLLMModelLabel(model: TextModel): string {
   return LLM_MODELS.find((m) => m.value === model)?.label ?? model;
 }
 
-/** Check if a lip sync model supports image input */
 export function lipSyncModelSupportsImage(model: LipSyncModel): boolean {
   return LIPSYNC_MODELS.find((m) => m.value === model)?.supportsImage ?? false;
 }

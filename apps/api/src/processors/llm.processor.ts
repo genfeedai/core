@@ -36,25 +36,24 @@ export class LLMProcessor extends BaseProcessor<LLMJobData> {
     this.logger.log(`Processing LLM generation job: ${job.id} for node ${nodeId}`);
 
     try {
-      // Update job status
       await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.ACTIVE);
-
-      // Update node status in execution
       await this.executionsService.updateNodeResult(executionId, nodeId, 'processing');
-
-      // Update progress
       await job.updateProgress({ percent: 20, message: 'Starting LLM generation' });
       await this.queueManager.addJobLog(job.id as string, 'Starting LLM generation');
 
-      // Determine which provider to use
+      const resolvedPrompt = nodeData.inputPrompt ?? nodeData.prompt;
+
+      if (!resolvedPrompt) {
+        throw new Error('No prompt provided: both inputPrompt and prompt are empty');
+      }
+
       const provider = nodeData.provider ?? 'replicate';
       let text: string;
 
       if (provider === 'ollama' && this.ollamaService?.isEnabled()) {
-        // Use Ollama for local LLM inference
         this.logger.log(`Using Ollama provider with model: ${nodeData.ollamaModel ?? 'default'}`);
         text = await this.ollamaService.generateText({
-          prompt: nodeData.prompt,
+          prompt: resolvedPrompt,
           systemPrompt: nodeData.systemPrompt,
           model: nodeData.ollamaModel,
           maxTokens: nodeData.maxTokens,
@@ -62,9 +61,8 @@ export class LLMProcessor extends BaseProcessor<LLMJobData> {
           topP: nodeData.topP,
         });
       } else {
-        // Use Replicate (default)
         text = await this.replicateService.generateText({
-          prompt: nodeData.prompt,
+          prompt: resolvedPrompt,
           systemPrompt: nodeData.systemPrompt,
           maxTokens: nodeData.maxTokens,
           temperature: nodeData.temperature,
@@ -81,10 +79,7 @@ export class LLMProcessor extends BaseProcessor<LLMJobData> {
         output: { text },
       };
 
-      // Update execution node result
       await this.executionsService.updateNodeResult(executionId, nodeId, 'complete', { text });
-
-      // Update job status
       await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.COMPLETED, {
         result: result as unknown as Record<string, unknown>,
       });
@@ -92,7 +87,6 @@ export class LLMProcessor extends BaseProcessor<LLMJobData> {
       await job.updateProgress({ percent: 100, message: 'Completed' });
       await this.queueManager.addJobLog(job.id as string, 'LLM generation completed');
 
-      // Continue workflow execution to next node
       await this.queueManager.continueExecution(executionId, job.data.workflowId);
 
       return result;

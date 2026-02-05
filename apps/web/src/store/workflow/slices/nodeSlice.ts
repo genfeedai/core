@@ -1,18 +1,13 @@
-import type { NodeType, WorkflowNode, WorkflowNodeData } from '@genfeedai/types';
+import type { NodeType, WorkflowEdge, WorkflowNode, WorkflowNodeData } from '@genfeedai/types';
 import { NODE_DEFINITIONS } from '@genfeedai/types';
 import type { XYPosition } from '@xyflow/react';
 import type { StateCreator } from 'zustand';
 import { generateId } from '../helpers/nodeHelpers';
 import type { WorkflowStore } from '../types';
 
-/**
- * Extract output value from a node based on its type
- */
 function getNodeOutput(node: WorkflowNode): string | null {
   const data = node.data as Record<string, unknown>;
-  // Check standard outputs first, then input-type nodes that pass through their values
-  // Check outputImages array before outputImage — multi-output nodes (imageGen) may have
-  // outputImage: null with all results in outputImages
+  // outputImages array before outputImage — multi-output nodes store results in array
   const outputImages = data.outputImages as string[] | undefined;
   if (outputImages?.length) return outputImages[0];
 
@@ -21,11 +16,11 @@ function getNodeOutput(node: WorkflowNode): string | null {
     data.outputVideo ??
     data.outputText ??
     data.outputAudio ??
-    data.prompt ?? // Prompt node outputs its prompt value
-    data.extractedTweet ?? // TweetParser outputs extracted tweet
-    data.image ?? // Image/ImageInput node outputs its image
-    data.video ?? // Video/VideoInput node outputs its video
-    data.audio ?? // Audio/AudioInput node outputs its audio
+    data.prompt ??
+    data.extractedTweet ??
+    data.image ??
+    data.video ??
+    data.audio ??
     null;
   if (output === null) return null;
   if (typeof output === 'string') return output;
@@ -33,15 +28,10 @@ function getNodeOutput(node: WorkflowNode): string | null {
   return null;
 }
 
-/**
- * Determine output type from source node
- */
 function getOutputType(sourceType: string): 'text' | 'image' | 'video' | 'audio' | null {
-  // Text output nodes
   if (['prompt', 'llm', 'tweetParser', 'template', 'transcribe'].includes(sourceType)) {
     return 'text';
   }
-  // Image output nodes (including imageInput for templates)
   if (
     ['imageGen', 'image', 'imageInput', 'upscale', 'resize', 'reframe', 'imageGridSplit'].includes(
       sourceType
@@ -49,7 +39,6 @@ function getOutputType(sourceType: string): 'text' | 'image' | 'video' | 'audio'
   ) {
     return 'image';
   }
-  // Video output nodes (including videoInput for templates)
   if (
     [
       'videoGen',
@@ -67,16 +56,12 @@ function getOutputType(sourceType: string): 'text' | 'image' | 'video' | 'audio'
   ) {
     return 'video';
   }
-  // Audio output nodes (including audioInput for templates)
   if (['textToSpeech', 'audio', 'audioInput'].includes(sourceType)) {
     return 'audio';
   }
   return null;
 }
 
-/**
- * Map source node output to target node input field based on node types
- */
 function mapOutputToInput(
   output: string,
   sourceType: string,
@@ -95,25 +80,19 @@ function mapOutputToInput(
     return null;
   }
 
-  // Text propagation: prompt/llm/tweetParser → nodes with text input
   if (outputType === 'text') {
-    // Nodes that use inputText
     if (['textToSpeech', 'subtitle'].includes(targetType)) {
       return { inputText: output };
     }
-    // Nodes that use inputPrompt
     if (['imageGen', 'videoGen', 'llm', 'motionControl'].includes(targetType)) {
       return { inputPrompt: output };
     }
   }
 
-  // Image propagation
   if (outputType === 'image') {
-    // Upscale/reframe need inputType set to switch modes
     if (['upscale', 'reframe'].includes(targetType)) {
       return { inputImage: output, inputVideo: null, inputType: 'image' };
     }
-    // Nodes that accept single image input
     if (
       ['videoGen', 'lipSync', 'voiceChange', 'motionControl', 'resize', 'animation'].includes(
         targetType
@@ -121,15 +100,12 @@ function mapOutputToInput(
     ) {
       return { inputImage: output };
     }
-    // Image gen accepts array of images
     if (targetType === 'imageGen') {
       return { inputImages: [output] };
     }
   }
 
-  // Video propagation
   if (outputType === 'video') {
-    // Upscale/reframe need inputType set to switch modes
     if (['upscale', 'reframe'].includes(targetType)) {
       return { inputVideo: output, inputImage: null, inputType: 'video' };
     }
@@ -149,7 +125,6 @@ function mapOutputToInput(
     }
   }
 
-  // Audio propagation
   if (outputType === 'audio') {
     if (['lipSync', 'voiceChange', 'transcribe'].includes(targetType)) {
       return { inputAudio: output };
@@ -182,7 +157,6 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
         label: nodeDef.label,
         status: 'idle',
       } as WorkflowNodeData,
-      // Set default dimensions for output nodes (larger preview area)
       ...(type === 'output' && { width: 280, height: 320 }),
     };
 
@@ -198,7 +172,6 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
     const { nodes, propagateOutputsDownstream } = get();
     const node = nodes.find((n) => n.id === nodeId);
 
-    // Execution-only fields that don't need persistence
     const TRANSIENT_KEYS = new Set(['status', 'progress', 'error', 'jobId']);
     const dataKeys = Object.keys(data as Record<string, unknown>);
     const hasPersistedChange = dataKeys.some((key) => !TRANSIENT_KEYS.has(key));
@@ -208,9 +181,6 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
       ...(hasPersistedChange && { isDirty: true }),
     }));
 
-    // Propagate outputs when:
-    // 1. Input nodes update (their value IS the output)
-    // 2. Any node receives an output field (outputImage, outputVideo, outputAudio, outputText)
     const inputNodeTypes = [
       'prompt',
       'image',
@@ -230,12 +200,9 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
       'outputText' in data;
 
     if (node && (inputNodeTypes.includes(node.type as string) || hasOutputUpdate)) {
-      // For output updates, pass the value directly to avoid stale state reads
-      // This fixes timing issues where get() reads state before set() commits
       if (hasOutputUpdate) {
         const dataRecord = data as Record<string, unknown>;
         if ('outputImages' in dataRecord) {
-          // Let propagation read full array from node state
           propagateOutputsDownstream(nodeId);
         } else {
           const outputValue =
@@ -281,8 +248,6 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
       } as WorkflowNodeData,
     };
 
-    // Clone incoming edges (where original node is the target)
-    // Skip self-connections (source === original node)
     const incomingEdges = edges.filter((e) => e.target === nodeId && e.source !== nodeId);
     const clonedEdges: WorkflowEdge[] = incomingEdges.map((edge) => ({
       ...edge,
@@ -297,7 +262,6 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
       isDirty: true,
     }));
 
-    // Propagate outputs from each source so the duplicate receives current data
     const sourcesNotified = new Set<string>();
     for (const edge of incomingEdges) {
       if (!sourcesNotified.has(edge.source)) {
@@ -314,11 +278,9 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
     const sourceNode = nodes.find((n) => n.id === sourceNodeId);
     if (!sourceNode) return;
 
-    // Use passed value (for output updates) or read from node (for edge connections)
     const output = outputValue ?? getNodeOutput(sourceNode);
     if (!output) return;
 
-    // Collect all updates using BFS traversal, then apply in a single state change
     const updates: Map<string, Record<string, unknown>> = new Map();
     const visited = new Set<string>();
     const queue: Array<{ nodeId: string; output: string }> = [{ nodeId: sourceNodeId, output }];
@@ -331,14 +293,12 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
       const currentNode = nodes.find((n) => n.id === current.nodeId);
       if (!currentNode) continue;
 
-      // Find downstream edges
       const downstreamEdges = edges.filter((e) => e.source === current.nodeId);
 
       for (const edge of downstreamEdges) {
         const targetNode = nodes.find((n) => n.id === edge.target);
         if (!targetNode) continue;
 
-        // OutputGallery: collect ALL images from source, not just first
         if (targetNode.type === 'outputGallery') {
           const sourceData = currentNode.data as Record<string, unknown>;
           const allImages: string[] = [];
@@ -353,9 +313,11 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
           if (allImages.length > 0) {
             const existing = updates.get(edge.target) ?? {};
             const existingImages = (existing.images as string[]) ?? [];
+            const targetData = targetNode.data as Record<string, unknown>;
+            const galleryExisting = (targetData.images as string[]) ?? [];
             updates.set(edge.target, {
               ...existing,
-              images: [...new Set([...existingImages, ...allImages])],
+              images: [...new Set([...galleryExisting, ...existingImages, ...allImages])],
             });
           }
           continue;
@@ -363,13 +325,9 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
 
         const inputUpdate = mapOutputToInput(current.output, currentNode.type, targetNode.type);
         if (inputUpdate) {
-          // Merge with existing updates for this node
           const existing = updates.get(edge.target) ?? {};
           updates.set(edge.target, { ...existing, ...inputUpdate });
 
-          // Check if target node will produce output that needs further propagation
-          // Only continue if this is an input-passthrough node
-          const _targetData = targetNode.data as Record<string, unknown>;
           const targetOutput = getNodeOutput(targetNode);
           if (targetOutput && !visited.has(edge.target)) {
             queue.push({ nodeId: edge.target, output: targetOutput });
@@ -378,7 +336,6 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
       }
     }
 
-    // Apply all updates in a single state change, but only if data actually changed
     if (updates.size > 0) {
       let hasRealChange = false;
       for (const [nodeId, update] of updates) {
@@ -386,7 +343,13 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
         if (!existingNode) continue;
         const existingData = existingNode.data as Record<string, unknown>;
         for (const [key, value] of Object.entries(update)) {
-          if (existingData[key] !== value) {
+          const prev = existingData[key];
+          if (Array.isArray(prev) && Array.isArray(value)) {
+            if (prev.length !== value.length || prev.some((v, i) => v !== value[i])) {
+              hasRealChange = true;
+              break;
+            }
+          } else if (prev !== value) {
             hasRealChange = true;
             break;
           }

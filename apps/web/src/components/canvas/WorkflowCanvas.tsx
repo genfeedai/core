@@ -38,10 +38,6 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
 
-/**
- * Get the data type for an edge based on source handle
- * Returns the HandleType which determines edge color
- */
 function getEdgeDataType(
   edge: WorkflowEdge,
   nodeMap: Map<string, WorkflowNode>
@@ -83,8 +79,9 @@ export function WorkflowCanvas() {
   const isRunning = useExecutionStore((state) => state.isRunning);
   const currentNodeId = useExecutionStore((state) => state.currentNodeId);
   const executingNodeIds = useExecutionStore((state) => state.executingNodeIds);
+  const activeNodeExecutions = useExecutionStore((state) => state.activeNodeExecutions);
+  const hasActiveNodeExecutions = useExecutionStore((state) => state.activeNodeExecutions.size > 0);
 
-  // Minimap visibility on pan/zoom (n8n-style)
   const [isMinimapVisible, setIsMinimapVisible] = useState(false);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const MINIMAP_HIDE_DELAY = 1500; // ms after stopping movement
@@ -100,7 +97,6 @@ export function WorkflowCanvas() {
     close: closeContextMenu,
   } = useContextMenu();
 
-  // Keyboard shortcuts for lock/group operations
   useCanvasKeyboardShortcuts({
     selectedNodeIds,
     groups,
@@ -112,7 +108,6 @@ export function WorkflowCanvas() {
     togglePalette,
   });
 
-  // Update highlighted nodes when selection changes
   useEffect(() => {
     if (selectedNodeIds.length === 0) {
       setHighlightedNodeIds([]);
@@ -122,23 +117,19 @@ export function WorkflowCanvas() {
     }
   }, [selectedNodeIds, getConnectedNodeIds, setHighlightedNodeIds]);
 
-  // Create stable node lookup map to avoid recreating callback on every node position change
   const nodeMap = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
 
-  // Check if an edge targets a disabled input on a node
   const isEdgeTargetingDisabledInput = useCallback(
     (edge: WorkflowEdge): boolean => {
       const targetNode = nodeMap.get(edge.target);
       if (!targetNode) return false;
 
-      // Check imageGen nodes - 'images' handle
       if (targetNode.type === 'imageGen' && edge.targetHandle === 'images') {
         const nodeData = targetNode.data as ImageGenNodeData;
         const hasImageSupport = supportsImageInput(nodeData?.selectedModel?.inputSchema);
         return !hasImageSupport;
       }
 
-      // Check videoGen nodes - 'image' or 'lastFrame' handles
       if (targetNode.type === 'videoGen') {
         if (edge.targetHandle === 'image' || edge.targetHandle === 'lastFrame') {
           const nodeData = targetNode.data as VideoGenNodeData;
@@ -152,30 +143,34 @@ export function WorkflowCanvas() {
     [nodeMap]
   );
 
-  // Compute edges with highlight/dim classes, data type colors, and execution state
   const styledEdges = useMemo(() => {
-    // For partial execution, determine which nodes are in the execution scope
     const executionScope = executingNodeIds.length > 0 ? new Set(executingNodeIds) : null;
+    const highlightedSet = highlightedNodeIds.length > 0 ? new Set(highlightedNodeIds) : null;
 
     return edges.map((edge) => {
-      // Get the data type for coloring (based on source handle)
       const dataType = getEdgeDataType(edge, nodeMap);
       const typeClass = dataType ? `edge-${dataType}` : '';
-
-      // Check if this edge targets a disabled input
       const isDisabledTarget = isEdgeTargetingDisabledInput(edge);
 
-      // During execution - show "pipe flow" effect only for relevant edges
+      if (!isRunning && hasActiveNodeExecutions) {
+        const isActiveEdge =
+          activeNodeExecutions.has(edge.source) || activeNodeExecutions.has(edge.target);
+
+        if (isActiveEdge && !isDisabledTarget) {
+          return {
+            ...edge,
+            animated: false,
+            className: `${typeClass} executing`.trim(),
+          };
+        }
+      }
+
       if (isRunning) {
-        // For partial execution, only highlight edges connected to executing nodes
         const isInExecutionScope =
           !executionScope || executionScope.has(edge.source) || executionScope.has(edge.target);
-
-        // Edge connected to currently executing node gets stronger highlight
         const isExecutingEdge =
           currentNodeId && (edge.source === currentNodeId || edge.target === currentNodeId);
 
-        // If targeting disabled input, show as disabled even during execution
         if (isDisabledTarget) {
           return {
             ...edge,
@@ -184,7 +179,6 @@ export function WorkflowCanvas() {
           };
         }
 
-        // For partial execution, don't animate edges outside the execution scope
         if (!isInExecutionScope) {
           return {
             ...edge,
@@ -195,12 +189,11 @@ export function WorkflowCanvas() {
 
         return {
           ...edge,
-          animated: false, // We use CSS animation instead
+          animated: false,
           className: `${typeClass} ${isExecutingEdge ? 'executing' : 'active-pipe'}`.trim(),
         };
       }
 
-      // If targeting disabled input, always show as disabled
       if (isDisabledTarget) {
         return {
           ...edge,
@@ -208,17 +201,14 @@ export function WorkflowCanvas() {
         };
       }
 
-      // Selection highlighting (when not running)
-      if (highlightedNodeIds.length > 0) {
-        const isConnected =
-          highlightedNodeIds.includes(edge.source) && highlightedNodeIds.includes(edge.target);
+      if (highlightedSet) {
+        const isConnected = highlightedSet.has(edge.source) && highlightedSet.has(edge.target);
         return {
           ...edge,
           className: `${typeClass} ${isConnected ? 'highlighted' : 'dimmed'}`.trim(),
         };
       }
 
-      // Default state - just the type color
       return {
         ...edge,
         className: typeClass,
@@ -231,6 +221,8 @@ export function WorkflowCanvas() {
     isRunning,
     currentNodeId,
     executingNodeIds,
+    activeNodeExecutions,
+    hasActiveNodeExecutions,
     isEdgeTargetingDisabledInput,
   ]);
 
@@ -246,7 +238,6 @@ export function WorkflowCanvas() {
     setSelectedNodeIds([]);
   }, [selectNode, setSelectedNodeIds]);
 
-  // Handle selection change for multi-select support
   const handleSelectionChange = useCallback(
     ({ nodes: selectedNodes }: { nodes: WorkflowNode[] }) => {
       setSelectedNodeIds(selectedNodes.map((n) => n.id));
@@ -254,11 +245,9 @@ export function WorkflowCanvas() {
     [setSelectedNodeIds]
   );
 
-  // Context menu handlers
   const handleNodeContextMenu = useCallback(
     (event: React.MouseEvent, node: Node) => {
       event.preventDefault();
-      // Check if this node is part of a multi-selection
       if (selectedNodeIds.length > 1 && selectedNodeIds.includes(node.id)) {
         openSelectionMenu(selectedNodeIds, event.clientX, event.clientY);
       } else {
@@ -293,7 +282,6 @@ export function WorkflowCanvas() {
     [openSelectionMenu]
   );
 
-  // Handle drop from node palette
   const handleDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
@@ -316,7 +304,6 @@ export function WorkflowCanvas() {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  // Handle connection end - auto-connect when dropping on a node
   const handleConnectEnd = useCallback(
     (event: MouseEvent | TouchEvent, connectionState: unknown) => {
       const state = connectionState as {
@@ -327,24 +314,19 @@ export function WorkflowCanvas() {
       const sourceHandleId = state.fromHandle?.id;
       if (!sourceNodeId || !sourceHandleId) return;
 
-      // Get the element under the cursor
       const target = event.target as HTMLElement;
       const nodeElement = target.closest('.react-flow__node');
       if (!nodeElement) return;
 
-      // Get target node ID from the element
       const targetNodeId = nodeElement.getAttribute('data-id');
       if (!targetNodeId || targetNodeId === sourceNodeId) return;
 
-      // Check if we dropped on a handle (let normal connection handling work)
       const droppedOnHandle = target.closest('.react-flow__handle');
       if (droppedOnHandle) return;
 
-      // Find a compatible handle on the target node
       const compatibleHandle = findCompatibleHandle(sourceNodeId, sourceHandleId, targetNodeId);
       if (!compatibleHandle) return;
 
-      // Create the connection
       onConnect({
         source: sourceNodeId,
         sourceHandle: sourceHandleId,
@@ -355,10 +337,8 @@ export function WorkflowCanvas() {
     [findCompatibleHandle, onConnect]
   );
 
-  // Wrapper for isValidConnection that handles both Connection and Edge types
   const checkValidConnection = useCallback(
     (connection: Connection | WorkflowEdge): boolean => {
-      // Extract connection properties, handling both Connection and Edge types
       const conn: Connection = {
         source: connection.source,
         target: connection.target,
@@ -370,11 +350,8 @@ export function WorkflowCanvas() {
     [isValidConnection]
   );
 
-  // Show minimap when panning/zooming starts
   const handleMoveStart = useCallback(() => {
     if (!showMinimap) return;
-
-    // Clear any pending hide timeout
     if (hideTimeoutRef.current) {
       clearTimeout(hideTimeoutRef.current);
       hideTimeoutRef.current = null;
@@ -382,23 +359,17 @@ export function WorkflowCanvas() {
     setIsMinimapVisible(true);
   }, [showMinimap]);
 
-  // Hide minimap after a delay when panning/zooming stops
   const handleMoveEnd = useCallback(() => {
     if (!showMinimap) return;
-
-    // Clear any existing timeout
     if (hideTimeoutRef.current) {
       clearTimeout(hideTimeoutRef.current);
     }
-
-    // Set timeout to hide minimap
     hideTimeoutRef.current = setTimeout(() => {
       setIsMinimapVisible(false);
       hideTimeoutRef.current = null;
     }, MINIMAP_HIDE_DELAY);
   }, [showMinimap]);
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (hideTimeoutRef.current) {
@@ -409,7 +380,6 @@ export function WorkflowCanvas() {
 
   return (
     <div className="w-full h-full relative" onDrop={handleDrop} onDragOver={handleDragOver}>
-      {/* Sidebar toggle button - Todoist style */}
       {!showPalette && (
         <button
           onClick={togglePalette}
@@ -441,7 +411,7 @@ export function WorkflowCanvas() {
         connectionMode={ConnectionMode.Loose}
         selectionMode={SelectionMode.Partial}
         selectionOnDrag
-        panOnDrag={[1, 2]} // Middle/right mouse for pan
+        panOnDrag={[1, 2]}
         onMoveStart={handleMoveStart}
         onMoveEnd={handleMoveEnd}
         deleteKeyCode={['Backspace', 'Delete']}
@@ -452,7 +422,6 @@ export function WorkflowCanvas() {
         edgesFocusable
         edgesReconnectable
         proOptions={{ hideAttribution: true }}
-        // Enable virtualization for large workflows (only render visible nodes)
         onlyRenderVisibleElements={nodes.length > 50}
       >
         <GroupOverlay />

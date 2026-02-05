@@ -100,7 +100,7 @@ export interface VideoGenNodeData extends BaseNodeData {
   jobId: string | null;
 }
 
-export type TextModel = 'meta-llama-3.1-405b-instruct';
+export type TextModel = 'meta-llama-3.1-405b-instruct' | 'claude-4.5-sonnet';
 
 export interface LLMNodeData extends BaseNodeData {
   // Inputs from connections

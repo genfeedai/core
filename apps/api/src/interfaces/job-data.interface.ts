@@ -1,9 +1,6 @@
 import type { Types } from 'mongoose';
 import { ReframeNodeType, UpscaleNodeType } from '@genfeedai/types';
 
-/**
- * Base job data interface
- */
 export interface BaseJobData {
   executionId: string;
   workflowId: string;
@@ -12,17 +9,11 @@ export interface BaseJobData {
   debugMode?: boolean;
 }
 
-/**
- * Workflow orchestrator job data
- */
 export interface WorkflowJobData extends BaseJobData {
   /** Selected node IDs for partial execution (empty = execute all) */
   selectedNodeIds?: string[];
 }
 
-/**
- * Node execution job data
- */
 export interface NodeJobData extends BaseJobData {
   nodeId: string;
   nodeType: string;
@@ -30,9 +21,6 @@ export interface NodeJobData extends BaseJobData {
   dependsOn?: string[]; // Node IDs this depends on
 }
 
-/**
- * Selected model info from frontend
- */
 export interface SelectedModelInfo {
   provider: string;
   modelId: string;
@@ -40,9 +28,6 @@ export interface SelectedModelInfo {
   inputSchema?: Record<string, unknown>;
 }
 
-/**
- * Image generation job data
- */
 export interface ImageJobData extends NodeJobData {
   nodeType: 'imageGen';
   nodeData: {
@@ -58,9 +43,6 @@ export interface ImageJobData extends NodeJobData {
   };
 }
 
-/**
- * Video generation job data
- */
 export interface VideoJobData extends NodeJobData {
   nodeType: 'videoGen';
   nodeData: {
@@ -82,65 +64,48 @@ export interface VideoJobData extends NodeJobData {
   };
 }
 
-/**
- * LLM provider type for selecting inference backend
- */
 export type LLMProvider = 'replicate' | 'ollama';
 
-/**
- * LLM generation job data
- */
 export interface LLMJobData extends NodeJobData {
   nodeType: 'llm';
   nodeData: {
-    prompt: string;
+    prompt?: string;
+    inputPrompt?: string;
     systemPrompt?: string;
     maxTokens?: number;
     temperature?: number;
     topP?: number;
-    // Ollama-specific options
     provider?: LLMProvider;
-    ollamaModel?: string; // e.g., 'llama3.1', 'mistral', 'codellama'
-    // Dynamic model selection (from model browser)
+    ollamaModel?: string;
     selectedModel?: SelectedModelInfo;
     schemaParams?: Record<string, unknown>;
   };
 }
 
-/**
- * Motion Control job data (Kling AI)
- */
 export interface MotionControlJobData extends NodeJobData {
   nodeType: 'motionControl';
   nodeData: {
-    image: string; // Legacy direct image field
-    inputImage?: string; // Image from connection
-    video?: string; // Legacy direct video field (for video transfer mode)
-    inputVideo?: string; // Video from connection (for video transfer mode)
-    prompt?: string; // Legacy direct prompt field
-    inputPrompt?: string; // Prompt from connection
+    image: string;
+    inputImage?: string;
+    video?: string;
+    inputVideo?: string;
+    prompt?: string;
+    inputPrompt?: string;
     mode: 'trajectory' | 'camera' | 'combined' | 'video_transfer';
     duration: 5 | 10;
     aspectRatio: '16:9' | '9:16' | '1:1';
-    // Trajectory points for path-based motion
     trajectoryPoints?: Array<{ x: number; y: number; frame: number }>;
-    // Camera movement settings
     cameraMovement?: string;
     cameraIntensity?: number;
-    // Motion settings
     motionStrength?: number;
     negativePrompt?: string;
     seed?: number;
-    // Video transfer settings
     keepOriginalSound?: boolean;
     characterOrientation?: 'from_image' | 'left' | 'right';
     quality?: 'standard' | 'pro';
   };
 }
 
-/**
- * Reframe job data
- */
 export interface ReframeJobData extends NodeJobData {
   nodeType: ReframeNodeType;
   nodeData: {
@@ -156,9 +121,6 @@ export interface ReframeJobData extends NodeJobData {
   };
 }
 
-/**
- * Upscale job data
- */
 export interface UpscaleJobData extends NodeJobData {
   nodeType: UpscaleNodeType;
   nodeData: {
@@ -181,9 +143,6 @@ export interface UpscaleJobData extends NodeJobData {
   };
 }
 
-/**
- * Video Frame Extract job data
- */
 export interface VideoFrameExtractJobData extends NodeJobData {
   nodeType: 'videoFrameExtract';
   nodeData: {
@@ -194,9 +153,6 @@ export interface VideoFrameExtractJobData extends NodeJobData {
   };
 }
 
-/**
- * Lip Sync job data
- */
 export interface LipSyncJobData extends NodeJobData {
   nodeType: 'lipSync';
   nodeData: {
@@ -213,9 +169,6 @@ export interface LipSyncJobData extends NodeJobData {
   };
 }
 
-/**
- * Voice Change job data
- */
 export interface VoiceChangeJobData extends NodeJobData {
   nodeType: 'voiceChange';
   nodeData: {
@@ -226,9 +179,6 @@ export interface VoiceChangeJobData extends NodeJobData {
   };
 }
 
-/**
- * Text to Speech job data
- */
 export interface TextToSpeechJobData extends NodeJobData {
   nodeType: 'textToSpeech';
   nodeData: {
@@ -242,9 +192,6 @@ export interface TextToSpeechJobData extends NodeJobData {
   };
 }
 
-/**
- * Subtitle job data
- */
 export interface SubtitleJobData extends NodeJobData {
   nodeType: 'subtitle';
   nodeData: {
@@ -259,9 +206,6 @@ export interface SubtitleJobData extends NodeJobData {
   };
 }
 
-/**
- * Video Stitch job data (easy-peasy-ease inspired)
- */
 export interface VideoStitchJobData extends NodeJobData {
   nodeType: 'videoStitch';
   nodeData: {
@@ -274,9 +218,6 @@ export interface VideoStitchJobData extends NodeJobData {
   };
 }
 
-/**
- * Distribution node job data (Telegram, Discord, Google Drive, etc.)
- */
 export interface DistributionJobData extends NodeJobData {
   nodeType:
     | 'telegramPost'
@@ -292,9 +233,6 @@ export interface DistributionJobData extends NodeJobData {
   nodeData: Record<string, unknown>; // Platform-specific config from node type definitions
 }
 
-/**
- * Workflow reference (subworkflow) job data
- */
 export interface WorkflowRefJobData extends NodeJobData {
   nodeType: 'workflowRef';
   nodeData: {
@@ -311,9 +249,6 @@ export interface WorkflowRefJobData extends NodeJobData {
   depth: number;
 }
 
-/**
- * Union type for all processing job data
- */
 export type ProcessingJobData =
   | ReframeJobData
   | UpscaleJobData
@@ -326,9 +261,6 @@ export type ProcessingJobData =
   | DistributionJobData
   | WorkflowRefJobData;
 
-/**
- * Job result interface
- */
 export interface JobResult {
   success: boolean;
   output?: string | string[] | Record<string, unknown>;
@@ -338,18 +270,12 @@ export interface JobResult {
   predictionId?: string;
 }
 
-/**
- * Job progress update
- */
 export interface JobProgress {
   percent: number;
   message?: string;
   timestamp: string;
 }
 
-/**
- * Dead letter queue job data
- */
 export interface DLQJobData {
   originalJobId: string;
   originalQueue: string;
@@ -360,9 +286,6 @@ export interface DLQJobData {
   failedAt: string;
 }
 
-/**
- * Queue job document for MongoDB persistence
- */
 export interface QueueJobDocument {
   _id: Types.ObjectId;
   bullJobId: string;

@@ -27,21 +27,23 @@ function LLMNodeComponent(props: NodeProps) {
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const openNodeDetailModal = useUIStore((state) => state.openNodeDetailModal);
   const { handleGenerate, handleStop } = useNodeExecution(id);
-  const { canGenerate } = useCanGenerate({
+  const { canGenerate: hasRequiredConnections } = useCanGenerate({
     nodeId: id,
     nodeType: type as 'llm',
   });
 
+  const hasSystemPrompt = !!nodeData.systemPrompt?.trim();
+  const hasInputPrompt = !!nodeData.inputPrompt?.trim();
+  const canGenerate = hasRequiredConnections && hasSystemPrompt && hasInputPrompt;
+
   const [isModelBrowserOpen, setIsModelBrowserOpen] = useState(false);
 
-  // Model selection hook (same pattern as ImageGenNode)
   const { handleModelSelect } = useModelSelection<TextModel, LLMNodeData>({
     nodeId: id,
     modelMap: LLM_MODEL_MAP,
     fallbackModel: DEFAULT_LLM_MODEL,
   });
 
-  // Auto-load schema for default model if selectedModel is not set
   useAutoLoadModelSchema({
     currentModel: nodeData.model,
     selectedModel: nodeData.selectedModel,
@@ -74,11 +76,14 @@ function LLMNodeComponent(props: NodeProps) {
     openNodeDetailModal(id, 'preview');
   }, [id, openNodeDetailModal]);
 
-  const modelDisplayName =
-    nodeData.selectedModel?.displayName ||
-    LLM_MODELS.find((m) => m.value === nodeData.model)?.label ||
-    nodeData.model ||
-    'Llama 3.1 405B';
+  const modelDisplayName = useMemo(
+    () =>
+      nodeData.selectedModel?.displayName ||
+      LLM_MODELS.find((m) => m.value === nodeData.model)?.label ||
+      nodeData.model ||
+      'Llama 3.1 405B',
+    [nodeData.selectedModel?.displayName, nodeData.model]
+  );
 
   const isProcessing = nodeData.status === 'processing';
 
@@ -134,7 +139,6 @@ function LLMNodeComponent(props: NodeProps) {
       hideStatusIndicator
     >
       <div className="space-y-3">
-        {/* Input Prompt Preview */}
         {nodeData.inputPrompt ? (
           <div>
             <label className="text-xs text-[var(--muted-foreground)]">Input Prompt</label>
@@ -143,7 +147,6 @@ function LLMNodeComponent(props: NodeProps) {
             </div>
           </div>
         ) : (
-          !canGenerate &&
           !isProcessing && (
             <div className="text-xs text-[var(--muted-foreground)] flex items-center gap-1">
               <AlertCircle className="w-3 h-3" />
@@ -152,19 +155,19 @@ function LLMNodeComponent(props: NodeProps) {
           )
         )}
 
-        {/* System Prompt */}
         <div>
-          <label className="text-xs text-[var(--muted-foreground)]">System Prompt</label>
+          <label className="text-xs text-[var(--muted-foreground)]">
+            System Prompt <span className="text-[var(--destructive)]">*</span>
+          </label>
           <textarea
             value={nodeData.systemPrompt}
             onChange={handleSystemPromptChange}
             placeholder="Define the AI's behavior..."
-            className="w-full h-16 px-2 py-1.5 text-sm bg-[var(--background)] border border-[var(--border)] rounded resize-none focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
+            className={`w-full h-16 px-2 py-1.5 text-sm bg-[var(--background)] border rounded resize-none focus:outline-none focus:ring-1 focus:ring-[var(--primary)] ${!hasSystemPrompt ? 'border-[var(--destructive)]/50' : 'border-[var(--border)]'}`}
             disabled={isProcessing}
           />
         </div>
 
-        {/* Temperature */}
         <div>
           <label className="text-xs text-[var(--muted-foreground)]">
             Temperature: {nodeData.temperature.toFixed(2)}
@@ -184,7 +187,6 @@ function LLMNodeComponent(props: NodeProps) {
           </div>
         </div>
 
-        {/* Max Tokens */}
         <div>
           <label className="text-xs text-[var(--muted-foreground)]">Max Tokens</label>
           <input
@@ -198,26 +200,39 @@ function LLMNodeComponent(props: NodeProps) {
           />
         </div>
 
-        {/* Output Text */}
         {nodeData.outputText && (
-          <div className="relative">
-            <div className="p-2 bg-[var(--background)] border border-[var(--border)] rounded text-sm max-h-32 overflow-y-auto">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs text-[var(--muted-foreground)]">Generated Output</label>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={handleGenerate}
+                  disabled={isProcessing}
+                  title="Regenerate"
+                  className="h-5 w-5"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={handleExpand}
+                  title="Expand preview"
+                  className="h-5 w-5"
+                >
+                  <Expand className="w-3 h-3" />
+                </Button>
+              </div>
+            </div>
+            <div className="p-2 bg-[var(--primary)]/5 border border-[var(--primary)]/20 rounded text-sm max-h-48 overflow-y-auto whitespace-pre-wrap nodrag nopan nowheel">
               {nodeData.outputText}
             </div>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={handleGenerate}
-              disabled={isProcessing}
-              className="absolute top-1 right-1 h-6 w-6 bg-black/50 hover:bg-black/70"
-            >
-              <RefreshCw className="w-3 h-3" />
-            </Button>
           </div>
         )}
       </div>
 
-      {/* Model Browser Modal */}
       <ModelBrowserModal
         isOpen={isModelBrowserOpen}
         onClose={() => setIsModelBrowserOpen(false)}
