@@ -13,11 +13,14 @@ vi.mock('../BaseNode', () => ({
   BaseNode: ({
     children,
     headerActions,
+    titleElement,
   }: {
     children: React.ReactNode;
     headerActions?: React.ReactNode;
+    titleElement?: React.ReactNode;
   }) => (
     <div data-testid="base-node">
+      <div data-testid="title-element">{titleElement}</div>
       <div data-testid="header-actions">{headerActions}</div>
       {children}
     </div>
@@ -66,7 +69,35 @@ vi.mock('@/hooks/useCanGenerate', () => ({
 vi.mock('@/hooks/useNodeExecution', () => ({
   useNodeExecution: () => ({
     handleGenerate: mockHandleGenerate,
+    handleStop: vi.fn(),
   }),
+}));
+
+vi.mock('@/hooks/useAutoLoadModelSchema', () => ({
+  useAutoLoadModelSchema: vi.fn(),
+}));
+
+vi.mock('@/hooks/useModelSelection', () => ({
+  useModelSelection: () => ({
+    handleModelSelect: vi.fn(),
+  }),
+}));
+
+vi.mock('@/lib/models/registry', () => ({
+  DEFAULT_LLM_MODEL: 'meta-llama-3.1-405b-instruct',
+  LLM_MODEL_ID_MAP: {},
+  LLM_MODEL_MAP: {},
+  LLM_MODELS: [
+    {
+      value: 'meta-llama-3.1-405b-instruct',
+      label: 'Llama 3.1 405B',
+      apiId: 'meta/meta-llama-3.1-405b-instruct',
+    },
+  ],
+}));
+
+vi.mock('@/components/models/ModelBrowserModal', () => ({
+  ModelBrowserModal: () => null,
 }));
 
 // Mock Slider to be a native range input
@@ -131,7 +162,7 @@ describe('LLMNode', () => {
     it('should render model info', () => {
       render(<LLMNode {...defaultProps} />);
 
-      expect(screen.getByText(/meta-llama-3.1-405b-instruct/)).toBeInTheDocument();
+      expect(screen.getByText(/Llama 3.1 405B/)).toBeInTheDocument();
     });
 
     it('should render system prompt textarea', () => {
@@ -224,22 +255,32 @@ describe('LLMNode', () => {
     it('should show generate button when no output', () => {
       render(<LLMNode {...defaultProps} />);
 
-      expect(screen.getByText('Generate Text')).toBeInTheDocument();
+      expect(screen.getByText('Generate')).toBeInTheDocument();
     });
 
     it('should call handleGenerate when generate button clicked', () => {
-      render(<LLMNode {...defaultProps} />);
+      render(
+        <LLMNode
+          {...defaultProps}
+          data={{
+            ...defaultProps.data,
+            systemPrompt: 'You are helpful',
+            inputPrompt: 'Tell me a story',
+          }}
+        />
+      );
 
-      fireEvent.click(screen.getByText('Generate Text'));
+      fireEvent.click(screen.getByText('Generate'));
 
       expect(mockHandleGenerate).toHaveBeenCalled();
     });
 
-    it('should show Generating text and be disabled when processing', () => {
+    it('should show Generating text as stop button when processing', () => {
       render(<LLMNode {...defaultProps} data={{ ...defaultProps.data, status: 'processing' }} />);
 
-      expect(screen.getByText('Generating...')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /generating/i })).toBeDisabled();
+      expect(screen.getByText('Generating')).toBeInTheDocument();
+      // The Generating button is a stop button (destructive variant), not disabled
+      expect(screen.getByRole('button', { name: /generating/i })).toBeInTheDocument();
     });
 
     it('should hide generate button when output exists', () => {
@@ -250,7 +291,8 @@ describe('LLMNode', () => {
         />
       );
 
-      expect(screen.queryByText('Generate Text')).not.toBeInTheDocument();
+      // Output text should be shown instead of a prompt
+      expect(screen.getByText('Generated output')).toBeInTheDocument();
     });
   });
 
@@ -287,14 +329,10 @@ describe('LLMNode', () => {
         />
       );
 
-      // The refresh button is inside the output display area (not in header-actions)
-      const buttons = screen.getAllByRole('button');
-      // Filter to the button inside the output section (not in header-actions)
-      const refreshButton = buttons.find(
-        (btn) => !screen.getByTestId('header-actions').contains(btn)
-      );
+      // The refresh button has title="Regenerate"
+      const refreshButton = screen.getByTitle('Regenerate');
       expect(refreshButton).toBeDefined();
-      fireEvent.click(refreshButton!);
+      fireEvent.click(refreshButton);
 
       expect(mockHandleGenerate).toHaveBeenCalled();
     });
@@ -311,10 +349,7 @@ describe('LLMNode', () => {
         />
       );
 
-      const buttons = screen.getAllByRole('button');
-      const refreshButton = buttons.find(
-        (btn) => !screen.getByTestId('header-actions').contains(btn)
-      );
+      const refreshButton = screen.getByTitle('Regenerate');
       expect(refreshButton).toBeDefined();
       expect(refreshButton).toBeDisabled();
     });

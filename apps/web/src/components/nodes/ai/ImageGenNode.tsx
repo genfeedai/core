@@ -1,10 +1,5 @@
 'use client';
 
-import type { ImageGenNodeData, ImageModel } from '@genfeedai/types';
-import type { NodeProps } from '@xyflow/react';
-import { AlertCircle, ChevronDown, Download, Expand, ImageIcon, Play, Square } from 'lucide-react';
-import Image from 'next/image';
-import { memo, useCallback, useMemo, useState } from 'react';
 import { ModelBrowserModal } from '@/components/models/ModelBrowserModal';
 import { BaseNode } from '@/components/nodes/BaseNode';
 import { ProcessingOverlay } from '@/components/nodes/ProcessingOverlay';
@@ -22,6 +17,11 @@ import {
   IMAGE_MODELS,
 } from '@/lib/models/registry';
 import { useUIStore } from '@/store/uiStore';
+import type { ImageGenNodeData, ImageModel } from '@genfeedai/types';
+import type { NodeProps } from '@xyflow/react';
+import { AlertCircle, ChevronDown, Download, Expand, ImageIcon, Play, Square } from 'lucide-react';
+import Image from 'next/image';
+import { memo, useCallback, useMemo, useState } from 'react';
 
 function ImageGenNodeComponent(props: NodeProps) {
   const { id, type, data } = props;
@@ -201,15 +201,16 @@ function ImageGenNodeComponent(props: NodeProps) {
                     className="object-cover"
                     unoptimized
                   />
+
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                     <Button
                       variant="ghost"
                       size="icon-sm"
+                      className="h-6 w-6 bg-white/20 hover:bg-white/30"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDownload(i);
                       }}
-                      className="h-6 w-6 bg-white/20 hover:bg-white/30"
                     >
                       <Download className="w-3 h-3 text-white" />
                     </Button>

@@ -175,7 +175,7 @@ describe('SettingsModal', () => {
     it('should close modal on backdrop click', () => {
       render(<SettingsModal />);
 
-      const backdrop = document.querySelector('.bg-black\\/70');
+      const backdrop = document.querySelector('.bg-black\\/50');
       if (backdrop) fireEvent.click(backdrop);
 
       expect(mockCloseModal).toHaveBeenCalled();

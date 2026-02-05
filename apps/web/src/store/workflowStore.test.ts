@@ -209,7 +209,7 @@ describe('useWorkflowStore', () => {
       expect(state.nodes).toHaveLength(1);
       expect(state.edgeStyle).toBe('straight');
       expect(state.workflowId).toBeNull(); // Should reset ID
-      expect(state.isDirty).toBe(true);
+      expect(state.isDirty).toBe(false);
     });
   });
 

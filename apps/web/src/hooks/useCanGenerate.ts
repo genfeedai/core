@@ -111,25 +111,19 @@ export function useCanGenerate({
       });
     }
 
-    // 2. Check connected nodes have actual data
+    // 2. Check connected nodes have actual data (informational only)
+    // This does NOT block generation — the backend resolves dependencies
+    // and runs upstream nodes first during single-node execution
     const connectedInputs = getConnectedInputs(nodeId);
     let hasConnectedData = true;
 
-    // If we have required connections but they don't have data, that's a problem
-    // We need to check if any handle that IS connected has empty data
     if (hasRequiredInputs) {
       for (const edge of incomingEdges) {
         const handleId = edge.targetHandle;
         if (!handleId) continue;
 
-        // Check if this connected input has data
         if (!connectedInputs.has(handleId)) {
           hasConnectedData = false;
-          missingItems.push({
-            type: 'data',
-            field: handleId,
-            message: `Connected ${handleId} has no data`,
-          });
         }
       }
     }
@@ -149,7 +143,7 @@ export function useCanGenerate({
       });
     }
 
-    const canGenerate = hasRequiredInputs && hasConnectedData && schemaValidation.isValid;
+    const canGenerate = hasRequiredInputs && schemaValidation.isValid;
 
     return {
       canGenerate,

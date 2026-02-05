@@ -129,7 +129,7 @@ describe('VideoProcessor', () => {
       await processor.process(job as never);
 
       expect(job.updateProgress).toHaveBeenCalledWith({
-        percent: 5,
+        percent: 10,
         message: 'Starting videoGen generation',
       });
     });

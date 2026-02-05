@@ -13,11 +13,14 @@ vi.mock('../BaseNode', () => ({
   BaseNode: ({
     children,
     headerActions,
+    titleElement,
   }: {
     children: React.ReactNode;
     headerActions?: React.ReactNode;
+    titleElement?: React.ReactNode;
   }) => (
     <div data-testid="base-node">
+      <div data-testid="title-element">{titleElement}</div>
       <div data-testid="header-actions">{headerActions}</div>
       {children}
     </div>
@@ -208,10 +211,10 @@ describe('ImageGenNode', () => {
       expect(screen.getByTestId('base-node')).toBeInTheDocument();
     });
 
-    it('should render the Browse button in header actions', () => {
+    it('should render the model name as clickable browse trigger', () => {
       render(<ImageGenNode {...defaultProps} />);
 
-      expect(screen.getByText('Browse')).toBeInTheDocument();
+      expect(screen.getByTitle('Browse models')).toBeInTheDocument();
     });
 
     it('should render generate button with correct text', () => {
@@ -222,10 +225,10 @@ describe('ImageGenNode', () => {
   });
 
   describe('model selection', () => {
-    it('should open model browser when Browse button clicked', () => {
+    it('should open model browser when model name clicked', () => {
       render(<ImageGenNode {...defaultProps} />);
 
-      fireEvent.click(screen.getByText('Browse'));
+      fireEvent.click(screen.getByTitle('Browse models'));
 
       expect(screen.getByTestId('model-browser')).toBeInTheDocument();
     });
@@ -233,7 +236,7 @@ describe('ImageGenNode', () => {
     it('should close model browser when close clicked', () => {
       render(<ImageGenNode {...defaultProps} />);
 
-      fireEvent.click(screen.getByText('Browse'));
+      fireEvent.click(screen.getByTitle('Browse models'));
       fireEvent.click(screen.getByTestId('close-modal'));
 
       expect(screen.queryByTestId('model-browser')).not.toBeInTheDocument();
@@ -242,7 +245,7 @@ describe('ImageGenNode', () => {
     it('should call handleModelSelect when model selected from browser', () => {
       render(<ImageGenNode {...defaultProps} />);
 
-      fireEvent.click(screen.getByText('Browse'));
+      fireEvent.click(screen.getByTitle('Browse models'));
       fireEvent.click(screen.getByTestId('select-model'));
 
       expect(mockHandleModelSelect).toHaveBeenCalledWith({

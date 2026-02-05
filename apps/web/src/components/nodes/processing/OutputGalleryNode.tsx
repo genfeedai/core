@@ -2,6 +2,7 @@
 
 import type { OutputGalleryNodeData } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
+import { ChevronLeft, ChevronRight, Copy, Download, X } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useShallow } from 'zustand/react/shallow';
@@ -47,7 +48,7 @@ function OutputGalleryNodeComponent(props: NodeProps) {
         }
       });
 
-    return [...new Set([...executionImages, ...connectedImages])];
+    return [...new Set([...executionImages, ...connectedImages])].reverse();
   }, [nodeData.images, edges, nodes, id]);
 
   const openLightbox = useCallback((index: number) => {
@@ -84,6 +85,37 @@ function OutputGalleryNodeComponent(props: NodeProps) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  }, [lightboxIndex]);
+
+  const copyImage = useCallback(async () => {
+    if (lightboxIndex === null) return;
+    const image = displayImagesRef.current[lightboxIndex];
+    if (!image) return;
+
+    try {
+      const response = await fetch(image);
+      const blob = await response.blob();
+      const pngBlob =
+        blob.type === 'image/png'
+          ? blob
+          : await new Promise<Blob>((resolve) => {
+              const canvas = document.createElement('canvas');
+              const img = new Image();
+              img.crossOrigin = 'anonymous';
+              img.onload = () => {
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext('2d');
+                ctx?.drawImage(img, 0, 0);
+                canvas.toBlob((b) => resolve(b || blob), 'image/png');
+              };
+              img.onerror = () => resolve(blob);
+              img.src = image;
+            });
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
+    } catch {
+      // Silently fail if clipboard API is unavailable
+    }
   }, [lightboxIndex]);
 
   useEffect(() => {
@@ -139,6 +171,7 @@ function OutputGalleryNodeComponent(props: NodeProps) {
           <div
             className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-8"
             onClick={closeLightbox}
+            onContextMenu={(e) => e.stopPropagation()}
           >
             <div className="relative max-w-full max-h-full" onClick={(e) => e.stopPropagation()}>
               <img
@@ -151,51 +184,32 @@ function OutputGalleryNodeComponent(props: NodeProps) {
                 onClick={closeLightbox}
                 className="absolute top-4 right-4 w-8 h-8 bg-white/10 hover:bg-white/20 rounded text-white text-sm transition-colors flex items-center justify-center"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="w-4 h-4" />
               </button>
 
-              <button
-                onClick={downloadImage}
-                className="absolute top-4 left-4 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded text-white text-xs font-medium transition-colors flex items-center gap-1.5"
-              >
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
+              <div className="absolute top-4 left-4 flex items-center gap-2">
+                <button
+                  onClick={downloadImage}
+                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded text-white text-xs font-medium transition-colors flex items-center gap-1.5"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
-                  />
-                </svg>
-                Download
-              </button>
+                  <Download className="w-3.5 h-3.5" />
+                  Download
+                </button>
+                <button
+                  onClick={copyImage}
+                  className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded text-white text-xs font-medium transition-colors flex items-center gap-1.5"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  Copy
+                </button>
+              </div>
 
               {lightboxIndex > 0 && (
                 <button
                   onClick={() => navigateLightbox('prev')}
                   className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors flex items-center justify-center"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                  </svg>
+                  <ChevronLeft className="w-5 h-5" />
                 </button>
               )}
 
@@ -204,15 +218,7 @@ function OutputGalleryNodeComponent(props: NodeProps) {
                   onClick={() => navigateLightbox('next')}
                   className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors flex items-center justify-center"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
+                  <ChevronRight className="w-5 h-5" />
                 </button>
               )}
 

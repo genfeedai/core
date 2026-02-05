@@ -105,8 +105,8 @@ describe('UGC Factory Workflow v3', () => {
     expect(motionData.mode).toBe('video_transfer');
     expect(motionData.duration).toBe(5);
     expect(motionData.aspectRatio).toBe('16:9');
-    expect(motionData.trajectory).toBeDefined();
-    expect(Array.isArray(motionData.trajectory)).toBe(true);
+    expect(motionData.trajectoryPoints).toBeDefined();
+    expect(Array.isArray(motionData.trajectoryPoints)).toBe(true);
     expect(motionData.motionStrength).toBe(0.3);
   });
 
