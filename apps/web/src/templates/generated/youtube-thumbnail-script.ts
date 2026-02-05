@@ -127,7 +127,7 @@ export const YOUTUBE_THUMBNAIL_SCRIPT_TEMPLATE: WorkflowTemplate = {
     // === OUTPUT NODES ===
     {
       id: 'output-thumbnails',
-      type: 'output',
+      type: 'download',
       position: { x: 750, y: 250 },
       data: {
         label: 'Thumbnails',
@@ -139,7 +139,7 @@ export const YOUTUBE_THUMBNAIL_SCRIPT_TEMPLATE: WorkflowTemplate = {
     },
     {
       id: 'output-script',
-      type: 'output',
+      type: 'download',
       position: { x: 750, y: 650 },
       data: {
         label: 'Script',

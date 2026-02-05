@@ -77,7 +77,7 @@ export const DANCE_VIDEO_TEMPLATE: WorkflowTemplate = {
     // Output
     {
       id: 'output',
-      type: 'output',
+      type: 'download',
       position: { x: 750, y: 200 },
       data: {
         label: 'Dance Video',

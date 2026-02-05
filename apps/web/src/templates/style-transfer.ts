@@ -49,7 +49,7 @@ export const STYLE_TRANSFER_TEMPLATE: WorkflowTemplate = {
     },
     {
       id: 'output-1',
-      type: 'output',
+      type: 'download',
       position: { x: 750, y: 200 },
       data: {
         label: 'Styled Output',

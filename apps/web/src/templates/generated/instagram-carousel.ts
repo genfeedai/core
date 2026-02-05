@@ -139,7 +139,7 @@ export const INSTAGRAM_CAROUSEL_TEMPLATE: WorkflowTemplate = {
     // Output Nodes
     {
       id: 'output-1',
-      type: 'output',
+      type: 'download',
       position: { x: 950, y: 50 },
       data: {
         label: 'Carousel Slide 1',
@@ -151,7 +151,7 @@ export const INSTAGRAM_CAROUSEL_TEMPLATE: WorkflowTemplate = {
     },
     {
       id: 'output-2',
-      type: 'output',
+      type: 'download',
       position: { x: 950, y: 250 },
       data: {
         label: 'Carousel Slide 2',
@@ -163,7 +163,7 @@ export const INSTAGRAM_CAROUSEL_TEMPLATE: WorkflowTemplate = {
     },
     {
       id: 'output-3',
-      type: 'output',
+      type: 'download',
       position: { x: 950, y: 450 },
       data: {
         label: 'Carousel Slide 3',

@@ -1,4 +1,4 @@
-import type { HandleType, NodeType, WorkflowNode } from '@genfeedai/types';
+import type { HandleType, NodeType } from '@genfeedai/types';
 import { NODE_DEFINITIONS } from '@genfeedai/types';
 import { nanoid } from 'nanoid';
 

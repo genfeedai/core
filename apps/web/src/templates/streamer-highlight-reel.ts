@@ -146,7 +146,7 @@ export const STREAMER_HIGHLIGHT_REEL_TEMPLATE: WorkflowTemplate = {
     // Output
     {
       id: 'output',
-      type: 'output',
+      type: 'download',
       position: { x: 1750, y: 300 },
       data: {
         label: 'Final Reel',

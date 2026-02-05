@@ -73,7 +73,7 @@ export function validateWorkflow(
     }
 
     // Check output nodes have at least one media input
-    if (node.type === 'output') {
+    if (node.type === 'download') {
       const hasMediaInput = incomingEdges.some(
         (e) => e.targetHandle === 'image' || e.targetHandle === 'video'
       );

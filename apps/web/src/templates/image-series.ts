@@ -87,7 +87,7 @@ export const IMAGE_SERIES_TEMPLATE: WorkflowTemplate = {
     },
     {
       id: 'output-1',
-      type: 'output',
+      type: 'download',
       position: { x: 1050, y: 250 },
       data: {
         label: 'Final Output',

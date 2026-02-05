@@ -186,7 +186,7 @@ export const FULL_PIPELINE_TEMPLATE: WorkflowTemplate = {
     // Output
     {
       id: 'output-1',
-      type: 'output',
+      type: 'download',
       position: { x: 2100, y: 275 },
       data: {
         label: 'Final Video',

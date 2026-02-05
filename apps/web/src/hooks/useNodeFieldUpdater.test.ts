@@ -1,5 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { WorkflowNodeData } from '@genfeedai/types';
 import { useNodeFieldUpdater } from './useNodeFieldUpdater';
 
 const mockUpdateNodeData = vi.fn();
@@ -12,10 +13,10 @@ vi.mock('@/store/workflowStore', () => {
   return { useWorkflowStore: store };
 });
 
-interface TestNodeData {
+type TestNodeData = WorkflowNodeData & {
   model: string;
   scale: number;
-}
+};
 
 describe('useNodeFieldUpdater', () => {
   beforeEach(() => {

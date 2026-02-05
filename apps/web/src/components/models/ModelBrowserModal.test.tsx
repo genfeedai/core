@@ -98,7 +98,7 @@ describe('ModelBrowserModal', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    global.fetch = vi.fn().mockResolvedValue(mockFetchResponse);
+    global.fetch = vi.fn().mockResolvedValue(mockFetchResponse) as unknown as typeof fetch;
   });
 
   describe('rendering', () => {
@@ -160,7 +160,9 @@ describe('ModelBrowserModal', () => {
 
     it('should show loading spinner during fetch', async () => {
       // Use a fetch that never resolves so isLoading stays true
-      global.fetch = vi.fn().mockImplementation(() => new Promise(() => {}));
+      global.fetch = vi
+        .fn()
+        .mockImplementation(() => new Promise(() => {})) as unknown as typeof fetch;
 
       render(<ModelBrowserModal {...defaultProps} />);
 
@@ -303,7 +305,7 @@ describe('ModelBrowserModal', () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ models: [], configuredProviders: [] }),
-      });
+      }) as unknown as typeof fetch;
 
       render(<ModelBrowserModal {...defaultProps} />);
 
@@ -330,7 +332,7 @@ describe('ModelBrowserModal', () => {
             models: [mockModels[0]],
             configuredProviders: ['replicate'],
           }),
-      });
+      }) as unknown as typeof fetch;
 
       render(<ModelBrowserModal {...defaultProps} />);
 

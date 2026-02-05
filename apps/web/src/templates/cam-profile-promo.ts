@@ -204,7 +204,7 @@ export const CAM_PROFILE_PROMO_TEMPLATE: WorkflowTemplate = {
     // Output
     {
       id: 'output',
-      type: 'output',
+      type: 'download',
       position: { x: 1450, y: 350 },
       data: {
         label: 'Final Promo',

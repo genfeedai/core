@@ -1,4 +1,5 @@
-import type { WorkflowEdge, WorkflowNode, WorkflowNodeData } from '@genfeedai/types';
+import { describe, expect, it, vi } from 'vitest';
+import type { WorkflowEdge, WorkflowNode, WorkflowNodeData, NodeType } from '@genfeedai/types';
 import {
   getNodeOutput,
   getOutputType,
@@ -17,7 +18,7 @@ import {
 function makeNode(id: string, type: string, data: Record<string, unknown> = {}): WorkflowNode {
   return {
     id,
-    type,
+    type: type as NodeType,
     position: { x: 0, y: 0 },
     data: { label: type, status: 'idle', ...data } as WorkflowNodeData,
   };

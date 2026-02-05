@@ -40,6 +40,7 @@ describe('useSettingsStore', () => {
         replicate: { apiKey: null, enabled: true },
         fal: { apiKey: null, enabled: false },
         huggingface: { apiKey: null, enabled: false },
+        'genfeed-ai': { apiKey: null, enabled: true },
       },
       defaults: {
         imageModel: 'nano-banana-pro',
@@ -372,6 +373,7 @@ describe('useSettingsStore', () => {
           replicate: { apiKey: 'key1', enabled: true },
           fal: { apiKey: 'key2', enabled: true },
           huggingface: { apiKey: 'key3', enabled: true },
+          'genfeed-ai': { apiKey: null, enabled: true },
         },
       });
 
@@ -390,6 +392,7 @@ describe('useSettingsStore', () => {
           replicate: { apiKey: 'key1', enabled: true },
           fal: { apiKey: 'key2', enabled: true },
           huggingface: { apiKey: 'key3', enabled: false },
+          'genfeed-ai': { apiKey: null, enabled: true },
         },
       });
 

@@ -148,7 +148,7 @@ Format: [VOICE] voiceover script [/VOICE]`,
     // Output
     {
       id: 'output',
-      type: 'output',
+      type: 'download',
       position: { x: 1750, y: 300 },
       data: {
         label: 'Final Highlight',

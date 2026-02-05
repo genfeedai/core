@@ -1,5 +1,6 @@
 import { temporal } from 'zundo';
 import { create } from 'zustand';
+import type { StateCreator } from 'zustand';
 import { temporalStateEquals } from './helpers/equality';
 import { createChatSlice } from './slices/chatSlice';
 import { createEdgeSlice } from './slices/edgeSlice';
@@ -27,44 +28,47 @@ import type { WorkflowStore } from './types';
  * Wrapped with zundo temporal middleware for undo/redo support.
  * Only tracks meaningful state (nodes, edges, groups) - not UI flags.
  */
-export const useWorkflowStore = create<WorkflowStore>()(
-  temporal(
-    (...args) => ({
-      // Initial state
-      nodes: [],
-      edges: [],
-      edgeStyle: 'default',
-      workflowName: 'Untitled Workflow',
-      workflowId: null,
-      isDirty: false,
-      isSaving: false,
-      isLoading: false,
-      groups: [],
-      selectedNodeIds: [],
-      viewedCommentIds: new Set<string>(),
-      navigationTargetId: null,
 
-      // Compose slices
-      ...createNodeSlice(...args),
-      ...createEdgeSlice(...args),
-      ...createLockingSlice(...args),
-      ...createGroupSlice(...args),
-      ...createSelectionSlice(...args),
-      ...createPersistenceSlice(...args),
-      ...(createSnapshotSlice as unknown as typeof createNodeSlice)(...args),
-      ...(createChatSlice as unknown as typeof createNodeSlice)(...args),
+// Slice composition requires type assertion because createSnapshotSlice and
+// createChatSlice return types are lost through the `as unknown` casts needed
+// to unify their signatures. The runtime correctly composes all slices.
+const storeCreator = ((...args: Parameters<StateCreator<WorkflowStore>>) => ({
+  // Initial state
+  nodes: [],
+  edges: [],
+  edgeStyle: 'default',
+  workflowName: 'Untitled Workflow',
+  workflowId: null,
+  isDirty: false,
+  isSaving: false,
+  isLoading: false,
+  groups: [],
+  selectedNodeIds: [],
+  viewedCommentIds: new Set<string>(),
+  navigationTargetId: null,
+
+  // Compose slices
+  ...createNodeSlice(...args),
+  ...createEdgeSlice(...args),
+  ...createLockingSlice(...args),
+  ...createGroupSlice(...args),
+  ...createSelectionSlice(...args),
+  ...createPersistenceSlice(...args),
+  ...(createSnapshotSlice as unknown as typeof createNodeSlice)(...args),
+  ...(createChatSlice as unknown as typeof createNodeSlice)(...args),
+})) as unknown as StateCreator<WorkflowStore, [['temporal', unknown]]>;
+
+export const useWorkflowStore = create<WorkflowStore>()(
+  temporal(storeCreator, {
+    // Only track meaningful state (not UI flags like isDirty, isSaving, etc.)
+    partialize: (state) => ({
+      nodes: state.nodes,
+      edges: state.edges,
+      groups: state.groups,
     }),
-    {
-      // Only track meaningful state (not UI flags like isDirty, isSaving, etc.)
-      partialize: (state) => ({
-        nodes: state.nodes,
-        edges: state.edges,
-        groups: state.groups,
-      }),
-      // Limit history to prevent memory issues
-      limit: 50,
-      // Optimized equality check using shallow comparison instead of JSON.stringify
-      equality: temporalStateEquals,
-    }
-  )
+    // Limit history to prevent memory issues
+    limit: 50,
+    // Optimized equality check using shallow comparison instead of JSON.stringify
+    equality: temporalStateEquals,
+  })
 );

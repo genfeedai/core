@@ -41,6 +41,7 @@ const PROVIDER_COLORS: Record<ProviderType, string> = {
   replicate: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
   fal: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
   huggingface: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
+  'genfeed-ai': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
 };
 
 function ProviderBadge({ provider }: { provider: ProviderType }) {
@@ -48,6 +49,7 @@ function ProviderBadge({ provider }: { provider: ProviderType }) {
     replicate: 'Replicate',
     fal: 'fal.ai',
     huggingface: 'Hugging Face',
+    'genfeed-ai': 'Genfeed AI',
   };
 
   return (
@@ -69,6 +71,7 @@ function CapabilityBadge({ capability }: { capability: ModelCapability }) {
     'image-to-image': 'img→img',
     'text-to-video': 'txt→vid',
     'image-to-video': 'img→vid',
+    'text-generation': 'txt→txt',
   };
 
   return (

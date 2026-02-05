@@ -58,7 +58,7 @@ export const AI_INFLUENCER_AVATAR_TEMPLATE: WorkflowTemplate = {
     // Avatar Output
     {
       id: 'output-avatar',
-      type: 'output',
+      type: 'download',
       position: { x: 1250, y: 50 },
       data: {
         label: 'Base Avatar',
@@ -100,7 +100,7 @@ export const AI_INFLUENCER_AVATAR_TEMPLATE: WorkflowTemplate = {
     },
     {
       id: 'output-scene-1',
-      type: 'output',
+      type: 'download',
       position: { x: 1250, y: 250 },
       data: {
         label: 'Beach Output',
@@ -142,7 +142,7 @@ export const AI_INFLUENCER_AVATAR_TEMPLATE: WorkflowTemplate = {
     },
     {
       id: 'output-scene-2',
-      type: 'output',
+      type: 'download',
       position: { x: 1250, y: 450 },
       data: {
         label: 'Office Output',
@@ -184,7 +184,7 @@ export const AI_INFLUENCER_AVATAR_TEMPLATE: WorkflowTemplate = {
     },
     {
       id: 'output-scene-3',
-      type: 'output',
+      type: 'download',
       position: { x: 1250, y: 650 },
       data: {
         label: 'Outdoor Output',
@@ -226,7 +226,7 @@ export const AI_INFLUENCER_AVATAR_TEMPLATE: WorkflowTemplate = {
     },
     {
       id: 'output-scene-4',
-      type: 'output',
+      type: 'download',
       position: { x: 1250, y: 850 },
       data: {
         label: 'Casual Output',

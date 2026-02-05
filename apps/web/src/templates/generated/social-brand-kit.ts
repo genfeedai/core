@@ -172,7 +172,7 @@ export const SOCIAL_BRAND_KIT_TEMPLATE: WorkflowTemplate = {
     // === OUTPUT NODES ===
     {
       id: 'output-pfp',
-      type: 'output',
+      type: 'download',
       position: { x: 950, y: 100 },
       data: {
         label: 'Profile Picture',
@@ -184,7 +184,7 @@ export const SOCIAL_BRAND_KIT_TEMPLATE: WorkflowTemplate = {
     },
     {
       id: 'output-yt',
-      type: 'output',
+      type: 'download',
       position: { x: 950, y: 275 },
       data: {
         label: 'YouTube Banner',
@@ -196,7 +196,7 @@ export const SOCIAL_BRAND_KIT_TEMPLATE: WorkflowTemplate = {
     },
     {
       id: 'output-fb',
-      type: 'output',
+      type: 'download',
       position: { x: 950, y: 425 },
       data: {
         label: 'Facebook Cover',
@@ -208,7 +208,7 @@ export const SOCIAL_BRAND_KIT_TEMPLATE: WorkflowTemplate = {
     },
     {
       id: 'output-x',
-      type: 'output',
+      type: 'download',
       position: { x: 950, y: 600 },
       data: {
         label: 'X Header',

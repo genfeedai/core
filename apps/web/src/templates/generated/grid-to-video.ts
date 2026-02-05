@@ -400,7 +400,7 @@ export const GRID_TO_VIDEO_TEMPLATE: WorkflowTemplate = {
     // Output
     {
       id: 'output-1',
-      type: 'output',
+      type: 'download',
       position: { x: 1850, y: 400 },
       data: {
         label: 'Final Video',

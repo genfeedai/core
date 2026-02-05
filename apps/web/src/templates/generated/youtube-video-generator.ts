@@ -185,7 +185,7 @@ Ensure visual continuity between scenes. Total runtime: 10 minutes (20 × 30 sec
     // Final Output
     {
       id: 'output',
-      type: 'output',
+      type: 'download',
       position: { x: 2750, y: 500 },
       data: {
         label: 'Final Video',

@@ -165,8 +165,8 @@ describe('validateWorkflow', () => {
     expect(result.errors.some((e) => e.message.includes('Prompt'))).toBe(true);
   });
 
-  it('should return error for output node without media input', () => {
-    const nodes = [{ id: 'output1', type: 'output' }];
+  it('should return error for download node without media input', () => {
+    const nodes = [{ id: 'download1', type: 'download' }];
     const result = validateWorkflow(nodes, []);
 
     expect(result.isValid).toBe(false);

@@ -120,7 +120,7 @@ export const SOCIAL_TEASER_CLIP_TEMPLATE: WorkflowTemplate = {
     // Output
     {
       id: 'output',
-      type: 'output',
+      type: 'download',
       position: { x: 1450, y: 300 },
       data: {
         label: 'Final Teaser',

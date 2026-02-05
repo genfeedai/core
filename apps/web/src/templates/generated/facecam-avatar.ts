@@ -87,7 +87,7 @@ export const FACECAM_AVATAR_TEMPLATE: WorkflowTemplate = {
     // Output
     {
       id: 'output',
-      type: 'output',
+      type: 'download',
       position: { x: 1100, y: 200 },
       data: {
         label: 'Talking Head Video',

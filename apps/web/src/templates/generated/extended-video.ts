@@ -118,7 +118,7 @@ export const EXTENDED_VIDEO_TEMPLATE: WorkflowTemplate = {
     // Output
     {
       id: 'output-1',
-      type: 'output',
+      type: 'download',
       position: { x: 1550, y: 250 },
       data: {
         label: 'Extended Video',

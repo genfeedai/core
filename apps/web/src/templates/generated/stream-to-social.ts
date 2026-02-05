@@ -151,7 +151,7 @@ Focus on content that will hook viewers in the first 3 seconds.`,
     // Stage 6: Final Output
     {
       id: 'output',
-      type: 'output',
+      type: 'download',
       position: { x: 1700, y: 400 },
       data: {
         label: 'Final Output',

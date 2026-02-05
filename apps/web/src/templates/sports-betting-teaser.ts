@@ -171,7 +171,7 @@ Format:
     // Output
     {
       id: 'output',
-      type: 'output',
+      type: 'download',
       position: { x: 2100, y: 300 },
       data: {
         label: 'Final Teaser',

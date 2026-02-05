@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { settingsApi } from '@/lib/api/settings';
 import { logger } from '@/lib/logger';
+import type { ProviderType } from '@genfeedai/types';
 
 // =============================================================================
 // TYPES
 // =============================================================================
 
-export type ProviderType = 'replicate' | 'fal' | 'huggingface';
+export type { ProviderType };
 export type EdgeStyle = 'default' | 'smoothstep' | 'straight';
 
 export interface ProviderConfig {
@@ -18,6 +19,7 @@ export interface ProviderSettings {
   replicate: ProviderConfig;
   fal: ProviderConfig;
   huggingface: ProviderConfig;
+  'genfeed-ai': ProviderConfig;
 }
 
 export interface DefaultModelSettings {
@@ -90,6 +92,7 @@ const DEFAULT_SETTINGS = {
     replicate: { apiKey: null, enabled: true },
     fal: { apiKey: null, enabled: false },
     huggingface: { apiKey: null, enabled: false },
+    'genfeed-ai': { apiKey: null, enabled: true },
   },
   defaults: {
     imageModel: 'nano-banana-pro',
@@ -291,6 +294,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => {
           replicate: { ...state.providers.replicate, apiKey: null },
           fal: { ...state.providers.fal, apiKey: null },
           huggingface: { ...state.providers.huggingface, apiKey: null },
+          'genfeed-ai': { ...state.providers['genfeed-ai'], apiKey: null },
         },
       }));
     },
@@ -313,10 +317,11 @@ export const useSettingsStore = create<SettingsStore>((set, get) => {
       const key = state.providers[provider].apiKey;
       if (!key) return {};
 
-      const headerMap: Record<ProviderType, string> = {
+      const headerMap: Record<string, string> = {
         replicate: 'X-Replicate-Key',
         fal: 'X-Fal-Key',
         huggingface: 'X-HF-Key',
+        'genfeed-ai': 'X-Genfeed-Key',
       };
 
       return { [headerMap[provider]]: key };
@@ -418,5 +423,10 @@ export const PROVIDER_INFO: Record<
     name: 'Hugging Face',
     description: 'The AI community platform with 500k+ models',
     docsUrl: 'https://huggingface.co/docs/api-inference',
+  },
+  'genfeed-ai': {
+    name: 'Genfeed AI',
+    description: 'Built-in models powered by Genfeed',
+    docsUrl: 'https://genfeed.ai/docs',
   },
 };

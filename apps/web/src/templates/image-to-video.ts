@@ -80,7 +80,7 @@ export const IMAGE_TO_VIDEO_TEMPLATE: WorkflowTemplate = {
     },
     {
       id: 'output-1',
-      type: 'output',
+      type: 'download',
       position: { x: 1100, y: 200 },
       data: {
         label: 'Final Video',

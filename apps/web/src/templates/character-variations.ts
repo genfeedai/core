@@ -111,7 +111,7 @@ export const CHARACTER_VARIATIONS_TEMPLATE: WorkflowTemplate = {
     // Output Nodes
     {
       id: 'output-1',
-      type: 'output',
+      type: 'download',
       position: { x: 750, y: 50 },
       data: {
         label: 'Scene 1 Output',
@@ -123,7 +123,7 @@ export const CHARACTER_VARIATIONS_TEMPLATE: WorkflowTemplate = {
     },
     {
       id: 'output-2',
-      type: 'output',
+      type: 'download',
       position: { x: 750, y: 350 },
       data: {
         label: 'Scene 2 Output',
@@ -135,7 +135,7 @@ export const CHARACTER_VARIATIONS_TEMPLATE: WorkflowTemplate = {
     },
     {
       id: 'output-3',
-      type: 'output',
+      type: 'download',
       position: { x: 750, y: 650 },
       data: {
         label: 'Scene 3 Output',
