@@ -1,4 +1,4 @@
-import { NODE_STATUS } from '@genfeedai/types';
+import { NodeStatusEnum } from '@genfeedai/types';
 import type { StateCreator } from 'zustand';
 import { apiClient } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
@@ -84,7 +84,7 @@ export const createExecutionSlice: StateCreator<ExecutionStore, [], [], Executio
 
     for (const node of workflowStore.nodes) {
       workflowStore.updateNodeData(node.id, {
-        status: NODE_STATUS.idle,
+        status: NodeStatusEnum.IDLE,
         error: undefined,
         progress: undefined,
       });
@@ -131,7 +131,7 @@ export const createExecutionSlice: StateCreator<ExecutionStore, [], [], Executio
           context: 'ExecutionStore',
         });
         workflowStore.updateNodeData(nodeId, {
-          status: NODE_STATUS.error,
+          status: NodeStatusEnum.ERROR,
           error: 'Failed to save workflow',
         });
         return;
@@ -141,7 +141,7 @@ export const createExecutionSlice: StateCreator<ExecutionStore, [], [], Executio
     const workflowId = workflowStore.workflowId;
     if (!workflowId) {
       workflowStore.updateNodeData(nodeId, {
-        status: NODE_STATUS.error,
+        status: NodeStatusEnum.ERROR,
         error: 'Workflow must be saved first',
       });
       return;
@@ -174,7 +174,7 @@ export const createExecutionSlice: StateCreator<ExecutionStore, [], [], Executio
     } catch (error) {
       logger.error('Failed to start node execution', error, { context: 'ExecutionStore' });
       workflowStore.updateNodeData(nodeId, {
-        status: NODE_STATUS.error,
+        status: NodeStatusEnum.ERROR,
         error: error instanceof Error ? error.message : 'Node execution failed',
       });
     }
@@ -242,7 +242,7 @@ export const createExecutionSlice: StateCreator<ExecutionStore, [], [], Executio
 
     for (const nodeId of selectedNodeIds) {
       workflowStore.updateNodeData(nodeId, {
-        status: NODE_STATUS.idle,
+        status: NodeStatusEnum.IDLE,
         error: undefined,
         progress: undefined,
       });
@@ -304,7 +304,7 @@ export const createExecutionSlice: StateCreator<ExecutionStore, [], [], Executio
     }
 
     workflowStore.updateNodeData(lastFailedNodeId, {
-      status: NODE_STATUS.idle,
+      status: NodeStatusEnum.IDLE,
       error: undefined,
       progress: undefined,
     });
@@ -376,7 +376,7 @@ export const createExecutionSlice: StateCreator<ExecutionStore, [], [], Executio
     }
 
     const workflowStore = useWorkflowStore.getState();
-    workflowStore.updateNodeData(nodeId, { status: NODE_STATUS.idle, error: undefined });
+    workflowStore.updateNodeData(nodeId, { status: NodeStatusEnum.IDLE, error: undefined });
   },
 
   isNodeExecuting: (nodeId: string) => {
@@ -416,7 +416,7 @@ export const createExecutionSlice: StateCreator<ExecutionStore, [], [], Executio
     const workflowStore = useWorkflowStore.getState();
     for (const node of workflowStore.nodes) {
       workflowStore.updateNodeData(node.id, {
-        status: NODE_STATUS.idle,
+        status: NodeStatusEnum.IDLE,
         error: undefined,
         progress: undefined,
       });

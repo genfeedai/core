@@ -1,7 +1,13 @@
 import type { NodeGroup } from './groups';
 import type { NodeType, WorkflowEdge, WorkflowNode } from './nodes';
 
-export type EdgeStyle = 'default' | 'smoothstep' | 'straight';
+export enum EdgeStyleEnum {
+  DEFAULT = 'default',
+  SMOOTHSTEP = 'smoothstep',
+  STRAIGHT = 'straight',
+}
+
+export type EdgeStyle = `${EdgeStyleEnum}`;
 
 export interface WorkflowFile {
   version: number;

@@ -6,7 +6,7 @@ import type {
   LumaReframeModel,
   ReframeNodeData,
 } from '@genfeedai/types';
-import { NODE_STATUS } from '@genfeedai/types';
+import { NodeStatusEnum } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { Loader2, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
@@ -87,7 +87,7 @@ function ReframeNodeComponent(props: NodeProps) {
   );
 
   const handleProcess = useCallback(() => {
-    updateNodeData(id, { status: NODE_STATUS.processing });
+    updateNodeData(id, { status: NodeStatusEnum.PROCESSING });
     executeNode(id);
   }, [id, executeNode, updateNodeData]);
 

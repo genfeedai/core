@@ -1,4 +1,4 @@
-import { NODE_STATUS } from '@genfeedai/types';
+import { NodeStatusEnum } from '@genfeedai/types';
 import { useCallback } from 'react';
 import { useExecutionStore } from '@/store/executionStore';
 import { useWorkflowStore } from '@/store/workflowStore';
@@ -21,7 +21,7 @@ export function useNodeExecution(nodeId: string) {
   const stopNodeExecution = useExecutionStore((state) => state.stopNodeExecution);
 
   const handleGenerate = useCallback(() => {
-    updateNodeData(nodeId, { status: NODE_STATUS.processing });
+    updateNodeData(nodeId, { status: NodeStatusEnum.PROCESSING });
     executeNode(nodeId);
   }, [nodeId, executeNode, updateNodeData]);
 

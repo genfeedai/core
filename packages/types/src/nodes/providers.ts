@@ -2,22 +2,35 @@
 // PROVIDER TYPES
 // =============================================================================
 
-export type ProviderType = 'replicate' | 'fal' | 'huggingface' | 'genfeed-ai';
+export enum ProviderTypeEnum {
+  REPLICATE = 'replicate',
+  FAL = 'fal',
+  HUGGINGFACE = 'huggingface',
+  GENFEED_AI = 'genfeed-ai',
+}
 
-export type ModelCapability =
-  | 'text-to-image'
-  | 'image-to-image'
-  | 'text-to-video'
-  | 'image-to-video'
-  | 'text-generation';
+export type ProviderType = `${ProviderTypeEnum}`;
 
-export type ModelUseCase =
-  | 'style-transfer'
-  | 'character-consistent'
-  | 'image-variation'
-  | 'inpainting'
-  | 'upscale'
-  | 'general';
+export enum ModelCapabilityEnum {
+  TEXT_TO_IMAGE = 'text-to-image',
+  IMAGE_TO_IMAGE = 'image-to-image',
+  TEXT_TO_VIDEO = 'text-to-video',
+  IMAGE_TO_VIDEO = 'image-to-video',
+  TEXT_GENERATION = 'text-generation',
+}
+
+export type ModelCapability = `${ModelCapabilityEnum}`;
+
+export enum ModelUseCaseEnum {
+  STYLE_TRANSFER = 'style-transfer',
+  CHARACTER_CONSISTENT = 'character-consistent',
+  IMAGE_VARIATION = 'image-variation',
+  INPAINTING = 'inpainting',
+  UPSCALE = 'upscale',
+  GENERAL = 'general',
+}
+
+export type ModelUseCase = `${ModelUseCaseEnum}`;
 
 export interface ProviderModel {
   id: string;

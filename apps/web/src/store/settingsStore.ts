@@ -1,14 +1,14 @@
 import { create } from 'zustand';
 import { settingsApi } from '@/lib/api/settings';
 import { logger } from '@/lib/logger';
-import type { ProviderType } from '@genfeedai/types';
+import { ProviderTypeEnum } from '@genfeedai/types';
+import type { EdgeStyle, ProviderType } from '@genfeedai/types';
 
 // =============================================================================
 // TYPES
 // =============================================================================
 
-export type { ProviderType };
-export type EdgeStyle = 'default' | 'smoothstep' | 'straight';
+export type { EdgeStyle, ProviderType };
 
 export interface ProviderConfig {
   apiKey: string | null;
@@ -317,11 +317,11 @@ export const useSettingsStore = create<SettingsStore>((set, get) => {
       const key = state.providers[provider].apiKey;
       if (!key) return {};
 
-      const headerMap: Record<string, string> = {
-        replicate: 'X-Replicate-Key',
-        fal: 'X-Fal-Key',
-        huggingface: 'X-HF-Key',
-        'genfeed-ai': 'X-Genfeed-Key',
+      const headerMap: Record<ProviderType, string> = {
+        [ProviderTypeEnum.REPLICATE]: 'X-Replicate-Key',
+        [ProviderTypeEnum.FAL]: 'X-Fal-Key',
+        [ProviderTypeEnum.HUGGINGFACE]: 'X-HF-Key',
+        [ProviderTypeEnum.GENFEED_AI]: 'X-Genfeed-Key',
       };
 
       return { [headerMap[provider]]: key };
@@ -409,22 +409,22 @@ export const PROVIDER_INFO: Record<
   ProviderType,
   { name: string; description: string; docsUrl: string }
 > = {
-  replicate: {
+  [ProviderTypeEnum.REPLICATE]: {
     name: 'Replicate',
     description: 'Access thousands of open-source AI models',
     docsUrl: 'https://replicate.com/docs',
   },
-  fal: {
+  [ProviderTypeEnum.FAL]: {
     name: 'fal.ai',
     description: 'Fast inference for image and video generation',
     docsUrl: 'https://fal.ai/docs',
   },
-  huggingface: {
+  [ProviderTypeEnum.HUGGINGFACE]: {
     name: 'Hugging Face',
     description: 'The AI community platform with 500k+ models',
     docsUrl: 'https://huggingface.co/docs/api-inference',
   },
-  'genfeed-ai': {
+  [ProviderTypeEnum.GENFEED_AI]: {
     name: 'Genfeed AI',
     description: 'Built-in models powered by Genfeed',
     docsUrl: 'https://genfeed.ai/docs',

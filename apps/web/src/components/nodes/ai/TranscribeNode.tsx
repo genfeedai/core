@@ -1,7 +1,7 @@
 'use client';
 
 import type { TranscribeLanguage, TranscribeNodeData } from '@genfeedai/types';
-import { NODE_STATUS } from '@genfeedai/types';
+import { NodeStatusEnum } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { AlertCircle, Expand, FileText, Loader2, RefreshCw } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
@@ -61,7 +61,7 @@ function TranscribeNodeComponent(props: NodeProps) {
   );
 
   const handleTranscribe = useCallback(() => {
-    updateNodeData(id, { status: NODE_STATUS.processing });
+    updateNodeData(id, { status: NodeStatusEnum.PROCESSING });
     executeNode(id);
   }, [id, executeNode, updateNodeData]);
 

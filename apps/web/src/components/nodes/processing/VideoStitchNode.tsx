@@ -1,7 +1,7 @@
 'use client';
 
 import type { AudioCodec, TransitionType, VideoStitchNodeData } from '@genfeedai/types';
-import { NODE_STATUS } from '@genfeedai/types';
+import { NodeStatusEnum } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { Layers, Loader2, RefreshCw, Zap } from 'lucide-react';
 import { memo, useCallback } from 'react';
@@ -88,7 +88,7 @@ function VideoStitchNodeComponent(props: NodeProps) {
   );
 
   const handleProcess = useCallback(() => {
-    updateNodeData(id, { status: NODE_STATUS.processing });
+    updateNodeData(id, { status: NodeStatusEnum.PROCESSING });
     executeNode(id);
   }, [id, executeNode, updateNodeData]);
 

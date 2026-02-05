@@ -1,7 +1,7 @@
 'use client';
 
 import type { VoiceChangeNodeData } from '@genfeedai/types';
-import { NODE_STATUS } from '@genfeedai/types';
+import { NodeStatusEnum } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { AudioLines, Expand, Loader2, RefreshCw, Video } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
@@ -42,7 +42,7 @@ function VoiceChangeNodeComponent(props: NodeProps) {
   );
 
   const handleProcess = useCallback(() => {
-    updateNodeData(id, { status: NODE_STATUS.processing });
+    updateNodeData(id, { status: NodeStatusEnum.PROCESSING });
     executeNode(id);
   }, [id, executeNode, updateNodeData]);
 

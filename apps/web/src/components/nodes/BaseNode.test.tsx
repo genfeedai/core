@@ -79,7 +79,7 @@ vi.mock('@/components/ui/button', () => ({
   ),
 }));
 
-// Mock NODE_DEFINITIONS and NODE_STATUS
+// Mock NODE_DEFINITIONS and NodeStatusEnum
 vi.mock('@genfeedai/types', () => ({
   NODE_DEFINITIONS: {
     prompt: {
@@ -104,11 +104,12 @@ vi.mock('@genfeedai/types', () => ({
       outputs: [],
     },
   },
-  NODE_STATUS: {
-    processing: 'processing',
-    complete: 'complete',
-    error: 'error',
-    idle: 'idle',
+  NodeStatusEnum: {
+    IDLE: 'idle',
+    PENDING: 'pending',
+    PROCESSING: 'processing',
+    COMPLETE: 'complete',
+    ERROR: 'error',
   },
 }));
 

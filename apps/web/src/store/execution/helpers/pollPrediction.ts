@@ -1,4 +1,4 @@
-import { NODE_STATUS } from '@genfeedai/types';
+import { NodeStatusEnum } from '@genfeedai/types';
 import { apiClient } from '@/lib/api/client';
 import type { useWorkflowStore } from '@/store/workflowStore';
 import type { Job, useExecutionStore } from '../executionStore';
@@ -52,7 +52,7 @@ export async function pollPrediction(
       );
       // Clear error on success
       workflowStore.updateNodeData(nodeId, {
-        status: NODE_STATUS.complete,
+        status: NodeStatusEnum.COMPLETE,
         error: undefined,
         ...outputUpdate,
       });
@@ -62,7 +62,7 @@ export async function pollPrediction(
 
     if (data.status === 'failed' || data.status === 'canceled') {
       workflowStore.updateNodeData(nodeId, {
-        status: NODE_STATUS.error,
+        status: NodeStatusEnum.ERROR,
         error: data.error ?? 'Job failed',
       });
       return;
@@ -93,7 +93,7 @@ export async function pollPrediction(
   }
 
   workflowStore.updateNodeData(nodeId, {
-    status: NODE_STATUS.error,
+    status: NodeStatusEnum.ERROR,
     error: 'Job timed out',
   });
 }

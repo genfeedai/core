@@ -1,7 +1,8 @@
 import { logger } from '@/lib/logger';
 import { useUIStore } from '@/store/uiStore';
 import { useWorkflowStore } from '@/store/workflowStore';
-import { NODE_STATUS } from '@genfeedai/types';
+import { NodeStatusEnum } from '@genfeedai/types';
+import type { NodeStatus } from '@genfeedai/types';
 import type { StoreApi } from 'zustand';
 import type { DebugPayload, ExecutionData, ExecutionStore, Job } from '../types';
 import { getOutputUpdate } from './outputHelpers';
@@ -11,12 +12,12 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://local.genfeed.ai
 /**
  * Status map for converting execution statuses to node statuses
  */
-const statusMap: Record<string, (typeof NODE_STATUS)[keyof typeof NODE_STATUS]> = {
-  pending: NODE_STATUS.idle,
-  processing: NODE_STATUS.processing,
-  complete: NODE_STATUS.complete,
-  succeeded: NODE_STATUS.complete,
-  error: NODE_STATUS.error,
+const statusMap: Record<string, NodeStatus> = {
+  pending: NodeStatusEnum.IDLE,
+  processing: NodeStatusEnum.PROCESSING,
+  complete: NodeStatusEnum.COMPLETE,
+  succeeded: NodeStatusEnum.COMPLETE,
+  error: NodeStatusEnum.ERROR,
 };
 
 function applyJobUpdates(
@@ -113,7 +114,7 @@ async function reconcileNodeStatuses(executionId: string): Promise<void> {
     const workflowStore = useWorkflowStore.getState();
 
     for (const nodeResult of execution.nodeResults || []) {
-      const nodeStatus = statusMap[nodeResult.status] ?? NODE_STATUS.idle;
+      const nodeStatus = statusMap[nodeResult.status] ?? NodeStatusEnum.IDLE;
       const isSuccess = nodeResult.status === 'complete' || nodeResult.status === 'succeeded';
 
       workflowStore.updateNodeData(nodeResult.nodeId, {
@@ -156,7 +157,7 @@ export function createExecutionSubscription(
         // Only process changed nodeResults if delta updates are available
         const nodeResults = data.nodeResults || [];
         for (const nodeResult of nodeResults) {
-          const nodeStatus = statusMap[nodeResult.status] ?? NODE_STATUS.idle;
+          const nodeStatus = statusMap[nodeResult.status] ?? NodeStatusEnum.IDLE;
           const isSuccess = nodeResult.status === 'complete' || nodeResult.status === 'succeeded';
 
           workflowStore.updateNodeData(nodeResult.nodeId, {
@@ -253,7 +254,7 @@ export function createNodeExecutionSubscription(
 
         const nodeResults = data.nodeResults || [];
         for (const nodeResult of nodeResults) {
-          const nodeStatus = statusMap[nodeResult.status] ?? NODE_STATUS.idle;
+          const nodeStatus = statusMap[nodeResult.status] ?? NodeStatusEnum.IDLE;
           const isSuccess = nodeResult.status === 'complete' || nodeResult.status === 'succeeded';
 
           workflowStore.updateNodeData(nodeResult.nodeId, {

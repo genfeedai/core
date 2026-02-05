@@ -1,7 +1,7 @@
 'use client';
 
 import type { GridOutputFormat, ImageGridSplitNodeData } from '@genfeedai/types';
-import { NODE_STATUS } from '@genfeedai/types';
+import { NodeStatusEnum } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { Download, Grid3X3, Loader2, RefreshCw } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
@@ -75,7 +75,7 @@ function ImageGridSplitNodeComponent(props: NodeProps) {
   );
 
   const handleProcess = useCallback(() => {
-    updateNodeData(id, { status: NODE_STATUS.processing });
+    updateNodeData(id, { status: NodeStatusEnum.PROCESSING });
     executeNode(id);
   }, [id, executeNode, updateNodeData]);
 

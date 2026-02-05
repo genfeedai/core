@@ -2,7 +2,15 @@
 // HANDLE TYPES
 // =============================================================================
 
-export type HandleType = 'image' | 'text' | 'video' | 'number' | 'audio';
+export enum HandleTypeEnum {
+  IMAGE = 'image',
+  TEXT = 'text',
+  VIDEO = 'video',
+  NUMBER = 'number',
+  AUDIO = 'audio',
+}
+
+export type HandleType = `${HandleTypeEnum}`;
 
 export interface HandleDefinition {
   id: string;
@@ -12,14 +20,6 @@ export interface HandleDefinition {
   required?: boolean;
   /** True if handle was dynamically generated from model schema */
   fromSchema?: boolean;
-}
-
-export enum HandleTypeEnum {
-  IMAGE = 'image',
-  TEXT = 'text',
-  VIDEO = 'video',
-  NUMBER = 'number',
-  AUDIO = 'audio',
 }
 
 // Connection validation rules

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { logger } from '@/lib/logger';
 import { useSettingsStore } from '@/store/settingsStore';
+import { ModelCapabilityEnum, ModelUseCaseEnum, ProviderTypeEnum } from '@genfeedai/types';
 import type { ModelCapability, ModelUseCase, ProviderModel, ProviderType } from '@genfeedai/types';
 import {
   AlertTriangle,
@@ -38,18 +39,18 @@ interface ModelBrowserModalProps {
 // =============================================================================
 
 const PROVIDER_COLORS: Record<ProviderType, string> = {
-  replicate: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-  fal: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-  huggingface: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
-  'genfeed-ai': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+  [ProviderTypeEnum.REPLICATE]: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+  [ProviderTypeEnum.FAL]: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
+  [ProviderTypeEnum.HUGGINGFACE]: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
+  [ProviderTypeEnum.GENFEED_AI]: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
 };
 
 function ProviderBadge({ provider }: { provider: ProviderType }) {
   const labels: Record<ProviderType, string> = {
-    replicate: 'Replicate',
-    fal: 'fal.ai',
-    huggingface: 'Hugging Face',
-    'genfeed-ai': 'Genfeed AI',
+    [ProviderTypeEnum.REPLICATE]: 'Replicate',
+    [ProviderTypeEnum.FAL]: 'fal.ai',
+    [ProviderTypeEnum.HUGGINGFACE]: 'Hugging Face',
+    [ProviderTypeEnum.GENFEED_AI]: 'Genfeed AI',
   };
 
   return (
@@ -67,11 +68,11 @@ function ProviderBadge({ provider }: { provider: ProviderType }) {
 
 function CapabilityBadge({ capability }: { capability: ModelCapability }) {
   const labels: Record<ModelCapability, string> = {
-    'text-to-image': 'txt→img',
-    'image-to-image': 'img→img',
-    'text-to-video': 'txt→vid',
-    'image-to-video': 'img→vid',
-    'text-generation': 'txt→txt',
+    [ModelCapabilityEnum.TEXT_TO_IMAGE]: 'txt→img',
+    [ModelCapabilityEnum.IMAGE_TO_IMAGE]: 'img→img',
+    [ModelCapabilityEnum.TEXT_TO_VIDEO]: 'txt→vid',
+    [ModelCapabilityEnum.IMAGE_TO_VIDEO]: 'img→vid',
+    [ModelCapabilityEnum.TEXT_GENERATION]: 'txt→txt',
   };
 
   return (
@@ -86,12 +87,12 @@ function CapabilityBadge({ capability }: { capability: ModelCapability }) {
 // =============================================================================
 
 const USE_CASE_CONFIG: Record<ModelUseCase, { label: string; icon: typeof Sparkles }> = {
-  'style-transfer': { label: 'Style Transfer', icon: Palette },
-  'character-consistent': { label: 'Character Consistent', icon: User },
-  'image-variation': { label: 'Image Variation', icon: Repeat },
-  inpainting: { label: 'Inpainting', icon: Layers },
-  upscale: { label: 'Upscale', icon: ZoomIn },
-  general: { label: 'General', icon: Sparkles },
+  [ModelUseCaseEnum.STYLE_TRANSFER]: { label: 'Style Transfer', icon: Palette },
+  [ModelUseCaseEnum.CHARACTER_CONSISTENT]: { label: 'Character Consistent', icon: User },
+  [ModelUseCaseEnum.IMAGE_VARIATION]: { label: 'Image Variation', icon: Repeat },
+  [ModelUseCaseEnum.INPAINTING]: { label: 'Inpainting', icon: Layers },
+  [ModelUseCaseEnum.UPSCALE]: { label: 'Upscale', icon: ZoomIn },
+  [ModelUseCaseEnum.GENERAL]: { label: 'General', icon: Sparkles },
 };
 
 function UseCaseBadge({ useCase }: { useCase: ModelUseCase }) {

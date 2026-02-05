@@ -7,7 +7,7 @@ import type {
   SelectedModel,
   WorkflowNodeData,
 } from '@genfeedai/types';
-import { NODE_DEFINITIONS, NODE_STATUS } from '@genfeedai/types';
+import { NODE_DEFINITIONS, NodeStatusEnum } from '@genfeedai/types';
 import {
   Handle,
   type NodeProps,
@@ -223,7 +223,7 @@ function BaseNodeComponent({
       e.stopPropagation();
       if (!nodeExecuting) {
         // Clear error and set to processing before retrying
-        updateNodeData(id, { error: undefined, status: NODE_STATUS.processing });
+        updateNodeData(id, { error: undefined, status: NodeStatusEnum.PROCESSING });
         executeNode(id);
       }
     },
@@ -241,7 +241,7 @@ function BaseNodeComponent({
         stopNodeExecution(id);
       } else {
         // No execution running — just reset UI status
-        updateNodeData(id, { status: NODE_STATUS.idle, error: undefined });
+        updateNodeData(id, { status: NodeStatusEnum.IDLE, error: undefined });
       }
     },
     [id, isRunning, nodeExecuting, stopExecution, stopNodeExecution, updateNodeData]
