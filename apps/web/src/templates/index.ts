@@ -22,6 +22,7 @@ import { STREAMER_HIGHLIGHT_REEL_TEMPLATE } from './streamer-highlight-reel';
 import { STYLE_TRANSFER_TEMPLATE } from './style-transfer';
 import { CHARACTER_VARIATIONS_TEMPLATE } from './character-variations';
 import { IMAGE_REMIX_TEMPLATE } from './image-remix';
+import { UGC_FACTORY_TEMPLATE } from './ugc-factory';
 
 export interface TemplateInfo {
   id: string;
@@ -55,6 +56,7 @@ export const TEMPLATE_REGISTRY: Record<string, WorkflowTemplate> = {
   'style-transfer': STYLE_TRANSFER_TEMPLATE,
   'character-variations': CHARACTER_VARIATIONS_TEMPLATE,
   'image-remix': IMAGE_REMIX_TEMPLATE,
+  'ugc-factory': UGC_FACTORY_TEMPLATE,
 };
 
 export const TEMPLATE_INFO: TemplateInfo[] = [
@@ -236,6 +238,12 @@ export const TEMPLATE_INFO: TemplateInfo[] = [
     category: TemplateCategory.IMAGE,
     thumbnail: 'https://images.unsplash.com/photo-1549490349-8643362247b5?w=600&h=400&fit=crop',
   },
+  {
+    id: 'ugc-factory',
+    name: 'UGC Factory',
+    description: 'Create AI-powered UGC videos: script → voice → motion → lip sync',
+    category: TemplateCategory.VIDEO,
+  },
 ];
 
 export function getTemplate(id: string): WorkflowTemplate | undefined {
@@ -271,4 +279,5 @@ export {
   STYLE_TRANSFER_TEMPLATE,
   CHARACTER_VARIATIONS_TEMPLATE,
   IMAGE_REMIX_TEMPLATE,
+  UGC_FACTORY_TEMPLATE,
 };

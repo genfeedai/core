@@ -1,10 +1,10 @@
 {
   "version": 3,
-  "name": "UGC Factory Pro",
-  "description": "Complete UGC pipeline: script → voice → motion → lip sync → multi-platform distribution (schema-driven)",
+  "name": "UGC Factory",
+  "description": "UGC pipeline: script → voice → motion → lip sync → download",
   "edgeStyle": "smoothstep",
   "createdAt": "2026-01-31T00:00:00.000Z",
-  "updatedAt": "2026-02-01T00:00:00.000Z",
+  "updatedAt": "2026-02-05T00:00:00.000Z",
   "nodes": [
     {
       "id": "script-input",
@@ -90,152 +90,16 @@
       }
     },
     {
-      "id": "telegram-post",
-      "type": "telegramPost",
-      "position": { "x": 800, "y": 50 },
+      "id": "output",
+      "type": "download",
+      "position": { "x": 750, "y": 275 },
       "data": {
-        "label": "Telegram",
+        "label": "Download",
         "status": "idle",
-        "inputVideo": null,
         "inputImage": null,
-        "inputText": null,
-        "chatId": "@your_channel",
-        "caption": "🔥 New UGC content generated with AI",
-        "asVoice": false,
-        "messageId": null,
-        "postUrl": null,
-        "jobId": null,
-        "aspectRatio": "9:16",
-        "maxDuration": 60
-      }
-    },
-    {
-      "id": "discord-post",
-      "type": "discordPost",
-      "position": { "x": 800, "y": 150 },
-      "data": {
-        "label": "Discord",
-        "status": "idle",
         "inputVideo": null,
-        "inputImage": null,
-        "inputText": null,
-        "channelId": "1234567890123456789",
-        "message": "Check out this AI-generated UGC! 🚀",
-        "messageId": null,
-        "postUrl": null,
-        "jobId": null,
-        "aspectRatio": "16:9",
-        "maxDuration": 300
-      }
-    },
-    {
-      "id": "twitter-post",
-      "type": "twitterPost",
-      "position": { "x": 1000, "y": 50 },
-      "data": {
-        "label": "Twitter/X",
-        "status": "idle",
-        "inputVideo": null,
-        "inputImage": null,
-        "inputText": null,
-        "caption": "This AI UGC is incredible! 🤯 #AI #UGC #ContentCreator",
-        "hashtags": ["#AI", "#UGC", "#viral"],
-        "tweetId": null,
-        "postUrl": null,
-        "jobId": null,
-        "aspectRatio": "16:9",
-        "maxDuration": 140
-      }
-    },
-    {
-      "id": "instagram-post",
-      "type": "instagramPost",
-      "position": { "x": 1000, "y": 150 },
-      "data": {
-        "label": "Instagram",
-        "status": "idle",
-        "inputVideo": null,
-        "inputImage": null,
-        "caption": "Mind-blown by AI technology 🤯 Follow for more! #AI #tech #viral",
-        "hashtags": ["#AI", "#tech", "#viral", "#contentcreator"],
-        "postType": "reels",
-        "postId": null,
-        "postUrl": null,
-        "jobId": null,
-        "aspectRatio": "9:16",
-        "maxDuration": 90
-      }
-    },
-    {
-      "id": "tiktok-post",
-      "type": "tiktokPost",
-      "position": { "x": 1000, "y": 250 },
-      "data": {
-        "label": "TikTok",
-        "status": "idle",
-        "inputVideo": null,
-        "caption": "POV: You discover AI can create realistic UGC 🤯",
-        "hashtags": ["#viral", "#ai", "#contentcreator", "#fyp"],
-        "videoId": null,
-        "postUrl": null,
-        "jobId": null,
-        "aspectRatio": "9:16",
-        "maxDuration": 60
-      }
-    },
-    {
-      "id": "youtube-post",
-      "type": "youtubePost",
-      "position": { "x": 1000, "y": 350 },
-      "data": {
-        "label": "YouTube Shorts",
-        "status": "idle",
-        "inputVideo": null,
-        "title": "AI Creates Realistic UGC - This Changed Everything",
-        "description": "Mind-blowing AI technology creating realistic user-generated content. The future is here! \\n\\nGenerated with AI tools.",
-        "tags": ["AI", "UGC", "content creation", "artificial intelligence", "viral"],
-        "visibility": "public",
-        "videoId": null,
-        "postUrl": null,
-        "jobId": null,
-        "aspectRatio": "9:16",
-        "maxDuration": 60
-      }
-    },
-    {
-      "id": "google-drive",
-      "type": "googleDriveUpload",
-      "position": { "x": 800, "y": 400 },
-      "data": {
-        "label": "Google Drive",
-        "status": "idle",
-        "inputVideo": null,
-        "inputImage": null,
-        "inputFile": null,
-        "folderId": "UGC_Factory_Outputs",
-        "fileName": "ugc-video-{timestamp}",
-        "fileId": null,
-        "driveUrl": null,
-        "jobId": null
-      }
-    },
-    {
-      "id": "webhook-notify",
-      "type": "webhookPost",
-      "position": { "x": 800, "y": 500 },
-      "data": {
-        "label": "Custom Webhook",
-        "status": "idle",
-        "inputVideo": null,
-        "inputImage": null,
-        "inputText": null,
-        "inputData": null,
-        "webhookUrl": "https://your-api.com/ugc-complete",
-        "method": "POST",
-        "headers": { "Content-Type": "application/json" },
-        "response": null,
-        "statusCode": null,
-        "jobId": null
+        "inputType": null,
+        "outputName": "ugc-video"
       }
     }
   ],
@@ -271,79 +135,9 @@
     {
       "id": "e5",
       "source": "lip-sync",
-      "target": "telegram-post",
+      "target": "output",
       "sourceHandle": "video",
       "targetHandle": "video"
-    },
-    {
-      "id": "e6",
-      "source": "lip-sync",
-      "target": "discord-post",
-      "sourceHandle": "video",
-      "targetHandle": "video"
-    },
-    {
-      "id": "e7",
-      "source": "lip-sync",
-      "target": "twitter-post",
-      "sourceHandle": "video",
-      "targetHandle": "video"
-    },
-    {
-      "id": "e8",
-      "source": "lip-sync",
-      "target": "instagram-post",
-      "sourceHandle": "video",
-      "targetHandle": "video"
-    },
-    {
-      "id": "e9",
-      "source": "lip-sync",
-      "target": "tiktok-post",
-      "sourceHandle": "video",
-      "targetHandle": "video"
-    },
-    {
-      "id": "e10",
-      "source": "lip-sync",
-      "target": "youtube-post",
-      "sourceHandle": "video",
-      "targetHandle": "video"
-    },
-    {
-      "id": "e11",
-      "source": "lip-sync",
-      "target": "google-drive",
-      "sourceHandle": "video",
-      "targetHandle": "video"
-    },
-    {
-      "id": "e12",
-      "source": "script-input",
-      "target": "telegram-post",
-      "sourceHandle": "text",
-      "targetHandle": "text"
-    },
-    {
-      "id": "e13",
-      "source": "script-input",
-      "target": "discord-post",
-      "sourceHandle": "text",
-      "targetHandle": "text"
-    },
-    {
-      "id": "e14",
-      "source": "script-input",
-      "target": "twitter-post",
-      "sourceHandle": "text",
-      "targetHandle": "text"
-    },
-    {
-      "id": "e15",
-      "source": "telegram-post",
-      "target": "webhook-notify",
-      "sourceHandle": "url",
-      "targetHandle": "data"
     }
   ]
 }

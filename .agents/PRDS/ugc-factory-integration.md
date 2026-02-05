@@ -3,7 +3,7 @@
 **Status:** Done
 **Priority:** High
 **Created:** 2026-01-31
-**Updated:** 2026-01-31
+**Updated:** 2026-02-05
 **Author:** Vincent (via Blaise)
 
 ---
@@ -22,18 +22,19 @@ UGC Factory is now implemented as a **workflow JSON** in core (`core/packages/wo
 
 **Current approach:** Standard workflow JSON that chains existing node types:
 ```
-Script (prompt) → Text-to-Speech (ElevenLabs) → Lip Sync → Output Video
-                  Avatar Image (imageInput) ↗
+Script (prompt) → Text-to-Speech (ElevenLabs) → Lip Sync → Download
+Avatar Image (imageInput) → Motion Control ↗
 ```
 
 ### Workflow Nodes
 | Node | Type | Purpose |
 |------|------|---------|
 | Script | `prompt` | UGC script text input |
-| Avatar Image | `imageInput` | Face/person image for lip sync |
+| Avatar Image | `imageInput` | Face/person image for motion |
 | Voice Over | `textToSpeech` | ElevenLabs TTS (configurable voice) |
+| Avatar Motion | `motionControl` | Apply motion to avatar image |
 | Lip Sync | `lipSync` | Sync avatar with voiceover |
-| UGC Video | `output` | Final output |
+| Download | `download` | Download final video output |
 
 ### Benefits of Workflow Approach
 - Uses existing execution engine (no custom processors needed)
@@ -57,6 +58,6 @@ Script (prompt) → Text-to-Speech (ElevenLabs) → Lip Sync → Output Video
 
 - [x] UGC Factory workflow JSON created
 - [x] Available in Telegram bot workflow list
-- [ ] Add to web UI workflow templates gallery
-- [ ] Multi-format support (16:9, 9:16, 1:1) via workflow variants
-- [ ] Batch generation (multiple voices/scripts in one run)
+- [x] Add to web UI workflow templates gallery
+- [x] Multi-format support (16:9, 9:16, 1:1) — configurable via motionControl node aspectRatio
+- [x] Batch generation — handled by BottomBar batch runner (1–10x)

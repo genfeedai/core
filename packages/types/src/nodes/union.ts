@@ -21,24 +21,10 @@ import type {
   WorkflowRefNodeData,
 } from './composition-nodes';
 import type {
-  DiscordPostNodeData,
-  FacebookPostNodeData,
-  GoogleDriveUploadNodeData,
-  InstagramPostNodeData,
-  LinkedInPostNodeData,
-  TelegramPostNodeData,
-  TikTokPostNodeData,
-  TwitterPostNodeData,
-  WebhookPostNodeData,
-  YouTubePostNodeData,
-} from './distribution-nodes';
-import type {
   AudioInputNodeData,
   ImageInputNodeData,
   PromptConstructorNodeData,
   PromptNodeData,
-  TelegramInputNodeData,
-  TemplateNodeData,
   VideoInputNodeData,
 } from './input-nodes';
 import type {
@@ -61,10 +47,8 @@ export type WorkflowNodeData =
   | ImageInputNodeData
   | AudioInputNodeData
   | VideoInputNodeData
-  | TelegramInputNodeData
   | PromptNodeData
   | PromptConstructorNodeData
-  | TemplateNodeData
   | ImageGenNodeData
   | VideoGenNodeData
   | LLMNodeData
@@ -86,17 +70,6 @@ export type WorkflowNodeData =
   | OutputGalleryNodeData
   | ImageCompareNodeData
   | OutputNodeData
-  // Distribution nodes
-  | TelegramPostNodeData
-  | DiscordPostNodeData
-  | TwitterPostNodeData
-  | InstagramPostNodeData
-  | TikTokPostNodeData
-  | YouTubePostNodeData
-  | FacebookPostNodeData
-  | LinkedInPostNodeData
-  | GoogleDriveUploadNodeData
-  | WebhookPostNodeData
   // Composition nodes
   | WorkflowInputNodeData
   | WorkflowOutputNodeData

@@ -32,6 +32,7 @@ import {
   Brain,
   CheckCircle,
   CheckCircle2,
+  Columns2,
   Copy,
   Crop,
   Download,
@@ -40,7 +41,9 @@ import {
   FileVideo,
   Film,
   GitBranch,
+  Grid3X3,
   Image,
+  LayoutGrid,
   Layers,
   Loader2,
   Lock,
@@ -48,12 +51,16 @@ import {
   Maximize2,
   MessageSquare,
   Mic,
+  Navigation,
+  Pencil,
+  Puzzle,
   RefreshCw,
   RotateCcw,
   Scissors,
   Share2,
   Sparkles,
   Square,
+  Subtitles,
   Unlock,
   Video,
   Volume2,
@@ -86,6 +93,13 @@ const ICON_MAP: Record<string, typeof Image> = {
   Mic,
   AudioLines,
   Volume2,
+  Navigation,
+  Puzzle,
+  Grid3X3,
+  LayoutGrid,
+  Columns2,
+  Pencil,
+  Subtitles,
   // Composition icons
   ArrowRightToLine,
   ArrowLeftFromLine,
@@ -301,8 +315,8 @@ function BaseNodeComponent({
       {/* Resizer - only shown when selected and not locked */}
       <NodeResizer
         isVisible={isSelected && !isLocked}
-        minWidth={type === 'output' ? 200 : 220}
-        minHeight={type === 'output' ? 280 : 100}
+        minWidth={type === 'download' ? 200 : 220}
+        minHeight={type === 'download' ? 280 : 100}
         maxWidth={500}
         lineClassName="!border-transparent"
         handleClassName="!w-2.5 !h-2.5 !border-0 !rounded-sm"
@@ -314,8 +328,8 @@ function BaseNodeComponent({
           'relative flex flex-col rounded-lg border border-[var(--border)] bg-[var(--card)] shadow-lg transition-all duration-200',
           // Only apply min/max width if node hasn't been manually resized
           // Output nodes get larger minimums for better preview visibility
-          !isResized && type === 'output' && 'min-w-[200px] min-h-[280px]',
-          !isResized && type !== 'output' && 'min-w-[220px] max-w-[320px]',
+          !isResized && type === 'download' && 'min-w-[200px] min-h-[280px]',
+          !isResized && type !== 'download' && 'min-w-[220px] max-w-[320px]',
           isSelected && 'ring-1',
           isLocked && 'opacity-60',
           isProcessing && 'node-processing',

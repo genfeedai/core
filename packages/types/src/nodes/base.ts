@@ -7,9 +7,7 @@ export type NodeType =
   | 'imageInput'
   | 'audioInput'
   | 'videoInput'
-  | 'telegramInput'
   | 'prompt'
-  | 'template'
   | 'promptConstructor'
   // AI generation nodes
   | 'imageGen'
@@ -33,31 +31,14 @@ export type NodeType =
   | 'subtitle'
   | 'outputGallery'
   | 'imageCompare'
-  // Output nodes (deprecated - outputs auto-save now)
-  | 'output' // @deprecated - kept for backwards compatibility with existing workflows
-  // Distribution nodes
-  | 'telegramPost'
-  | 'discordPost'
-  | 'twitterPost'
-  | 'instagramPost'
-  | 'tiktokPost'
-  | 'youtubePost'
-  | 'facebookPost'
-  | 'linkedinPost'
-  | 'googleDriveUpload'
-  | 'webhookPost'
+  // Output nodes
+  | 'download'
   // Composition nodes (workflow-as-node)
   | 'workflowInput'
   | 'workflowOutput'
   | 'workflowRef';
 
-export type NodeCategory =
-  | 'input'
-  | 'ai'
-  | 'processing'
-  | 'output'
-  | 'distribution'
-  | 'composition';
+export type NodeCategory = 'input' | 'ai' | 'processing' | 'output' | 'composition';
 
 export type NodeStatus = 'idle' | 'pending' | 'processing' | 'complete' | 'error';
 

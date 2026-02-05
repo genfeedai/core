@@ -1,1 +1,1 @@
-export { OutputNode } from './OutputNode';
+export { DownloadNode, OutputNode } from './OutputNode';

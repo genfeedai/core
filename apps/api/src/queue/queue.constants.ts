@@ -114,17 +114,6 @@ export const NODE_TYPE_TO_QUEUE: Record<string, QueueName> = {
   textToSpeech: QUEUE_NAMES.PROCESSING,
   // Composition: workflowRef triggers nested workflow execution via orchestrator
   workflowRef: QUEUE_NAMES.WORKFLOW_ORCHESTRATOR,
-  // Distribution nodes (stub - routed to processing queue)
-  telegramPost: QUEUE_NAMES.PROCESSING,
-  discordPost: QUEUE_NAMES.PROCESSING,
-  twitterPost: QUEUE_NAMES.PROCESSING,
-  instagramPost: QUEUE_NAMES.PROCESSING,
-  tiktokPost: QUEUE_NAMES.PROCESSING,
-  youtubePost: QUEUE_NAMES.PROCESSING,
-  facebookPost: QUEUE_NAMES.PROCESSING,
-  linkedinPost: QUEUE_NAMES.PROCESSING,
-  googleDriveUpload: QUEUE_NAMES.PROCESSING,
-  webhookPost: QUEUE_NAMES.PROCESSING,
 };
 
 /**
@@ -196,9 +185,8 @@ export const PASSTHROUGH_NODE_TYPES = [
   'imageInput',
   'videoInput',
   'audioInput',
-  'template',
   // Output node
-  'output',
+  'download',
 ] as const;
 
 export type PassthroughNodeType = (typeof PASSTHROUGH_NODE_TYPES)[number];

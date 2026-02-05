@@ -1,4 +1,4 @@
-import type { HandleType, NodeType, WorkflowNode, WorkflowNodeData } from '@genfeedai/types';
+import type { HandleType, NodeType, WorkflowNode } from '@genfeedai/types';
 import { NODE_DEFINITIONS } from '@genfeedai/types';
 import { nanoid } from 'nanoid';
 
@@ -7,34 +7,6 @@ import { nanoid } from 'nanoid';
  */
 export function generateId(): string {
   return nanoid(8);
-}
-
-/**
- * Extract output from a node for caching
- */
-export function getNodeOutput(node: WorkflowNode): unknown {
-  const data = node.data as WorkflowNodeData & {
-    outputImage?: string;
-    outputVideo?: string;
-    outputText?: string;
-    outputMedia?: string;
-    image?: string;
-    prompt?: string;
-    extractedTweet?: string;
-    audio?: string;
-  };
-
-  return (
-    data.outputImage ??
-    data.outputVideo ??
-    data.outputText ??
-    data.outputMedia ??
-    data.image ??
-    data.prompt ??
-    data.extractedTweet ??
-    data.audio ??
-    null
-  );
 }
 
 /**

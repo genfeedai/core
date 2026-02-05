@@ -4,7 +4,6 @@ export * from './base';
 export * from './input-nodes';
 export * from './ai-nodes';
 export * from './processing-nodes';
-export * from './distribution-nodes';
 export * from './composition-nodes';
 export * from './union';
 export * from './registry';

@@ -1,9 +1,9 @@
 import type {
+  DownloadNodeData,
   ImageGenNodeData,
   ImageInputNodeData,
   MotionControlNodeData,
   NodeType,
-  OutputNodeData,
   VideoGenNodeData,
   VideoInputNodeData,
   WorkflowNodeData,
@@ -45,8 +45,8 @@ export function getMediaFromNode(nodeType: NodeType, data: WorkflowNodeData): Me
       const mcData = data as MotionControlNodeData;
       return { url: mcData.outputVideo, type: mcData.outputVideo ? 'video' : null };
     }
-    case 'output': {
-      const outData = data as OutputNodeData;
+    case 'download': {
+      const outData = data as DownloadNodeData;
       if (outData.inputVideo) {
         return { url: outData.inputVideo, type: 'video' };
       }

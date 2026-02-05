@@ -29,10 +29,6 @@ const SYSTEM_PROMPT = `You are an expert workflow generator for Genfeed, a visua
 - outputs: audio
 - data: { label, status: "idle", audio: null, filename: null, duration: null, source: "upload" }
 
-**template** — Preset prompt template
-- outputs: text
-- data: { label, status: "idle", templateId: "", templateName: "", variables: {}, resolvedPrompt: null }
-
 ### AI Generation Nodes
 
 **imageGen** — Generate images with AI
@@ -129,10 +125,10 @@ const SYSTEM_PROMPT = `You are an expert workflow generator for Genfeed, a visua
 
 ### Output Nodes
 
-**output** — Download workflow output
+**download** — Download workflow output
 - inputs: image, video (accepts either)
 - outputs: none
-- data: { label: "Output", status: "idle", inputImage: null, inputVideo: null, inputType: null, outputName: "output" }
+- data: { label: "Download", status: "idle", inputImage: null, inputVideo: null, inputType: null, outputName: "output" }
 
 ## Connection Rules (STRICT — type must match exactly)
 

@@ -24,7 +24,7 @@ const MEDIA_OUTPUT_NODE_TYPES = new Set([
   'videoGen',
   'imageInput',
   'videoInput',
-  'output',
+  'download',
 ]);
 
 @Injectable()
@@ -61,9 +61,13 @@ export class WorkflowsService {
   async findAll(query?: QueryWorkflowDto): Promise<WorkflowDocument[]> {
     return this.workflowModel
       .find({ isDeleted: false })
+      .select(
+        'name thumbnail thumbnailNodeId updatedAt createdAt nodes.id nodes.type nodes.position edges.id edges.source edges.target'
+      )
       .sort({ updatedAt: -1 })
       .skip(query?.offset ?? 0)
       .limit(query?.limit ?? 20)
+      .lean()
       .exec();
   }
 

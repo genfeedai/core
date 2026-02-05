@@ -1,6 +1,6 @@
 'use client';
 
-import type { OutputNodeData } from '@genfeedai/types';
+import type { DownloadNodeData } from '@genfeedai/types';
 import type { NodeProps } from '@xyflow/react';
 import { Clock, Download, Loader2 } from 'lucide-react';
 import Image from 'next/image';
@@ -35,9 +35,9 @@ function getExtensionFromUrl(url: string, inputType: string): string {
   return 'txt';
 }
 
-function OutputNodeComponent(props: NodeProps) {
+function DownloadNodeComponent(props: NodeProps) {
   const { id, data } = props;
-  const nodeData = data as OutputNodeData;
+  const nodeData = data as DownloadNodeData;
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const edges = useWorkflowStore((state) => state.edges);
   const isRunning = useExecutionStore((state) => state.isRunning);
@@ -54,7 +54,7 @@ function OutputNodeComponent(props: NodeProps) {
 
   const handleFilenameChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      updateNodeData<OutputNodeData>(id, { outputName: e.target.value });
+      updateNodeData<DownloadNodeData>(id, { outputName: e.target.value });
     },
     [id, updateNodeData]
   );
@@ -182,4 +182,7 @@ function OutputNodeComponent(props: NodeProps) {
   );
 }
 
-export const OutputNode = memo(OutputNodeComponent);
+export const DownloadNode = memo(DownloadNodeComponent);
+
+/** @deprecated Use DownloadNode instead */
+export const OutputNode = DownloadNode;

@@ -230,7 +230,6 @@ export const createPersistenceSlice: StateCreator<WorkflowStore, [], [], Persist
         image?: string;
         video?: string;
         audio?: string;
-        templateId?: string;
         outputImage?: string;
         outputVideo?: string;
         outputText?: string;
@@ -245,8 +244,6 @@ export const createPersistenceSlice: StateCreator<WorkflowStore, [], [], Persist
           return Boolean(data.video);
         case 'audioInput':
           return Boolean(data.audio);
-        case 'template':
-          return Boolean(data.templateId);
         default:
           return true;
       }

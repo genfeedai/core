@@ -282,7 +282,7 @@ export interface ImageCompareNodeData extends BaseNodeData {
 
 export type OutputInputType = 'image' | 'video' | null;
 
-export interface OutputNodeData extends BaseNodeData {
+export interface DownloadNodeData extends BaseNodeData {
   // Inputs from connections (accepts either image or video)
   inputImage: string | null;
   inputVideo: string | null;
@@ -291,3 +291,6 @@ export interface OutputNodeData extends BaseNodeData {
   // Output name for saving
   outputName: string;
 }
+
+/** @deprecated Use DownloadNodeData instead */
+export type OutputNodeData = DownloadNodeData;

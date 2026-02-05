@@ -110,14 +110,14 @@ export const WORKFLOW_REGISTRY: Record<string, WorkflowMetadata> = {
   'ugc-factory': {
     slug: 'ugc-factory',
     title: 'UGC Content Factory',
-    description: 'Automated user-generated content creation for social media and marketing',
+    description: 'UGC pipeline: script → voice → motion → lip sync → download',
     category: 'full-pipeline',
     tags: ['ugc', 'social', 'automation', 'marketing', 'content'],
     tier: 'free',
     icon: '🏭',
     defaultModel: 'nano-banana-pro',
     inputTypes: ['text'],
-    outputTypes: ['video', 'image'],
+    outputTypes: ['video'],
     version: 1,
   },
 };

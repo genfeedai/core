@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import { getNodeOutput } from '../helpers/nodeHelpers';
+import { getNodeOutput } from '../helpers/propagation';
 import type { WorkflowStore } from '../types';
 
 export interface LockingSlice {

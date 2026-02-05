@@ -218,21 +218,6 @@ export interface VideoStitchJobData extends NodeJobData {
   };
 }
 
-export interface DistributionJobData extends NodeJobData {
-  nodeType:
-    | 'telegramPost'
-    | 'discordPost'
-    | 'twitterPost'
-    | 'instagramPost'
-    | 'tiktokPost'
-    | 'youtubePost'
-    | 'facebookPost'
-    | 'linkedinPost'
-    | 'googleDriveUpload'
-    | 'webhookPost';
-  nodeData: Record<string, unknown>; // Platform-specific config from node type definitions
-}
-
 export interface WorkflowRefJobData extends NodeJobData {
   nodeType: 'workflowRef';
   nodeData: {
@@ -258,7 +243,6 @@ export type ProcessingJobData =
   | TextToSpeechJobData
   | SubtitleJobData
   | VideoStitchJobData
-  | DistributionJobData
   | WorkflowRefJobData;
 
 export interface JobResult {

@@ -17,13 +17,6 @@ export interface PromptNodeData extends BaseNodeData {
   variables: Record<string, string>;
 }
 
-export interface TemplateNodeData extends BaseNodeData {
-  templateId: string;
-  templateName: string;
-  variables: Record<string, string>;
-  resolvedPrompt: string | null;
-}
-
 export interface AudioInputNodeData extends BaseNodeData {
   audio: string | null;
   filename: string | null;
@@ -39,14 +32,6 @@ export interface VideoInputNodeData extends BaseNodeData {
   dimensions: { width: number; height: number } | null;
   source: 'upload' | 'url';
   url?: string;
-}
-
-export interface TelegramInputNodeData extends BaseNodeData {
-  image: string | null;
-  text: string | null;
-  chatId: string | null;
-  messageId: string | null;
-  source: 'telegram';
 }
 
 export interface AvailableVariable {

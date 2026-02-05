@@ -3,7 +3,6 @@ import { forwardRef, Inject, Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
 import { ProcessingNodeType, ReframeNodeType, UpscaleNodeType } from '@genfeedai/types';
 import type {
-  DistributionJobData,
   JobResult,
   LipSyncJobData,
   ProcessingJobData,
@@ -15,14 +14,6 @@ import type {
   VideoStitchJobData,
   VoiceChangeJobData,
 } from '@/interfaces/job-data.interface';
-import type {
-  BaseOutputNode,
-  GeneratedVideo,
-  DeliveryConfig,
-  DeliveryResult,
-  PlatformConfig,
-} from '@/nodes/distribution/base-output-node';
-import type { DistributionNodeRegistry } from '@/nodes/distribution/distribution-node-registry';
 import { BaseProcessor } from '@/processors/base.processor';
 import { JOB_STATUS, QUEUE_CONCURRENCY, QUEUE_NAMES } from '@/queue/queue.constants';
 import type { ExecutionsService } from '@/services/executions.service';
@@ -58,9 +49,7 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
     @Inject(forwardRef(() => 'FFmpegService'))
     private readonly ffmpegService: FFmpegService,
     @Inject(forwardRef(() => 'FilesService'))
-    private readonly _filesService: FilesService,
-    @Inject(forwardRef(() => 'DistributionNodeRegistry'))
-    private readonly distributionNodeRegistry: DistributionNodeRegistry
+    private readonly _filesService: FilesService
   ) {
     super();
   }
@@ -169,19 +158,6 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
 
         case ProcessingNodeType.VIDEO_STITCH:
           return this.handleVideoStitch(job as unknown as Job<VideoStitchJobData>);
-
-        // Distribution nodes
-        case 'telegramPost':
-        case 'discordPost':
-        case 'twitterPost':
-        case 'instagramPost':
-        case 'tiktokPost':
-        case 'youtubePost':
-        case 'facebookPost':
-        case 'linkedinPost':
-        case 'googleDriveUpload':
-        case 'webhookPost':
-          return this.handleDistribution(job as unknown as Job<DistributionJobData>);
 
         default:
           throw new Error(`Unknown processing node type: ${nodeType}`);
@@ -473,106 +449,6 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
     });
 
     return this.completeLocalJob(job, stitchResult.videoUrl, 'video');
-  }
-
-  /**
-   * Map distribution node type to its output node implementation
-   */
-  private getDistributionNode(nodeType: string): { node: BaseOutputNode; platform: string } | null {
-    return this.distributionNodeRegistry.get(nodeType);
-  }
-
-  /**
-   * Handle distribution node execution (Telegram, Discord, Google Drive, etc.)
-   */
-  private async handleDistribution(job: Job<DistributionJobData>): Promise<JobResult> {
-    const { executionId, nodeId, nodeType, nodeData, workflowId } = job.data;
-
-    const distributionNode = this.getDistributionNode(nodeType);
-
-    // Unimplemented platforms — skip gracefully
-    if (!distributionNode) {
-      this.logger.warn(`Distribution node [${nodeType}] not yet implemented — skipping`);
-      const skipOutput = {
-        url: null,
-        skipped: true,
-        reason: `Distribution platform ${nodeType} not yet implemented`,
-      };
-      await this.executionsService.updateNodeResult(executionId, nodeId, 'complete', skipOutput);
-      await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.COMPLETED, {
-        result: skipOutput as unknown as Record<string, unknown>,
-      });
-      await this.queueManager.continueExecution(executionId, workflowId);
-      return { success: true, output: skipOutput };
-    }
-
-    // Build GeneratedVideo from upstream inputs
-    const inputVideo = nodeData.inputVideo as string | undefined;
-    const inputImage = nodeData.inputImage as string | undefined;
-    const inputText = nodeData.inputText as string | undefined;
-    const mediaUrl = inputVideo ?? inputImage;
-
-    if (!mediaUrl) {
-      throw new Error(
-        `Distribution node ${nodeType} requires inputVideo or inputImage from upstream connection`
-      );
-    }
-
-    const video: GeneratedVideo = {
-      url: mediaUrl,
-      filename: `${nodeId}_output.${inputVideo ? 'mp4' : 'png'}`,
-    };
-
-    // Build DeliveryConfig from execution context
-    const config: DeliveryConfig = {
-      execution_id: executionId,
-      node_id: nodeId,
-      original_script: inputText,
-    };
-
-    // Extract platform-specific config from nodeData
-    const platformConfig = nodeData as unknown as PlatformConfig;
-
-    await this.updateProgressWithLog(job, 50, `Delivering to ${distributionNode.platform}`);
-
-    const deliveryResult: DeliveryResult = await distributionNode.node.deliver(
-      video,
-      config,
-      platformConfig
-    );
-
-    const output = {
-      platform: deliveryResult.platform,
-      success: deliveryResult.success,
-      delivered_count: deliveryResult.delivered_count,
-      total_targets: deliveryResult.total_targets,
-      results: deliveryResult.results,
-      error: deliveryResult.error,
-    } as Record<string, unknown>;
-
-    if (deliveryResult.success) {
-      await this.executionsService.updateNodeResult(executionId, nodeId, 'complete', output);
-    } else {
-      await this.executionsService.updateNodeResult(
-        executionId,
-        nodeId,
-        'error',
-        output,
-        deliveryResult.error
-      );
-    }
-
-    await job.updateProgress({ percent: 100, message: 'Delivery completed' });
-    await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.COMPLETED, {
-      result: output,
-    });
-    await this.queueManager.addJobLog(job.id as string, `${nodeType} delivery completed`);
-    await this.queueManager.continueExecution(executionId, workflowId);
-
-    return {
-      success: deliveryResult.success,
-      output,
-    };
   }
 
   @OnWorkerEvent('completed')

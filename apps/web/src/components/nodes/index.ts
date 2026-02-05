@@ -23,10 +23,9 @@ import {
   ImageInputNode,
   PromptConstructorNode,
   PromptNode,
-  TemplateNode,
   VideoInputNode,
 } from './input';
-import { OutputNode } from './output';
+import { DownloadNode } from './output';
 import {
   AnimationNode,
   AnnotationNode,
@@ -49,7 +48,6 @@ export const nodeTypes: NodeTypes = {
   videoInput: VideoInputNode,
   prompt: PromptNode,
   promptConstructor: PromptConstructorNode,
-  template: TemplateNode,
   // AI nodes
   imageGen: ImageGenNode,
   videoGen: VideoGenNode,
@@ -72,8 +70,8 @@ export const nodeTypes: NodeTypes = {
   reframe: ReframeNode,
   upscale: UpscaleNode,
   subtitle: SubtitleNode,
-  // Output nodes (deprecated - kept for backwards compatibility with existing workflows)
-  output: OutputNode,
+  // Output nodes
+  download: DownloadNode,
   // Composition nodes (workflow-as-node)
   workflowInput: WorkflowInputNode,
   workflowOutput: WorkflowOutputNode,
