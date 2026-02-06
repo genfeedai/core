@@ -1,1 +1,1 @@
-export { useAutoLoadModelSchema } from '@genfeedai/core-ui/hooks';
+export { useAutoLoadModelSchema } from '@genfeedai/workflow-ui/hooks';

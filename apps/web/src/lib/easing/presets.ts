@@ -3,4 +3,4 @@ export {
   evaluateBezier,
   applySpeedCurve,
   getEasingDisplayName,
-} from '@genfeedai/core-ui/lib';
+} from '@genfeedai/workflow-ui/lib';

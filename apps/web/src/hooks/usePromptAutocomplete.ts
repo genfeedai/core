@@ -1,1 +1,1 @@
-export { usePromptAutocomplete } from '@genfeedai/core-ui/hooks';
+export { usePromptAutocomplete } from '@genfeedai/workflow-ui/hooks';

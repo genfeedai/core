@@ -19,11 +19,11 @@ export {
   getLipSyncModelLabel,
   getLLMModelLabel,
   lipSyncModelSupportsImage,
-} from '@genfeedai/core-ui/lib';
+} from '@genfeedai/workflow-ui/lib';
 
 export type {
   ImageModelConfig,
   VideoModelConfig,
   LipSyncModelConfig,
   TextModelConfig,
-} from '@genfeedai/core-ui/lib';
+} from '@genfeedai/workflow-ui/lib';

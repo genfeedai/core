@@ -1,5 +1,5 @@
 {
-  "name": "@genfeedai/core-ui",
+  "name": "@genfeedai/workflow-ui",
   "version": "0.1.0",
   "license": "AGPL-3.0",
   "description": "Shared UI components for Genfeed workflow editor",

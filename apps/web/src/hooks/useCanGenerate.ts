@@ -1,1 +1,1 @@
-export { useCanGenerate } from '@genfeedai/core-ui/hooks';
+export { useCanGenerate } from '@genfeedai/workflow-ui/hooks';

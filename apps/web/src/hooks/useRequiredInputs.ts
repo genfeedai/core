@@ -1,1 +1,1 @@
-export { useRequiredInputs } from '@genfeedai/core-ui/hooks';
+export { useRequiredInputs } from '@genfeedai/workflow-ui/hooks';

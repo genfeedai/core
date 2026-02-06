@@ -1,5 +1,5 @@
 /**
- * Store re-exports for @genfeedai/core-ui
+ * Store re-exports for @genfeedai/workflow-ui
  *
  * These are the actual Zustand stores used by workflow-ui components.
  * The consuming app can override behavior by:

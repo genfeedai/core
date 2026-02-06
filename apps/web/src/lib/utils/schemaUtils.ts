@@ -1,1 +1,5 @@
-export { getSchemaDefaults, supportsImageInput, extractEnumValues } from '@genfeedai/core-ui/lib';
+export {
+  getSchemaDefaults,
+  supportsImageInput,
+  extractEnumValues,
+} from '@genfeedai/workflow-ui/lib';

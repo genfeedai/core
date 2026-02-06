@@ -1,1 +1,1 @@
-export { generateHandlesFromSchema, isSchemaHandle } from '@genfeedai/core-ui/lib';
+export { generateHandlesFromSchema, isSchemaHandle } from '@genfeedai/workflow-ui/lib';

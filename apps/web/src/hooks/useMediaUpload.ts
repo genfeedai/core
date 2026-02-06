@@ -1,1 +1,1 @@
-export { useMediaUpload } from '@genfeedai/core-ui/hooks';
+export { useMediaUpload } from '@genfeedai/workflow-ui/hooks';

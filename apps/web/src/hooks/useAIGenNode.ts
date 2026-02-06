@@ -1,1 +1,1 @@
-export { useAIGenNode } from '@genfeedai/core-ui/hooks';
+export { useAIGenNode } from '@genfeedai/workflow-ui/hooks';

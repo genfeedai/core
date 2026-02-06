@@ -1,4 +1,4 @@
-export { useAnnotationStore } from '@genfeedai/core-ui/stores';
+export { useAnnotationStore } from '@genfeedai/workflow-ui/stores';
 export type {
   AnnotationTool,
   ToolOptions,
@@ -9,4 +9,4 @@ export type {
   FreehandShape,
   TextShape,
   AnnotationShape,
-} from '@genfeedai/core-ui/stores';
+} from '@genfeedai/workflow-ui/stores';

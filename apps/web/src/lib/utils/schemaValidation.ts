@@ -1,1 +1,1 @@
-export { validateRequiredSchemaFields, CONNECTION_FIELDS } from '@genfeedai/core-ui/lib';
+export { validateRequiredSchemaFields, CONNECTION_FIELDS } from '@genfeedai/workflow-ui/lib';

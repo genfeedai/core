@@ -1,1 +1,1 @@
-export { usePromptEditorStore } from '@genfeedai/core-ui/stores';
+export { usePromptEditorStore } from '@genfeedai/workflow-ui/stores';

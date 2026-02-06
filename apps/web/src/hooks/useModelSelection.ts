@@ -1,1 +1,1 @@
-export { useModelSelection } from '@genfeedai/core-ui/hooks';
+export { useModelSelection } from '@genfeedai/workflow-ui/hooks';

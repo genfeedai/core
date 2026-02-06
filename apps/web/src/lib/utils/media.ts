@@ -1,1 +1,1 @@
-export { getImageDimensions, getVideoMetadata } from '@genfeedai/core-ui/lib';
+export { getImageDimensions, getVideoMetadata } from '@genfeedai/workflow-ui/lib';
