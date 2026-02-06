@@ -20,8 +20,8 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@genfeedai/core-ui": ["../../packages/workflow-ui/src/index.ts"],
-      "@genfeedai/core-ui/*": ["../../packages/workflow-ui/src/*/index.ts"]
+      "@genfeedai/workflow-ui": ["../../packages/workflow-ui/src/index.ts"],
+      "@genfeedai/workflow-ui/*": ["../../packages/workflow-ui/src/*/index.ts"]
     }
   },
   "include": [

@@ -3,7 +3,7 @@
     "@dagrejs/dagre": "1.1.4",
     "@genfeedai/core": "workspace:*",
     "@genfeedai/types": "workspace:*",
-    "@genfeedai/core-ui": "workspace:*",
+    "@genfeedai/workflow-ui": "workspace:*",
     "@radix-ui/react-checkbox": "1.3.3",
     "@radix-ui/react-label": "2.1.8",
     "@radix-ui/react-select": "2.2.6",
