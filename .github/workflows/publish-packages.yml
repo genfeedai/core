@@ -69,9 +69,10 @@ jobs:
 
       - name: Publish
         working-directory: packages/types
-        run: |
-          echo "registry=https://registry.npmjs.org/" > ~/.npmrc
-          npm publish --provenance --access public
+        run: npm publish --provenance --access public
+        env:
+          NPM_CONFIG_USERCONFIG: ''
+          NODE_AUTH_TOKEN: ''
 
   publish-core:
     name: Publish @genfeedai/core
@@ -142,9 +143,10 @@ jobs:
 
       - name: Publish
         working-directory: packages/core
-        run: |
-          echo "registry=https://registry.npmjs.org/" > ~/.npmrc
-          npm publish --provenance --access public
+        run: npm publish --provenance --access public
+        env:
+          NPM_CONFIG_USERCONFIG: ''
+          NODE_AUTH_TOKEN: ''
 
   publish-workflows:
     name: Publish @genfeedai/workflows
@@ -215,9 +217,10 @@ jobs:
 
       - name: Publish
         working-directory: packages/workflows
-        run: |
-          echo "registry=https://registry.npmjs.org/" > ~/.npmrc
-          npm publish --provenance --access public
+        run: npm publish --provenance --access public
+        env:
+          NPM_CONFIG_USERCONFIG: ''
+          NODE_AUTH_TOKEN: ''
 
   publish-prompts:
     name: Publish @genfeedai/prompts
@@ -288,9 +291,10 @@ jobs:
 
       - name: Publish
         working-directory: packages/prompts
-        run: |
-          echo "registry=https://registry.npmjs.org/" > ~/.npmrc
-          npm publish --provenance --access public
+        run: npm publish --provenance --access public
+        env:
+          NPM_CONFIG_USERCONFIG: ''
+          NODE_AUTH_TOKEN: ''
 
   publish-workflow-ui:
     name: Publish @genfeedai/workflow-ui
@@ -363,6 +367,7 @@ jobs:
 
       - name: Publish
         working-directory: packages/workflow-ui
-        run: |
-          echo "registry=https://registry.npmjs.org/" > ~/.npmrc
-          npm publish --provenance --access public
+        run: npm publish --provenance --access public
+        env:
+          NPM_CONFIG_USERCONFIG: ''
+          NODE_AUTH_TOKEN: ''
