@@ -11,5 +11,5 @@ export default defineConfig({
   clean: true,
   splitting: true,
   treeshake: true,
-  noExternal: ['@genfeedai/types'],
+  external: ['@genfeedai/types'],
 });

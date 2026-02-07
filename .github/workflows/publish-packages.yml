@@ -107,6 +107,9 @@ jobs:
           fi
           echo "Version validated: $TAG_VERSION"
 
+      - name: Build workspace dependencies
+        run: bun run --cwd packages/types build
+
       - name: Build
         working-directory: packages/core
         run: bun run build
@@ -174,6 +177,9 @@ jobs:
             exit 1
           fi
           echo "Version validated: $TAG_VERSION"
+
+      - name: Build workspace dependencies
+        run: bun run --cwd packages/types build
 
       - name: Build
         working-directory: packages/workflows
@@ -243,6 +249,9 @@ jobs:
           fi
           echo "Version validated: $TAG_VERSION"
 
+      - name: Build workspace dependencies
+        run: bun run --cwd packages/types build
+
       - name: Build
         working-directory: packages/prompts
         run: bun run build
@@ -310,6 +319,11 @@ jobs:
             exit 1
           fi
           echo "Version validated: $TAG_VERSION"
+
+      - name: Build workspace dependencies
+        run: |
+          bun run --cwd packages/types build
+          bun run --cwd packages/core build
 
       - name: Build
         working-directory: packages/workflow-ui

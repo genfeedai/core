@@ -20,8 +20,17 @@ export default defineConfig({
   splitting: true,
   treeshake: true,
   jsx: 'automatic',
-  external: ['react', 'react-dom', '@xyflow/react', 'zustand', 'zundo', 'next', 'next/image'],
-  noExternal: ['@genfeedai/types'],
+  external: [
+    'react',
+    'react-dom',
+    '@xyflow/react',
+    'zustand',
+    'zundo',
+    'next',
+    'next/image',
+    '@genfeedai/core',
+    '@genfeedai/types',
+  ],
   esbuildOptions(options) {
     options.banner = {
       js: '"use client";',
