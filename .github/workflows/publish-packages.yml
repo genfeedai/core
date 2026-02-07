@@ -42,6 +42,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -68,7 +69,7 @@ jobs:
 
       - name: Publish
         working-directory: packages/types
-        run: npm publish --provenance --access public
+        run: unset NODE_AUTH_TOKEN && npm publish --provenance --access public
 
   publish-core:
     name: Publish @genfeedai/core
@@ -85,6 +86,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -138,7 +140,7 @@ jobs:
 
       - name: Publish
         working-directory: packages/core
-        run: npm publish --provenance --access public
+        run: unset NODE_AUTH_TOKEN && npm publish --provenance --access public
 
   publish-workflows:
     name: Publish @genfeedai/workflows
@@ -155,6 +157,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -208,7 +211,7 @@ jobs:
 
       - name: Publish
         working-directory: packages/workflows
-        run: npm publish --provenance --access public
+        run: unset NODE_AUTH_TOKEN && npm publish --provenance --access public
 
   publish-prompts:
     name: Publish @genfeedai/prompts
@@ -225,6 +228,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -278,7 +282,7 @@ jobs:
 
       - name: Publish
         working-directory: packages/prompts
-        run: npm publish --provenance --access public
+        run: unset NODE_AUTH_TOKEN && npm publish --provenance --access public
 
   publish-workflow-ui:
     name: Publish @genfeedai/workflow-ui
@@ -295,6 +299,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -350,4 +355,4 @@ jobs:
 
       - name: Publish
         working-directory: packages/workflow-ui
-        run: npm publish --provenance --access public
+        run: unset NODE_AUTH_TOKEN && npm publish --provenance --access public
