@@ -6,19 +6,19 @@ const mockOpenAnnotation = vi.fn();
 const mockGetConnectedInputs = vi.fn();
 const mockOpenNodeDetailModal = vi.fn();
 
-vi.mock('@/store/annotationStore', () => ({
+vi.mock('../../stores/annotationStore', () => ({
   useAnnotationStore: vi.fn((selector: (state: unknown) => unknown) =>
     selector({ openAnnotation: mockOpenAnnotation })
   ),
 }));
 
-vi.mock('@/store/workflowStore', () => ({
+vi.mock('../../stores/workflowStore', () => ({
   useWorkflowStore: vi.fn((selector: (state: unknown) => unknown) =>
     selector({ getConnectedInputs: mockGetConnectedInputs })
   ),
 }));
 
-vi.mock('@/store/uiStore', () => ({
+vi.mock('../../stores/uiStore', () => ({
   useUIStore: vi.fn((selector: (state: unknown) => unknown) =>
     selector({ openNodeDetailModal: mockOpenNodeDetailModal })
   ),
@@ -37,7 +37,7 @@ vi.mock('next/image', () => ({
 }));
 
 // Mock UI button with variant support for class-based assertions
-vi.mock('@/components/ui/button', () => ({
+vi.mock('../../ui/button', () => ({
   Button: ({
     children,
     onClick,

@@ -2,8 +2,8 @@
 
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import type { AnnotationShape } from '@/store/annotationStore';
-import { useAnnotationStore } from '@/store/annotationStore';
+import type { AnnotationShape } from '@genfeedai/workflow-ui/stores';
+import { useAnnotationStore } from '@genfeedai/workflow-ui/stores';
 import { useWorkflowStore } from '@/store/workflowStore';
 import { AnnotationOptionsPanel } from './AnnotationOptionsPanel';
 import { AnnotationToolbar } from './AnnotationToolbar';

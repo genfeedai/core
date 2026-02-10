@@ -1,7 +1,7 @@
 'use client';
 
 import { clsx } from 'clsx';
-import type { AnnotationTool, ToolOptions } from '@/store/annotationStore';
+import type { AnnotationTool, ToolOptions } from '@genfeedai/workflow-ui/stores';
 import { COLORS, FONT_SIZES, STROKE_WIDTHS } from './drawing/constants';
 
 interface AnnotationOptionsPanelProps {

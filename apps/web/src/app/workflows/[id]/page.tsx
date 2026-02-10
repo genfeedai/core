@@ -21,7 +21,7 @@ import { apiClient } from '@/lib/api/client';
 import { promptsApi } from '@/lib/api';
 import { usePromptLibraryStore } from '@/store/promptLibraryStore';
 import { useSettingsStore } from '@/store/settingsStore';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@genfeedai/workflow-ui/stores';
 import { useWorkflowStore } from '@/store/workflowStore';
 
 // Dynamic imports for less frequently used modals to reduce initial bundle

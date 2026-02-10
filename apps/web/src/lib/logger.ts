@@ -5,19 +5,32 @@
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
-interface LoggerOptions {
+export interface LoggerOptions {
   context?: string;
   metadata?: Record<string, unknown>;
   [key: string]: unknown;
 }
 
+export interface LoggerErrorPayload {
+  message: string;
+  error?: unknown;
+  options?: LoggerOptions;
+}
+
+type ErrorReporter = (payload: LoggerErrorPayload) => void;
+
 class Logger {
   private isDev = process.env.NODE_ENV === 'development';
+  private errorReporter?: ErrorReporter;
 
   private formatMessage(level: LogLevel, message: string, options?: LoggerOptions): string {
     const timestamp = new Date().toISOString();
     const context = options?.context ? `[${options.context}]` : '';
     return `${timestamp} ${level.toUpperCase()} ${context} ${message}`;
+  }
+
+  setErrorReporter(reporter?: ErrorReporter): void {
+    this.errorReporter = reporter;
   }
 
   debug(message: string, options?: LoggerOptions): void {
@@ -40,16 +53,20 @@ class Logger {
   }
 
   error(message: string, error?: unknown, options?: LoggerOptions): void {
+    const formattedError =
+      error instanceof Error ? { message: error.message, stack: error.stack } : error;
+
     // eslint-disable-next-line no-console
     console.error(this.formatMessage('error', message, options), {
-      error: error instanceof Error ? { message: error.message, stack: error.stack } : error,
+      error: formattedError,
       ...options?.metadata,
     });
 
-    // TODO: Send to error tracking service (Sentry, etc.)
-    // if (typeof window !== 'undefined' && window.Sentry) {
-    //   window.Sentry.captureException(error);
-    // }
+    this.errorReporter?.({
+      message,
+      error,
+      options,
+    });
   }
 }
 

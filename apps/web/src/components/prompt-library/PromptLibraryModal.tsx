@@ -7,7 +7,7 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePromptLibraryStore } from '@/store/promptLibraryStore';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@genfeedai/workflow-ui/stores';
 import { CreatePromptModal } from './CreatePromptModal';
 
 interface PromptCardProps {

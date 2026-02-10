@@ -31,7 +31,7 @@ vi.mock('../BaseNode', () => ({
 const mockUpdateNodeData = vi.fn();
 const mockOpenNodeDetailModal = vi.fn();
 
-vi.mock('@/store/workflowStore', () => ({
+vi.mock('../../stores/workflowStore', () => ({
   useWorkflowStore: Object.assign(
     (selector: (state: unknown) => unknown) => {
       const state = {
@@ -46,7 +46,7 @@ vi.mock('@/store/workflowStore', () => ({
   ),
 }));
 
-vi.mock('@/store/uiStore', () => ({
+vi.mock('../../stores/uiStore', () => ({
   useUIStore: (selector: (state: unknown) => unknown) => {
     const state = { openNodeDetailModal: mockOpenNodeDetailModal };
     return selector(state);
@@ -54,7 +54,7 @@ vi.mock('@/store/uiStore', () => ({
 }));
 
 // Mock UI components
-vi.mock('@/components/ui/button', () => ({
+vi.mock('../../ui/button', () => ({
   Button: ({
     children,
     onClick,
@@ -75,7 +75,7 @@ vi.mock('@/components/ui/button', () => ({
 // Mock hooks used by the component
 const mockHandleGenerate = vi.fn();
 
-vi.mock('@/hooks/useCanGenerate', () => ({
+vi.mock('../../hooks/useCanGenerate', () => ({
   useCanGenerate: () => ({
     canGenerate: true,
     missingItems: [],
@@ -85,24 +85,24 @@ vi.mock('@/hooks/useCanGenerate', () => ({
   }),
 }));
 
-vi.mock('@/hooks/useNodeExecution', () => ({
+vi.mock('../../hooks/useNodeExecution', () => ({
   useNodeExecution: () => ({
     handleGenerate: mockHandleGenerate,
     handleStop: vi.fn(),
   }),
 }));
 
-vi.mock('@/hooks/useAutoLoadModelSchema', () => ({
+vi.mock('../../hooks/useAutoLoadModelSchema', () => ({
   useAutoLoadModelSchema: vi.fn(),
 }));
 
-vi.mock('@/hooks/useModelSelection', () => ({
+vi.mock('../../hooks/useModelSelection', () => ({
   useModelSelection: () => ({
     handleModelSelect: vi.fn(),
   }),
 }));
 
-vi.mock('@/lib/models/registry', () => ({
+vi.mock('../../lib/models/registry', () => ({
   DEFAULT_LLM_MODEL: 'meta-llama-3.1-405b-instruct',
   LLM_MODEL_ID_MAP: {},
   LLM_MODEL_MAP: {},
@@ -116,11 +116,12 @@ vi.mock('@/lib/models/registry', () => ({
 }));
 
 vi.mock('@/components/models/ModelBrowserModal', () => ({
+// Note: ModelBrowserModal is provided by consuming app via WorkflowUIProvider
   ModelBrowserModal: () => null,
 }));
 
 // Mock Slider to be a native range input
-vi.mock('@/components/ui/slider', () => ({
+vi.mock('../../ui/slider', () => ({
   Slider: ({
     value,
     min,

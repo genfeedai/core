@@ -21,7 +21,7 @@ const mockToggleNodeLock = vi.fn();
 const mockIsNodeLocked = vi.fn().mockReturnValue(false);
 const mockUpdateNodeData = vi.fn();
 
-vi.mock('@/store/uiStore', () => ({
+vi.mock('../stores/uiStore', () => ({
   useUIStore: (selector: (state: unknown) => unknown) => {
     const state = {
       selectNode: mockSelectNode,
@@ -32,7 +32,7 @@ vi.mock('@/store/uiStore', () => ({
   },
 }));
 
-vi.mock('@/store/workflowStore', () => ({
+vi.mock('../stores/workflowStore', () => ({
   useWorkflowStore: (selector: (state: unknown) => unknown) => {
     const state = {
       toggleNodeLock: mockToggleNodeLock,
@@ -43,7 +43,7 @@ vi.mock('@/store/workflowStore', () => ({
   },
 }));
 
-vi.mock('@/store/executionStore', () => ({
+vi.mock('../stores/executionStore', () => ({
   useExecutionStore: (selector: (state: unknown) => unknown) => {
     const state = {
       executeNode: vi.fn(),
@@ -55,21 +55,21 @@ vi.mock('@/store/executionStore', () => ({
 }));
 
 // Mock child components
-vi.mock('@/components/nodes/NodeErrorBoundary', () => ({
+vi.mock('./NodeErrorBoundary', () => ({
   NodeErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-vi.mock('@/components/nodes/PreviewTooltip', () => ({
+vi.mock('./PreviewTooltip', () => ({
   PreviewTooltip: () => null,
 }));
 
 // Mock schema handles utility
-vi.mock('@/lib/utils/schemaHandles', () => ({
+vi.mock('../lib/schemaHandles', () => ({
   generateHandlesFromSchema: vi.fn((_schema: unknown, staticInputs: unknown[]) => staticInputs),
 }));
 
 // Mock UI components
-vi.mock('@/components/ui/button', () => ({
+vi.mock('../ui/button', () => ({
   Button: ({
     children,
     onClick,

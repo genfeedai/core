@@ -16,7 +16,7 @@ import {
   getProviderColor,
   type ProviderName,
 } from '@/lib/template-utils';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@genfeedai/workflow-ui/stores';
 import { useWorkflowStore } from '@/store/workflowStore';
 
 type CategoryFilter = 'all' | 'simple' | 'advanced' | 'community';

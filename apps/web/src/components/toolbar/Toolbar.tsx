@@ -30,7 +30,7 @@ import { logger } from '@/lib/logger';
 import { calculateWorkflowCost } from '@/lib/replicate/client';
 import { useExecutionStore } from '@/store/executionStore';
 import { useSettingsStore } from '@/store/settingsStore';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@genfeedai/workflow-ui/stores';
 import { useWorkflowStore } from '@/store/workflowStore';
 import { CommentNavigator } from './CommentNavigator';
 import { SaveAsDialog } from './SaveAsDialog';

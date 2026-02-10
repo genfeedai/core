@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useCommandPaletteStore } from '@/store/commandPaletteStore';
 import { useExecutionStore } from '@/store/executionStore';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@genfeedai/workflow-ui/stores';
 import { useWorkflowStore } from '@/store/workflowStore';
 import {
   CATEGORY_LABELS,

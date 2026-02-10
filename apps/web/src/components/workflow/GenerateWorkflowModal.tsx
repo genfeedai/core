@@ -4,7 +4,7 @@ import { clsx } from 'clsx';
 import { AlertCircle, Loader2, Sparkles, X } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@genfeedai/workflow-ui/stores';
 import { useWorkflowStore } from '@/store/workflowStore';
 
 // =============================================================================

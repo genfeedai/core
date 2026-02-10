@@ -249,6 +249,50 @@ Flags:
 
 **Resolution:** Review the prompt for policy violations. Adjust content and retry.
 
+## Bring Your Own Key (BYOK)
+
+Genfeed supports BYOK — use your own OpenRouter API key for AI operations instead of consuming Genfeed credits.
+
+### Setup
+
+1. Go to [app.genfeed.ai/settings/api-keys](https://app.genfeed.ai/settings/api-keys)
+2. Enter your [OpenRouter API key](https://openrouter.ai/keys)
+3. The key is validated and encrypted at rest (AES-256-CBC)
+4. All AI operations now route through your key — no Genfeed credits deducted
+
+### How It Works
+
+When BYOK is enabled:
+- AI text generation, prompt engineering, and content optimization use **your** OpenRouter key
+- Content pipeline operations (publishing, analytics, workflows) still use the Genfeed platform
+- You are billed directly by OpenRouter for AI model usage
+- Genfeed credits are not consumed for AI operations
+
+### BYOK + OpenClaw
+
+This is the recommended setup for power users:
+
+```
+Your Machine (OpenClaw)
+├── Local models (Ollama) → Free local reasoning
+├── Claude/GPT (your own keys via OpenClaw) → Direct API billing
+└── MCP Client → mcp.genfeed.ai/mcp
+    └── Genfeed tools use YOUR OpenRouter key (BYOK)
+        ├── Image generation → your key
+        ├── Video generation → your key
+        └── Publishing, analytics → Genfeed platform
+```
+
+With this setup:
+- **Local reasoning** is free (Ollama runs on your machine)
+- **AI generation** uses your OpenRouter key (billed by OpenRouter)
+- **Platform features** (social publishing, analytics, workflows) use Genfeed
+- **Zero Genfeed credits consumed** for AI operations
+
+### Removing BYOK
+
+Go to [app.genfeed.ai/settings/api-keys](https://app.genfeed.ai/settings/api-keys) and click **Remove Key**. AI operations will revert to using Genfeed credits.
+
 ## Instructions
 
 When helping users connect to Genfeed:
@@ -258,3 +302,4 @@ When helping users connect to Genfeed:
 3. **Verify connection** -- Suggest calling `get_credits()` as a health check
 4. **Guide tool usage** -- Start with simple operations (create_image) before complex workflows
 5. **Handle errors** -- Reference the error handling section for common issues
+6. **Mention BYOK** -- For power users, suggest setting up their own OpenRouter key at settings/api-keys to avoid credit consumption

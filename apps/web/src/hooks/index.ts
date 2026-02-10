@@ -1,10 +1,23 @@
+// Web-app-specific hooks
 export { useAutoSave } from './useAutoSave';
-export { useCanGenerate } from './useCanGenerate';
 export { useCommentNavigation, useHeaderCommentNavigation } from './useCommentNavigation';
 export { useContextMenu } from './useContextMenu';
 export { useGlobalShortcuts } from './useGlobalShortcuts';
-export { useModelSelection } from './useModelSelection';
 export { useNodeActions } from './useNodeActions';
+export { useNodeFieldUpdater } from './useNodeFieldUpdater';
 export { useOptimalHandleOrder } from './useOptimalHandleOrder';
 export { usePaneActions } from './usePaneActions';
-export { useRequiredInputs } from './useRequiredInputs';
+
+// Re-export shared hooks from workflow-ui
+export {
+  useAIGenNode,
+  useAIGenNodeHeader,
+  useAutoLoadModelSchema,
+  useCanGenerate,
+  useCanvasKeyboardShortcuts,
+  useMediaUpload,
+  useModelSelection,
+  useNodeExecution,
+  usePromptAutocomplete,
+  useRequiredInputs,
+} from '@genfeedai/workflow-ui/hooks';

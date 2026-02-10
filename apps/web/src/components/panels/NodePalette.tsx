@@ -38,7 +38,7 @@ import {
   Wand2,
 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@genfeedai/workflow-ui/stores';
 
 // Icon mapping
 const ICONS: Record<string, typeof Image> = {

@@ -29,6 +29,7 @@ vi.mock('../BaseNode', () => ({
 
 // Mock PromptPicker
 vi.mock('@/components/prompt-library', () => ({
+// Note: PromptPicker is provided by consuming app
   PromptPicker: ({ onSelect }: { onSelect: (item: { promptText: string }) => void }) => (
     <button data-testid="prompt-picker" onClick={() => onSelect({ promptText: 'Library prompt' })}>
       Pick Prompt
@@ -40,20 +41,20 @@ vi.mock('@/components/prompt-library', () => ({
 const mockUpdateNodeData = vi.fn();
 const mockOpenCreateModal = vi.fn();
 
-vi.mock('@/store/workflowStore', () => ({
+vi.mock('../../stores/workflowStore', () => ({
   useWorkflowStore: (selector: (state: unknown) => unknown) => {
     const state = { updateNodeData: mockUpdateNodeData, edges: [] };
     return selector(state);
   },
 }));
 
-vi.mock('@/store/promptLibraryStore', () => ({
+vi.mock('../../stores/promptLibraryStore', () => ({
   usePromptLibraryStore: () => ({
     openCreateModal: mockOpenCreateModal,
   }),
 }));
 
-vi.mock('@/store/promptEditorStore', () => ({
+vi.mock('../../stores/promptEditorStore', () => ({
   usePromptEditorStore: () => ({
     openEditor: vi.fn(),
   }),

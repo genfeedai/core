@@ -1,7 +1,7 @@
 'use client';
 
 import { InfoBox, LinkCard } from '@/components/ui/settings-section';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@genfeedai/workflow-ui/stores';
 import { BookOpen, HelpCircle, MessageCircle, Store, Twitter } from 'lucide-react';
 
 export function HelpTab() {

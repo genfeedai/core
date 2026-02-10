@@ -2,7 +2,7 @@
 
 import { clsx } from 'clsx';
 import { Redo, Trash2, Undo } from 'lucide-react';
-import type { AnnotationTool } from '@/store/annotationStore';
+import type { AnnotationTool } from '@genfeedai/workflow-ui/stores';
 import { TOOLS } from './drawing/constants';
 
 interface AnnotationToolbarProps {

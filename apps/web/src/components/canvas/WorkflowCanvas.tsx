@@ -30,15 +30,14 @@ import { HelperLines } from '@/components/canvas/HelperLines';
 import { NodeSearch } from '@/components/canvas/NodeSearch';
 import { ShortcutHelpModal } from '@/components/canvas/ShortcutHelpModal';
 import { ContextMenu } from '@/components/context-menu';
-import { nodeTypes } from '@/components/nodes';
-import { NodeDetailModal } from '@/components/nodes/NodeDetailModal';
-import { useCanvasKeyboardShortcuts } from '@/hooks/useCanvasKeyboardShortcuts';
+import { nodeTypes, NodeDetailModal } from '@genfeedai/workflow-ui/nodes';
+import { useCanvasKeyboardShortcuts } from '@genfeedai/workflow-ui/hooks';
 import { useContextMenu } from '@/hooks/useContextMenu';
 import { DEFAULT_NODE_COLOR } from '@/lib/constants/colors';
 import { supportsImageInput } from '@/lib/utils/schemaUtils';
 import { useExecutionStore } from '@/store/executionStore';
 import { useSettingsStore } from '@/store/settingsStore';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@genfeedai/workflow-ui/stores';
 import { useWorkflowStore } from '@/store/workflowStore';
 
 function getEdgeDataType(

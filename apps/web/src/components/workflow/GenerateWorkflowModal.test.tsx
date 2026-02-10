@@ -19,7 +19,7 @@ vi.mock('@/store/workflowStore', () => ({
 }));
 
 // Import mocked modules at top level (vi.mock is hoisted above these imports)
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@genfeedai/workflow-ui/stores';
 import { useWorkflowStore } from '@/store/workflowStore';
 
 describe('GenerateWorkflowModal', () => {

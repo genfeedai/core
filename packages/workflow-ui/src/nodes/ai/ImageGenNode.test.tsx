@@ -34,7 +34,7 @@ vi.mock('next/image', () => ({
   ),
 }));
 
-// Mock ModelBrowserModal
+// Mock ModelBrowserModal (provided by consuming app via WorkflowUIProvider)
 vi.mock('@/components/models/ModelBrowserModal', () => ({
   ModelBrowserModal: ({
     isOpen,
@@ -67,7 +67,7 @@ vi.mock('@/components/models/ModelBrowserModal', () => ({
 }));
 
 // Mock UI components
-vi.mock('@/components/ui/button', () => ({
+vi.mock('../../ui/button', () => ({
   Button: ({
     children,
     onClick,
@@ -85,7 +85,7 @@ vi.mock('@/components/ui/button', () => ({
   ),
 }));
 
-vi.mock('@/components/ui/label', () => ({
+vi.mock('../../ui/label', () => ({
   Label: ({ children }: { children: React.ReactNode }) => <label>{children}</label>,
 }));
 
@@ -93,30 +93,30 @@ vi.mock('@/components/ui/label', () => ({
 const mockHandleGenerate = vi.fn();
 const mockHandleModelSelect = vi.fn();
 
-vi.mock('@/hooks/useAutoLoadModelSchema', () => ({
+vi.mock('../../hooks/useAutoLoadModelSchema', () => ({
   useAutoLoadModelSchema: vi.fn(),
 }));
 
-vi.mock('@/hooks/useModelSelection', () => ({
+vi.mock('../../hooks/useModelSelection', () => ({
   useModelSelection: () => ({
     handleModelSelect: mockHandleModelSelect,
   }),
 }));
 
-vi.mock('@/hooks/useCanGenerate', () => ({
+vi.mock('../../hooks/useCanGenerate', () => ({
   useCanGenerate: () => ({
     canGenerate: true,
   }),
 }));
 
-vi.mock('@/hooks/useNodeExecution', () => ({
+vi.mock('../../hooks/useNodeExecution', () => ({
   useNodeExecution: () => ({
     handleGenerate: mockHandleGenerate,
   }),
 }));
 
 // Mock model registry
-vi.mock('@/lib/models/registry', () => ({
+vi.mock('../../lib/models/registry', () => ({
   DEFAULT_IMAGE_MODEL: 'nano-banana',
   IMAGE_MODEL_ID_MAP: {},
   IMAGE_MODEL_MAP: {},
@@ -124,13 +124,13 @@ vi.mock('@/lib/models/registry', () => ({
 }));
 
 // Mock schema utilities
-vi.mock('@/lib/utils/schemaUtils', () => ({
+vi.mock('../../lib/schemaUtils', () => ({
   extractEnumValues: vi.fn().mockReturnValue({}),
   supportsImageInput: vi.fn().mockReturnValue(false),
 }));
 
 // Mock SchemaInputs - renders nothing since inputs are dynamic
-vi.mock('@/components/nodes/SchemaInputs', () => ({
+vi.mock('../SchemaInputs', () => ({
   SchemaInputs: () => null,
 }));
 
@@ -144,7 +144,7 @@ vi.mock('@genfeedai/core', () => ({
 // Mock stores
 const mockUpdateNodeData = vi.fn();
 
-vi.mock('@/store/workflowStore', () => ({
+vi.mock('../../stores/workflowStore', () => ({
   useWorkflowStore: Object.assign(
     (selector: (state: unknown) => unknown) => {
       const state = {
@@ -160,14 +160,14 @@ vi.mock('@/store/workflowStore', () => ({
   ),
 }));
 
-vi.mock('@/store/executionStore', () => ({
+vi.mock('../../stores/executionStore', () => ({
   useExecutionStore: (selector: (state: unknown) => unknown) => {
     const state = { executeNode: vi.fn(), isRunning: false };
     return selector(state);
   },
 }));
 
-vi.mock('@/store/uiStore', () => ({
+vi.mock('../../stores/uiStore', () => ({
   useUIStore: (selector: (state: unknown) => unknown) => {
     const state = { openNodeDetailModal: vi.fn() };
     return selector(state);

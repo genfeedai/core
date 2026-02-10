@@ -1,5 +1,6 @@
 export * from './ai';
 export { BaseNode } from './BaseNode';
+export { NodeDetailModal } from './NodeDetailModal';
 export * from './composition';
 export * from './input';
 export * from './output';

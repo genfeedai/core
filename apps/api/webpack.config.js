@@ -26,6 +26,10 @@ module.exports = {
 
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.json'],
+    alias: {
+      '@genfeedai/types': path.resolve(rootDir, 'packages/types/dist'),
+      '@genfeedai/core': path.resolve(rootDir, 'packages/core/dist'),
+    },
     plugins: [
       new TsconfigPathsPlugin({
         configFile: path.resolve(__dirname, 'tsconfig.json'),

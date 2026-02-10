@@ -4,7 +4,7 @@ import { Bug, ChevronDown, ChevronRight, Copy, Trash2, X } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 import type { DebugPayload } from '@/store/execution';
 import { useExecutionStore } from '@/store/execution';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@genfeedai/workflow-ui/stores';
 import { PanelContainer } from './PanelContainer';
 
 interface PayloadCardProps {

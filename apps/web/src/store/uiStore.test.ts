@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useUIStore } from './uiStore';
+import { useUIStore } from '@genfeedai/workflow-ui/stores';
 
 describe('useUIStore', () => {
   beforeEach(() => {

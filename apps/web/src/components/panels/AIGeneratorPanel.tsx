@@ -3,7 +3,7 @@
 import type { WorkflowFile } from '@genfeedai/types';
 import { Bot, Loader2, Send, Sparkles, Trash2, Upload, User, X } from 'lucide-react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@genfeedai/workflow-ui/stores';
 import { useWorkflowStore } from '@/store/workflowStore';
 import { PanelContainer } from './PanelContainer';
 

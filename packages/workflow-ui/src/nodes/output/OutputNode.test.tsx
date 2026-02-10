@@ -32,7 +32,7 @@ vi.mock('next/image', () => ({
 }));
 
 // Mock Button
-vi.mock('@/components/ui/button', () => ({
+vi.mock('../../ui/button', () => ({
   Button: ({
     children,
     onClick,
@@ -56,14 +56,14 @@ vi.mock('@/components/ui/button', () => ({
 }));
 
 // Mock stores
-vi.mock('@/store/workflowStore', () => ({
+vi.mock('../../stores/workflowStore', () => ({
   useWorkflowStore: (selector: (state: unknown) => unknown) => {
     const state = { updateNodeData: vi.fn(), edges: [] };
     return selector(state);
   },
 }));
 
-vi.mock('@/store/executionStore', () => ({
+vi.mock('../../stores/executionStore', () => ({
   useExecutionStore: (selector: (state: unknown) => unknown) => {
     const state = { isRunning: false };
     return selector(state);
@@ -71,7 +71,7 @@ vi.mock('@/store/executionStore', () => ({
 }));
 
 // Mock Input component
-vi.mock('@/components/ui/input', () => ({
+vi.mock('../../ui/input', () => ({
   Input: (props: Record<string, unknown>) => <input {...props} />,
 }));
 

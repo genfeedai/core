@@ -7,6 +7,7 @@ describe('logger', () => {
     vi.spyOn(console, 'info').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
+    logger.setErrorReporter(undefined);
   });
 
   afterEach(() => {
@@ -125,6 +126,30 @@ describe('logger', () => {
       const call = (console.error as ReturnType<typeof vi.fn>).mock.calls[0];
       expect(call[1].error.message).toBe('Connection failed');
       expect(call[1].db).toBe('primary');
+    });
+
+    it('should call configured error reporter with payload', () => {
+      const reporter = vi.fn();
+      const error = new Error('Reporter error');
+
+      logger.setErrorReporter(reporter);
+      logger.error('Report this', error, { metadata: { runId: 'run_1' } });
+
+      expect(reporter).toHaveBeenCalledWith({
+        message: 'Report this',
+        error,
+        options: { metadata: { runId: 'run_1' } },
+      });
+    });
+
+    it('should stop calling error reporter when unset', () => {
+      const reporter = vi.fn();
+      logger.setErrorReporter(reporter);
+      logger.setErrorReporter(undefined);
+
+      logger.error('No reporter should run');
+
+      expect(reporter).not.toHaveBeenCalled();
     });
   });
 

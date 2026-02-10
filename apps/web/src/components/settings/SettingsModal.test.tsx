@@ -10,7 +10,7 @@ const mockCloseModal = vi.fn();
 const mockOpenModal = vi.fn();
 
 // Import mocked modules at top level (vi.mock is hoisted above these imports)
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@genfeedai/workflow-ui/stores';
 const mockedUIStore = vi.mocked(useUIStore);
 
 vi.mock('@/components/ui/select', () => ({

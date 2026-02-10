@@ -2,7 +2,7 @@
 
 import { memo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { usePromptEditorStore } from '@/store/promptEditorStore';
+import { usePromptEditorStore } from '@genfeedai/workflow-ui/stores';
 import { useWorkflowStore } from '@/store/workflowStore';
 
 const FONT_SIZES = [12, 14, 16, 18, 20, 24];

@@ -2,7 +2,7 @@
 
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@genfeedai/workflow-ui/stores';
 import { Keyboard, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 

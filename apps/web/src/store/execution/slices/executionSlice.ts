@@ -3,7 +3,7 @@ import type { StateCreator } from 'zustand';
 import { apiClient } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
 import { useSettingsStore } from '@/store/settingsStore';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@genfeedai/workflow-ui/stores';
 import { useWorkflowStore } from '@/store/workflowStore';
 import {
   createExecutionSubscription,

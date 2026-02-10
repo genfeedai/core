@@ -2,7 +2,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useCommandPaletteStore } from '@/store/commandPaletteStore';
 import { useExecutionStore } from '@/store/executionStore';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@genfeedai/workflow-ui/stores';
 import { selectSelectedNodeIds } from '@/store/workflow/selectors';
 import { useWorkflowStore } from '@/store/workflowStore';
 

@@ -1,5 +1,5 @@
 import { logger } from '@/lib/logger';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@genfeedai/workflow-ui/stores';
 import { useWorkflowStore } from '@/store/workflowStore';
 import { NodeStatusEnum } from '@genfeedai/types';
 import type { NodeStatus } from '@genfeedai/types';

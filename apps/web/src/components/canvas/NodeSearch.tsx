@@ -5,7 +5,7 @@ import { NODE_DEFINITIONS } from '@genfeedai/types';
 import { useReactFlow } from '@xyflow/react';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@genfeedai/workflow-ui/stores';
 import { useWorkflowStore } from '@/store/workflowStore';
 import { Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';

@@ -1,4 +1,4 @@
-import type { AnnotationShape } from '@/store/annotationStore';
+import type { AnnotationShape } from '@genfeedai/workflow-ui/stores';
 
 /**
  * Canvas state for transformations
