@@ -34,36 +34,38 @@ vi.mock('next/image', () => ({
   ),
 }));
 
-// Mock ModelBrowserModal (provided by consuming app via WorkflowUIProvider)
-vi.mock('@/components/models/ModelBrowserModal', () => ({
-  ModelBrowserModal: ({
-    isOpen,
-    onClose,
-    onSelect,
-  }: {
-    isOpen: boolean;
-    onClose: () => void;
-    onSelect: (model: { id: string; provider: string; displayName: string }) => void;
-  }) =>
-    isOpen ? (
-      <div data-testid="model-browser">
-        <button onClick={onClose} data-testid="close-modal">
-          Close
-        </button>
-        <button
-          onClick={() =>
-            onSelect({
-              id: 'google/nano-banana-pro',
-              provider: 'replicate',
-              displayName: 'Nano Banana Pro',
-            })
-          }
-          data-testid="select-model"
-        >
-          Select Model
-        </button>
-      </div>
-    ) : null,
+// Mock provider-injected UI config
+vi.mock('../../provider', () => ({
+  useWorkflowUIConfig: () => ({
+    ModelBrowserModal: ({
+      isOpen,
+      onClose,
+      onSelect,
+    }: {
+      isOpen: boolean;
+      onClose: () => void;
+      onSelect: (model: { id: string; provider: string; displayName: string }) => void;
+    }) =>
+      isOpen ? (
+        <div data-testid="model-browser">
+          <button onClick={onClose} data-testid="close-modal">
+            Close
+          </button>
+          <button
+            onClick={() =>
+              onSelect({
+                id: 'google/nano-banana-pro',
+                provider: 'replicate',
+                displayName: 'Nano Banana Pro',
+              })
+            }
+            data-testid="select-model"
+          >
+            Select Model
+          </button>
+        </div>
+      ) : null,
+  }),
 }));
 
 // Mock UI components

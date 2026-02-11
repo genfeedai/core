@@ -27,14 +27,18 @@ vi.mock('../BaseNode', () => ({
   ),
 }));
 
-// Mock PromptPicker
-vi.mock('@/components/prompt-library', () => ({
-// Note: PromptPicker is provided by consuming app
-  PromptPicker: ({ onSelect }: { onSelect: (item: { promptText: string }) => void }) => (
-    <button data-testid="prompt-picker" onClick={() => onSelect({ promptText: 'Library prompt' })}>
-      Pick Prompt
-    </button>
-  ),
+// Mock provider-injected PromptPicker
+vi.mock('../../provider', () => ({
+  useWorkflowUIConfig: () => ({
+    PromptPicker: ({ onSelect }: { onSelect: (item: { promptText: string }) => void }) => (
+      <button
+        data-testid="prompt-picker"
+        onClick={() => onSelect({ promptText: 'Library prompt' })}
+      >
+        Pick Prompt
+      </button>
+    ),
+  }),
 }));
 
 // Mock stores

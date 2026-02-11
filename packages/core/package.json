@@ -12,18 +12,18 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     },
     "./topological-sort": {
       "types": "./dist/topological-sort.d.ts",
-      "import": "./dist/topological-sort.js",
-      "require": "./dist/topological-sort.cjs"
+      "import": "./dist/topological-sort.mjs",
+      "require": "./dist/topological-sort.js"
     },
     "./validation": {
       "types": "./dist/validation.d.ts",
-      "import": "./dist/validation.js",
-      "require": "./dist/validation.cjs"
+      "import": "./dist/validation.mjs",
+      "require": "./dist/validation.js"
     }
   },
   "files": [

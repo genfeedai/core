@@ -19,28 +19,28 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     },
     "./nodes": {
       "types": "./dist/nodes.d.ts",
-      "import": "./dist/nodes.js",
-      "require": "./dist/nodes.cjs"
+      "import": "./dist/nodes.mjs",
+      "require": "./dist/nodes.js"
     },
     "./workflow": {
       "types": "./dist/workflow.d.ts",
-      "import": "./dist/workflow.js",
-      "require": "./dist/workflow.cjs"
+      "import": "./dist/workflow.mjs",
+      "require": "./dist/workflow.js"
     },
     "./comfyui": {
       "types": "./dist/comfyui.d.ts",
-      "import": "./dist/comfyui.js",
-      "require": "./dist/comfyui.cjs"
+      "import": "./dist/comfyui.mjs",
+      "require": "./dist/comfyui.js"
     },
     "./replicate": {
       "types": "./dist/replicate.d.ts",
-      "import": "./dist/replicate.js",
-      "require": "./dist/replicate.cjs"
+      "import": "./dist/replicate.mjs",
+      "require": "./dist/replicate.js"
     },
     "./replicate/schemas.json": "./src/replicate/schemas.json"
   },

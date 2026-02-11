@@ -5,7 +5,7 @@ import { GenerateWorkflowModal } from './GenerateWorkflowModal';
 const mockToggleAIGenerator = vi.fn();
 const mockLoadWorkflow = vi.fn();
 
-vi.mock('@/store/uiStore', () => ({
+vi.mock('@genfeedai/workflow-ui/stores', () => ({
   useUIStore: vi.fn(() => ({
     showAIGenerator: true,
     toggleAIGenerator: mockToggleAIGenerator,

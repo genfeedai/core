@@ -13,48 +13,58 @@
     "registry": "https://registry.npmjs.org/"
   },
   "main": "./dist/index.js",
-  "module": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     },
     "./canvas": {
       "types": "./dist/canvas.d.ts",
-      "import": "./dist/canvas.js"
+      "import": "./dist/canvas.mjs",
+      "require": "./dist/canvas.js"
     },
     "./nodes": {
       "types": "./dist/nodes.d.ts",
-      "import": "./dist/nodes.js"
+      "import": "./dist/nodes.mjs",
+      "require": "./dist/nodes.js"
     },
     "./panels": {
       "types": "./dist/panels.d.ts",
-      "import": "./dist/panels.js"
+      "import": "./dist/panels.mjs",
+      "require": "./dist/panels.js"
     },
     "./toolbar": {
       "types": "./dist/toolbar.d.ts",
-      "import": "./dist/toolbar.js"
+      "import": "./dist/toolbar.mjs",
+      "require": "./dist/toolbar.js"
     },
     "./hooks": {
       "types": "./dist/hooks.d.ts",
-      "import": "./dist/hooks.js"
+      "import": "./dist/hooks.mjs",
+      "require": "./dist/hooks.js"
     },
     "./stores": {
       "types": "./dist/stores.d.ts",
-      "import": "./dist/stores.js"
+      "import": "./dist/stores.mjs",
+      "require": "./dist/stores.js"
     },
     "./provider": {
       "types": "./dist/provider.d.ts",
-      "import": "./dist/provider.js"
+      "import": "./dist/provider.mjs",
+      "require": "./dist/provider.js"
     },
     "./ui": {
       "types": "./dist/ui.d.ts",
-      "import": "./dist/ui.js"
+      "import": "./dist/ui.mjs",
+      "require": "./dist/ui.js"
     },
     "./lib": {
       "types": "./dist/lib.d.ts",
-      "import": "./dist/lib.js"
+      "import": "./dist/lib.mjs",
+      "require": "./dist/lib.js"
     },
     "./styles": "./src/styles/workflow-ui.css"
   },
@@ -86,8 +96,11 @@
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "6.6.3",
+    "@testing-library/react": "16.2.0",
     "@genfeedai/core": "workspace:*",
     "@genfeedai/types": "workspace:*",
+    "jsdom": "26.0.0",
     "react-compare-slider": "^3.1.0",
     "@types/react": "19.2.4",
     "@types/react-dom": "19.2.4",
@@ -96,12 +109,14 @@
     "react-dom": "19.2.4",
     "tsup": "8.4.0",
     "typescript": "5.9.3",
+    "vitest": "3.0.4",
     "zustand": "5.0.3",
     "zundo": "2.3.0"
   },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "prepublishOnly": "bun run build"
+    "prepublishOnly": "bun run build",
+    "test": "vitest run"
   }
 }

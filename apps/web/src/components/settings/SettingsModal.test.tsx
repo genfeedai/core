@@ -85,7 +85,7 @@ vi.mock('@/store/settingsStore', () => ({
   },
 }));
 
-vi.mock('@/store/uiStore', () => ({
+vi.mock('@genfeedai/workflow-ui/stores', () => ({
   useUIStore: vi.fn(() => ({
     activeModal: 'settings',
     closeModal: mockCloseModal,

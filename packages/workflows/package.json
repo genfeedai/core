@@ -17,13 +17,13 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     },
     "./comfyui": {
       "types": "./dist/comfyui/index.d.ts",
-      "import": "./dist/comfyui/index.js",
-      "require": "./dist/comfyui/index.cjs"
+      "import": "./dist/comfyui/index.mjs",
+      "require": "./dist/comfyui/index.js"
     },
     "./workflows/*": "./workflows/*"
   },
