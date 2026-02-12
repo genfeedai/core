@@ -34,6 +34,8 @@ export const MODELS = {
   veedFabric: 'veed/fabric-1.0',
   // Flux Kontext
   fluxKontextDev: 'black-forest-labs/flux-kontext-dev',
+  // Whisper (transcription)
+  whisper: 'openai/whisper',
 } as const;
 
 export interface SelectedModel {
@@ -172,6 +174,12 @@ export interface MotionControlInput {
   keepOriginalSound?: boolean;
   characterOrientation?: 'from_image' | 'left' | 'right';
   quality?: KlingQuality;
+}
+
+export interface TranscribeInput {
+  audio: string;
+  language?: string;
+  translate?: boolean;
 }
 
 export interface PredictionResult {
@@ -813,6 +821,39 @@ export class ReplicateService {
 
     await this.executionsService.createJob(executionId, nodeId, prediction.id);
     this.logger.log(`Created lip sync prediction ${prediction.id} for node ${nodeId}`);
+
+    return prediction as PredictionResult;
+  }
+
+  /**
+   * Transcribe audio/video using OpenAI Whisper
+   */
+  async transcribeAudio(
+    executionId: string,
+    nodeId: string,
+    input: TranscribeInput
+  ): Promise<PredictionResult> {
+    const audio = this.convertLocalUrlToBase64(input.audio);
+
+    const modelInput: Record<string, unknown> = {
+      audio,
+    };
+
+    if (input.language) {
+      modelInput.language = input.language;
+    }
+
+    if (input.translate) {
+      modelInput.translate = input.translate;
+    }
+
+    const prediction = await this.replicate.predictions.create({
+      model: MODELS.whisper,
+      input: modelInput,
+    });
+
+    await this.executionsService.createJob(executionId, nodeId, prediction.id);
+    this.logger.log(`Created whisper transcription prediction ${prediction.id} for node ${nodeId}`);
 
     return prediction as PredictionResult;
   }

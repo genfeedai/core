@@ -5,6 +5,7 @@ import {
   AlertCircle,
   BookMarked,
   Bug,
+  Camera,
   Copy,
   DollarSign,
   FolderOpen,
@@ -22,6 +23,8 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useReactFlow, getNodesBounds, getViewportForBounds } from '@xyflow/react';
+import { toPng } from 'html-to-image';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { WorkflowSwitcher } from '@/components/workflow/WorkflowSwitcher';
@@ -73,6 +76,7 @@ export function Toolbar() {
   const router = useRouter();
   const { exportWorkflow, workflowId, workflowName, duplicateWorkflowApi, nodes } =
     useWorkflowStore();
+  const { getNodes } = useReactFlow();
   const { undo, redo } = useWorkflowStore.temporal.getState();
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
@@ -215,6 +219,44 @@ export function Toolbar() {
     },
     [workflowId, duplicateWorkflowApi, router]
   );
+
+  const handleScreenshot = useCallback(async () => {
+    const allNodes = getNodes();
+    if (allNodes.length === 0) return;
+
+    const imageWidth = 1920;
+    const imageHeight = 1080;
+    const bounds = getNodesBounds(allNodes);
+    const viewport = getViewportForBounds(bounds, imageWidth, imageHeight, 0.5, 2, 0.15);
+
+    const viewportEl = document.querySelector<HTMLElement>('.react-flow__viewport');
+    if (!viewportEl) return;
+
+    try {
+      const dataUrl = await toPng(viewportEl, {
+        backgroundColor: '#171717',
+        width: imageWidth,
+        height: imageHeight,
+        imagePlaceholder:
+          'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+        style: {
+          width: String(imageWidth),
+          height: String(imageHeight),
+          transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+        },
+      });
+
+      const safeName = (workflowName || 'workflow').toLowerCase().replace(/\s+/g, '-');
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = `${safeName}-screenshot.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      logger.error('Failed to capture workflow screenshot', error, { context: 'Toolbar' });
+    }
+  }, [getNodes, workflowName]);
 
   const fileMenuItems: DropdownItem[] = useMemo(
     () => [
@@ -402,6 +444,23 @@ export function Toolbar() {
 
         {/* Spacer */}
         <div className="flex-1" />
+
+        {/* Screenshot Workflow */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground"
+              onClick={handleScreenshot}
+            >
+              <Camera className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p>Screenshot workflow</p>
+          </TooltipContent>
+        </Tooltip>
 
         {/* Open Output Folder */}
         <Tooltip>

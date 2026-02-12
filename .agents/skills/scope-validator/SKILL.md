@@ -12,19 +12,28 @@ tags:
 
 # Scope Validator
 
+## Routing
+
+**USE this skill when:**
+- User asks "should this be in core or cloud?"
+- User wants to contribute a new node or feature
+- User requests social publishing, RSS, or feed features
+- Feature request triage or PR review for scope compliance
+
+**DO NOT use this skill when:**
+- User already knows where the feature belongs and wants to build it -> Use `node-creator`, `react-flow`, etc.
+- User wants infrastructure details -> Use `infra-reference`
+- User wants to fix a bug -> Use `bugfix`
+
+**Expected outputs:**
+- OSS Core vs Cloud SaaS classification
+- List of Cloud-only nodes/features/providers involved
+- OSS alternative suggestions when applicable
+
 Helps users and contributors understand whether a feature belongs in:
 
 - **OSS Core** → Submit a PR or feature request to [genfeedai/core](https://github.com/genfeedai/core)
 - **Cloud SaaS** → Subscribe at [genfeed.ai/cloud](https://genfeed.ai/cloud)
-
-## When This Activates
-
-- User asks "should this be in core or cloud?"
-- User wants to contribute a new node or feature
-- User requests social publishing features
-- User asks about RSS/Twitter/feed integration
-- Feature request triage
-- PR review for scope compliance
 
 ## OSS Core Scope
 

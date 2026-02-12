@@ -5,6 +5,27 @@ description: Advanced React Flow patterns for complex use cases. Use when implem
 
 # Advanced React Flow Patterns
 
+## Routing
+
+**USE this skill when:**
+- Implementing sub-flows (nested/grouped nodes)
+- Building drag-and-drop from external sources
+- Adding undo/redo functionality
+- Programmatic layout with dagre
+- Custom connection lines
+- Complex state synchronization (middleware, keyboard shortcuts)
+- Accessing node data from edges
+
+**DO NOT use this skill when:**
+- Basic React Flow setup (nodes, edges, handles) -> Use `react-flow`
+- Reviewing existing code for anti-patterns -> Use `react-flow-code-review`
+- Creating a new SDK node type -> Use `node-creator`
+- Generating workflow JSON -> Use `workflow-creator`
+
+**Expected outputs:**
+- Complete TypeScript code for advanced patterns
+- Integration guidance with existing React Flow setup
+
 ## Sub-Flows (Nested Nodes)
 
 ```tsx

@@ -92,10 +92,10 @@ export const DEFAULT_JOB_OPTIONS = {
  */
 export const QUEUE_CONCURRENCY = {
   [QUEUE_NAMES.WORKFLOW_ORCHESTRATOR]: 10,
-  [QUEUE_NAMES.IMAGE_GENERATION]: 1,
-  [QUEUE_NAMES.VIDEO_GENERATION]: 1,
-  [QUEUE_NAMES.LLM_GENERATION]: 1,
-  [QUEUE_NAMES.PROCESSING]: 1,
+  [QUEUE_NAMES.IMAGE_GENERATION]: 10,
+  [QUEUE_NAMES.VIDEO_GENERATION]: 10,
+  [QUEUE_NAMES.LLM_GENERATION]: 10,
+  [QUEUE_NAMES.PROCESSING]: 10,
 } as const;
 
 /**
@@ -112,6 +112,7 @@ export const NODE_TYPE_TO_QUEUE: Record<string, QueueName> = {
   lipSync: QUEUE_NAMES.PROCESSING,
   voiceChange: QUEUE_NAMES.PROCESSING,
   textToSpeech: QUEUE_NAMES.PROCESSING,
+  transcribe: QUEUE_NAMES.PROCESSING,
   // Composition: workflowRef triggers nested workflow execution via orchestrator
   workflowRef: QUEUE_NAMES.WORKFLOW_ORCHESTRATOR,
 };

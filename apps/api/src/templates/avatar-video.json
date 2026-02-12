@@ -1,0 +1,190 @@
+{
+  "version": 1,
+  "name": "Avatar Video",
+  "description": "End-to-end AI avatar video: script generation, TTS voice, lip-synced avatar, video stitching, and burned-in subtitles.",
+  "edgeStyle": "smoothstep",
+  "nodes": [
+    {
+      "id": "prompt-1",
+      "type": "prompt",
+      "position": { "x": 100, "y": 250 },
+      "data": {
+        "label": "Script Brief",
+        "status": "idle",
+        "prompt": "Create a 60-second educational video about the benefits of AI in business. Include an engaging hook, 3 key points, and a call to action.",
+        "variables": {}
+      }
+    },
+    {
+      "id": "llm-1",
+      "type": "llm",
+      "position": { "x": 450, "y": 250 },
+      "data": {
+        "label": "Script Writer",
+        "status": "idle",
+        "inputPrompt": null,
+        "outputText": null,
+        "model": "claude-4.5-sonnet",
+        "systemPrompt": "You are a professional video scriptwriter. Write natural, conversational scripts meant to be spoken aloud by an AI avatar. Keep sentences short and punchy. Do not include stage directions, scene descriptions, or formatting - output only the spoken words. Structure the script with a hook, main points, and closing.",
+        "temperature": 0.7,
+        "maxTokens": 2048,
+        "topP": 0.9,
+        "jobId": null
+      }
+    },
+    {
+      "id": "tts-1",
+      "type": "textToSpeech",
+      "position": { "x": 800, "y": 250 },
+      "data": {
+        "label": "Voice Generator",
+        "status": "idle",
+        "inputText": null,
+        "outputAudio": null,
+        "provider": "elevenlabs",
+        "voice": "rachel",
+        "stability": 0.5,
+        "similarityBoost": 0.75,
+        "speed": 1.0,
+        "jobId": null
+      }
+    },
+    {
+      "id": "img-1",
+      "type": "imageInput",
+      "position": { "x": 800, "y": 500 },
+      "data": {
+        "label": "Avatar Image",
+        "status": "idle",
+        "image": null,
+        "filename": null,
+        "dimensions": null,
+        "source": "upload"
+      }
+    },
+    {
+      "id": "lipsync-1",
+      "type": "lipSync",
+      "position": { "x": 1150, "y": 350 },
+      "data": {
+        "label": "Avatar Video",
+        "status": "idle",
+        "inputImage": null,
+        "inputVideo": null,
+        "inputAudio": null,
+        "outputVideo": null,
+        "model": "sync/lipsync-2-pro",
+        "syncMode": "loop",
+        "temperature": 0.5,
+        "activeSpeaker": false,
+        "jobId": null
+      }
+    },
+    {
+      "id": "stitch-1",
+      "type": "videoStitch",
+      "position": { "x": 1500, "y": 350 },
+      "data": {
+        "label": "Stitch Videos",
+        "status": "idle",
+        "inputVideos": [],
+        "outputVideo": null,
+        "transitionType": "crossfade",
+        "transitionDuration": 0.5,
+        "seamlessLoop": false
+      }
+    },
+    {
+      "id": "subtitle-1",
+      "type": "subtitle",
+      "position": { "x": 1850, "y": 350 },
+      "data": {
+        "label": "Add Subtitles",
+        "status": "idle",
+        "inputVideo": null,
+        "inputText": null,
+        "outputVideo": null,
+        "style": "modern",
+        "position": "bottom",
+        "fontSize": 24,
+        "fontColor": "#FFFFFF",
+        "backgroundColor": "rgba(0,0,0,0.7)",
+        "fontFamily": "Arial",
+        "jobId": null
+      }
+    },
+    {
+      "id": "download-1",
+      "type": "download",
+      "position": { "x": 2200, "y": 350 },
+      "data": {
+        "label": "Export Video",
+        "status": "idle",
+        "inputImage": null,
+        "inputVideo": null,
+        "inputType": null,
+        "outputName": "avatar-video"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-prompt-llm",
+      "source": "prompt-1",
+      "target": "llm-1",
+      "sourceHandle": "text",
+      "targetHandle": "prompt"
+    },
+    {
+      "id": "e-llm-tts",
+      "source": "llm-1",
+      "target": "tts-1",
+      "sourceHandle": "text",
+      "targetHandle": "text"
+    },
+    {
+      "id": "e-tts-lipsync",
+      "source": "tts-1",
+      "target": "lipsync-1",
+      "sourceHandle": "audio",
+      "targetHandle": "audio"
+    },
+    {
+      "id": "e-img-lipsync",
+      "source": "img-1",
+      "target": "lipsync-1",
+      "sourceHandle": "image",
+      "targetHandle": "image"
+    },
+    {
+      "id": "e-lipsync-stitch",
+      "source": "lipsync-1",
+      "target": "stitch-1",
+      "sourceHandle": "video",
+      "targetHandle": "videos"
+    },
+    {
+      "id": "e-stitch-subtitle",
+      "source": "stitch-1",
+      "target": "subtitle-1",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "id": "e-llm-subtitle",
+      "source": "llm-1",
+      "target": "subtitle-1",
+      "sourceHandle": "text",
+      "targetHandle": "text"
+    },
+    {
+      "id": "e-subtitle-download",
+      "source": "subtitle-1",
+      "target": "download-1",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    }
+  ],
+  "createdAt": "2026-02-12T00:00:00Z",
+  "updatedAt": "2026-02-12T00:00:00Z"
+}

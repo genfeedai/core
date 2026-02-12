@@ -9,6 +9,7 @@ import type {
   ReframeJobData,
   SubtitleJobData,
   TextToSpeechJobData,
+  TranscribeJobData,
   UpscaleJobData,
   VideoFrameExtractJobData,
   VideoStitchJobData,
@@ -111,6 +112,7 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
         UpscaleNodeType.TOPAZ_IMAGE_UPSCALE,
         UpscaleNodeType.TOPAZ_VIDEO_UPSCALE,
         ProcessingNodeType.LIP_SYNC,
+        ProcessingNodeType.TRANSCRIBE,
       ];
       const existingJob = replicateNodeTypes.includes(nodeType)
         ? await this.executionsService.findExistingJob(executionId, nodeId)
@@ -153,6 +155,13 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
         case ProcessingNodeType.VOICE_CHANGE:
           return this.handleVoiceChange(job as unknown as Job<VoiceChangeJobData>);
 
+        case ProcessingNodeType.TRANSCRIBE:
+          predictionId = await this.handleTranscribe(
+            job as unknown as Job<TranscribeJobData>,
+            existingJob?.predictionId
+          );
+          break;
+
         case ProcessingNodeType.SUBTITLE:
           return this.handleSubtitle(job as unknown as Job<SubtitleJobData>);
 
@@ -188,35 +197,50 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
 
         // Update execution node result
         if (result.success) {
-          // Determine output type based on node type
-          let outputType: 'image' | 'video' = 'video';
-          if (
-            nodeType === ReframeNodeType.LUMA_REFRAME_IMAGE ||
-            nodeType === UpscaleNodeType.TOPAZ_IMAGE_UPSCALE
-          ) {
-            outputType = 'image';
-          } else if (
-            nodeType === ReframeNodeType.LUMA_REFRAME_VIDEO ||
-            nodeType === UpscaleNodeType.TOPAZ_VIDEO_UPSCALE
-          ) {
-            outputType = 'video';
-          } else if (nodeType === ReframeNodeType.REFRAME || nodeType === UpscaleNodeType.UPSCALE) {
-            outputType = nodeData.inputType === 'video' ? 'video' : 'image';
+          if (nodeType === ProcessingNodeType.TRANSCRIBE) {
+            // Whisper returns { transcription: string } or a string — extract text directly
+            const whisperOutput = result.output as { transcription?: string } | string;
+            const text =
+              typeof whisperOutput === 'string'
+                ? whisperOutput
+                : (whisperOutput?.transcription ?? '');
+            await this.executionsService.updateNodeResult(executionId, nodeId, 'complete', {
+              text,
+            });
+          } else {
+            // Determine output type based on node type
+            let outputType: 'image' | 'video' = 'video';
+            if (
+              nodeType === ReframeNodeType.LUMA_REFRAME_IMAGE ||
+              nodeType === UpscaleNodeType.TOPAZ_IMAGE_UPSCALE
+            ) {
+              outputType = 'image';
+            } else if (
+              nodeType === ReframeNodeType.LUMA_REFRAME_VIDEO ||
+              nodeType === UpscaleNodeType.TOPAZ_VIDEO_UPSCALE
+            ) {
+              outputType = 'video';
+            } else if (
+              nodeType === ReframeNodeType.REFRAME ||
+              nodeType === UpscaleNodeType.UPSCALE
+            ) {
+              outputType = nodeData.inputType === 'video' ? 'video' : 'image';
+            }
+
+            const localOutput = await this.saveAndNormalizeOutput(
+              result.output,
+              job.data.workflowId,
+              nodeId,
+              outputType
+            );
+
+            await this.executionsService.updateNodeResult(
+              executionId,
+              nodeId,
+              'complete',
+              localOutput
+            );
           }
-
-          const localOutput = await this.saveAndNormalizeOutput(
-            result.output,
-            job.data.workflowId,
-            nodeId,
-            outputType
-          );
-
-          await this.executionsService.updateNodeResult(
-            executionId,
-            nodeId,
-            'complete',
-            localOutput
-          );
         } else {
           await this.executionsService.updateNodeResult(
             executionId,
@@ -354,6 +378,31 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
       temperature: nodeData.temperature,
       activeSpeaker: nodeData.activeSpeaker,
     });
+    return prediction.id;
+  }
+
+  /**
+   * Handle transcription via Whisper (Replicate)
+   */
+  private async handleTranscribe(
+    job: Job<TranscribeJobData>,
+    existingPredictionId?: string
+  ): Promise<string> {
+    const existing = this.checkExistingPrediction(existingPredictionId);
+    if (existing) return existing;
+
+    const { executionId, nodeId, nodeData } = job.data;
+    const audio = nodeData.inputAudio ?? nodeData.audio ?? nodeData.inputVideo ?? nodeData.video;
+
+    if (!audio) {
+      throw new Error('No audio or video input for transcription');
+    }
+
+    const prediction = await this.replicateService.transcribeAudio(executionId, nodeId, {
+      audio,
+      language: nodeData.language !== 'auto' ? nodeData.language : undefined,
+    });
+
     return prediction.id;
   }
 

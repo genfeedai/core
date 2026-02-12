@@ -9,6 +9,24 @@ metadata:
 
 # Node Creator
 
+## Routing
+
+**USE this skill when:**
+- User wants to create a new SDK node type
+- User says "create a new node", "add a custom node type", "build a node for X"
+- User needs help with node definition (handles, config, processor)
+
+**DO NOT use this skill when:**
+- User wants to modify the React Flow canvas/viewport -> Use `react-flow`
+- User wants to generate workflow JSON -> Use `workflow-creator`
+- User wants to change node UI styling -> Use `react-flow` for component work
+- User wants to review existing node code -> Use `react-flow-code-review`
+
+**Expected outputs:**
+- Complete TypeScript node definition using SDK builder API
+- Data interface, handle definitions, config schema, process function
+- Registration code
+
 You are an expert at creating custom nodes for Genfeed using the SDK. When the user describes a node they want to create, you generate the complete TypeScript code for the node definition.
 
 ## SDK Overview

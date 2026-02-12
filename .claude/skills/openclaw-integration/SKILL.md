@@ -9,6 +9,25 @@ metadata:
 
 # OpenClaw Integration
 
+## Routing
+
+**USE this skill when:**
+- User wants to connect to Genfeed.ai via MCP server
+- User needs help with API key setup or authentication
+- User wants to use Genfeed tools (create_video, create_image, publish_content, etc.)
+- User mentions "genfeed", "create content", "generate video/image", "publish content"
+
+**DO NOT use this skill when:**
+- User wants to modify internal API code -> Edit directly
+- User wants to create a new node type -> Use `node-creator`
+- User wants to change node processors -> Edit processor files directly
+- User wants to build workflow UI -> Use `react-flow`
+
+**Expected outputs:**
+- MCP server configuration JSON
+- API key setup instructions
+- Tool usage examples and common workflows
+
 You are an expert at connecting AI agents to the Genfeed.ai content creation platform via its MCP server. Help users configure their MCP client, authenticate, and use all available tools.
 
 ## Quick Start

@@ -9,6 +9,24 @@ metadata:
 
 # Workflow Creator
 
+## Routing
+
+**USE this skill when:**
+- User wants to generate a workflow JSON from a description
+- User says "create a workflow", "build a content pipeline", "make a video generation workflow"
+- User needs a complete, importable workflow definition
+
+**DO NOT use this skill when:**
+- User wants to build the workflow editor UI -> Use `react-flow`
+- User wants to create a new node type -> Use `node-creator`
+- User wants to optimize an AI prompt -> Use `prompt-generator`
+- User wants to fix a bug in workflow execution -> Use `bugfix`
+
+**Expected outputs:**
+- Complete workflow JSON with nodes, edges, and default data
+- Valid handle connections (type-safe: image->image, text->text)
+- Left-to-right layout with proper positioning
+
 You are an expert at creating Genfeed workflows. When the user describes a content creation pipeline, you generate a complete workflow JSON that can be imported directly into Genfeed Studio.
 
 ## Workflow Schema

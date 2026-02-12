@@ -192,6 +192,18 @@ export interface TextToSpeechJobData extends NodeJobData {
   };
 }
 
+export interface TranscribeJobData extends NodeJobData {
+  nodeType: 'transcribe';
+  nodeData: {
+    video?: string;
+    audio?: string;
+    inputVideo?: string;
+    inputAudio?: string;
+    language: string;
+    timestamps: boolean;
+  };
+}
+
 export interface SubtitleJobData extends NodeJobData {
   nodeType: 'subtitle';
   nodeData: {
@@ -241,6 +253,7 @@ export type ProcessingJobData =
   | LipSyncJobData
   | VoiceChangeJobData
   | TextToSpeechJobData
+  | TranscribeJobData
   | SubtitleJobData
   | VideoStitchJobData
   | WorkflowRefJobData;

@@ -5,6 +5,42 @@ description: React Flow (@xyflow/react) for workflow visualization with custom n
 
 # React Flow
 
+## Routing
+
+**USE this skill when:**
+- Building or modifying the React Flow canvas, nodes, edges, handles, or viewport
+- Creating custom node/edge components
+- Working with state management for the flow editor
+- Implementing connection validation, events, or interactive elements
+- Any work involving `@xyflow/react`, `ReactFlow`, `Handle`, `NodeProps`, `EdgeProps`, `useReactFlow`
+
+**DO NOT use this skill when:**
+- Creating a new SDK node type (data model + processor) -> Use `node-creator`
+- Generating workflow JSON from description -> Use `workflow-creator`
+- Implementing sub-flows, DnD, undo/redo, dagre layouts -> Use `react-flow-advanced`
+- Auditing existing React Flow code for issues -> Use `react-flow-code-review`
+- Fixing a non-React-Flow bug -> Use `bugfix`
+
+**Expected outputs:**
+- TypeScript React Flow component code
+- Custom node/edge implementations with proper typing
+- State management patterns (controlled, Zustand, hooks)
+
+## When to Use React Flow
+
+**Good fit**: Visual programming interfaces, workflow builders, diagram editors, data pipeline visualization, node-based audio/video editors, decision trees, state machines.
+
+**Consider alternatives**: Simple static diagrams (use SVG), heavy real-time collaboration (custom sync layer), 3D (Three.js), 10k+ nodes (WebGL/Sigma.js).
+
+## Performance Scaling
+
+| Nodes | Strategy |
+|-------|----------|
+| < 100 | Default settings |
+| 100-500 | Enable `onlyRenderVisibleElements` |
+| 500-1000 | Simplify custom nodes, reduce DOM elements |
+| > 1000 | Consider virtualization, WebGL alternatives |
+
 React Flow (@xyflow/react) is a library for building node-based graphs, workflow editors, and interactive diagrams. It provides a highly customizable framework for creating visual programming interfaces, process flows, and network visualizations.
 
 ## Quick Start
@@ -431,6 +467,37 @@ function App() {
   );
 }
 ```
+
+## Common Props Reference
+
+```tsx
+<ReactFlow
+  nodes={nodes}
+  edges={edges}
+  onNodesChange={onNodesChange}
+  onEdgesChange={onEdgesChange}
+  nodeTypes={nodeTypes}        // Define OUTSIDE component
+  edgeTypes={edgeTypes}        // Define OUTSIDE component
+  onConnect={onConnect}
+  isValidConnection={isValidConnection}
+  fitView
+  minZoom={0.1}
+  maxZoom={4}
+>
+  <MiniMap />
+  <Controls />
+  <Background variant={BackgroundVariant.Dots} />
+</ReactFlow>
+```
+
+## CSS Classes for Interaction
+
+| Class | Effect |
+|-------|--------|
+| `nodrag` | Prevent dragging when clicking element |
+| `nowheel` | Prevent zoom on wheel events |
+| `nopan` | Prevent panning from element |
+| `nokey` | Prevent keyboard events (use on inputs) |
 
 ## Reference Files
 

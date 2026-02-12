@@ -276,26 +276,26 @@ export class WorkflowProcessor extends WorkerHost {
         throw new Error('No nodes ready to execute - possible circular dependency');
       }
 
-      // Enqueue only the first ready node (sequential execution)
-      // Other ready nodes will be enqueued as previous ones complete
+      // Enqueue ALL ready nodes (parallel execution)
+      // Nodes with no unmet dependencies can run concurrently
       if (readyNodes.length > 0) {
-        const firstNode = readyNodes[0];
-        // Pass workflow definition for input resolution and debugMode
         const workflowDef = { nodes, edges };
-        await this.queueManager.enqueueNode(
-          executionId,
-          workflowId,
-          firstNode.nodeId,
-          firstNode.nodeType,
-          firstNode.nodeData,
-          firstNode.dependsOn,
-          workflowDef,
-          { debugMode }
-        );
-        await this.executionsService.removeFromPendingNodes(executionId, firstNode.nodeId);
+        for (const readyNode of readyNodes) {
+          await this.queueManager.enqueueNode(
+            executionId,
+            workflowId,
+            readyNode.nodeId,
+            readyNode.nodeType,
+            readyNode.nodeData,
+            readyNode.dependsOn,
+            workflowDef,
+            { debugMode }
+          );
+          await this.executionsService.removeFromPendingNodes(executionId, readyNode.nodeId);
+        }
 
         this.logger.log(
-          `Enqueued first ready node ${firstNode.nodeId} (${firstNode.nodeType}) - ${pendingNodes.length - 1} nodes pending`
+          `Enqueued ${readyNodes.length} ready node(s) in parallel - ${pendingNodes.length - readyNodes.length} nodes pending`
         );
       }
 

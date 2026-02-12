@@ -45,6 +45,7 @@ export enum ProcessingNodeType {
   LIP_SYNC = 'lipSync',
   TEXT_TO_SPEECH = 'textToSpeech',
   VOICE_CHANGE = 'voiceChange',
+  TRANSCRIBE = 'transcribe',
   SUBTITLE = 'subtitle',
   VIDEO_STITCH = 'videoStitch',
   WORKFLOW_REF = 'workflowRef',

@@ -5,6 +5,34 @@ description: Reviews React Flow code for anti-patterns, performance issues, and 
 
 # React Flow Code Review
 
+## Routing
+
+**USE this skill when:**
+- Auditing existing React Flow code for anti-patterns
+- Reviewing a PR that touches `@xyflow/react` components
+- Checking for performance issues in node-based UI
+- Validating TypeScript types for custom nodes/edges
+
+**DO NOT use this skill when:**
+- Building new React Flow features from scratch -> Use `react-flow`
+- Implementing advanced patterns (sub-flows, DnD) -> Use `react-flow-advanced`
+- Creating a new SDK node type -> Use `node-creator`
+- Fixing a non-React-Flow bug -> Use `bugfix`
+
+**Expected outputs:**
+- List of anti-patterns and violations found
+- Performance checklist results
+- Specific code fixes with before/after examples
+
+## Performance Scaling Reference
+
+| Nodes | Strategy |
+|-------|----------|
+| < 100 | Default settings |
+| 100-500 | Enable `onlyRenderVisibleElements` |
+| 500-1000 | Simplify custom nodes, reduce DOM elements |
+| > 1000 | Consider virtualization, WebGL alternatives |
+
 ## Critical Anti-Patterns
 
 ### 1. Defining nodeTypes/edgeTypes Inside Components

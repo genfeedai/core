@@ -418,39 +418,39 @@ export class QueueManagerService {
       };
     }
 
-    // Enqueue only the first ready node (sequential execution)
-    const nextNode = readyNodes[0];
-
-    // Check if any incoming edge to this node has a pause breakpoint
-    const hasIncomingPause = workflowDef.edges.some(
-      (edge) =>
-        edge.target === nextNode.nodeId &&
-        (edge as { data?: { hasPause?: boolean } }).data?.hasPause === true
-    );
-
-    if (hasIncomingPause) {
-      await this.executionsService.updateExecutionStatus(executionId, 'paused');
-      await this.executionsService.setPausedAtNodeId(executionId, nextNode.nodeId);
-      this.logger.log(
-        `Execution ${executionId}: paused at node ${nextNode.nodeId} (pause edge breakpoint)`
+    // Enqueue ALL ready nodes (parallel execution)
+    for (const nextNode of readyNodes) {
+      // Check if any incoming edge to this node has a pause breakpoint
+      const hasIncomingPause = workflowDef.edges.some(
+        (edge) =>
+          edge.target === nextNode.nodeId &&
+          (edge as { data?: { hasPause?: boolean } }).data?.hasPause === true
       );
-      return;
+
+      if (hasIncomingPause) {
+        await this.executionsService.updateExecutionStatus(executionId, 'paused');
+        await this.executionsService.setPausedAtNodeId(executionId, nextNode.nodeId);
+        this.logger.log(
+          `Execution ${executionId}: paused at node ${nextNode.nodeId} (pause edge breakpoint)`
+        );
+        return;
+      }
+
+      await this.enqueueNode(
+        executionId,
+        workflowId,
+        nextNode.nodeId,
+        nextNode.nodeType,
+        nextNode.nodeData,
+        nextNode.dependsOn,
+        workflowDef,
+        { debugMode }
+      );
+      await this.executionsService.removeFromPendingNodes(executionId, nextNode.nodeId);
     }
 
-    await this.enqueueNode(
-      executionId,
-      workflowId,
-      nextNode.nodeId,
-      nextNode.nodeType,
-      nextNode.nodeData,
-      nextNode.dependsOn,
-      workflowDef,
-      { debugMode }
-    );
-    await this.executionsService.removeFromPendingNodes(executionId, nextNode.nodeId);
-
     this.logger.log(
-      `Execution ${executionId}: enqueued next node ${nextNode.nodeId} (${nextNode.nodeType})`
+      `Execution ${executionId}: enqueued ${readyNodes.length} ready node(s) in parallel`
     );
   }
 
