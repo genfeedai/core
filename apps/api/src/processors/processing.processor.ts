@@ -2,6 +2,9 @@ import { OnWorkerEvent, Processor } from '@nestjs/bullmq';
 import { forwardRef, Inject, Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
 import { ProcessingNodeType, ReframeNodeType, UpscaleNodeType } from '@genfeedai/types';
+
+// TRANSCRIBE is not in ProcessingNodeType enum but is a valid processing node
+const TRANSCRIBE_NODE_TYPE = 'transcribe' as const;
 import type {
   JobResult,
   LipSyncJobData,
@@ -113,7 +116,7 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
         UpscaleNodeType.TOPAZ_IMAGE_UPSCALE,
         UpscaleNodeType.TOPAZ_VIDEO_UPSCALE,
         ProcessingNodeType.LIP_SYNC,
-        ProcessingNodeType.TRANSCRIBE,
+        TRANSCRIBE_NODE_TYPE,
       ];
       const existingJob = replicateNodeTypes.includes(nodeType)
         ? await this.executionsService.findExistingJob(executionId, nodeId)
@@ -156,7 +159,7 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
         case ProcessingNodeType.VOICE_CHANGE:
           return this.handleVoiceChange(job as unknown as Job<VoiceChangeJobData>);
 
-        case ProcessingNodeType.TRANSCRIBE:
+        case TRANSCRIBE_NODE_TYPE:
           predictionId = await this.handleTranscribe(
             job as unknown as Job<TranscribeJobData>,
             existingJob?.predictionId
@@ -198,7 +201,7 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
 
         // Update execution node result
         if (result.success) {
-          if (nodeType === ProcessingNodeType.TRANSCRIBE) {
+          if (nodeType === TRANSCRIBE_NODE_TYPE) {
             // Whisper returns { transcription: string } or a string — extract text directly
             const whisperOutput = result.output as { transcription?: string } | string;
             const text =

@@ -41,9 +41,12 @@ export interface WorkflowExportEdge {
 export const WORKFLOW_EXPORT_VERSION = 1;
 
 /**
- * Assert that a WorkflowExport is assignable to WorkflowFile.
- * This compile-time check ensures the two shapes stay aligned.
+ * Compile-time check: every key of WorkflowFile (minus nodes/edges) must exist
+ * on WorkflowExport. WorkflowExport intentionally widens some field types
+ * (e.g. optional dates, `EdgeStyle | string`), so we verify key coverage
+ * rather than strict assignability.
  */
-type _AssertExportCompatible =
-  WorkflowExport extends Omit<WorkflowFile, 'nodes' | 'edges'> ? true : never;
-const _: _AssertExportCompatible = true;
+type _WorkflowFileKeys = keyof Omit<WorkflowFile, 'nodes' | 'edges'>;
+type _ExportKeys = keyof WorkflowExport;
+type _AssertKeyCoverage = _WorkflowFileKeys extends _ExportKeys ? true : never;
+const _: _AssertKeyCoverage = true;

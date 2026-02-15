@@ -124,7 +124,7 @@ export class WorkflowProcessor extends WorkerHost {
         if (data.outputImage) {
           result.output = data.outputImage;
         }
-        const outputImages = data.outputImages as unknown[] | undefined;
+        const outputImages = data.outputImages as string[] | undefined;
         if (outputImages && outputImages.length > 0) {
           result.outputs = outputImages;
           result.images = outputImages;
@@ -136,19 +136,19 @@ export class WorkflowProcessor extends WorkerHost {
 
         // Map outputVideo -> output (video nodes use 'output' handle)
         if (data.outputVideo) {
-          result.output = data.outputVideo;
-          result.video = data.outputVideo;
+          result.output = data.outputVideo as string;
+          result.video = data.outputVideo as string;
         }
 
         // Map outputAudio -> output (audio nodes use 'output' handle)
         if (data.outputAudio) {
-          result.output = data.outputAudio;
-          result.audio = data.outputAudio;
+          result.output = data.outputAudio as string;
+          result.audio = data.outputAudio as string;
         }
 
         // Map outputText -> text (LLM nodes use 'text' handle)
         if (data.outputText) {
-          result.text = data.outputText;
+          result.text = data.outputText as string;
         }
 
         // Keep output as-is if already in correct format

@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
+import type { GroupColor } from '@genfeedai/types';
 import type { CreateWorkflowDto } from '@/dto/create-workflow.dto';
 import type { ImportWorkflowDto } from '@/dto/import-workflow.dto';
 import type { QueryWorkflowDto } from '@/dto/query-workflow.dto';
@@ -305,7 +306,7 @@ export class WorkflowsService {
       }>
     ).map((group) => ({
       collapsed: group.collapsed,
-      color: group.color,
+      color: group.color as GroupColor | undefined,
       id: group.id,
       isLocked: group.isLocked,
       name: group.name,

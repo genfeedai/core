@@ -1,7 +1,39 @@
-import type { CostBreakdown, CostSummary, NodeCostEstimate } from '@genfeedai/types';
+/**
+ * Cost types — defined locally because they are API-specific
+ * and not exported by @genfeedai/types.
+ */
 
-// Re-export canonical types for local consumers
-export type { CostBreakdown, CostSummary, NodeCostEstimate };
+/**
+ * Per-node cost estimate used in workflow cost breakdowns
+ */
+export interface NodeCostEstimate {
+  nodeId: string;
+  nodeType: string;
+  nodeLabel: string;
+  model: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+  duration?: number;
+  withAudio?: boolean;
+}
+
+/**
+ * Full workflow cost breakdown with itemised per-node estimates
+ */
+export interface CostBreakdown {
+  items: NodeCostEstimate[];
+  total: number;
+}
+
+/**
+ * Execution-level cost summary (estimated vs actual)
+ */
+export interface CostSummary {
+  estimated: number;
+  actual: number;
+  variance: number;
+}
 
 /**
  * Job cost breakdown stored on a job document
