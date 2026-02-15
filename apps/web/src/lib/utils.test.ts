@@ -52,7 +52,7 @@ describe('cn', () => {
 
   it('should handle object input', () => {
     const result = cn({ bar: false, baz: true, foo: true });
-    expect(result).toBe('foo baz');
+    expect(result).toBe('baz foo');
   });
 
   it('should handle mixed input types', () => {

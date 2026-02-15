@@ -22,7 +22,7 @@ export interface NodeCostEstimate {
  * Full workflow cost breakdown with itemised per-node estimates
  */
 export interface CostBreakdown {
-  items: NodeCostEstimate[];
+  breakdown: NodeCostEstimate[];
   total: number;
 }
 

@@ -23,7 +23,7 @@ export class CostCalculatorService {
    * Calculate estimated cost for a workflow before execution
    */
   calculateWorkflowEstimate(nodes: WorkflowNodeForCost[]): CostBreakdown {
-    const items: NodeCostEstimate[] = [];
+    const breakdown: NodeCostEstimate[] = [];
     let total = 0;
 
     for (const node of nodes) {
@@ -45,12 +45,12 @@ export class CostCalculatorService {
           item.withAudio = node.data.generateAudio ?? true;
         }
 
-        items.push(item);
+        breakdown.push(item);
         total += cost;
       }
     }
 
-    return { items, total };
+    return { breakdown, total };
   }
 
   /**
