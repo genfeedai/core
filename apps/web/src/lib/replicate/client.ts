@@ -1,22 +1,7 @@
+import type { CostBreakdown, NodeCostEstimate } from '@genfeedai/types';
 import Replicate from 'replicate';
 
-export interface NodeCostEstimate {
-  nodeId: string;
-  nodeLabel: string;
-  nodeType: string;
-  model: string;
-  quantity: number;
-  unitPrice: number;
-  subtotal: number;
-  details: string;
-  duration?: number;
-  withAudio?: boolean;
-}
-
-export interface CostBreakdown {
-  items: NodeCostEstimate[];
-  total: number;
-}
+export type { CostBreakdown, NodeCostEstimate } from '@genfeedai/types';
 
 // Initialize Replicate client
 const replicate = new Replicate({

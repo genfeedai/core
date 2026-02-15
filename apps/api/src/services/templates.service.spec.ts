@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, type TestingModule } from '@nestjs/testing';
-import { TemplateCategory } from '@genfeedai/types';
+import { WorkflowTemplateCategory } from '@genfeedai/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Template } from '@/schemas/template.schema';
 import { TemplatesService } from '@/services/templates.service';
@@ -60,7 +60,7 @@ describe('TemplatesService', () => {
   describe('create', () => {
     it('should create a new template', async () => {
       const dto = {
-        category: TemplateCategory.IMAGE,
+        category: WorkflowTemplateCategory.IMAGE,
         description: 'A test template',
         edges: [],
         name: 'Test Template',
@@ -74,7 +74,7 @@ describe('TemplatesService', () => {
     });
 
     it('should create template with default values', async () => {
-      const dto = { category: TemplateCategory.IMAGE, name: 'Minimal Template' };
+      const dto = { category: WorkflowTemplateCategory.IMAGE, name: 'Minimal Template' };
 
       const result = await service.create(dto);
 
@@ -91,7 +91,7 @@ describe('TemplatesService', () => {
     });
 
     it('should filter by category', async () => {
-      const result = await service.findAll({ category: TemplateCategory.IMAGE });
+      const result = await service.findAll({ category: WorkflowTemplateCategory.IMAGE });
 
       expect(result).toHaveLength(1);
     });

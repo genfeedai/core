@@ -1,4 +1,4 @@
-import { TemplateCategory } from '@genfeedai/types';
+import { WorkflowTemplateCategory } from '@genfeedai/types';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, type HydratedDocument } from 'mongoose';
 
@@ -12,8 +12,8 @@ export class Template extends Document {
   @Prop({ default: '' })
   description: string;
 
-  @Prop({ enum: Object.values(TemplateCategory), required: true, type: String })
-  category: TemplateCategory;
+  @Prop({ enum: Object.values(WorkflowTemplateCategory), required: true, type: String })
+  category: WorkflowTemplateCategory;
 
   @Prop()
   thumbnail?: string;

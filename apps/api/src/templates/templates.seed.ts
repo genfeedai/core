@@ -1,4 +1,4 @@
-import { TemplateCategory } from '@genfeedai/types';
+import { WorkflowTemplateCategory } from '@genfeedai/types';
 
 // System templates to seed on startup
 export const SYSTEM_TEMPLATES = [
@@ -6,7 +6,7 @@ export const SYSTEM_TEMPLATES = [
   // MINIMAL DEFAULT WORKFLOWS (Marketplace Core)
   // ============================================
   {
-    category: TemplateCategory.IMAGE,
+    category: WorkflowTemplateCategory.IMAGE,
     description: 'Generate an AI image from a source image (img2img)',
     edgeStyle: 'smoothstep',
     edges: [
@@ -92,7 +92,7 @@ export const SYSTEM_TEMPLATES = [
     version: 1,
   },
   {
-    category: TemplateCategory.VIDEO,
+    category: WorkflowTemplateCategory.VIDEO,
     description: 'Generate an AI video from a source image (img2video)',
     edgeStyle: 'smoothstep',
     edges: [
@@ -185,7 +185,7 @@ export const SYSTEM_TEMPLATES = [
   // ADVANCED WORKFLOWS
   // ============================================
   {
-    category: TemplateCategory.IMAGE,
+    category: WorkflowTemplateCategory.IMAGE,
     description: 'Generate a series of related images from a concept prompt using LLM expansion',
     edgeStyle: 'smoothstep',
     edges: [
@@ -324,7 +324,7 @@ export const SYSTEM_TEMPLATES = [
     version: 1,
   },
   {
-    category: TemplateCategory.VIDEO,
+    category: WorkflowTemplateCategory.VIDEO,
     description: 'Create interpolated video between two images with easing animation',
     edgeStyle: 'smoothstep',
     edges: [
@@ -456,7 +456,7 @@ export const SYSTEM_TEMPLATES = [
     version: 1,
   },
   {
-    category: TemplateCategory.FULL_PIPELINE,
+    category: WorkflowTemplateCategory.FULL_PIPELINE,
     description: 'Complete workflow: concept → images → videos → animation → stitched output',
     edgeStyle: 'smoothstep',
     edges: [
@@ -710,7 +710,7 @@ export const SYSTEM_TEMPLATES = [
   // NODE-BANANA IMPORTED WORKFLOWS
   // ============================================
   {
-    category: TemplateCategory.IMAGE,
+    category: WorkflowTemplateCategory.IMAGE,
     description: 'Place a product in a new scene or environment for e-commerce visualization',
     edgeStyle: 'smoothstep',
     edges: [
@@ -816,7 +816,7 @@ export const SYSTEM_TEMPLATES = [
     version: 1,
   },
   {
-    category: TemplateCategory.IMAGE,
+    category: WorkflowTemplateCategory.IMAGE,
     description:
       'Combine a model with a product and custom background for fashion/lifestyle photography',
     edgeStyle: 'smoothstep',
@@ -944,7 +944,7 @@ export const SYSTEM_TEMPLATES = [
     version: 1,
   },
   {
-    category: TemplateCategory.IMAGE,
+    category: WorkflowTemplateCategory.IMAGE,
     description:
       'Generate product color variants using reference palettes for product line mockups',
     edgeStyle: 'smoothstep',
@@ -1072,7 +1072,7 @@ export const SYSTEM_TEMPLATES = [
     version: 1,
   },
   {
-    category: TemplateCategory.IMAGE,
+    category: WorkflowTemplateCategory.IMAGE,
     description: 'Replace the background of a subject with a new environment',
     edgeStyle: 'smoothstep',
     edges: [
@@ -1179,7 +1179,7 @@ export const SYSTEM_TEMPLATES = [
     version: 1,
   },
   {
-    category: TemplateCategory.IMAGE,
+    category: WorkflowTemplateCategory.IMAGE,
     description: 'Apply visual style from a reference image to your content',
     edgeStyle: 'smoothstep',
     edges: [
@@ -1286,7 +1286,7 @@ export const SYSTEM_TEMPLATES = [
     version: 1,
   },
   {
-    category: TemplateCategory.IMAGE,
+    category: WorkflowTemplateCategory.IMAGE,
     description:
       'Combine multiple elements into a cohesive scene for environmental design and mood boards',
     edgeStyle: 'smoothstep',
@@ -1414,7 +1414,7 @@ export const SYSTEM_TEMPLATES = [
     version: 1,
   },
   {
-    category: TemplateCategory.IMAGE,
+    category: WorkflowTemplateCategory.IMAGE,
     description:
       'Generate 4 mood-consistent images from reference images and a base prompt. The LLM creates variations while maintaining the overall aesthetic.',
     edgeStyle: 'default',
@@ -1805,7 +1805,7 @@ export const SYSTEM_TEMPLATES = [
   // GENERATED TEMPLATES
   // ============================================
   {
-    category: TemplateCategory.VIDEO,
+    category: WorkflowTemplateCategory.VIDEO,
     description:
       'Generate a longer video by chaining video segments: create first segment, extract last frame, generate continuation prompt, create second segment, and stitch together',
     edgeStyle: 'smoothstep',
@@ -1989,7 +1989,7 @@ export const SYSTEM_TEMPLATES = [
     version: 1,
   },
   {
-    category: TemplateCategory.FULL_PIPELINE,
+    category: WorkflowTemplateCategory.FULL_PIPELINE,
     description:
       'Generate a 3x3 grid image, split into 9 cells, create video from each, apply easing, and stitch into final video',
     edgeStyle: 'smoothstep',
@@ -2672,7 +2672,7 @@ export const SYSTEM_TEMPLATES = [
     version: 1,
   },
   {
-    category: TemplateCategory.AUDIO,
+    category: WorkflowTemplateCategory.AUDIO,
     description: 'Generate a talking-head video from an image and audio file',
     edgeStyle: 'smoothstep',
     edges: [
@@ -2761,7 +2761,7 @@ export const SYSTEM_TEMPLATES = [
     version: 1,
   },
   {
-    category: TemplateCategory.IMAGE,
+    category: WorkflowTemplateCategory.IMAGE,
     description:
       'Generate multiple thumbnail variations for YouTube videos/livestreams using a character image and reference style, plus generate a livestream script from topic context.',
     edgeStyle: 'smoothstep',
@@ -2998,7 +2998,7 @@ export const SYSTEM_TEMPLATES = [
     version: 1,
   },
   {
-    category: TemplateCategory.FULL_PIPELINE,
+    category: WorkflowTemplateCategory.FULL_PIPELINE,
     description:
       'Generate a complete 10-minute YouTube video: script → images → videos with camera movements → stitch → music → subtitles',
     edgeStyle: 'smoothstep',
@@ -3511,7 +3511,7 @@ export const SYSTEM_TEMPLATES = [
     version: 1,
   },
   {
-    category: TemplateCategory.FULL_PIPELINE,
+    category: WorkflowTemplateCategory.FULL_PIPELINE,
     description:
       'Transform a 1-hour stream into engaging short-form content: transcribe → extract hot takes → generate intro + trim highlights → stitch → export',
     edgeStyle: 'smoothstep',
@@ -3712,7 +3712,7 @@ export const SYSTEM_TEMPLATES = [
     version: 1,
   },
   {
-    category: TemplateCategory.IMAGE,
+    category: WorkflowTemplateCategory.IMAGE,
     description:
       'Generate a complete brand kit for social media: profile picture, YouTube banner, Facebook cover, and X header with automatic resizing to platform dimensions.',
     edgeStyle: 'smoothstep',
@@ -4010,7 +4010,7 @@ export const SYSTEM_TEMPLATES = [
     version: 1,
   },
   {
-    category: TemplateCategory.VIDEO,
+    category: WorkflowTemplateCategory.VIDEO,
     description: 'Generate talking head videos from text scripts using ElevenLabs TTS and lip sync',
     edgeStyle: 'smoothstep',
     edges: [
@@ -4135,7 +4135,7 @@ export const SYSTEM_TEMPLATES = [
     version: 1,
   },
   {
-    category: TemplateCategory.VIDEO,
+    category: WorkflowTemplateCategory.VIDEO,
     description:
       'Apply dance or motion from a reference video to a static image using Kling v2.6 motion control',
     edgeStyle: 'smoothstep',
@@ -4252,7 +4252,7 @@ export const SYSTEM_TEMPLATES = [
     version: 1,
   },
   {
-    category: TemplateCategory.IMAGE,
+    category: WorkflowTemplateCategory.IMAGE,
     description:
       'Generate 3 pose variations of a subject from a single reference image for Instagram carousel posts',
     edgeStyle: 'smoothstep',
@@ -4511,7 +4511,7 @@ export const SYSTEM_TEMPLATES = [
     version: 1,
   },
   {
-    category: TemplateCategory.IMAGE,
+    category: WorkflowTemplateCategory.IMAGE,
     description:
       'Generate a consistent AI influencer avatar and create multiple scene/pose variations using that avatar as reference for character consistency',
     edgeStyle: 'smoothstep',
@@ -4855,7 +4855,7 @@ export const SYSTEM_TEMPLATES = [
   // LORA DATASET GENERATOR
   // ============================================
   {
-    category: TemplateCategory.IMAGE,
+    category: WorkflowTemplateCategory.IMAGE,
     description:
       'Generate 20 varied training images from 3 reference identity photos across 4 angle groups: frontal, three-quarter, side profile, and variety shots',
     edgeStyle: 'smoothstep',
@@ -5556,7 +5556,7 @@ export const SYSTEM_TEMPLATES = [
   // AVATAR VIDEO PIPELINE
   // ============================================
   {
-    category: TemplateCategory.FULL_PIPELINE,
+    category: WorkflowTemplateCategory.FULL_PIPELINE,
     description:
       'End-to-end AI avatar video: script generation, TTS voice, lip-synced avatar, video stitching, and burned-in subtitles.',
     edgeStyle: 'smoothstep',

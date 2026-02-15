@@ -45,7 +45,7 @@ describe('WorkflowsController', () => {
 
   const mockCostCalculatorService = {
     calculateWorkflowEstimate: vi.fn().mockReturnValue({
-      breakdown: [
+      items: [
         {
           model: 'nano-banana-pro',
           nodeId: 'node-2',
@@ -143,7 +143,7 @@ describe('WorkflowsController', () => {
       const result = await controller.getCostEstimate(mockWorkflowId.toString());
 
       expect(result.total).toBe(0.15);
-      expect(result.breakdown).toHaveLength(1);
+      expect(result.items).toHaveLength(1);
       expect(mockWorkflowsService.findOne).toHaveBeenCalledWith(mockWorkflowId.toString());
       expect(mockCostCalculatorService.calculateWorkflowEstimate).toHaveBeenCalled();
     });

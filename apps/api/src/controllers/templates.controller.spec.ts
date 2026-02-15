@@ -1,4 +1,4 @@
-import { TemplateCategory } from '@genfeedai/types';
+import { WorkflowTemplateCategory } from '@genfeedai/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TemplatesController } from '@/controllers/templates.controller';
 import type { TemplatesService } from '@/services/templates.service';
@@ -7,7 +7,7 @@ describe('TemplatesController', () => {
   let controller: TemplatesController;
 
   const mockTemplate = {
-    category: TemplateCategory.IMAGE,
+    category: WorkflowTemplateCategory.IMAGE,
     createdAt: new Date(),
     description: 'A test template',
     id: 'template-1',
@@ -37,7 +37,7 @@ describe('TemplatesController', () => {
   describe('create', () => {
     it('should create a new template', async () => {
       const createDto = {
-        category: TemplateCategory.IMAGE,
+        category: WorkflowTemplateCategory.IMAGE,
         name: 'Test Template',
         promptText: 'Generate a beautiful {{subject}}',
       };
@@ -58,10 +58,10 @@ describe('TemplatesController', () => {
     });
 
     it('should filter by category when provided', async () => {
-      await controller.findAll(TemplateCategory.IMAGE);
+      await controller.findAll(WorkflowTemplateCategory.IMAGE);
 
       expect(mockService.findAll).toHaveBeenCalledWith({
-        category: TemplateCategory.IMAGE,
+        category: WorkflowTemplateCategory.IMAGE,
         search: undefined,
       });
     });

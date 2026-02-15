@@ -157,7 +157,7 @@ describe('CostCalculatorService', () => {
     it('should return empty breakdown for empty nodes', () => {
       const result = service.calculateWorkflowEstimate([]);
       expect(result.total).toBe(0);
-      expect(result.breakdown).toHaveLength(0);
+      expect(result.items).toHaveLength(0);
     });
 
     it('should calculate cost for single image gen node', () => {
@@ -172,9 +172,9 @@ describe('CostCalculatorService', () => {
       const result = service.calculateWorkflowEstimate(nodes);
 
       expect(result.total).toBe(0.15);
-      expect(result.breakdown).toHaveLength(1);
-      expect(result.breakdown[0].nodeId).toBe('node-1');
-      expect(result.breakdown[0].model).toBe('nano-banana-pro');
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].nodeId).toBe('node-1');
+      expect(result.items[0].model).toBe('nano-banana-pro');
     });
 
     it('should calculate cost for video gen node', () => {
@@ -189,8 +189,8 @@ describe('CostCalculatorService', () => {
       const result = service.calculateWorkflowEstimate(nodes);
 
       expect(result.total).toBe(0.15 * 8);
-      expect(result.breakdown[0].duration).toBe(8);
-      expect(result.breakdown[0].withAudio).toBe(true);
+      expect(result.items[0].duration).toBe(8);
+      expect(result.items[0].withAudio).toBe(true);
     });
 
     it('should calculate total for multiple nodes', () => {
@@ -210,7 +210,7 @@ describe('CostCalculatorService', () => {
       const result = service.calculateWorkflowEstimate(nodes);
 
       expect(result.total).toBe(0.15 + 0.15 * 8);
-      expect(result.breakdown).toHaveLength(2);
+      expect(result.items).toHaveLength(2);
     });
 
     it('should skip nodes without model', () => {
@@ -225,7 +225,7 @@ describe('CostCalculatorService', () => {
       const result = service.calculateWorkflowEstimate(nodes);
 
       expect(result.total).toBe(0);
-      expect(result.breakdown).toHaveLength(0);
+      expect(result.items).toHaveLength(0);
     });
 
     it('should handle legacy node type names', () => {
@@ -245,7 +245,7 @@ describe('CostCalculatorService', () => {
       const result = service.calculateWorkflowEstimate(nodes);
 
       expect(result.total).toBe(0.039 * 2);
-      expect(result.breakdown).toHaveLength(2);
+      expect(result.items).toHaveLength(2);
     });
 
     it('should handle video nodes with default values', () => {
@@ -439,7 +439,7 @@ describe('CostCalculatorService', () => {
       const result = service.calculateWorkflowEstimate(nodes);
 
       expect(result.total).toBe(0.03);
-      expect(result.breakdown).toHaveLength(1);
+      expect(result.items).toHaveLength(1);
     });
 
     it('should calculate cost for lumaReframeVideo node', () => {
@@ -508,7 +508,7 @@ describe('CostCalculatorService', () => {
 
       // $0.15 (nano-banana-pro 2K) + $0.01 (photon-flash-1) + $0.16 (2x upscale 8MP) = $0.32
       expect(result.total).toBe(0.15 + 0.01 + 0.16);
-      expect(result.breakdown).toHaveLength(3);
+      expect(result.items).toHaveLength(3);
     });
   });
 });

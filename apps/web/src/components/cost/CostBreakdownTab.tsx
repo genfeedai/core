@@ -2,8 +2,8 @@
 
 import { Brain, ChevronDown, ChevronRight, Film, Image, Mic } from 'lucide-react';
 import { memo, useMemo, useRef, useState } from 'react';
+import type { NodeCostEstimate } from '@genfeedai/types';
 import { calculateWorkflowCostWithBreakdown, PRICING } from '@/lib/replicate/client';
-import type { NodeCostEstimate } from '@/lib/replicate/client';
 import { useExecutionStore } from '@/store/executionStore';
 import { useWorkflowStore } from '@/store/workflowStore';
 

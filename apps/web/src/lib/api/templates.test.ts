@@ -1,4 +1,4 @@
-import { TemplateCategory } from '@genfeedai/types';
+import { WorkflowTemplateCategory } from '@genfeedai/types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TemplateData } from './templates';
 import { templatesApi } from './templates';
@@ -16,7 +16,7 @@ vi.mock('./client', () => ({
 describe('templatesApi', () => {
   const mockTemplate: TemplateData = {
     _id: 'template-1',
-    category: TemplateCategory.IMAGE,
+    category: WorkflowTemplateCategory.IMAGE,
     createdAt: '2026-01-15T00:00:00.000Z',
     description: 'A test template',
     edgeStyle: 'default',
@@ -62,18 +62,18 @@ describe('templatesApi', () => {
       const { apiClient } = await import('./client');
       vi.mocked(apiClient.get).mockResolvedValueOnce([mockTemplate]);
 
-      const result = await templatesApi.getByCategory(TemplateCategory.IMAGE);
+      const result = await templatesApi.getByCategory(WorkflowTemplateCategory.IMAGE);
 
       expect(apiClient.get).toHaveBeenCalledWith('/templates?category=image', {
         signal: undefined,
       });
       expect(result).toHaveLength(1);
-      expect(result[0].category).toBe(TemplateCategory.IMAGE);
+      expect(result[0].category).toBe(WorkflowTemplateCategory.IMAGE);
     });
 
     it('should filter video templates', async () => {
       const { apiClient } = await import('./client');
-      const videoTemplate = { ...mockTemplate, category: TemplateCategory.VIDEO };
+      const videoTemplate = { ...mockTemplate, category: WorkflowTemplateCategory.VIDEO };
       vi.mocked(apiClient.get).mockResolvedValueOnce([videoTemplate]);
 
       const result = await templatesApi.getByCategory('video');
@@ -100,7 +100,7 @@ describe('templatesApi', () => {
       vi.mocked(apiClient.post).mockResolvedValueOnce(mockTemplate);
 
       const createData = {
-        category: TemplateCategory.IMAGE,
+        category: WorkflowTemplateCategory.IMAGE,
         edges: [],
         name: 'New Template',
         nodes: [],
@@ -118,7 +118,7 @@ describe('templatesApi', () => {
       vi.mocked(apiClient.post).mockResolvedValueOnce(templateWithStyle);
 
       const createData = {
-        category: TemplateCategory.FULL_PIPELINE,
+        category: WorkflowTemplateCategory.FULL_PIPELINE,
         edgeStyle: 'smoothstep',
         edges: [],
         name: 'Complex Template',
