@@ -53,36 +53,6 @@ export const executionsApi = {
     apiClient.post<ExecutionData>(`/workflows/${workflowId}/execute`, undefined, { signal }),
 
   /**
-   * Get all executions for a workflow
-   */
-  getByWorkflow: (workflowId: string, signal?: AbortSignal): Promise<ExecutionData[]> =>
-    apiClient.get<ExecutionData[]>(`/workflows/${workflowId}/executions`, { signal }),
-
-  /**
-   * Get a single execution by ID
-   */
-  getById: (id: string, signal?: AbortSignal): Promise<ExecutionData> =>
-    apiClient.get<ExecutionData>(`/executions/${id}`, { signal }),
-
-  /**
-   * Stop a running execution
-   */
-  stop: (id: string, signal?: AbortSignal): Promise<ExecutionData> =>
-    apiClient.post<ExecutionData>(`/executions/${id}/stop`, undefined, { signal }),
-
-  /**
-   * Get all jobs for an execution
-   */
-  getJobs: (executionId: string, signal?: AbortSignal): Promise<JobData[]> =>
-    apiClient.get<JobData[]>(`/executions/${executionId}/jobs`, { signal }),
-
-  /**
-   * Get a job by prediction ID
-   */
-  getJobByPredictionId: (predictionId: string, signal?: AbortSignal): Promise<JobData> =>
-    apiClient.get<JobData>(`/jobs/${predictionId}`, { signal }),
-
-  /**
    * Execute a partial set of nodes
    */
   executePartial: (
@@ -97,6 +67,36 @@ export const executionsApi = {
     ),
 
   /**
+   * Get a single execution by ID
+   */
+  getById: (id: string, signal?: AbortSignal): Promise<ExecutionData> =>
+    apiClient.get<ExecutionData>(`/executions/${id}`, { signal }),
+
+  /**
+   * Get all executions for a workflow
+   */
+  getByWorkflow: (workflowId: string, signal?: AbortSignal): Promise<ExecutionData[]> =>
+    apiClient.get<ExecutionData[]>(`/workflows/${workflowId}/executions`, { signal }),
+
+  /**
+   * Get a job by prediction ID
+   */
+  getJobByPredictionId: (predictionId: string, signal?: AbortSignal): Promise<JobData> =>
+    apiClient.get<JobData>(`/jobs/${predictionId}`, { signal }),
+
+  /**
+   * Get all jobs for an execution
+   */
+  getJobs: (executionId: string, signal?: AbortSignal): Promise<JobData[]> =>
+    apiClient.get<JobData[]>(`/executions/${executionId}/jobs`, { signal }),
+
+  /**
+   * Get aggregated execution statistics
+   */
+  getStats: (signal?: AbortSignal): Promise<ExecutionStats> =>
+    apiClient.get<ExecutionStats>('/executions/stats', { signal }),
+
+  /**
    * Resume execution from a failed node
    */
   resumeFromFailed: (
@@ -109,8 +109,8 @@ export const executionsApi = {
     }),
 
   /**
-   * Get aggregated execution statistics
+   * Stop a running execution
    */
-  getStats: (signal?: AbortSignal): Promise<ExecutionStats> =>
-    apiClient.get<ExecutionStats>('/executions/stats', { signal }),
+  stop: (id: string, signal?: AbortSignal): Promise<ExecutionData> =>
+    apiClient.post<ExecutionData>(`/executions/${id}/stop`, undefined, { signal }),
 };

@@ -7,6 +7,7 @@ import type {
   MotionControlJobData,
   VideoJobData,
 } from '@/interfaces/job-data.interface';
+import type { NodeOutput } from '@/interfaces/execution-types.interface';
 import { BaseProcessor } from '@/processors/base.processor';
 import { JOB_STATUS, QUEUE_CONCURRENCY, QUEUE_NAMES } from '@/queue/queue.constants';
 import type { ExecutionsService } from '@/services/executions.service';
@@ -60,7 +61,7 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
         // Resume polling existing prediction
         this.logger.log(`Retry: resuming existing prediction ${existingJob.predictionId}`);
         predictionId = existingJob.predictionId;
-        await job.updateProgress({ percent: 15, message: 'Resuming existing prediction' });
+        await job.updateProgress({ message: 'Resuming existing prediction', percent: 15 });
       } else {
         // Create new prediction - route to appropriate handler based on node type
         let prediction: { id: string };
@@ -71,25 +72,25 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
           const image = data.nodeData.inputImage ?? data.nodeData.image;
           const video = data.nodeData.inputVideo ?? data.nodeData.video;
           prediction = await this.replicateService.generateMotionControlVideo(executionId, nodeId, {
-            image,
-            video,
-            prompt: prompt ?? '',
-            mode: data.nodeData.mode,
-            duration: data.nodeData.duration,
             aspectRatio: data.nodeData.aspectRatio,
-            trajectoryPoints: data.nodeData.trajectoryPoints,
-            cameraMovement: data.nodeData.cameraMovement,
             cameraIntensity: data.nodeData.cameraIntensity,
-            motionStrength: data.nodeData.motionStrength,
-            negativePrompt: data.nodeData.negativePrompt,
-            seed: data.nodeData.seed,
+            cameraMovement: data.nodeData.cameraMovement,
+            characterOrientation: data.nodeData.characterOrientation,
+            duration: data.nodeData.duration,
+            image,
             // Video transfer settings
             keepOriginalSound: data.nodeData.keepOriginalSound,
-            characterOrientation: data.nodeData.characterOrientation,
+            mode: data.nodeData.mode,
+            motionStrength: data.nodeData.motionStrength,
+            negativePrompt: data.nodeData.negativePrompt,
+            prompt: prompt ?? '',
             quality:
               data.nodeData.qualityMode === KlingQuality.PRO
                 ? KlingQuality.PRO
                 : KlingQuality.STANDARD,
+            seed: data.nodeData.seed,
+            trajectoryPoints: data.nodeData.trajectoryPoints,
+            video,
           });
         } else {
           // Standard video generation
@@ -98,19 +99,19 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
           // Get prompt from inputPrompt (from connection) or prompt (legacy/direct)
           const prompt = (data.nodeData.inputPrompt ?? data.nodeData.prompt) as string | undefined;
           prediction = await this.replicateService.generateVideo(executionId, nodeId, model, {
-            prompt: prompt ?? '',
+            aspectRatio: data.nodeData.aspectRatio,
+            debugMode,
+            duration: data.nodeData.duration,
+            generateAudio: data.nodeData.generateAudio,
             image: data.nodeData.inputImage ?? data.nodeData.image,
             lastFrame: data.nodeData.lastFrame,
-            referenceImages: data.nodeData.referenceImages,
-            duration: data.nodeData.duration,
-            aspectRatio: data.nodeData.aspectRatio,
-            resolution: data.nodeData.resolution,
-            generateAudio: data.nodeData.generateAudio,
             negativePrompt: data.nodeData.negativePrompt,
+            prompt: prompt ?? '',
+            referenceImages: data.nodeData.referenceImages,
+            resolution: data.nodeData.resolution,
+            schemaParams: data.nodeData.schemaParams,
             seed: data.nodeData.seed,
             selectedModel: data.nodeData.selectedModel,
-            schemaParams: data.nodeData.schemaParams,
-            debugMode,
           });
 
           // Handle debug mode - skip polling and return mock data
@@ -128,9 +129,9 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
 
             await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.COMPLETED, {
               result: {
-                success: true,
-                output: mockOutput,
                 debugPayload: predResult.debugPayload,
+                output: mockOutput,
+                success: true,
               },
             });
 
@@ -141,23 +142,23 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
             await this.queueManager.continueExecution(executionId, job.data.workflowId);
 
             return {
-              success: true,
               output: mockOutput,
               predictionId: predResult.id,
+              success: true,
             };
           }
         }
         predictionId = prediction.id;
-        await job.updateProgress({ percent: 15, message: 'Prediction created' });
+        await job.updateProgress({ message: 'Prediction created', percent: 15 });
         await this.queueManager.addJobLog(job.id as string, `Created prediction: ${predictionId}`);
       }
 
       // Poll for completion using shared service (video uses longer intervals)
       const result = await this.replicatePollerService.pollForCompletion(predictionId, {
         ...POLL_CONFIGS.video,
-        onProgress: this.replicatePollerService.createJobProgressCallback(job),
-        onHeartbeat: () => this.queueManager.heartbeatJob(job.id as string),
         heartbeatInterval: 12, // Every 2 min for 10s polls (video uses longer intervals)
+        onHeartbeat: () => this.queueManager.heartbeatJob(job.id as string),
+        onProgress: this.replicatePollerService.createJobProgressCallback(job),
       });
 
       // Update execution node result
@@ -181,11 +182,7 @@ export class VideoProcessor extends BaseProcessor<VideoQueueJobData> {
         );
       }
 
-      await this.completeJob(
-        job,
-        result as unknown as Record<string, unknown>,
-        'Video generation completed'
-      );
+      await this.completeJob(job, result as unknown as NodeOutput, 'Video generation completed');
 
       return result;
     } catch (error) {

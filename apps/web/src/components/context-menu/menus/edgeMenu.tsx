@@ -9,10 +9,10 @@ interface EdgeMenuOptions {
 export function getEdgeMenuItems({ edgeId, onDelete }: EdgeMenuOptions): ContextMenuItemConfig[] {
   return [
     {
+      danger: true,
+      icon: <Trash2 className="w-4 h-4" />,
       id: 'delete',
       label: 'Delete Connection',
-      icon: <Trash2 className="w-4 h-4" />,
-      danger: true,
       onClick: () => onDelete(edgeId),
     },
   ];

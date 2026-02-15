@@ -5,10 +5,10 @@ import { useAutoSave } from './useAutoSave';
 // Mock logger
 vi.mock('@/lib/logger', () => ({
   logger: {
+    debug: vi.fn(),
     error: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
-    debug: vi.fn(),
   },
 }));
 
@@ -21,8 +21,8 @@ let mockNodes: { id: string }[] = [];
 const mockState = () => ({
   isDirty: mockIsDirty,
   isSaving: mockIsSaving,
-  saveWorkflow: mockSaveWorkflow,
   nodes: mockNodes,
+  saveWorkflow: mockSaveWorkflow,
 });
 
 vi.mock('@/store/workflowStore', () => {

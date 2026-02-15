@@ -226,9 +226,9 @@ export async function POST(request: NextRequest) {
 
     // Generate workflow using LLM
     const response = await generateText({
+      max_tokens: 8192,
       prompt: userPrompt,
       system_prompt: SYSTEM_PROMPT,
-      max_tokens: 8192,
       temperature: 0.3,
       top_p: 0.9,
     });
@@ -238,9 +238,9 @@ export async function POST(request: NextRequest) {
 
     if (!parsed) {
       return NextResponse.json({
-        success: false,
-        message: response,
         error: 'Failed to parse workflow from response. The AI did not return valid JSON.',
+        message: response,
+        success: false,
       });
     }
 
@@ -254,8 +254,8 @@ export async function POST(request: NextRequest) {
     const completeWorkflow = {
       version: 1,
       ...workflow,
-      edgeStyle: 'smoothstep',
       createdAt: new Date().toISOString(),
+      edgeStyle: 'smoothstep',
       updatedAt: new Date().toISOString(),
     };
 
@@ -264,8 +264,8 @@ export async function POST(request: NextRequest) {
       : '';
 
     return NextResponse.json({
-      success: true,
       message: `Generated workflow "${workflow.name}" with ${workflow.nodes.length} nodes and ${workflow.edges.length} connections.${repairNote}`,
+      success: true,
       workflow: completeWorkflow,
     });
   } catch (error) {

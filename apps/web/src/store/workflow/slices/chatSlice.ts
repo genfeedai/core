@@ -26,33 +26,18 @@ export const createChatSlice: StateCreator<
   [],
   ChatSlice
 > = (set, get) => ({
-  chatMessages: [],
-  isChatOpen: false,
-
   addChatMessage: (role, content) => {
     set((state) => ({
       chatMessages: [
         ...state.chatMessages,
         {
+          content,
           id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           role,
-          content,
           timestamp: Date.now(),
         },
       ],
     }));
-  },
-
-  clearChatMessages: () => {
-    set({ chatMessages: [] });
-  },
-
-  toggleChat: () => {
-    set((state) => ({ isChatOpen: !state.isChatOpen }));
-  },
-
-  setChatOpen: (open) => {
-    set({ isChatOpen: open });
   },
 
   applyChatEditOperations: (operations) => {
@@ -62,5 +47,19 @@ export const createChatSlice: StateCreator<
     state.captureSnapshot();
 
     return state.applyEditOperations(operations);
+  },
+  chatMessages: [],
+
+  clearChatMessages: () => {
+    set({ chatMessages: [] });
+  },
+  isChatOpen: false,
+
+  setChatOpen: (open) => {
+    set({ isChatOpen: open });
+  },
+
+  toggleChat: () => {
+    set((state) => ({ isChatOpen: !state.isChatOpen }));
   },
 });

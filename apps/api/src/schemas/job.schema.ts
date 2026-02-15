@@ -1,13 +1,14 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, type HydratedDocument, Types } from 'mongoose';
 import type { JobCostBreakdown } from '@/interfaces/cost.interface';
+import type { NodeOutput } from '@/interfaces/execution-types.interface';
 import { PREDICTION_STATUS } from '@/queue/queue.constants';
 
 export type JobDocument = HydratedDocument<Job>;
 
-@Schema({ timestamps: true, collection: 'jobs' })
+@Schema({ collection: 'jobs', timestamps: true })
 export class Job extends Document {
-  @Prop({ type: Types.ObjectId, ref: 'Execution', required: true })
+  @Prop({ ref: 'Execution', required: true, type: Types.ObjectId })
   executionId: Types.ObjectId;
 
   @Prop({ required: true })
@@ -17,20 +18,20 @@ export class Job extends Document {
   predictionId: string;
 
   @Prop({
-    required: true,
-    enum: Object.values(PREDICTION_STATUS),
     default: PREDICTION_STATUS.PENDING,
+    enum: Object.values(PREDICTION_STATUS),
+    required: true,
   })
   status: string;
 
-  @Prop({ default: 0, min: 0, max: 100 })
+  @Prop({ default: 0, max: 100, min: 0 })
   progress: number;
 
   @Prop({ type: Object })
-  output?: Record<string, unknown>;
+  output?: NodeOutput;
 
   @Prop({ type: Object })
-  result?: Record<string, unknown>;
+  result?: NodeOutput;
 
   @Prop()
   error?: string;

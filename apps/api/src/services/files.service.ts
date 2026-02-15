@@ -87,10 +87,10 @@ export class FilesService {
 
     return {
       filename,
-      url,
+      mimeType: file.mimetype,
       path: filePath,
       size: file.size,
-      mimeType: file.mimetype,
+      url,
     };
   }
 
@@ -125,10 +125,10 @@ export class FilesService {
 
     return {
       filename,
-      url,
+      mimeType,
       path: filePath,
       size: buffer.length,
-      mimeType,
+      url,
     };
   }
 
@@ -151,8 +151,8 @@ export class FilesService {
       try {
         // First, check file size with HEAD request to avoid downloading oversized files
         const headResponse = await fetch(remoteUrl, {
-          method: 'HEAD',
           headers: { 'User-Agent': 'Genfeed/1.0' },
+          method: 'HEAD',
         });
 
         if (headResponse.ok) {
@@ -346,8 +346,8 @@ export class FilesService {
 
       // Check file size first with HEAD request
       const headResponse = await fetch(url, {
-        method: 'HEAD',
         headers: { 'User-Agent': 'Genfeed/1.0' },
+        method: 'HEAD',
       });
 
       if (headResponse.ok) {
@@ -413,17 +413,17 @@ export class FilesService {
   private getMimeTypeFromFilename(filename: string): string {
     const ext = filename.toLowerCase().split('.').pop();
     const mimeTypes: Record<string, string> = {
-      jpg: 'image/jpeg',
-      jpeg: 'image/jpeg',
-      png: 'image/png',
       gif: 'image/gif',
-      webp: 'image/webp',
-      mp4: 'video/mp4',
-      webm: 'video/webm',
+      jpeg: 'image/jpeg',
+      jpg: 'image/jpeg',
       mov: 'video/quicktime',
       mp3: 'audio/mpeg',
-      wav: 'audio/wav',
+      mp4: 'video/mp4',
       ogg: 'audio/ogg',
+      png: 'image/png',
+      wav: 'audio/wav',
+      webm: 'video/webm',
+      webp: 'image/webp',
     };
     return mimeTypes[ext ?? ''] ?? 'application/octet-stream';
   }
@@ -446,16 +446,16 @@ export class FilesService {
    */
   private getExtensionFromMimeType(mimeType: string): string {
     const mimeToExt: Record<string, string> = {
+      'audio/mpeg': '.mp3',
+      'audio/ogg': '.ogg',
+      'audio/wav': '.wav',
+      'image/gif': '.gif',
       'image/jpeg': '.jpg',
       'image/png': '.png',
-      'image/gif': '.gif',
       'image/webp': '.webp',
       'video/mp4': '.mp4',
-      'video/webm': '.webm',
       'video/quicktime': '.mov',
-      'audio/mpeg': '.mp3',
-      'audio/wav': '.wav',
-      'audio/ogg': '.ogg',
+      'video/webm': '.webm',
     };
 
     return mimeToExt[mimeType] ?? '';

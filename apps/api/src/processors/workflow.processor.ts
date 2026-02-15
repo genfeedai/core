@@ -4,24 +4,14 @@ import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { forwardRef, Inject, Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
 import type { WorkflowJobData, WorkflowRefJobData } from '@/interfaces/job-data.interface';
-import { JOB_STATUS, PASSTHROUGH_NODE_TYPES, QUEUE_NAMES } from '@/queue/queue.constants';
+import { JOB_STATUS, QUEUE_NAMES } from '@/queue/queue.constants';
+import { QUEUE_PASSTHROUGH_TYPES } from '@/registry/node-type.registry';
 import type { ExecutionsService } from '@/services/executions.service';
 import type { QueueManagerService } from '@/services/queue-manager.service';
 import type { WorkflowInterfaceService } from '@/services/workflow-interface.service';
 import type { WorkflowsService } from '@/services/workflows.service';
-
-interface WorkflowNode {
-  id: string;
-  type: string;
-  data: Record<string, unknown>;
-}
-
-interface WorkflowEdge {
-  source: string;
-  target: string;
-  sourceHandle?: string;
-  targetHandle?: string;
-}
+import type { NodeOutput, PendingNode } from '@/interfaces/execution-types.interface';
+import type { WorkflowEdge, WorkflowNode } from '@/interfaces/workflow.interface';
 
 @Processor(QUEUE_NAMES.WORKFLOW_ORCHESTRATOR)
 export class WorkflowProcessor extends WorkerHost {
@@ -92,18 +82,13 @@ export class WorkflowProcessor extends WorkerHost {
       const dependencyMap = buildDependencyMap(nodes, edges);
 
       // Build pending nodes list (excluding passthrough nodes like input/output)
-      const pendingNodes: Array<{
-        nodeId: string;
-        nodeType: string;
-        nodeData: Record<string, unknown>;
-        dependsOn: string[];
-      }> = [];
+      const pendingNodes: PendingNode[] = [];
 
       // Collect passthrough node IDs first
       const passthroughNodeIds = new Set<string>();
       for (const nodeId of executionOrder) {
         const node = nodes.find((n) => n.id === nodeId);
-        if (node && (PASSTHROUGH_NODE_TYPES as readonly string[]).includes(node.type)) {
+        if (node && QUEUE_PASSTHROUGH_TYPES.includes(node.type)) {
           passthroughNodeIds.add(nodeId);
         }
       }
@@ -131,9 +116,9 @@ export class WorkflowProcessor extends WorkerHost {
       // Helper to convert node.data output format to execution output format
       // Node data stores: outputImage, outputVideo, etc.
       // Execution expects: output, text, etc. (accessed via sourceHandle)
-      const getExecutionOutputFormat = (node: WorkflowNode): Record<string, unknown> => {
+      const getExecutionOutputFormat = (node: WorkflowNode): NodeOutput => {
         const data = node.data || {};
-        const result: Record<string, unknown> = {};
+        const result: NodeOutput = {};
 
         // Map outputImage/outputImages -> output/outputs (image nodes use 'output' handle)
         if (data.outputImage) {
@@ -259,10 +244,10 @@ export class WorkflowProcessor extends WorkerHost {
             (!executionSet || executionSet.has(depId))
         );
         pendingNodes.push({
+          dependsOn,
+          nodeData: node.data,
           nodeId: node.id,
           nodeType: node.type,
-          nodeData: node.data,
-          dependsOn,
         });
       }
 
@@ -279,7 +264,7 @@ export class WorkflowProcessor extends WorkerHost {
       // Enqueue ALL ready nodes (parallel execution)
       // Nodes with no unmet dependencies can run concurrently
       if (readyNodes.length > 0) {
-        const workflowDef = { nodes, edges };
+        const workflowDef = { edges, nodes };
         for (const readyNode of readyNodes) {
           await this.queueManager.enqueueNode(
             executionId,
@@ -394,7 +379,7 @@ export class WorkflowProcessor extends WorkerHost {
 
       // Enqueue child workflow nodes (skip WorkflowInput nodes as they're pre-populated)
       // Pass child workflow definition for input resolution
-      const childWorkflowDef = { nodes: childNodes, edges: childEdges };
+      const childWorkflowDef = { edges: childEdges, nodes: childNodes };
       for (const childNodeId of childExecutionOrder) {
         const childNode = childNodes.find((n) => n.id === childNodeId);
         if (!childNode) continue;
@@ -426,12 +411,12 @@ export class WorkflowProcessor extends WorkerHost {
 
       // Map child outputs back to the parent workflowRef node
       await this.executionsService.updateNodeResult(executionId, nodeId, 'complete', {
-        outputMappings: childOutputs,
         childExecutionId: childExecutionId.toString(),
+        outputMappings: childOutputs,
       });
 
       await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.COMPLETED, {
-        result: { outputMappings: childOutputs, childExecutionId: childExecutionId.toString() },
+        result: { childExecutionId: childExecutionId.toString(), outputMappings: childOutputs },
       });
 
       this.logger.log(

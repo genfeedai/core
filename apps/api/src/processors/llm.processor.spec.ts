@@ -5,9 +5,9 @@ import { JOB_STATUS, QUEUE_NAMES } from '@/queue/queue.constants';
 
 // Mock BullMQ WorkerHost
 vi.mock('@nestjs/bullmq', () => ({
+  OnWorkerEvent: () => vi.fn(),
   Processor: () => vi.fn(),
   WorkerHost: class {},
-  OnWorkerEvent: () => vi.fn(),
 }));
 
 describe('LLMProcessor', () => {
@@ -30,22 +30,22 @@ describe('LLMProcessor', () => {
   const mockNodeId = 'llm-node-1';
 
   const createMockJob = (overrides = {}) => ({
-    id: 'llm-job-123',
+    attemptsMade: 0,
     data: {
       executionId: mockExecutionId,
-      workflowId: 'workflow-123',
-      nodeId: mockNodeId,
-      nodeType: 'llm',
       nodeData: {
+        maxTokens: 1000,
         prompt: 'Write a creative story about AI',
         systemPrompt: 'You are a creative writer',
-        maxTokens: 1000,
         temperature: 0.7,
         topP: 0.9,
       },
+      nodeId: mockNodeId,
+      nodeType: 'llm',
       timestamp: new Date().toISOString(),
+      workflowId: 'workflow-123',
     },
-    attemptsMade: 0,
+    id: 'llm-job-123',
     opts: { attempts: 3 },
     updateProgress: vi.fn().mockResolvedValue(undefined),
     ...overrides,
@@ -55,11 +55,11 @@ describe('LLMProcessor', () => {
     vi.clearAllMocks();
 
     mockQueueManager = {
-      updateJobStatus: vi.fn().mockResolvedValue(undefined),
       addJobLog: vi.fn().mockResolvedValue(undefined),
-      moveToDeadLetterQueue: vi.fn().mockResolvedValue(undefined),
       continueExecution: vi.fn().mockResolvedValue(undefined),
       heartbeatJob: vi.fn().mockResolvedValue(undefined),
+      moveToDeadLetterQueue: vi.fn().mockResolvedValue(undefined),
+      updateJobStatus: vi.fn().mockResolvedValue(undefined),
     };
 
     mockExecutionsService = {
@@ -107,8 +107,8 @@ describe('LLMProcessor', () => {
       await processor.process(job as never);
 
       expect(job.updateProgress).toHaveBeenCalledWith({
-        percent: 20,
         message: 'Starting LLM generation',
+        percent: 20,
       });
     });
 
@@ -118,9 +118,9 @@ describe('LLMProcessor', () => {
       await processor.process(job as never);
 
       expect(mockReplicateService.generateText).toHaveBeenCalledWith({
+        maxTokens: 1000,
         prompt: 'Write a creative story about AI',
         systemPrompt: 'You are a creative writer',
-        maxTokens: 1000,
         temperature: 0.7,
         topP: 0.9,
       });
@@ -130,26 +130,26 @@ describe('LLMProcessor', () => {
       const job = createMockJob({
         data: {
           executionId: mockExecutionId,
-          workflowId: 'workflow-123',
-          nodeId: mockNodeId,
-          nodeType: 'llm',
           nodeData: {
+            maxTokens: 500,
             prompt: 'Test prompt',
             systemPrompt: 'Test system',
-            maxTokens: 500,
             temperature: 0.5,
             topP: 0.8,
           },
+          nodeId: mockNodeId,
+          nodeType: 'llm',
           timestamp: new Date().toISOString(),
+          workflowId: 'workflow-123',
         },
       });
 
       await processor.process(job as never);
 
       expect(mockReplicateService.generateText).toHaveBeenCalledWith({
+        maxTokens: 500,
         prompt: 'Test prompt',
         systemPrompt: 'Test system',
-        maxTokens: 500,
         temperature: 0.5,
         topP: 0.8,
       });
@@ -159,22 +159,22 @@ describe('LLMProcessor', () => {
       const job = createMockJob({
         data: {
           executionId: mockExecutionId,
-          workflowId: 'workflow-123',
-          nodeId: mockNodeId,
-          nodeType: 'llm',
           nodeData: {
             prompt: 'Simple prompt',
           },
+          nodeId: mockNodeId,
+          nodeType: 'llm',
           timestamp: new Date().toISOString(),
+          workflowId: 'workflow-123',
         },
       });
 
       await processor.process(job as never);
 
       expect(mockReplicateService.generateText).toHaveBeenCalledWith({
+        maxTokens: undefined,
         prompt: 'Simple prompt',
         systemPrompt: undefined,
-        maxTokens: undefined,
         temperature: undefined,
         topP: undefined,
       });
@@ -186,8 +186,8 @@ describe('LLMProcessor', () => {
       await processor.process(job as never);
 
       expect(job.updateProgress).toHaveBeenCalledWith({
-        percent: 90,
         message: 'Text generated',
+        percent: 90,
       });
     });
 
@@ -197,8 +197,8 @@ describe('LLMProcessor', () => {
       const result = await processor.process(job as never);
 
       expect(result).toEqual({
-        success: true,
         output: { text: 'Once upon a time in a digital world...' },
+        success: true,
       });
     });
 
@@ -235,8 +235,8 @@ describe('LLMProcessor', () => {
       await processor.process(job as never);
 
       expect(job.updateProgress).toHaveBeenCalledWith({
-        percent: 100,
         message: 'Completed',
+        percent: 100,
       });
     });
 
@@ -261,8 +261,8 @@ describe('LLMProcessor', () => {
         'llm-job-123',
         JOB_STATUS.FAILED,
         expect.objectContaining({
-          error: 'LLM API error',
           attemptsMade: 0,
+          error: 'LLM API error',
         })
       );
     });

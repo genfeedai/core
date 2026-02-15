@@ -19,10 +19,10 @@ export async function POST(request: NextRequest) {
         // For complex easing, we'd use FFmpeg or similar
         // For now, return the input as-is (client-side processing)
         return NextResponse.json({
+          message: 'Animation applied client-side',
           nodeId,
           output: inputs.video,
           status: 'succeeded',
-          message: 'Animation applied client-side',
         });
       }
 
@@ -40,20 +40,20 @@ export async function POST(request: NextRequest) {
         // For production, implement FFmpeg-based stitching here
         // For now, return placeholder
         return NextResponse.json({
+          message: `Stitched ${videos.length} videos with ${config.transitionType} transition`,
           nodeId,
           output: videos[0], // Return first video as placeholder
           status: 'succeeded',
-          message: `Stitched ${videos.length} videos with ${config.transitionType} transition`,
         });
       }
 
       case 'resize': {
         // Resize/transform media
         return NextResponse.json({
+          message: `Resized to ${config.targetAspectRatio}`,
           nodeId,
           output: inputs.media,
           status: 'succeeded',
-          message: `Resized to ${config.targetAspectRatio}`,
         });
       }
 

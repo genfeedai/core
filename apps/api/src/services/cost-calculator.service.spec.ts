@@ -163,9 +163,9 @@ describe('CostCalculatorService', () => {
     it('should calculate cost for single image gen node', () => {
       const nodes: WorkflowNodeForCost[] = [
         {
+          data: { model: 'nano-banana-pro', resolution: '2K' },
           id: 'node-1',
           type: 'imageGen',
-          data: { model: 'nano-banana-pro', resolution: '2K' },
         },
       ];
 
@@ -180,9 +180,9 @@ describe('CostCalculatorService', () => {
     it('should calculate cost for video gen node', () => {
       const nodes: WorkflowNodeForCost[] = [
         {
+          data: { duration: 8, generateAudio: true, model: 'veo-3.1-fast' },
           id: 'node-1',
           type: 'videoGen',
-          data: { model: 'veo-3.1-fast', duration: 8, generateAudio: true },
         },
       ];
 
@@ -196,14 +196,14 @@ describe('CostCalculatorService', () => {
     it('should calculate total for multiple nodes', () => {
       const nodes: WorkflowNodeForCost[] = [
         {
+          data: { model: 'nano-banana-pro', resolution: '2K' },
           id: 'node-1',
           type: 'imageGen',
-          data: { model: 'nano-banana-pro', resolution: '2K' },
         },
         {
+          data: { duration: 8, generateAudio: true, model: 'veo-3.1-fast' },
           id: 'node-2',
           type: 'videoGen',
-          data: { model: 'veo-3.1-fast', duration: 8, generateAudio: true },
         },
       ];
 
@@ -216,9 +216,9 @@ describe('CostCalculatorService', () => {
     it('should skip nodes without model', () => {
       const nodes: WorkflowNodeForCost[] = [
         {
+          data: {},
           id: 'node-1',
           type: 'prompt',
-          data: {},
         },
       ];
 
@@ -231,14 +231,14 @@ describe('CostCalculatorService', () => {
     it('should handle legacy node type names', () => {
       const nodes: WorkflowNodeForCost[] = [
         {
+          data: { model: 'nano-banana' },
           id: 'node-1',
           type: 'image-gen',
-          data: { model: 'nano-banana' },
         },
         {
+          data: { model: 'nano-banana' },
           id: 'node-2',
           type: 'ImageGenNode',
-          data: { model: 'nano-banana' },
         },
       ];
 
@@ -251,9 +251,9 @@ describe('CostCalculatorService', () => {
     it('should handle video nodes with default values', () => {
       const nodes: WorkflowNodeForCost[] = [
         {
+          data: { model: 'veo-3.1-fast' }, // No duration or generateAudio
           id: 'node-1',
           type: 'videoGen',
-          data: { model: 'veo-3.1-fast' }, // No duration or generateAudio
         },
       ];
 
@@ -275,12 +275,12 @@ describe('CostCalculatorService', () => {
       );
 
       expect(breakdown).toEqual({
-        model: 'nano-banana-pro',
-        resolution: '2K',
         duration: undefined,
-        withAudio: undefined,
-        unitPrice: 0.15,
+        model: 'nano-banana-pro',
         quantity: 1,
+        resolution: '2K',
+        unitPrice: 0.15,
+        withAudio: undefined,
       });
     });
 
@@ -288,12 +288,12 @@ describe('CostCalculatorService', () => {
       const breakdown = service.buildJobCostBreakdown('veo-3.1-fast', 1.2, 8, true);
 
       expect(breakdown).toEqual({
-        model: 'veo-3.1-fast',
-        resolution: undefined,
         duration: 8,
-        withAudio: true,
-        unitPrice: 1.2,
+        model: 'veo-3.1-fast',
         quantity: 1,
+        resolution: undefined,
+        unitPrice: 1.2,
+        withAudio: true,
       });
     });
   });
@@ -367,9 +367,9 @@ describe('CostCalculatorService', () => {
       it('should calculate cost for 1080p-30fps 10s video', () => {
         // 10s = 2 segments of 5s, $0.101 per 5s
         const cost = service.calculateTopazCost('topazVideoUpscale', {
-          targetResolution: '1080p',
-          targetFps: 30,
           duration: 10,
+          targetFps: 30,
+          targetResolution: '1080p',
         });
         expect(cost).toBe(2 * 0.101);
       });
@@ -377,9 +377,9 @@ describe('CostCalculatorService', () => {
       it('should calculate cost for 4k-60fps 15s video', () => {
         // 15s = 3 segments of 5s, $0.747 per 5s
         const cost = service.calculateTopazCost('topazVideoUpscale', {
-          targetResolution: '4k',
-          targetFps: 60,
           duration: 15,
+          targetFps: 60,
+          targetResolution: '4k',
         });
         expect(cost).toBe(3 * 0.747);
       });
@@ -387,9 +387,9 @@ describe('CostCalculatorService', () => {
       it('should calculate cost for 720p-24fps 5s video', () => {
         // 5s = 1 segment, $0.022 per 5s
         const cost = service.calculateTopazCost('topazVideoUpscale', {
-          targetResolution: '720p',
-          targetFps: 24,
           duration: 5,
+          targetFps: 24,
+          targetResolution: '720p',
         });
         expect(cost).toBe(0.022);
       });
@@ -403,8 +403,8 @@ describe('CostCalculatorService', () => {
 
       it('should default to 10s duration when not specified', () => {
         const cost = service.calculateTopazCost('topazVideoUpscale', {
-          targetResolution: '1080p',
           targetFps: 30,
+          targetResolution: '1080p',
         });
         expect(cost).toBe(2 * 0.101);
       });
@@ -412,9 +412,9 @@ describe('CostCalculatorService', () => {
       it('should round up segments for partial durations', () => {
         // 7s = 2 segments (rounded up from 1.4)
         const cost = service.calculateTopazCost('topazVideoUpscale', {
-          targetResolution: '1080p',
-          targetFps: 30,
           duration: 7,
+          targetFps: 30,
+          targetResolution: '1080p',
         });
         expect(cost).toBe(2 * 0.101);
       });
@@ -430,9 +430,9 @@ describe('CostCalculatorService', () => {
     it('should calculate cost for lumaReframeImage node', () => {
       const nodes: WorkflowNodeForCost[] = [
         {
+          data: { model: 'photon-1' },
           id: 'node-1',
           type: 'lumaReframeImage',
-          data: { model: 'photon-1' },
         },
       ];
 
@@ -445,9 +445,9 @@ describe('CostCalculatorService', () => {
     it('should calculate cost for lumaReframeVideo node', () => {
       const nodes: WorkflowNodeForCost[] = [
         {
+          data: { duration: 8 },
           id: 'node-1',
           type: 'lumaReframeVideo',
-          data: { duration: 8 },
         },
       ];
 
@@ -459,9 +459,9 @@ describe('CostCalculatorService', () => {
     it('should calculate cost for topazImageUpscale node', () => {
       const nodes: WorkflowNodeForCost[] = [
         {
+          data: { upscaleFactor: '2x' },
           id: 'node-1',
           type: 'topazImageUpscale',
-          data: { upscaleFactor: '2x' },
         },
       ];
 
@@ -474,9 +474,9 @@ describe('CostCalculatorService', () => {
     it('should calculate cost for topazVideoUpscale node', () => {
       const nodes: WorkflowNodeForCost[] = [
         {
+          data: { duration: 10, targetFps: 30, targetResolution: '4k' },
           id: 'node-1',
           type: 'topazVideoUpscale',
-          data: { targetResolution: '4k', targetFps: 30, duration: 10 },
         },
       ];
 
@@ -488,19 +488,19 @@ describe('CostCalculatorService', () => {
     it('should calculate total for mixed workflow with Luma and Topaz nodes', () => {
       const nodes: WorkflowNodeForCost[] = [
         {
+          data: { model: 'nano-banana-pro', resolution: '2K' },
           id: 'node-1',
           type: 'imageGen',
-          data: { model: 'nano-banana-pro', resolution: '2K' },
         },
         {
+          data: { model: 'photon-flash-1' },
           id: 'node-2',
           type: 'lumaReframeImage',
-          data: { model: 'photon-flash-1' },
         },
         {
+          data: { upscaleFactor: '2x' },
           id: 'node-3',
           type: 'topazImageUpscale',
-          data: { upscaleFactor: '2x' },
         },
       ];
 

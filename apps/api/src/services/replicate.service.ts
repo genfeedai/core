@@ -3,6 +3,12 @@ import { KlingQuality } from '@genfeedai/types';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Replicate from 'replicate';
+import type {
+  DebugPayload,
+  ModelInputSchema,
+  ReplicateModelInput,
+  SchemaParams,
+} from '@/interfaces/execution-types.interface';
 import { CostCalculatorService } from '@/services/cost-calculator.service';
 import { ExecutionsService } from '@/services/executions.service';
 import { FilesService } from '@/services/files.service';
@@ -10,30 +16,30 @@ import { SchemaMapperService } from '@/services/schema-mapper.service';
 
 // Model identifiers (Replicate official models)
 export const MODELS = {
-  // Image generation
-  nanoBanana: 'google/nano-banana',
-  nanoBananaPro: 'google/nano-banana-pro',
-  // Video generation
-  veoFast: 'google/veo-3.1-fast',
-  veo: 'google/veo-3.1',
-  klingTurboPro: 'kwaivgi/kling-v2.5-turbo-pro',
+  // Flux Kontext
+  fluxKontextDev: 'black-forest-labs/flux-kontext-dev',
   klingMotionControl: 'kwaivgi/kling-v2.6-motion-control',
+  klingTurboPro: 'kwaivgi/kling-v2.5-turbo-pro',
+  // Lip sync
+  lipSync2: 'sync/lipsync-2',
+  lipSync2Pro: 'sync/lipsync-2-pro',
   // LLM
   llama: 'meta/meta-llama-3.1-405b-instruct',
   // Luma Reframe
   lumaReframeImage: 'luma/reframe-image',
   lumaReframeVideo: 'luma/reframe-video',
+  // Image generation
+  nanoBanana: 'google/nano-banana',
+  nanoBananaPro: 'google/nano-banana-pro',
+  omniHuman: 'bytedance/omni-human',
+  pixverseLipSync: 'pixverse/lipsync',
   // Topaz Upscale
   topazImageUpscale: 'topazlabs/image-upscale',
   topazVideoUpscale: 'topazlabs/video-upscale',
-  // Lip sync
-  lipSync2: 'sync/lipsync-2',
-  lipSync2Pro: 'sync/lipsync-2-pro',
-  pixverseLipSync: 'pixverse/lipsync',
-  omniHuman: 'bytedance/omni-human',
   veedFabric: 'veed/fabric-1.0',
-  // Flux Kontext
-  fluxKontextDev: 'black-forest-labs/flux-kontext-dev',
+  veo: 'google/veo-3.1',
+  // Video generation
+  veoFast: 'google/veo-3.1-fast',
   // Whisper (transcription)
   whisper: 'openai/whisper',
 } as const;
@@ -42,7 +48,7 @@ export interface SelectedModel {
   provider: string;
   modelId: string;
   displayName?: string;
-  inputSchema?: Record<string, unknown>;
+  inputSchema?: ModelInputSchema;
 }
 
 export interface ImageGenInput {
@@ -53,7 +59,7 @@ export interface ImageGenInput {
   outputFormat?: string;
   selectedModel?: SelectedModel;
   /** Dynamic parameters from model's input schema */
-  schemaParams?: Record<string, unknown>;
+  schemaParams?: SchemaParams;
   /** Debug mode - skip API calls and return mock data */
   debugMode?: boolean;
 }
@@ -71,7 +77,7 @@ export interface VideoGenInput {
   seed?: number;
   selectedModel?: SelectedModel;
   /** Dynamic parameters from model's input schema */
-  schemaParams?: Record<string, unknown>;
+  schemaParams?: SchemaParams;
   /** Debug mode - skip API calls and return mock data */
   debugMode?: boolean;
 }
@@ -83,7 +89,7 @@ export interface LLMInput {
   temperature?: number;
   topP?: number;
   selectedModel?: SelectedModel;
-  schemaParams?: Record<string, unknown>;
+  schemaParams?: SchemaParams;
 }
 
 export interface LumaReframeImageInput {
@@ -190,11 +196,7 @@ export interface PredictionResult {
   metrics?: {
     predict_time?: number;
   };
-  debugPayload?: {
-    model: string;
-    input: Record<string, unknown>;
-    timestamp: string;
-  };
+  debugPayload?: DebugPayload;
 }
 
 @Injectable()
@@ -221,8 +223,8 @@ export class ReplicateService {
    * This handles cases where image URLs are passed via schemaParams
    */
   private convertSchemaParamsUrls(
-    schemaParams: Record<string, unknown> | undefined
-  ): Record<string, unknown> | undefined {
+    schemaParams: SchemaParams | undefined
+  ): SchemaParams | undefined {
     if (!schemaParams) return undefined;
 
     // Keys that typically contain image/video/audio URLs
@@ -276,19 +278,19 @@ export class ReplicateService {
 
   /** Map Topaz model names to enhance model display names */
   private static readonly TOPAZ_ENHANCE_MODEL_MAP: Record<string, string> = {
-    'topaz-standard-v2': 'Standard V2',
-    'topaz-low-res-v2': 'Low Resolution V2',
     'topaz-cgi': 'CGI',
     'topaz-high-fidelity-v2': 'High Fidelity V2',
+    'topaz-low-res-v2': 'Low Resolution V2',
+    'topaz-standard-v2': 'Standard V2',
     'topaz-text-refine': 'Text Refine',
   };
 
   /** Map lip sync model identifiers to Replicate model IDs */
   private static readonly LIP_SYNC_MODEL_MAP: Record<string, string> = {
+    'bytedance/omni-human': MODELS.omniHuman,
+    'pixverse/lipsync': MODELS.pixverseLipSync,
     'sync/lipsync-2': MODELS.lipSync2,
     'sync/lipsync-2-pro': MODELS.lipSync2Pro,
-    'pixverse/lipsync': MODELS.pixverseLipSync,
-    'bytedance/omni-human': MODELS.omniHuman,
     'veed/fabric-1.0': MODELS.veedFabric,
   };
 
@@ -347,11 +349,11 @@ export class ReplicateService {
     // Use schema mapper to build prediction input with correct field names
     const predictionInput = this.schemaMapper.mapImageInput(
       {
-        prompt: input.prompt,
-        inputImages: inputImages.filter(Boolean) as string[],
         aspectRatio: input.aspectRatio,
-        resolution: input.resolution,
+        inputImages: inputImages.filter(Boolean) as string[],
         outputFormat: input.outputFormat,
+        prompt: input.prompt,
+        resolution: input.resolution,
       },
       inputSchema,
       convertedSchemaParams
@@ -366,8 +368,8 @@ export class ReplicateService {
       const mockId = `debug-img-${Date.now()}`;
       const mockOutput = 'https://placehold.co/1024x1024/1a1a2e/ffd700?text=DEBUG+IMAGE';
       const debugPayload = {
-        model: modelId,
         input: predictionInput,
+        model: modelId,
         timestamp: new Date().toISOString(),
       };
 
@@ -383,16 +385,16 @@ export class ReplicateService {
       );
 
       return {
-        id: mockId,
-        status: 'succeeded',
-        output: mockOutput,
         debugPayload,
+        id: mockId,
+        output: mockOutput,
+        status: 'succeeded',
       } as PredictionResult;
     }
 
     const prediction = await this.replicate.predictions.create({
-      model: modelId,
       input: predictionInput,
+      model: modelId,
     });
 
     // Create job record in database
@@ -438,15 +440,15 @@ export class ReplicateService {
     // Use schema mapper to build prediction input with correct field names
     const predictionInput = this.schemaMapper.mapVideoInput(
       {
-        prompt: input.prompt,
+        aspectRatio: input.aspectRatio,
+        duration: input.duration,
+        generateAudio: input.generateAudio,
         image: image ?? undefined,
         lastFrame: lastFrame ?? undefined,
-        referenceImages: referenceImages?.filter(Boolean) as string[] | undefined,
-        duration: input.duration,
-        aspectRatio: input.aspectRatio,
-        resolution: input.resolution,
-        generateAudio: input.generateAudio,
         negativePrompt: input.negativePrompt,
+        prompt: input.prompt,
+        referenceImages: referenceImages?.filter(Boolean) as string[] | undefined,
+        resolution: input.resolution,
         seed: input.seed,
       },
       inputSchema,
@@ -462,8 +464,8 @@ export class ReplicateService {
       const mockId = `debug-vid-${Date.now()}`;
       const mockOutput = 'https://placehold.co/1920x1080/1a1a2e/ffd700?text=DEBUG+VIDEO';
       const debugPayload = {
-        model: modelId,
         input: predictionInput,
+        model: modelId,
         timestamp: new Date().toISOString(),
       };
 
@@ -479,16 +481,16 @@ export class ReplicateService {
       );
 
       return {
-        id: mockId,
-        status: 'succeeded',
-        output: mockOutput,
         debugPayload,
+        id: mockId,
+        output: mockOutput,
+        status: 'succeeded',
       } as PredictionResult;
     }
 
     const prediction = await this.replicate.predictions.create({
-      model: modelId,
       input: predictionInput,
+      model: modelId,
     });
 
     // Create job record in database
@@ -514,7 +516,7 @@ export class ReplicateService {
     const image = this.convertLocalUrlToBase64(input.image);
 
     // Build input based on mode
-    const baseInput: Record<string, unknown> = {
+    const baseInput: ReplicateModelInput = {
       image,
       prompt: input.prompt || '',
     };
@@ -546,9 +548,9 @@ export class ReplicateService {
       // Add trajectory points for trajectory or combined mode
       if ((input.mode === 'trajectory' || input.mode === 'combined') && input.trajectoryPoints) {
         baseInput.trajectory = input.trajectoryPoints.map((pt) => ({
+          frame: pt.frame,
           x: pt.x,
           y: pt.y,
-          frame: pt.frame,
         }));
       }
 
@@ -560,8 +562,8 @@ export class ReplicateService {
     }
 
     const prediction = await this.replicate.predictions.create({
-      model: MODELS.klingMotionControl,
       input: baseInput,
+      model: MODELS.klingMotionControl,
     });
 
     await this.executionsService.createJob(executionId, nodeId, prediction.id);
@@ -576,10 +578,10 @@ export class ReplicateService {
   async generateText(input: LLMInput): Promise<string> {
     const modelId = input.selectedModel?.modelId ?? MODELS.llama;
 
-    const replicateInput: Record<string, unknown> = {
+    const replicateInput: ReplicateModelInput = {
+      max_tokens: input.maxTokens ?? 1024,
       prompt: input.prompt,
       system_prompt: input.systemPrompt ?? 'You are a helpful assistant.',
-      max_tokens: input.maxTokens ?? 1024,
       temperature: input.temperature ?? 0.7,
       top_p: input.topP ?? 0.9,
       ...input.schemaParams,
@@ -608,15 +610,15 @@ export class ReplicateService {
     const image = this.convertLocalUrlToBase64(input.image);
 
     const prediction = await this.replicate.predictions.create({
-      model: MODELS.lumaReframeImage,
       input: {
-        image,
         aspect_ratio: input.aspectRatio,
-        model: input.model ?? 'photon-flash-1',
-        prompt: input.prompt || undefined,
         grid_position_x: input.gridPosition?.x ?? 0.5,
         grid_position_y: input.gridPosition?.y ?? 0.5,
+        image,
+        model: input.model ?? 'photon-flash-1',
+        prompt: input.prompt || undefined,
       },
+      model: MODELS.lumaReframeImage,
     });
 
     await this.executionsService.createJob(executionId, nodeId, prediction.id);
@@ -636,14 +638,14 @@ export class ReplicateService {
     const video = this.convertLocalUrlToBase64(input.video);
 
     const prediction = await this.replicate.predictions.create({
-      model: MODELS.lumaReframeVideo,
       input: {
-        video,
         aspect_ratio: input.aspectRatio,
-        prompt: input.prompt || undefined,
         grid_position_x: input.gridPosition?.x ?? 0.5,
         grid_position_y: input.gridPosition?.y ?? 0.5,
+        prompt: input.prompt || undefined,
+        video,
       },
+      model: MODELS.lumaReframeVideo,
     });
 
     await this.executionsService.createJob(executionId, nodeId, prediction.id);
@@ -663,16 +665,16 @@ export class ReplicateService {
     const image = this.convertLocalUrlToBase64(input.image);
 
     const prediction = await this.replicate.predictions.create({
-      model: MODELS.topazImageUpscale,
       input: {
-        image,
         enhance_model: input.enhanceModel,
-        upscale_factor: input.upscaleFactor,
-        output_format: input.outputFormat,
         face_enhancement: input.faceEnhancement ?? false,
-        face_enhancement_strength: (input.faceEnhancementStrength ?? 80) / 100,
         face_enhancement_creativity: (input.faceEnhancementCreativity ?? 0) / 100,
+        face_enhancement_strength: (input.faceEnhancementStrength ?? 80) / 100,
+        image,
+        output_format: input.outputFormat,
+        upscale_factor: input.upscaleFactor,
       },
+      model: MODELS.topazImageUpscale,
     });
 
     await this.executionsService.createJob(executionId, nodeId, prediction.id);
@@ -692,12 +694,12 @@ export class ReplicateService {
     const video = this.convertLocalUrlToBase64(input.video);
 
     const prediction = await this.replicate.predictions.create({
-      model: MODELS.topazVideoUpscale,
       input: {
-        video,
-        target_resolution: input.targetResolution,
         target_fps: input.targetFps,
+        target_resolution: input.targetResolution,
+        video,
       },
+      model: MODELS.topazVideoUpscale,
     });
 
     await this.executionsService.createJob(executionId, nodeId, prediction.id);
@@ -716,18 +718,18 @@ export class ReplicateService {
   ): Promise<PredictionResult> {
     if (input.inputType === 'image') {
       return this.reframeImage(executionId, nodeId, {
-        image: input.image!,
         aspectRatio: input.aspectRatio,
+        gridPosition: input.gridPosition,
+        image: input.image!,
         model: input.model,
         prompt: input.prompt,
-        gridPosition: input.gridPosition,
       });
     } else {
       return this.reframeVideo(executionId, nodeId, {
-        video: input.video!,
         aspectRatio: input.aspectRatio,
-        prompt: input.prompt,
         gridPosition: input.gridPosition,
+        prompt: input.prompt,
+        video: input.video!,
       });
     }
   }
@@ -742,22 +744,22 @@ export class ReplicateService {
   ): Promise<PredictionResult> {
     if (input.inputType === 'image') {
       return this.upscaleImage(executionId, nodeId, {
-        image: input.image!,
         enhanceModel:
           ReplicateService.TOPAZ_ENHANCE_MODEL_MAP[input.model] ??
           input.enhanceModel ??
           'Standard V2',
-        upscaleFactor: input.upscaleFactor ?? '2x',
-        outputFormat: input.outputFormat ?? 'png',
         faceEnhancement: input.faceEnhancement,
-        faceEnhancementStrength: input.faceEnhancementStrength,
         faceEnhancementCreativity: input.faceEnhancementCreativity,
+        faceEnhancementStrength: input.faceEnhancementStrength,
+        image: input.image!,
+        outputFormat: input.outputFormat ?? 'png',
+        upscaleFactor: input.upscaleFactor ?? '2x',
       });
     } else {
       return this.upscaleVideo(executionId, nodeId, {
-        video: input.video!,
-        targetResolution: input.targetResolution ?? '1080p',
         targetFps: input.targetFps ?? 30,
+        targetResolution: input.targetResolution ?? '1080p',
+        video: input.video!,
       });
     }
   }
@@ -779,7 +781,7 @@ export class ReplicateService {
     const video = input.video ? this.convertLocalUrlToBase64(input.video) : undefined;
 
     // Build input based on model - different models have different input formats
-    const modelInput: Record<string, unknown> = {
+    const modelInput: ReplicateModelInput = {
       audio,
     };
 
@@ -815,8 +817,8 @@ export class ReplicateService {
     );
 
     const prediction = await this.replicate.predictions.create({
-      model: modelId,
       input: modelInput,
+      model: modelId,
     });
 
     await this.executionsService.createJob(executionId, nodeId, prediction.id);
@@ -835,7 +837,7 @@ export class ReplicateService {
   ): Promise<PredictionResult> {
     const audio = this.convertLocalUrlToBase64(input.audio);
 
-    const modelInput: Record<string, unknown> = {
+    const modelInput: ReplicateModelInput = {
       audio,
     };
 
@@ -848,8 +850,8 @@ export class ReplicateService {
     }
 
     const prediction = await this.replicate.predictions.create({
-      model: MODELS.whisper,
       input: modelInput,
+      model: MODELS.whisper,
     });
 
     await this.executionsService.createJob(executionId, nodeId, prediction.id);

@@ -13,11 +13,11 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://local.genfeed.ai
  * Status map for converting execution statuses to node statuses
  */
 const statusMap: Record<string, NodeStatus> = {
+  complete: NodeStatusEnum.COMPLETE,
+  error: NodeStatusEnum.ERROR,
   pending: NodeStatusEnum.IDLE,
   processing: NodeStatusEnum.PROCESSING,
-  complete: NodeStatusEnum.COMPLETE,
   succeeded: NodeStatusEnum.COMPLETE,
-  error: NodeStatusEnum.ERROR,
 };
 
 function applyJobUpdates(
@@ -45,13 +45,13 @@ function applyJobUpdates(
       if (!existing) {
         didChange = true;
         newJobs.set(job.predictionId, {
-          nodeId: job.nodeId,
-          predictionId: job.predictionId,
-          status,
-          progress: 0,
-          output,
-          error,
           createdAt: new Date().toISOString(),
+          error,
+          nodeId: job.nodeId,
+          output,
+          predictionId: job.predictionId,
+          progress: 0,
+          status,
         });
       } else if (
         existing.status !== status ||
@@ -61,20 +61,20 @@ function applyJobUpdates(
         didChange = true;
         newJobs.set(job.predictionId, {
           ...existing,
-          status,
-          output,
           error,
+          output,
+          status,
         });
       }
 
       if (job.result?.debugPayload) {
         const node = workflowStore.getNodeById(job.nodeId);
         newDebugPayloads.push({
+          input: job.result.debugPayload.input,
+          model: job.result.debugPayload.model,
           nodeId: job.nodeId,
           nodeName: String(node?.data?.label || node?.data?.name || job.nodeId),
           nodeType: node?.type || 'unknown',
-          model: job.result.debugPayload.model,
-          input: job.result.debugPayload.input,
           timestamp: job.result.debugPayload.timestamp,
         });
       }
@@ -87,7 +87,6 @@ function applyJobUpdates(
     }
 
     return {
-      jobs: didChange ? newJobs : state.jobs,
       debugPayloads:
         newDebugPayloads.length > 0
           ? [
@@ -97,6 +96,7 @@ function applyJobUpdates(
               ...newDebugPayloads,
             ]
           : state.debugPayloads,
+      jobs: didChange ? newJobs : state.jobs,
     };
   });
 }
@@ -118,8 +118,8 @@ async function reconcileNodeStatuses(executionId: string): Promise<void> {
       const isSuccess = nodeResult.status === 'complete' || nodeResult.status === 'succeeded';
 
       workflowStore.updateNodeData(nodeResult.nodeId, {
-        status: nodeStatus,
         error: isSuccess ? undefined : nodeResult.error,
+        status: nodeStatus,
         ...(nodeResult.output &&
           getOutputUpdate(nodeResult.nodeId, nodeResult.output, workflowStore)),
       });
@@ -161,9 +161,9 @@ export function createExecutionSubscription(
           const isSuccess = nodeResult.status === 'complete' || nodeResult.status === 'succeeded';
 
           workflowStore.updateNodeData(nodeResult.nodeId, {
-            status: nodeStatus,
             // Clear error on success, otherwise pass the error
             error: isSuccess ? undefined : nodeResult.error,
+            status: nodeStatus,
             ...(nodeResult.output &&
               getOutputUpdate(nodeResult.nodeId, nodeResult.output, workflowStore)),
           });
@@ -206,7 +206,7 @@ export function createExecutionSubscription(
           // Reconcile final state to catch any missed SSE deltas
           await reconcileNodeStatuses(executionId);
 
-          set({ isRunning: false, eventSource: null, currentNodeId: null, jobs: new Map() });
+          set({ currentNodeId: null, eventSource: null, isRunning: false, jobs: new Map() });
 
           if (data.status === 'failed' || hasFailedNode) {
             logger.error('Workflow execution failed', new Error('Execution failed'), {
@@ -225,7 +225,7 @@ export function createExecutionSubscription(
     eventSource.close();
     // Reconcile: fetch final execution state to recover any missed updates
     void reconcileNodeStatuses(executionId).then(() => {
-      set({ isRunning: false, eventSource: null });
+      set({ eventSource: null, isRunning: false });
     });
   };
 
@@ -258,8 +258,8 @@ export function createNodeExecutionSubscription(
           const isSuccess = nodeResult.status === 'complete' || nodeResult.status === 'succeeded';
 
           workflowStore.updateNodeData(nodeResult.nodeId, {
-            status: nodeStatus,
             error: isSuccess ? undefined : nodeResult.error,
+            status: nodeStatus,
             ...(nodeResult.output &&
               getOutputUpdate(nodeResult.nodeId, nodeResult.output, workflowStore)),
           });

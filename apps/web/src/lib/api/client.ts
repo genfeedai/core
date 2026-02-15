@@ -49,8 +49,8 @@ async function uploadFile<T>(endpoint: string, file: File, options: FetchOptions
   formData.append('file', file);
 
   const config: RequestInit = {
-    method: 'POST',
     body: formData,
+    method: 'POST',
     // Don't set Content-Type - browser will set it with boundary for multipart/form-data
     ...options,
   };
@@ -70,32 +70,31 @@ async function uploadFile<T>(endpoint: string, file: File, options: FetchOptions
 }
 
 export const apiClient = {
+  delete: <T>(endpoint: string, options?: FetchOptions) =>
+    request<T>(endpoint, { ...options, method: 'DELETE' }),
   get: <T>(endpoint: string, options?: FetchOptions) =>
     request<T>(endpoint, { ...options, method: 'GET' }),
+
+  patch: <T>(endpoint: string, data?: unknown, options?: FetchOptions) =>
+    request<T>(endpoint, {
+      ...options,
+      body: data ? JSON.stringify(data) : undefined,
+      method: 'PATCH',
+    }),
 
   post: <T>(endpoint: string, data?: unknown, options?: FetchOptions) =>
     request<T>(endpoint, {
       ...options,
-      method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
+      method: 'POST',
     }),
 
   put: <T>(endpoint: string, data?: unknown, options?: FetchOptions) =>
     request<T>(endpoint, {
       ...options,
+      body: data ? JSON.stringify(data) : undefined,
       method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
     }),
-
-  patch: <T>(endpoint: string, data?: unknown, options?: FetchOptions) =>
-    request<T>(endpoint, {
-      ...options,
-      method: 'PATCH',
-      body: data ? JSON.stringify(data) : undefined,
-    }),
-
-  delete: <T>(endpoint: string, options?: FetchOptions) =>
-    request<T>(endpoint, { ...options, method: 'DELETE' }),
 
   /**
    * Upload a file to the server

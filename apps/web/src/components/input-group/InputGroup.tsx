@@ -26,10 +26,10 @@ interface InputGroupProps {
 }
 
 const VARIANT_STYLES: Record<InputGroupVariant, string> = {
-  section: 'p-4 bg-[var(--card)] border border-[var(--border)] rounded-lg',
-  inline: 'p-2',
   card: 'p-4 bg-[var(--card)] border border-[var(--border)] rounded-lg shadow-sm',
+  inline: 'p-2',
   minimal: '',
+  section: 'p-4 bg-[var(--card)] border border-[var(--border)] rounded-lg',
 };
 
 function InputGroupComponent({

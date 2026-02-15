@@ -1,50 +1,146 @@
 import type { WorkflowTemplate } from '@genfeedai/types';
 
 export const YOUTUBE_VIDEO_GENERATOR_TEMPLATE: WorkflowTemplate = {
-  version: 1,
-  name: 'YouTube 10-Min Video Generator',
+  createdAt: new Date().toISOString(),
   description:
     'Generate a complete 10-minute YouTube video: script → images → videos with camera movements → stitch → music → subtitles',
+  edgeStyle: 'smoothstep',
+  edges: [
+    // Script flow
+    {
+      id: 'e-script-1',
+      source: 'script-input',
+      sourceHandle: 'text',
+      target: 'llm-script',
+      targetHandle: 'prompt',
+    },
+    {
+      id: 'e-script-2',
+      source: 'llm-script',
+      sourceHandle: 'text',
+      target: 'llm-scenes',
+      targetHandle: 'prompt',
+    },
+
+    // LLM → Images (20 edges)
+    ...Array.from({ length: 20 }, (_, i) => ({
+      id: `e-img-prompt-${i + 1}`,
+      source: 'llm-scenes',
+      sourceHandle: 'text',
+      target: `img-${i + 1}`,
+      targetHandle: 'prompt',
+    })),
+
+    // Images → Videos (20 edges)
+    ...Array.from({ length: 20 }, (_, i) => ({
+      id: `e-img-vid-${i + 1}`,
+      source: `img-${i + 1}`,
+      sourceHandle: 'image',
+      target: `vid-${i + 1}`,
+      targetHandle: 'image',
+    })),
+
+    // LLM → Videos for camera prompts (20 edges)
+    ...Array.from({ length: 20 }, (_, i) => ({
+      id: `e-vid-prompt-${i + 1}`,
+      source: 'llm-scenes',
+      sourceHandle: 'text',
+      target: `vid-${i + 1}`,
+      targetHandle: 'prompt',
+    })),
+
+    // Videos → Stitch (20 edges)
+    ...Array.from({ length: 20 }, (_, i) => ({
+      id: `e-stitch-${i + 1}`,
+      source: `vid-${i + 1}`,
+      sourceHandle: 'video',
+      target: 'stitch',
+      targetHandle: 'videos',
+    })),
+
+    // Stitch → Voice Change (add music)
+    {
+      id: 'e-stitch-voice',
+      source: 'stitch',
+      sourceHandle: 'video',
+      target: 'voice-change',
+      targetHandle: 'video',
+    },
+    {
+      id: 'e-audio-voice',
+      source: 'audio-music',
+      sourceHandle: 'audio',
+      target: 'voice-change',
+      targetHandle: 'audio',
+    },
+
+    // Script → Subtitle (for subtitle text)
+    {
+      id: 'e-script-subtitle',
+      source: 'llm-script',
+      sourceHandle: 'text',
+      target: 'subtitle',
+      targetHandle: 'text',
+    },
+
+    // Voice Change → Subtitle
+    {
+      id: 'e-voice-subtitle',
+      source: 'voice-change',
+      sourceHandle: 'video',
+      target: 'subtitle',
+      targetHandle: 'video',
+    },
+
+    // Subtitle → Output
+    {
+      id: 'e-subtitle-output',
+      source: 'subtitle',
+      sourceHandle: 'video',
+      target: 'output',
+      targetHandle: 'video',
+    },
+  ],
+  name: 'YouTube 10-Min Video Generator',
   nodes: [
     // Stage 1: Script Input & Generation
     {
-      id: 'script-input',
-      type: 'prompt',
-      position: { x: 50, y: 600 },
       data: {
         label: 'Script/Topic',
-        status: 'idle',
         prompt:
           'Create a 10-minute educational video about the history of artificial intelligence, from its origins in the 1950s to modern deep learning breakthroughs.',
+        status: 'idle',
         variables: {},
       },
+      id: 'script-input',
+      position: { x: 50, y: 600 },
+      type: 'prompt',
     },
     {
-      id: 'llm-script',
-      type: 'llm',
-      position: { x: 350, y: 500 },
       data: {
-        label: 'Script Generator',
-        status: 'idle',
         inputPrompt: null,
+        jobId: null,
+        label: 'Script Generator',
+        maxTokens: 4096,
         outputText: null,
+        status: 'idle',
         systemPrompt:
           'You are a professional YouTube scriptwriter. Generate a complete 10-minute video script with clear narration, engaging hooks, and natural transitions. Include timestamps and speaker directions. The script should be compelling and educational.',
         temperature: 0.8,
-        maxTokens: 4096,
         topP: 0.9,
-        jobId: null,
       },
+      id: 'llm-script',
+      position: { x: 350, y: 500 },
+      type: 'llm',
     },
     {
-      id: 'llm-scenes',
-      type: 'llm',
-      position: { x: 650, y: 500 },
       data: {
-        label: 'Scene Expander',
-        status: 'idle',
         inputPrompt: null,
+        jobId: null,
+        label: 'Scene Expander',
+        maxTokens: 8192,
         outputText: null,
+        status: 'idle',
         systemPrompt: `You are a video director. Break this script into exactly 20 scenes for video generation.
 
 For each scene, provide:
@@ -63,236 +159,140 @@ MOOD: [emotional tone]
 
 Ensure visual continuity between scenes. Total runtime: 10 minutes (20 × 30 seconds).`,
         temperature: 0.7,
-        maxTokens: 8192,
         topP: 0.9,
-        jobId: null,
       },
+      id: 'llm-scenes',
+      position: { x: 650, y: 500 },
+      type: 'llm',
     },
 
     // Stage 2: Image Generation (20 scenes)
     ...Array.from({ length: 20 }, (_, i) => ({
-      id: `img-${i + 1}`,
-      type: 'imageGen' as const,
-      position: { x: 1000, y: 50 + i * 120 },
       data: {
-        label: `Scene ${i + 1} Image`,
-        status: 'idle' as const,
+        aspectRatio: '16:9' as const,
         inputImages: [],
         inputPrompt: null,
-        outputImage: null,
-        model: 'nano-banana-pro' as const,
-        aspectRatio: '16:9' as const,
-        resolution: '2K' as const,
-        outputFormat: 'jpg' as const,
         jobId: null,
+        label: `Scene ${i + 1} Image`,
+        model: 'nano-banana-pro' as const,
+        outputFormat: 'jpg' as const,
+        outputImage: null,
+        resolution: '2K' as const,
+        status: 'idle' as const,
       },
+      id: `img-${i + 1}`,
+      position: { x: 1000, y: 50 + i * 120 },
+      type: 'imageGen' as const,
     })),
 
     // Stage 3: Video Generation (20 scenes with camera movements)
     ...Array.from({ length: 20 }, (_, i) => ({
-      id: `vid-${i + 1}`,
-      type: 'videoGen' as const,
-      position: { x: 1350, y: 50 + i * 120 },
       data: {
-        label: `Scene ${i + 1} Video`,
-        status: 'idle' as const,
+        aspectRatio: '16:9' as const,
+        duration: 8 as const,
+        generateAudio: false,
         inputImage: null,
-        lastFrame: null,
-        referenceImages: [],
         inputPrompt: null,
+        jobId: null,
+        label: `Scene ${i + 1} Video`,
+        lastFrame: null,
+        model: 'veo-3.1' as const,
         negativePrompt: 'blurry, distorted, low quality, watermark, text overlay',
         outputVideo: null,
-        model: 'veo-3.1' as const,
-        duration: 8 as const,
-        aspectRatio: '16:9' as const,
+        referenceImages: [],
         resolution: '1080p' as const,
-        generateAudio: false,
-        jobId: null,
+        status: 'idle' as const,
       },
+      id: `vid-${i + 1}`,
+      position: { x: 1350, y: 50 + i * 120 },
+      type: 'videoGen' as const,
     })),
 
     // Stage 4: Video Stitching
     {
-      id: 'stitch',
-      type: 'videoStitch',
-      position: { x: 1700, y: 600 },
       data: {
-        label: 'Video Stitcher',
-        status: 'idle',
-        inputVideos: [],
-        outputVideo: null,
-        transitionType: 'crossfade',
-        transitionDuration: 0.5,
-        seamlessLoop: false,
         audioCodec: 'aac',
+        inputVideos: [],
+        label: 'Video Stitcher',
         outputQuality: 'full',
+        outputVideo: null,
+        seamlessLoop: false,
+        status: 'idle',
+        transitionDuration: 0.5,
+        transitionType: 'crossfade',
       },
+      id: 'stitch',
+      position: { x: 1700, y: 600 },
+      type: 'videoStitch',
     },
 
     // Stage 5: Audio Input (Background Music)
     {
-      id: 'audio-music',
-      type: 'audioInput',
-      position: { x: 1700, y: 300 },
       data: {
-        label: 'Background Music',
-        status: 'idle',
         audio: null,
-        filename: null,
         duration: null,
+        filename: null,
+        label: 'Background Music',
         source: 'upload',
+        status: 'idle',
       },
+      id: 'audio-music',
+      position: { x: 1700, y: 300 },
+      type: 'audioInput',
     },
 
     // Stage 6: Voice Change (Audio Mixer)
     {
-      id: 'voice-change',
-      type: 'voiceChange',
-      position: { x: 2050, y: 500 },
       data: {
-        label: 'Audio Mixer',
-        status: 'idle',
-        inputVideo: null,
+        audioMixLevel: 0.3,
         inputAudio: null,
+        inputVideo: null,
+        jobId: null,
+        label: 'Audio Mixer',
         outputVideo: null,
         preserveOriginalAudio: false,
-        audioMixLevel: 0.3,
-        jobId: null,
+        status: 'idle',
       },
+      id: 'voice-change',
+      position: { x: 2050, y: 500 },
+      type: 'voiceChange',
     },
 
     // Stage 7: Subtitle
     {
-      id: 'subtitle',
-      type: 'subtitle',
-      position: { x: 2400, y: 500 },
       data: {
-        label: 'Subtitles',
-        status: 'idle',
-        inputVideo: null,
-        inputText: null,
-        outputVideo: null,
-        style: 'modern',
-        position: 'bottom',
-        fontSize: 24,
-        fontColor: '#FFFFFF',
         backgroundColor: 'rgba(0,0,0,0.7)',
+        fontColor: '#FFFFFF',
         fontFamily: 'Arial',
+        fontSize: 24,
+        inputText: null,
+        inputVideo: null,
         jobId: null,
+        label: 'Subtitles',
+        outputVideo: null,
+        position: 'bottom',
+        status: 'idle',
+        style: 'modern',
       },
+      id: 'subtitle',
+      position: { x: 2400, y: 500 },
+      type: 'subtitle',
     },
 
     // Final Output
     {
-      id: 'output',
-      type: 'download',
-      position: { x: 2750, y: 500 },
       data: {
-        label: 'Final Video',
-        status: 'idle',
         inputMedia: null,
         inputType: 'video',
+        label: 'Final Video',
         outputName: 'youtube-video-10min',
+        status: 'idle',
       },
+      id: 'output',
+      position: { x: 2750, y: 500 },
+      type: 'download',
     },
   ],
-  edges: [
-    // Script flow
-    {
-      id: 'e-script-1',
-      source: 'script-input',
-      target: 'llm-script',
-      sourceHandle: 'text',
-      targetHandle: 'prompt',
-    },
-    {
-      id: 'e-script-2',
-      source: 'llm-script',
-      target: 'llm-scenes',
-      sourceHandle: 'text',
-      targetHandle: 'prompt',
-    },
-
-    // LLM → Images (20 edges)
-    ...Array.from({ length: 20 }, (_, i) => ({
-      id: `e-img-prompt-${i + 1}`,
-      source: 'llm-scenes',
-      target: `img-${i + 1}`,
-      sourceHandle: 'text',
-      targetHandle: 'prompt',
-    })),
-
-    // Images → Videos (20 edges)
-    ...Array.from({ length: 20 }, (_, i) => ({
-      id: `e-img-vid-${i + 1}`,
-      source: `img-${i + 1}`,
-      target: `vid-${i + 1}`,
-      sourceHandle: 'image',
-      targetHandle: 'image',
-    })),
-
-    // LLM → Videos for camera prompts (20 edges)
-    ...Array.from({ length: 20 }, (_, i) => ({
-      id: `e-vid-prompt-${i + 1}`,
-      source: 'llm-scenes',
-      target: `vid-${i + 1}`,
-      sourceHandle: 'text',
-      targetHandle: 'prompt',
-    })),
-
-    // Videos → Stitch (20 edges)
-    ...Array.from({ length: 20 }, (_, i) => ({
-      id: `e-stitch-${i + 1}`,
-      source: `vid-${i + 1}`,
-      target: 'stitch',
-      sourceHandle: 'video',
-      targetHandle: 'videos',
-    })),
-
-    // Stitch → Voice Change (add music)
-    {
-      id: 'e-stitch-voice',
-      source: 'stitch',
-      target: 'voice-change',
-      sourceHandle: 'video',
-      targetHandle: 'video',
-    },
-    {
-      id: 'e-audio-voice',
-      source: 'audio-music',
-      target: 'voice-change',
-      sourceHandle: 'audio',
-      targetHandle: 'audio',
-    },
-
-    // Script → Subtitle (for subtitle text)
-    {
-      id: 'e-script-subtitle',
-      source: 'llm-script',
-      target: 'subtitle',
-      sourceHandle: 'text',
-      targetHandle: 'text',
-    },
-
-    // Voice Change → Subtitle
-    {
-      id: 'e-voice-subtitle',
-      source: 'voice-change',
-      target: 'subtitle',
-      sourceHandle: 'video',
-      targetHandle: 'video',
-    },
-
-    // Subtitle → Output
-    {
-      id: 'e-subtitle-output',
-      source: 'subtitle',
-      target: 'output',
-      sourceHandle: 'video',
-      targetHandle: 'video',
-    },
-  ],
-  edgeStyle: 'smoothstep',
-  createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
+  version: 1,
 };

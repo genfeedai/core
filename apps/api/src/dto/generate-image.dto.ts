@@ -8,6 +8,7 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
+import type { SchemaParams } from '@/interfaces/execution-types.interface';
 
 class SelectedModelDto {
   @IsString()
@@ -61,7 +62,7 @@ export class GenerateImageDto {
 
   @IsOptional()
   @IsObject()
-  schemaParams?: Record<string, unknown>;
+  schemaParams?: SchemaParams;
 
   @IsOptional()
   @IsBoolean()

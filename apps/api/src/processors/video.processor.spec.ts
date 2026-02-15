@@ -4,23 +4,23 @@ import { JOB_STATUS, QUEUE_NAMES } from '@/queue/queue.constants';
 
 // Mock BullMQ WorkerHost
 vi.mock('@nestjs/bullmq', () => ({
+  OnWorkerEvent: () => vi.fn(),
   Processor: () => vi.fn(),
   WorkerHost: class {},
-  OnWorkerEvent: () => vi.fn(),
 }));
 
 // Create mock services
 const mockQueueManager = {
-  updateJobStatus: vi.fn(),
   addJobLog: vi.fn(),
-  moveToDeadLetterQueue: vi.fn(),
   continueExecution: vi.fn(),
   heartbeatJob: vi.fn(),
+  moveToDeadLetterQueue: vi.fn(),
+  updateJobStatus: vi.fn(),
 };
 
 const mockExecutionsService = {
-  updateNodeResult: vi.fn(),
   findExistingJob: vi.fn().mockResolvedValue(null),
+  updateNodeResult: vi.fn(),
 };
 
 const mockReplicateService = {
@@ -28,8 +28,8 @@ const mockReplicateService = {
 };
 
 const mockReplicatePollerService = {
-  pollForCompletion: vi.fn(),
   createJobProgressCallback: vi.fn().mockReturnValue(() => {}),
+  pollForCompletion: vi.fn(),
 };
 
 const mockFilesService = {
@@ -48,22 +48,22 @@ describe('VideoProcessor', () => {
   const mockPredictionId = 'pred-video-123';
 
   const createMockJob = (overrides = {}) => ({
-    id: 'video-job-123',
+    attemptsMade: 0,
     data: {
       executionId: mockExecutionId,
-      workflowId: 'workflow-123',
+      nodeData: {
+        aspectRatio: '16:9',
+        duration: 5,
+        generateAudio: true,
+        model: 'veo-3.1-turbo',
+        prompt: 'A cinematic video of waves',
+      },
       nodeId: mockNodeId,
       nodeType: 'videoGen',
-      nodeData: {
-        prompt: 'A cinematic video of waves',
-        duration: 5,
-        aspectRatio: '16:9',
-        model: 'veo-3.1-turbo',
-        generateAudio: true,
-      },
       timestamp: new Date().toISOString(),
+      workflowId: 'workflow-123',
     },
-    attemptsMade: 0,
+    id: 'video-job-123',
     opts: { attempts: 3 },
     updateProgress: vi.fn().mockResolvedValue(undefined),
     ...overrides,
@@ -77,8 +77,8 @@ describe('VideoProcessor', () => {
 
     // Reset pollForCompletion to return success by default
     mockReplicatePollerService.pollForCompletion.mockResolvedValue({
-      success: true,
       output: ['https://example.com/video.mp4'],
+      success: true,
     });
 
     // Reset generateVideo to return a prediction
@@ -86,8 +86,8 @@ describe('VideoProcessor', () => {
 
     // Reset file save to success by default
     mockFilesService.downloadAndSaveOutput.mockResolvedValue({
-      url: 'https://saved.example.com/video.mp4',
       path: '/local/path/video.mp4',
+      url: 'https://saved.example.com/video.mp4',
     });
 
     processor = new VideoProcessor(
@@ -129,8 +129,8 @@ describe('VideoProcessor', () => {
       await processor.process(job as never);
 
       expect(job.updateProgress).toHaveBeenCalledWith({
-        percent: 10,
         message: 'Starting videoGen generation',
+        percent: 10,
       });
     });
 
@@ -144,10 +144,10 @@ describe('VideoProcessor', () => {
         mockNodeId,
         'veo-3.1-turbo',
         expect.objectContaining({
-          prompt: 'A cinematic video of waves',
-          duration: 5,
           aspectRatio: '16:9',
+          duration: 5,
           generateAudio: true,
+          prompt: 'A cinematic video of waves',
         })
       );
     });
@@ -156,11 +156,11 @@ describe('VideoProcessor', () => {
       const job = createMockJob({
         data: {
           executionId: mockExecutionId,
-          workflowId: 'workflow-123',
+          nodeData: { prompt: 'test video' },
           nodeId: mockNodeId,
           nodeType: 'videoGen',
-          nodeData: { prompt: 'test video' },
           timestamp: new Date().toISOString(),
+          workflowId: 'workflow-123',
         },
       });
 
@@ -178,19 +178,19 @@ describe('VideoProcessor', () => {
       const job = createMockJob({
         data: {
           executionId: mockExecutionId,
-          workflowId: 'workflow-123',
-          nodeId: mockNodeId,
-          nodeType: 'videoGen',
           nodeData: {
-            prompt: 'test',
             image: 'https://example.com/start.jpg',
             lastFrame: 'https://example.com/end.jpg',
-            referenceImages: ['https://example.com/ref1.jpg'],
             negativePrompt: 'blur, distortion',
-            seed: 12345,
+            prompt: 'test',
+            referenceImages: ['https://example.com/ref1.jpg'],
             resolution: '1080p',
+            seed: 12345,
           },
+          nodeId: mockNodeId,
+          nodeType: 'videoGen',
           timestamp: new Date().toISOString(),
+          workflowId: 'workflow-123',
         },
       });
 
@@ -203,10 +203,10 @@ describe('VideoProcessor', () => {
         expect.objectContaining({
           image: 'https://example.com/start.jpg',
           lastFrame: 'https://example.com/end.jpg',
-          referenceImages: ['https://example.com/ref1.jpg'],
           negativePrompt: 'blur, distortion',
-          seed: 12345,
+          referenceImages: ['https://example.com/ref1.jpg'],
           resolution: '1080p',
+          seed: 12345,
         })
       );
     });
@@ -243,8 +243,8 @@ describe('VideoProcessor', () => {
 
       expect(result).toEqual(
         expect.objectContaining({
-          success: true,
           output: ['https://example.com/video.mp4'],
+          success: true,
         })
       );
     });
@@ -272,8 +272,8 @@ describe('VideoProcessor', () => {
         mockNodeId,
         'complete',
         expect.objectContaining({
-          video: 'https://saved.example.com/video.mp4',
           localPath: '/local/path/video.mp4',
+          video: 'https://saved.example.com/video.mp4',
         })
       );
     });
@@ -316,8 +316,8 @@ describe('VideoProcessor', () => {
 
     it('should return failure result when prediction fails', async () => {
       mockReplicatePollerService.pollForCompletion.mockResolvedValue({
-        success: false,
         error: 'Video generation failed',
+        success: false,
       });
       const job = createMockJob();
 
@@ -325,16 +325,16 @@ describe('VideoProcessor', () => {
 
       expect(result).toEqual(
         expect.objectContaining({
-          success: false,
           error: 'Video generation failed',
+          success: false,
         })
       );
     });
 
     it('should update node result to error on prediction failure', async () => {
       mockReplicatePollerService.pollForCompletion.mockResolvedValue({
-        success: false,
         error: 'Video generation failed',
+        success: false,
       });
       const job = createMockJob();
 
@@ -359,8 +359,8 @@ describe('VideoProcessor', () => {
         'video-job-123',
         JOB_STATUS.FAILED,
         expect.objectContaining({
-          error: 'Video API error',
           attemptsMade: 0,
+          error: 'Video API error',
         })
       );
     });
@@ -421,8 +421,8 @@ describe('VideoProcessor', () => {
         mockNodeId,
         'complete',
         expect.objectContaining({
-          video: 'https://example.com/video.mp4',
           saveError: 'Storage unavailable',
+          video: 'https://example.com/video.mp4',
         })
       );
     });

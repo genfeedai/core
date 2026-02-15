@@ -12,22 +12,22 @@ describe('useAnnotationStore', () => {
   beforeEach(() => {
     // Reset store to initial state
     useAnnotationStore.setState({
-      isOpen: false,
-      nodeId: null,
-      sourceImage: null,
-      shapes: [],
-      selectedShapeId: null,
       currentTool: 'rectangle',
-      toolOptions: {
-        strokeColor: '#ef4444',
-        strokeWidth: 3,
-        fillColor: null,
-        fontSize: 16,
-      },
+      drawingShape: null,
       history: [],
       historyIndex: -1,
       isDrawing: false,
-      drawingShape: null,
+      isOpen: false,
+      nodeId: null,
+      selectedShapeId: null,
+      shapes: [],
+      sourceImage: null,
+      toolOptions: {
+        fillColor: null,
+        fontSize: 16,
+        strokeColor: '#ef4444',
+        strokeWidth: 3,
+      },
     });
   });
 
@@ -66,8 +66,8 @@ describe('useAnnotationStore', () => {
 
     it('should reset state when opening', () => {
       useAnnotationStore.setState({
-        selectedShapeId: 'some-shape',
         isDrawing: true,
+        selectedShapeId: 'some-shape',
       });
 
       const { openAnnotation } = useAnnotationStore.getState();
@@ -82,15 +82,15 @@ describe('useAnnotationStore', () => {
     it('should load existing shapes', () => {
       const existingShapes: AnnotationShape[] = [
         {
+          fillColor: null,
+          height: 50,
           id: 'shape-1',
-          type: 'rectangle',
           strokeColor: '#000',
           strokeWidth: 2,
-          fillColor: null,
+          type: 'rectangle',
+          width: 100,
           x: 10,
           y: 20,
-          width: 100,
-          height: 50,
         },
       ];
 
@@ -105,14 +105,14 @@ describe('useAnnotationStore', () => {
     it('should initialize history with existing shapes', () => {
       const existingShapes: AnnotationShape[] = [
         {
+          fillColor: null,
           id: 'shape-1',
-          type: 'circle',
+          radius: 25,
           strokeColor: '#000',
           strokeWidth: 2,
-          fillColor: null,
+          type: 'circle',
           x: 50,
           y: 50,
-          radius: 25,
         },
       ];
 
@@ -138,13 +138,13 @@ describe('useAnnotationStore', () => {
   describe('closeAnnotation', () => {
     it('should close and reset all state', () => {
       useAnnotationStore.setState({
-        isOpen: true,
-        nodeId: 'node-1',
-        sourceImage: 'image.png',
-        shapes: [{ id: 'shape-1', type: 'rectangle' } as RectangleShape],
-        selectedShapeId: 'shape-1',
         history: [[{ id: 'shape-1', type: 'rectangle' } as RectangleShape]],
         historyIndex: 0,
+        isOpen: true,
+        nodeId: 'node-1',
+        selectedShapeId: 'shape-1',
+        shapes: [{ id: 'shape-1', type: 'rectangle' } as RectangleShape],
+        sourceImage: 'image.png',
       });
 
       const { closeAnnotation } = useAnnotationStore.getState();
@@ -165,15 +165,15 @@ describe('useAnnotationStore', () => {
     it('should return shapes and node ID when saving', () => {
       const shapes: AnnotationShape[] = [
         {
+          fillColor: null,
+          height: 50,
           id: 'shape-1',
-          type: 'rectangle',
           strokeColor: '#000',
           strokeWidth: 2,
-          fillColor: null,
+          type: 'rectangle',
+          width: 100,
           x: 10,
           y: 20,
-          width: 100,
-          height: 50,
         },
       ];
 
@@ -223,15 +223,15 @@ describe('useAnnotationStore', () => {
       useAnnotationStore.setState({ history: [[]], historyIndex: 0 });
 
       const shape: RectangleShape = {
+        fillColor: null,
+        height: 50,
         id: 'shape-1',
-        type: 'rectangle',
         strokeColor: '#ff0000',
         strokeWidth: 3,
-        fillColor: null,
+        type: 'rectangle',
+        width: 100,
         x: 10,
         y: 20,
-        width: 100,
-        height: 50,
       };
 
       const { addShape } = useAnnotationStore.getState();
@@ -245,14 +245,14 @@ describe('useAnnotationStore', () => {
       useAnnotationStore.setState({ history: [[]], historyIndex: 0 });
 
       const shape: CircleShape = {
+        fillColor: '#00ff0050',
         id: 'circle-1',
-        type: 'circle',
+        radius: 50,
         strokeColor: '#00ff00',
         strokeWidth: 2,
-        fillColor: '#00ff0050',
+        type: 'circle',
         x: 100,
         y: 100,
-        radius: 50,
       };
 
       const { addShape } = useAnnotationStore.getState();
@@ -275,12 +275,12 @@ describe('useAnnotationStore', () => {
       });
 
       const shape: ArrowShape = {
+        fillColor: null,
         id: 'arrow-1',
-        type: 'arrow',
+        points: [0, 0, 100, 100],
         strokeColor: '#0000ff',
         strokeWidth: 2,
-        fillColor: null,
-        points: [0, 0, 100, 100],
+        type: 'arrow',
       };
 
       const { addShape } = useAnnotationStore.getState();
@@ -294,25 +294,25 @@ describe('useAnnotationStore', () => {
   describe('updateShape', () => {
     it('should update a shape', () => {
       const shape: RectangleShape = {
+        fillColor: null,
+        height: 50,
         id: 'shape-1',
-        type: 'rectangle',
         strokeColor: '#ff0000',
         strokeWidth: 3,
-        fillColor: null,
+        type: 'rectangle',
+        width: 100,
         x: 10,
         y: 20,
-        width: 100,
-        height: 50,
       };
 
       useAnnotationStore.setState({
-        shapes: [shape],
         history: [[shape]],
         historyIndex: 0,
+        shapes: [shape],
       });
 
       const { updateShape } = useAnnotationStore.getState();
-      updateShape('shape-1', { width: 200, height: 100 });
+      updateShape('shape-1', { height: 100, width: 200 });
 
       const state = useAnnotationStore.getState();
       const updated = state.shapes[0] as RectangleShape;
@@ -322,20 +322,20 @@ describe('useAnnotationStore', () => {
 
     it('should add update to history', () => {
       const shape: CircleShape = {
+        fillColor: null,
         id: 'circle-1',
-        type: 'circle',
+        radius: 25,
         strokeColor: '#ff0000',
         strokeWidth: 3,
-        fillColor: null,
+        type: 'circle',
         x: 50,
         y: 50,
-        radius: 25,
       };
 
       useAnnotationStore.setState({
-        shapes: [shape],
         history: [[shape]],
         historyIndex: 0,
+        shapes: [shape],
       });
 
       const { updateShape } = useAnnotationStore.getState();
@@ -353,9 +353,9 @@ describe('useAnnotationStore', () => {
       ];
 
       useAnnotationStore.setState({
-        shapes,
         history: [shapes],
         historyIndex: 0,
+        shapes,
       });
 
       const { deleteShape } = useAnnotationStore.getState();
@@ -367,10 +367,10 @@ describe('useAnnotationStore', () => {
 
     it('should clear selection if deleted shape was selected', () => {
       useAnnotationStore.setState({
-        shapes: [{ id: 'shape-1', type: 'rectangle' } as RectangleShape],
-        selectedShapeId: 'shape-1',
         history: [[{ id: 'shape-1', type: 'rectangle' } as RectangleShape]],
         historyIndex: 0,
+        selectedShapeId: 'shape-1',
+        shapes: [{ id: 'shape-1', type: 'rectangle' } as RectangleShape],
       });
 
       const { deleteShape } = useAnnotationStore.getState();
@@ -381,13 +381,13 @@ describe('useAnnotationStore', () => {
 
     it('should not clear selection if different shape deleted', () => {
       useAnnotationStore.setState({
+        history: [[{ id: 'shape-1' }, { id: 'shape-2' }] as AnnotationShape[]],
+        historyIndex: 0,
+        selectedShapeId: 'shape-1',
         shapes: [
           { id: 'shape-1', type: 'rectangle' } as RectangleShape,
           { id: 'shape-2', type: 'circle' } as CircleShape,
         ],
-        selectedShapeId: 'shape-1',
-        history: [[{ id: 'shape-1' }, { id: 'shape-2' }] as AnnotationShape[]],
-        historyIndex: 0,
       });
 
       const { deleteShape } = useAnnotationStore.getState();
@@ -419,13 +419,13 @@ describe('useAnnotationStore', () => {
   describe('clearShapes', () => {
     it('should clear all shapes', () => {
       useAnnotationStore.setState({
+        history: [[{ id: 'shape-1' }, { id: 'shape-2' }] as AnnotationShape[]],
+        historyIndex: 0,
+        selectedShapeId: 'shape-1',
         shapes: [
           { id: 'shape-1', type: 'rectangle' } as RectangleShape,
           { id: 'shape-2', type: 'circle' } as CircleShape,
         ],
-        selectedShapeId: 'shape-1',
-        history: [[{ id: 'shape-1' }, { id: 'shape-2' }] as AnnotationShape[]],
-        historyIndex: 0,
       });
 
       const { clearShapes } = useAnnotationStore.getState();
@@ -438,9 +438,9 @@ describe('useAnnotationStore', () => {
 
     it('should add clear action to history', () => {
       useAnnotationStore.setState({
-        shapes: [{ id: 'shape-1', type: 'rectangle' } as RectangleShape],
         history: [[{ id: 'shape-1' } as AnnotationShape]],
         historyIndex: 0,
+        shapes: [{ id: 'shape-1', type: 'rectangle' } as RectangleShape],
       });
 
       const { clearShapes } = useAnnotationStore.getState();
@@ -531,9 +531,9 @@ describe('useAnnotationStore', () => {
         const { startDrawing } = useAnnotationStore.getState();
 
         startDrawing({
-          type: 'rectangle',
           strokeColor: '#ff0000',
           strokeWidth: 2,
+          type: 'rectangle',
           x: 10,
           y: 20,
         });
@@ -549,19 +549,19 @@ describe('useAnnotationStore', () => {
     describe('updateDrawing', () => {
       it('should update drawing shape', () => {
         useAnnotationStore.setState({
-          isDrawing: true,
           drawingShape: {
+            height: 30,
             id: 'drawing-1',
             type: 'rectangle',
+            width: 50,
             x: 10,
             y: 20,
-            width: 50,
-            height: 30,
           },
+          isDrawing: true,
         });
 
         const { updateDrawing } = useAnnotationStore.getState();
-        updateDrawing({ width: 100, height: 60 });
+        updateDrawing({ height: 60, width: 100 });
 
         const shape = useAnnotationStore.getState().drawingShape as {
           width?: number;
@@ -582,20 +582,20 @@ describe('useAnnotationStore', () => {
     describe('finishDrawing', () => {
       it('should add valid rectangle shape', () => {
         useAnnotationStore.setState({
-          isDrawing: true,
           drawingShape: {
+            fillColor: null,
+            height: 50,
             id: 'rect-1',
-            type: 'rectangle',
             strokeColor: '#ff0000',
             strokeWidth: 2,
-            fillColor: null,
+            type: 'rectangle',
+            width: 100,
             x: 10,
             y: 20,
-            width: 100,
-            height: 50,
           },
           history: [[]],
           historyIndex: 0,
+          isDrawing: true,
         });
 
         const { finishDrawing } = useAnnotationStore.getState();
@@ -609,20 +609,20 @@ describe('useAnnotationStore', () => {
 
       it('should not add invalid rectangle (too small)', () => {
         useAnnotationStore.setState({
-          isDrawing: true,
           drawingShape: {
+            fillColor: null,
+            height: 3, // Too small
             id: 'rect-1',
-            type: 'rectangle',
             strokeColor: '#ff0000',
             strokeWidth: 2,
-            fillColor: null,
+            type: 'rectangle',
+            width: 3, // Too small
             x: 10,
             y: 20,
-            width: 3, // Too small
-            height: 3, // Too small
           },
           history: [[]],
           historyIndex: 0,
+          isDrawing: true,
           shapes: [],
         });
 
@@ -634,19 +634,19 @@ describe('useAnnotationStore', () => {
 
       it('should add valid circle shape', () => {
         useAnnotationStore.setState({
-          isDrawing: true,
           drawingShape: {
+            fillColor: null,
             id: 'circle-1',
-            type: 'circle',
+            radius: 25,
             strokeColor: '#ff0000',
             strokeWidth: 2,
-            fillColor: null,
+            type: 'circle',
             x: 50,
             y: 50,
-            radius: 25,
           },
           history: [[]],
           historyIndex: 0,
+          isDrawing: true,
         });
 
         const { finishDrawing } = useAnnotationStore.getState();
@@ -657,19 +657,19 @@ describe('useAnnotationStore', () => {
 
       it('should not add invalid circle (radius too small)', () => {
         useAnnotationStore.setState({
-          isDrawing: true,
           drawingShape: {
+            fillColor: null,
             id: 'circle-1',
-            type: 'circle',
+            radius: 3, // Too small
             strokeColor: '#ff0000',
             strokeWidth: 2,
-            fillColor: null,
+            type: 'circle',
             x: 50,
             y: 50,
-            radius: 3, // Too small
           },
           history: [[]],
           historyIndex: 0,
+          isDrawing: true,
           shapes: [],
         });
 
@@ -681,17 +681,17 @@ describe('useAnnotationStore', () => {
 
       it('should add valid arrow shape', () => {
         useAnnotationStore.setState({
-          isDrawing: true,
           drawingShape: {
+            fillColor: null,
             id: 'arrow-1',
-            type: 'arrow',
+            points: [0, 0, 100, 100],
             strokeColor: '#ff0000',
             strokeWidth: 2,
-            fillColor: null,
-            points: [0, 0, 100, 100],
+            type: 'arrow',
           },
           history: [[]],
           historyIndex: 0,
+          isDrawing: true,
         });
 
         const { finishDrawing } = useAnnotationStore.getState();
@@ -702,17 +702,17 @@ describe('useAnnotationStore', () => {
 
       it('should not add invalid arrow (too short)', () => {
         useAnnotationStore.setState({
-          isDrawing: true,
           drawingShape: {
+            fillColor: null,
             id: 'arrow-1',
-            type: 'arrow',
+            points: [0, 0, 5, 5], // Too short
             strokeColor: '#ff0000',
             strokeWidth: 2,
-            fillColor: null,
-            points: [0, 0, 5, 5], // Too short
+            type: 'arrow',
           },
           history: [[]],
           historyIndex: 0,
+          isDrawing: true,
           shapes: [],
         });
 
@@ -724,17 +724,17 @@ describe('useAnnotationStore', () => {
 
       it('should add valid freehand shape', () => {
         useAnnotationStore.setState({
-          isDrawing: true,
           drawingShape: {
+            fillColor: null,
             id: 'freehand-1',
-            type: 'freehand',
+            points: [0, 0, 10, 10, 20, 20, 30, 30],
             strokeColor: '#ff0000',
             strokeWidth: 2,
-            fillColor: null,
-            points: [0, 0, 10, 10, 20, 20, 30, 30],
+            type: 'freehand',
           },
           history: [[]],
           historyIndex: 0,
+          isDrawing: true,
         });
 
         const { finishDrawing } = useAnnotationStore.getState();
@@ -745,20 +745,20 @@ describe('useAnnotationStore', () => {
 
       it('should add valid text shape', () => {
         useAnnotationStore.setState({
-          isDrawing: true,
           drawingShape: {
+            fillColor: null,
+            fontSize: 16,
             id: 'text-1',
-            type: 'text',
             strokeColor: '#ff0000',
             strokeWidth: 2,
-            fillColor: null,
+            text: 'Hello World',
+            type: 'text',
             x: 100,
             y: 100,
-            text: 'Hello World',
-            fontSize: 16,
           },
           history: [[]],
           historyIndex: 0,
+          isDrawing: true,
         });
 
         const { finishDrawing } = useAnnotationStore.getState();
@@ -769,20 +769,20 @@ describe('useAnnotationStore', () => {
 
       it('should not add invalid text (empty)', () => {
         useAnnotationStore.setState({
-          isDrawing: true,
           drawingShape: {
+            fillColor: null,
+            fontSize: 16,
             id: 'text-1',
-            type: 'text',
             strokeColor: '#ff0000',
             strokeWidth: 2,
-            fillColor: null,
+            text: '',
+            type: 'text',
             x: 100,
             y: 100,
-            text: '',
-            fontSize: 16,
           },
           history: [[]],
           historyIndex: 0,
+          isDrawing: true,
           shapes: [],
         });
 
@@ -796,15 +796,15 @@ describe('useAnnotationStore', () => {
     describe('cancelDrawing', () => {
       it('should cancel drawing without adding shape', () => {
         useAnnotationStore.setState({
-          isDrawing: true,
           drawingShape: {
+            height: 50,
             id: 'rect-1',
             type: 'rectangle',
+            width: 100,
             x: 10,
             y: 20,
-            width: 100,
-            height: 50,
           },
+          isDrawing: true,
           shapes: [],
         });
 
@@ -823,21 +823,21 @@ describe('useAnnotationStore', () => {
     describe('undo', () => {
       it('should undo to previous state', () => {
         const shape1: RectangleShape = {
+          fillColor: null,
+          height: 50,
           id: 'shape-1',
-          type: 'rectangle',
           strokeColor: '#000',
           strokeWidth: 2,
-          fillColor: null,
+          type: 'rectangle',
+          width: 100,
           x: 10,
           y: 20,
-          width: 100,
-          height: 50,
         };
 
         useAnnotationStore.setState({
-          shapes: [shape1],
           history: [[], [shape1]],
           historyIndex: 1,
+          shapes: [shape1],
         });
 
         const { undo } = useAnnotationStore.getState();
@@ -850,10 +850,10 @@ describe('useAnnotationStore', () => {
 
       it('should clear selection after undo', () => {
         useAnnotationStore.setState({
-          shapes: [{ id: 'shape-1' } as AnnotationShape],
-          selectedShapeId: 'shape-1',
           history: [[], [{ id: 'shape-1' } as AnnotationShape]],
           historyIndex: 1,
+          selectedShapeId: 'shape-1',
+          shapes: [{ id: 'shape-1' } as AnnotationShape],
         });
 
         const { undo } = useAnnotationStore.getState();
@@ -864,9 +864,9 @@ describe('useAnnotationStore', () => {
 
       it('should not undo past beginning', () => {
         useAnnotationStore.setState({
-          shapes: [],
           history: [[]],
           historyIndex: 0,
+          shapes: [],
         });
 
         const { undo } = useAnnotationStore.getState();
@@ -879,20 +879,20 @@ describe('useAnnotationStore', () => {
     describe('redo', () => {
       it('should redo to next state', () => {
         const shape1: CircleShape = {
+          fillColor: null,
           id: 'shape-1',
-          type: 'circle',
+          radius: 25,
           strokeColor: '#000',
           strokeWidth: 2,
-          fillColor: null,
+          type: 'circle',
           x: 50,
           y: 50,
-          radius: 25,
         };
 
         useAnnotationStore.setState({
-          shapes: [],
           history: [[], [shape1]],
           historyIndex: 0,
+          shapes: [],
         });
 
         const { redo } = useAnnotationStore.getState();
@@ -905,9 +905,9 @@ describe('useAnnotationStore', () => {
 
       it('should not redo past end', () => {
         useAnnotationStore.setState({
-          shapes: [{ id: 'shape-1' } as AnnotationShape],
           history: [[], [{ id: 'shape-1' } as AnnotationShape]],
           historyIndex: 1,
+          shapes: [{ id: 'shape-1' } as AnnotationShape],
         });
 
         const { redo } = useAnnotationStore.getState();
@@ -965,9 +965,9 @@ describe('useAnnotationStore', () => {
   describe('history limit', () => {
     it('should limit history to MAX_HISTORY (50)', () => {
       useAnnotationStore.setState({
-        shapes: [],
         history: [[]],
         historyIndex: 0,
+        shapes: [],
       });
 
       const { addShape } = useAnnotationStore.getState();
@@ -975,15 +975,15 @@ describe('useAnnotationStore', () => {
       // Add 60 shapes (exceeds MAX_HISTORY of 50)
       for (let i = 0; i < 60; i++) {
         addShape({
+          fillColor: null,
+          height: 50,
           id: `shape-${i}`,
-          type: 'rectangle',
           strokeColor: '#000',
           strokeWidth: 2,
-          fillColor: null,
+          type: 'rectangle',
+          width: 50,
           x: i * 10,
           y: i * 10,
-          width: 50,
-          height: 50,
         });
       }
 

@@ -18,9 +18,9 @@ interface ActionToolbarProps {
 }
 
 const SIZE_CLASSES: Record<ToolbarSize, { button: string; icon: string }> = {
-  sm: { button: 'p-1', icon: 'w-3.5 h-3.5' },
-  md: { button: 'p-1.5', icon: 'w-4 h-4' },
   lg: { button: 'p-2', icon: 'w-5 h-5' },
+  md: { button: 'p-1.5', icon: 'w-4 h-4' },
+  sm: { button: 'p-1', icon: 'w-3.5 h-3.5' },
 };
 
 function ActionToolbarComponent({

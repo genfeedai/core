@@ -5,13 +5,24 @@ import { NODE_DEFINITIONS } from '@genfeedai/types';
  * Binary fields by node type - fields containing base64 data URLs or large media
  */
 const BINARY_FIELDS_BY_TYPE: Record<string, string[]> = {
-  imageInput: ['image'],
-  imageGen: ['inputImages', 'outputImage', 'outputImages'],
-  videoGen: ['inputImage', 'lastFrame', 'referenceImages', 'outputVideo'],
-  llm: ['inputImages'],
+  animation: ['inputVideo', 'outputVideo'],
   annotation: ['inputImage', 'outputImage'],
-  resize: ['inputMedia', 'outputMedia'],
+  imageCompare: ['imageA', 'imageB'],
+  imageGen: ['inputImages', 'outputImage', 'outputImages'],
+  imageGridSplit: ['inputImage', 'outputImages'],
+  imageInput: ['image'],
+  lipSync: ['inputImage', 'inputVideo', 'inputAudio', 'outputVideo'],
+  llm: ['inputImages'],
+  motionControl: ['inputImage', 'inputVideo', 'outputVideo'],
+  output: ['inputImage', 'inputVideo'],
+  outputGallery: ['images'],
+  prompt: [],
+  promptConstructor: [],
   reframe: ['inputImage', 'inputVideo', 'outputImage', 'outputVideo'],
+  resize: ['inputMedia', 'outputMedia'],
+  subtitle: ['inputVideo', 'outputVideo'],
+  template: [],
+  textToSpeech: ['outputAudio'],
   upscale: [
     'inputImage',
     'inputVideo',
@@ -20,22 +31,11 @@ const BINARY_FIELDS_BY_TYPE: Record<string, string[]> = {
     'originalPreview',
     'outputPreview',
   ],
-  imageGridSplit: ['inputImage', 'outputImages'],
+  videoFrameExtract: ['inputVideo', 'outputImage'],
+  videoGen: ['inputImage', 'lastFrame', 'referenceImages', 'outputVideo'],
   videoStitch: ['inputVideos', 'outputVideo'],
   videoTrim: ['inputVideo', 'outputVideo'],
-  videoFrameExtract: ['inputVideo', 'outputImage'],
-  animation: ['inputVideo', 'outputVideo'],
-  lipSync: ['inputImage', 'inputVideo', 'inputAudio', 'outputVideo'],
   voiceChange: ['inputVideo', 'inputAudio', 'outputVideo'],
-  textToSpeech: ['outputAudio'],
-  motionControl: ['inputImage', 'inputVideo', 'outputVideo'],
-  subtitle: ['inputVideo', 'outputVideo'],
-  output: ['inputImage', 'inputVideo'],
-  outputGallery: ['images'],
-  imageCompare: ['imageA', 'imageB'],
-  prompt: [],
-  promptConstructor: [],
-  template: [],
 };
 
 /**
@@ -114,10 +114,10 @@ export function stripBinaryData(nodes: WorkflowNode[]): StrippedNode[] {
     }
 
     return {
-      id: node.id,
-      type: node.type ?? 'unknown',
-      position: node.position,
       data: strippedData,
+      id: node.id,
+      position: node.position,
+      type: node.type ?? 'unknown',
     };
   });
 }
@@ -134,16 +134,16 @@ export function buildWorkflowContext(
 
   const connections = edges.map((edge) => ({
     from: edge.source,
-    to: edge.target,
     sourceHandle: edge.sourceHandle || null,
     targetHandle: edge.targetHandle || null,
+    to: edge.target,
   }));
 
   return {
-    nodeCount: nodes.length,
-    nodes: strippedNodes,
     connections,
     isEmpty,
+    nodeCount: nodes.length,
+    nodes: strippedNodes,
   };
 }
 

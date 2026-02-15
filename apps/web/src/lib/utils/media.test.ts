@@ -17,13 +17,13 @@ describe('getImageDimensions', () => {
     mockImage.width = 1920;
     mockImage.height = 1080;
     (mockImage.onload as () => void)();
-    expect(await promise).toEqual({ width: 1920, height: 1080 });
+    expect(await promise).toEqual({ height: 1080, width: 1920 });
   });
 
   it('resolves with {0,0} on error', async () => {
     const promise = getImageDimensions('https://example.com/bad.png');
     (mockImage.onerror as () => void)();
-    expect(await promise).toEqual({ width: 0, height: 0 });
+    expect(await promise).toEqual({ height: 0, width: 0 });
   });
 
   it('sets crossOrigin to anonymous', () => {
@@ -50,8 +50,8 @@ describe('getVideoMetadata', () => {
     mockVideo.videoHeight = 2160;
     (mockVideo.onloadedmetadata as () => void)();
     expect(await promise).toEqual({
+      dimensions: { height: 2160, width: 3840 },
       duration: 30.5,
-      dimensions: { width: 3840, height: 2160 },
     });
   });
 
@@ -59,8 +59,8 @@ describe('getVideoMetadata', () => {
     const promise = getVideoMetadata('https://example.com/bad.mp4');
     (mockVideo.onerror as () => void)();
     expect(await promise).toEqual({
+      dimensions: { height: 0, width: 0 },
       duration: 0,
-      dimensions: { width: 0, height: 0 },
     });
   });
 

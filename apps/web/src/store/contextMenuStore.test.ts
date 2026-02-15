@@ -7,8 +7,8 @@ describe('contextMenuStore', () => {
     const store = useContextMenuStore;
     store.setState({
       isOpen: false,
-      position: { x: 0, y: 0 },
       menuType: null,
+      position: { x: 0, y: 0 },
       targetId: null,
       targetIds: null,
     });

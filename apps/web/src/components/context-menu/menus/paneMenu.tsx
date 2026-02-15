@@ -34,47 +34,47 @@ import { type ContextMenuItemConfig, createSeparator } from '@/components/contex
 
 // Icon mapping from node definition icon strings to Lucide components
 const NODE_ICONS: Record<string, LucideIcon> = {
-  Image,
-  MessageSquare,
-  FileText,
-  Volume2,
-  FileVideo,
-  Sparkles,
-  Video,
-  Brain,
-  Mic,
-  AudioLines,
-  Navigation,
-  Maximize2,
-  Wand2,
-  Layers,
-  Scissors,
-  Film,
-  Crop,
-  Maximize,
-  Grid3X3,
-  Pencil,
-  Subtitles,
-  CheckCircle,
-  ArrowRightToLine,
   ArrowLeftFromLine,
+  ArrowRightToLine,
+  AudioLines,
+  Brain,
+  CheckCircle,
+  Crop,
+  FileText,
+  FileVideo,
+  Film,
   GitBranch,
+  Grid3X3,
+  Image,
+  Layers,
+  Maximize,
+  Maximize2,
+  MessageSquare,
+  Mic,
+  Navigation,
+  Pencil,
+  Scissors,
+  Sparkles,
+  Subtitles,
+  Video,
+  Volume2,
+  Wand2,
 };
 
 const CATEGORY_LABELS: Record<NodeCategory, string> = {
-  input: 'Input',
   ai: 'AI Generation',
-  processing: 'Processing',
-  output: 'Output',
   composition: 'Composition',
+  input: 'Input',
+  output: 'Output',
+  processing: 'Processing',
 };
 
 const CATEGORY_ICONS: Record<NodeCategory, LucideIcon> = {
-  input: Image,
   ai: Sparkles,
-  processing: Wand2,
-  output: Monitor,
   composition: GitBranch,
+  input: Image,
+  output: Monitor,
+  processing: Wand2,
 };
 
 interface PaneMenuOptions {
@@ -110,15 +110,15 @@ export function getPaneMenuItems({
     const nodes = nodesByCategory[category];
 
     return {
+      icon: <CategoryIcon className="w-4 h-4" />,
       id: `add-${category}`,
       label: CATEGORY_LABELS[category],
-      icon: <CategoryIcon className="w-4 h-4" />,
       submenu: nodes.map((node) => {
         const NodeIcon = NODE_ICONS[node.icon] ?? Sparkles;
         return {
+          icon: <NodeIcon className="w-4 h-4" />,
           id: `add-${node.type}`,
           label: node.label,
-          icon: <NodeIcon className="w-4 h-4" />,
           onClick: () => onAddNode(node.type, screenX, screenY),
         };
       }),
@@ -129,33 +129,33 @@ export function getPaneMenuItems({
     ...addNodeItems,
     createSeparator('separator-1'),
     {
+      disabled: !hasClipboard,
+      icon: <Clipboard className="w-4 h-4" />,
       id: 'paste',
       label: 'Paste',
-      icon: <Clipboard className="w-4 h-4" />,
-      shortcut: '⌘V',
-      disabled: !hasClipboard,
       onClick: onPaste,
+      shortcut: '⌘V',
     },
     createSeparator('separator-2'),
     {
       id: 'select-all',
       label: 'Select All',
-      shortcut: '⌘A',
       onClick: onSelectAll,
+      shortcut: '⌘A',
     },
     {
+      icon: <Maximize className="w-4 h-4" />,
       id: 'fit-view',
       label: 'Fit View',
-      icon: <Maximize className="w-4 h-4" />,
-      shortcut: 'F',
       onClick: onFitView,
+      shortcut: 'F',
     },
     {
+      icon: <LayoutGrid className="w-4 h-4" />,
       id: 'auto-layout',
       label: 'Auto-layout Nodes',
-      icon: <LayoutGrid className="w-4 h-4" />,
-      shortcut: 'L',
       onClick: onAutoLayout,
+      shortcut: 'L',
     },
   ];
 }

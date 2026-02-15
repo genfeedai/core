@@ -136,8 +136,8 @@ describe('logger', () => {
       logger.error('Report this', error, { metadata: { runId: 'run_1' } });
 
       expect(reporter).toHaveBeenCalledWith({
-        message: 'Report this',
         error,
+        message: 'Report this',
         options: { metadata: { runId: 'run_1' } },
       });
     });

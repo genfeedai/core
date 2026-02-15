@@ -39,7 +39,7 @@ describe('Workflow Execution E2E', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
     await app.init();
 
     workflowModel = moduleFixture.get<Model<Workflow>>(getModelToken(Workflow.name));
@@ -60,13 +60,13 @@ describe('Workflow Execution E2E', () => {
   describe('Workflow CRUD', () => {
     it('should create a workflow', async () => {
       const createDto = {
-        name: 'Test Workflow',
         description: 'A test workflow',
-        nodes: [
-          { id: 'node-1', type: 'prompt', position: { x: 0, y: 0 }, data: { label: 'Prompt' } },
-        ],
-        edges: [],
         edgeStyle: 'bezier',
+        edges: [],
+        name: 'Test Workflow',
+        nodes: [
+          { data: { label: 'Prompt' }, id: 'node-1', position: { x: 0, y: 0 }, type: 'prompt' },
+        ],
       };
 
       const response = await request(app.getHttpServer())
@@ -82,8 +82,8 @@ describe('Workflow Execution E2E', () => {
     it('should get all workflows', async () => {
       // Create test workflows
       await workflowModel.create([
-        { name: 'Workflow 1', nodes: [], edges: [], edgeStyle: 'bezier' },
-        { name: 'Workflow 2', nodes: [], edges: [], edgeStyle: 'bezier' },
+        { edgeStyle: 'bezier', edges: [], name: 'Workflow 1', nodes: [] },
+        { edgeStyle: 'bezier', edges: [], name: 'Workflow 2', nodes: [] },
       ]);
 
       const response = await request(app.getHttpServer()).get('/workflows').expect(200);
@@ -93,10 +93,10 @@ describe('Workflow Execution E2E', () => {
 
     it('should get workflow by ID', async () => {
       const workflow = await workflowModel.create({
+        edgeStyle: 'bezier',
+        edges: [],
         name: 'Single Workflow',
         nodes: [],
-        edges: [],
-        edgeStyle: 'bezier',
       });
 
       const response = await request(app.getHttpServer())
@@ -108,10 +108,10 @@ describe('Workflow Execution E2E', () => {
 
     it('should update workflow', async () => {
       const workflow = await workflowModel.create({
+        edgeStyle: 'bezier',
+        edges: [],
         name: 'Original Name',
         nodes: [],
-        edges: [],
-        edgeStyle: 'bezier',
       });
 
       const response = await request(app.getHttpServer())
@@ -124,10 +124,10 @@ describe('Workflow Execution E2E', () => {
 
     it('should soft delete workflow', async () => {
       const workflow = await workflowModel.create({
+        edgeStyle: 'bezier',
+        edges: [],
         name: 'To Delete',
         nodes: [],
-        edges: [],
-        edgeStyle: 'bezier',
       });
 
       await request(app.getHttpServer()).delete(`/workflows/${workflow._id}`).expect(200);
@@ -146,10 +146,10 @@ describe('Workflow Execution E2E', () => {
   describe('Execution CRUD', () => {
     it('should create an execution for a workflow', async () => {
       const workflow = await workflowModel.create({
-        name: 'Execution Test',
-        nodes: [{ id: 'node-1', type: 'prompt', position: { x: 0, y: 0 }, data: {} }],
-        edges: [],
         edgeStyle: 'bezier',
+        edges: [],
+        name: 'Execution Test',
+        nodes: [{ data: {}, id: 'node-1', position: { x: 0, y: 0 }, type: 'prompt' }],
       });
 
       const response = await request(app.getHttpServer())
@@ -163,15 +163,15 @@ describe('Workflow Execution E2E', () => {
 
     it('should get executions for a workflow', async () => {
       const workflow = await workflowModel.create({
+        edgeStyle: 'bezier',
+        edges: [],
         name: 'Execution Test',
         nodes: [],
-        edges: [],
-        edgeStyle: 'bezier',
       });
 
       await executionModel.create([
-        { workflowId: workflow._id, status: 'completed', nodeResults: [] },
-        { workflowId: workflow._id, status: 'failed', nodeResults: [] },
+        { nodeResults: [], status: 'completed', workflowId: workflow._id },
+        { nodeResults: [], status: 'failed', workflowId: workflow._id },
       ]);
 
       const response = await request(app.getHttpServer())
@@ -183,16 +183,16 @@ describe('Workflow Execution E2E', () => {
 
     it('should get single execution by ID', async () => {
       const workflow = await workflowModel.create({
+        edgeStyle: 'bezier',
+        edges: [],
         name: 'Test',
         nodes: [],
-        edges: [],
-        edgeStyle: 'bezier',
       });
 
       const execution = await executionModel.create({
-        workflowId: workflow._id,
-        status: 'running',
         nodeResults: [],
+        status: 'running',
+        workflowId: workflow._id,
       });
 
       const response = await request(app.getHttpServer())
@@ -206,8 +206,8 @@ describe('Workflow Execution E2E', () => {
   describe('Database queries', () => {
     it('should respect isDeleted filter', async () => {
       await workflowModel.create([
-        { name: 'Active', nodes: [], edges: [], edgeStyle: 'bezier', isDeleted: false },
-        { name: 'Deleted', nodes: [], edges: [], edgeStyle: 'bezier', isDeleted: true },
+        { edgeStyle: 'bezier', edges: [], isDeleted: false, name: 'Active', nodes: [] },
+        { edgeStyle: 'bezier', edges: [], isDeleted: true, name: 'Deleted', nodes: [] },
       ]);
 
       const response = await request(app.getHttpServer()).get('/workflows').expect(200);

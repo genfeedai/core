@@ -16,9 +16,9 @@ export async function POST(request: NextRequest) {
 
     // Generate text synchronously (LLM is usually fast enough)
     const output = await generateText({
+      max_tokens: config.maxTokens || 1024,
       prompt,
       system_prompt: config.systemPrompt,
-      max_tokens: config.maxTokens || 1024,
       temperature: config.temperature || 0.7,
       top_p: config.topP || 0.9,
     });

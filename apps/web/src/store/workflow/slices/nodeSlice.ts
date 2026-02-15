@@ -27,20 +27,20 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
 
     const id = generateId();
     const newNode: WorkflowNode = {
-      id,
-      type,
-      position,
       data: {
         ...nodeDef.defaultData,
         label: nodeDef.label,
         status: 'idle',
       } as WorkflowNodeData,
-      ...(type === 'download' && { width: 280, height: 320 }),
+      id,
+      position,
+      type,
+      ...(type === 'download' && { height: 320, width: 280 }),
     };
 
     set((state) => ({
-      nodes: [...state.nodes, newNode],
       isDirty: true,
+      nodes: [...state.nodes, newNode],
     }));
 
     return id;
@@ -50,9 +50,9 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
     if (newNodes.length === 0) return;
 
     set((state) => ({
-      nodes: [...state.nodes, ...newNodes],
       edges: [...state.edges, ...newEdges],
       isDirty: true,
+      nodes: [...state.nodes, ...newNodes],
     }));
 
     // Propagate outputs for nodes that have existing connections
@@ -61,6 +61,77 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
     for (const sourceId of sourceNodeIds) {
       propagateOutputsDownstream(sourceId);
     }
+  },
+
+  duplicateNode: (nodeId) => {
+    const { nodes, edges, edgeStyle, propagateOutputsDownstream } = get();
+    const node = nodes.find((n) => n.id === nodeId);
+    if (!node) return null;
+
+    const newId = generateId();
+    const newNode: WorkflowNode = {
+      ...node,
+      data: {
+        ...node.data,
+        jobId: null,
+        status: 'idle',
+      } as WorkflowNodeData,
+      id: newId,
+      position: {
+        x: node.position.x + 50,
+        y: node.position.y + 50,
+      },
+    };
+
+    const incomingEdges = edges.filter((e) => e.target === nodeId && e.source !== nodeId);
+    const clonedEdges: WorkflowEdge[] = incomingEdges.map((edge) => ({
+      ...edge,
+      id: generateId(),
+      target: newId,
+      type: edgeStyle,
+    }));
+
+    set((state) => ({
+      edges: [...state.edges, ...clonedEdges],
+      isDirty: true,
+      nodes: [...state.nodes, newNode],
+    }));
+
+    const sourcesNotified = new Set<string>();
+    for (const edge of incomingEdges) {
+      if (!sourcesNotified.has(edge.source)) {
+        sourcesNotified.add(edge.source);
+        propagateOutputsDownstream(edge.source);
+      }
+    }
+
+    return newId;
+  },
+
+  propagateOutputsDownstream: (sourceNodeId, outputValue?) => {
+    const { nodes, edges } = get();
+    const sourceNode = nodes.find((n) => n.id === sourceNodeId);
+    if (!sourceNode) return;
+
+    const output = outputValue ?? getNodeOutput(sourceNode);
+    if (!output) return;
+
+    const updates = computeDownstreamUpdates(sourceNodeId, output, nodes, edges);
+    if (updates.size === 0) return;
+    if (!hasStateChanged(updates, nodes)) return;
+
+    set((state) => ({
+      isDirty: true,
+      nodes: applyNodeUpdates(state.nodes, updates),
+    }));
+  },
+
+  removeNode: (nodeId) => {
+    set((state) => ({
+      edges: state.edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
+      isDirty: true,
+      nodes: state.nodes.filter((node) => node.id !== nodeId),
+    }));
   },
 
   updateNodeData: (nodeId, data) => {
@@ -112,76 +183,5 @@ export const createNodeSlice: StateCreator<WorkflowStore, [], [], NodeSlice> = (
         propagateOutputsDownstream(nodeId);
       }
     }
-  },
-
-  removeNode: (nodeId) => {
-    set((state) => ({
-      nodes: state.nodes.filter((node) => node.id !== nodeId),
-      edges: state.edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
-      isDirty: true,
-    }));
-  },
-
-  duplicateNode: (nodeId) => {
-    const { nodes, edges, edgeStyle, propagateOutputsDownstream } = get();
-    const node = nodes.find((n) => n.id === nodeId);
-    if (!node) return null;
-
-    const newId = generateId();
-    const newNode: WorkflowNode = {
-      ...node,
-      id: newId,
-      position: {
-        x: node.position.x + 50,
-        y: node.position.y + 50,
-      },
-      data: {
-        ...node.data,
-        status: 'idle',
-        jobId: null,
-      } as WorkflowNodeData,
-    };
-
-    const incomingEdges = edges.filter((e) => e.target === nodeId && e.source !== nodeId);
-    const clonedEdges: WorkflowEdge[] = incomingEdges.map((edge) => ({
-      ...edge,
-      id: generateId(),
-      target: newId,
-      type: edgeStyle,
-    }));
-
-    set((state) => ({
-      nodes: [...state.nodes, newNode],
-      edges: [...state.edges, ...clonedEdges],
-      isDirty: true,
-    }));
-
-    const sourcesNotified = new Set<string>();
-    for (const edge of incomingEdges) {
-      if (!sourcesNotified.has(edge.source)) {
-        sourcesNotified.add(edge.source);
-        propagateOutputsDownstream(edge.source);
-      }
-    }
-
-    return newId;
-  },
-
-  propagateOutputsDownstream: (sourceNodeId, outputValue?) => {
-    const { nodes, edges } = get();
-    const sourceNode = nodes.find((n) => n.id === sourceNodeId);
-    if (!sourceNode) return;
-
-    const output = outputValue ?? getNodeOutput(sourceNode);
-    if (!output) return;
-
-    const updates = computeDownstreamUpdates(sourceNodeId, output, nodes, edges);
-    if (updates.size === 0) return;
-    if (!hasStateChanged(updates, nodes)) return;
-
-    set((state) => ({
-      nodes: applyNodeUpdates(state.nodes, updates),
-      isDirty: true,
-    }));
   },
 });

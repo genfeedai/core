@@ -108,10 +108,10 @@ export function mapOutputToInput(
   // Handle download node
   if (targetType === 'download') {
     if (outputType === 'video') {
-      return { inputVideo: output, inputImage: null, inputType: 'video' };
+      return { inputImage: null, inputType: 'video', inputVideo: output };
     }
     if (outputType === 'image') {
-      return { inputImage: output, inputVideo: null, inputType: 'image' };
+      return { inputImage: output, inputType: 'image', inputVideo: null };
     }
     return null;
   }
@@ -127,7 +127,7 @@ export function mapOutputToInput(
 
   if (outputType === 'image') {
     if (['upscale', 'reframe'].includes(targetType)) {
-      return { inputImage: output, inputVideo: null, inputType: 'image' };
+      return { inputImage: output, inputType: 'image', inputVideo: null };
     }
     if (
       ['videoGen', 'lipSync', 'voiceChange', 'motionControl', 'resize', 'animation'].includes(
@@ -143,7 +143,7 @@ export function mapOutputToInput(
 
   if (outputType === 'video') {
     if (['upscale', 'reframe'].includes(targetType)) {
-      return { inputVideo: output, inputImage: null, inputType: 'video' };
+      return { inputImage: null, inputType: 'video', inputVideo: output };
     }
     if (
       [

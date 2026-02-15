@@ -21,35 +21,6 @@ const MAX_RECENT_COMMANDS = 5;
 export const useCommandPaletteStore = create<CommandPaletteStore>()(
   persist(
     (set) => ({
-      isOpen: false,
-      searchQuery: '',
-      selectedIndex: 0,
-      recentCommands: [],
-
-      open: () => {
-        set({ isOpen: true, searchQuery: '', selectedIndex: 0 });
-      },
-
-      close: () => {
-        set({ isOpen: false, searchQuery: '', selectedIndex: 0 });
-      },
-
-      toggle: () => {
-        set((state) => ({
-          isOpen: !state.isOpen,
-          searchQuery: state.isOpen ? state.searchQuery : '',
-          selectedIndex: state.isOpen ? state.selectedIndex : 0,
-        }));
-      },
-
-      setQuery: (query) => {
-        set({ searchQuery: query, selectedIndex: 0 });
-      },
-
-      setSelectedIndex: (index) => {
-        set({ selectedIndex: index });
-      },
-
       addRecentCommand: (id) => {
         set((state) => {
           const filtered = state.recentCommands.filter((cmd) => cmd !== id);
@@ -59,8 +30,36 @@ export const useCommandPaletteStore = create<CommandPaletteStore>()(
         });
       },
 
+      close: () => {
+        set({ isOpen: false, searchQuery: '', selectedIndex: 0 });
+      },
+      isOpen: false,
+
+      open: () => {
+        set({ isOpen: true, searchQuery: '', selectedIndex: 0 });
+      },
+      recentCommands: [],
+
       reset: () => {
         set({ searchQuery: '', selectedIndex: 0 });
+      },
+      searchQuery: '',
+      selectedIndex: 0,
+
+      setQuery: (query) => {
+        set({ searchQuery: query, selectedIndex: 0 });
+      },
+
+      setSelectedIndex: (index) => {
+        set({ selectedIndex: index });
+      },
+
+      toggle: () => {
+        set((state) => ({
+          isOpen: !state.isOpen,
+          searchQuery: state.isOpen ? state.searchQuery : '',
+          selectedIndex: state.isOpen ? state.selectedIndex : 0,
+        }));
       },
     }),
     {

@@ -5,14 +5,24 @@ import type { NodeType, HandleType } from '@genfeedai/types';
 // TYPES
 // =============================================================================
 
-interface WorkflowNode {
+/**
+ * Simplified node shape for validating raw AI-generated JSON.
+ * NOT the same as WorkflowNode from @genfeedai/types (which is a full React Flow Node).
+ * Raw JSON has `type: string` (any string, may be invalid) and `data: Record<string, unknown>`.
+ */
+interface ValidationNode {
   id: string;
   type: string;
   position: { x: number; y: number };
   data: Record<string, unknown>;
 }
 
-interface WorkflowEdge {
+/**
+ * Simplified edge shape for validating raw AI-generated JSON.
+ * NOT the same as WorkflowEdge from @genfeedai/types (which is a full React Flow Edge).
+ * Raw JSON has required sourceHandle/targetHandle (not optional like React Flow).
+ */
+interface ValidationEdge {
   id: string;
   source: string;
   target: string;
@@ -23,8 +33,8 @@ interface WorkflowEdge {
 interface GeneratedWorkflow {
   name: string;
   description: string;
-  nodes: WorkflowNode[];
-  edges: WorkflowEdge[];
+  nodes: ValidationNode[];
+  edges: ValidationEdge[];
 }
 
 interface ValidationResult {
@@ -108,11 +118,11 @@ export function validateWorkflowJSON(workflow: GeneratedWorkflow): ValidationRes
   }
   if (!Array.isArray(workflow.nodes)) {
     errors.push('nodes must be an array');
-    return { valid: false, errors, warnings };
+    return { errors, valid: false, warnings };
   }
   if (!Array.isArray(workflow.edges)) {
     errors.push('edges must be an array');
-    return { valid: false, errors, warnings };
+    return { errors, valid: false, warnings };
   }
 
   // --- Node checks ---
@@ -195,7 +205,7 @@ export function validateWorkflowJSON(workflow: GeneratedWorkflow): ValidationRes
     }
   }
 
-  return { valid: errors.length === 0, errors, warnings };
+  return { errors, valid: errors.length === 0, warnings };
 }
 
 // =============================================================================
@@ -238,28 +248,28 @@ export function repairWorkflowJSON(workflow: GeneratedWorkflow): GeneratedWorkfl
     if (!node.type || !VALID_NODE_TYPES.has(node.type)) {
       // Try common misspellings
       const typeMap: Record<string, NodeType> = {
-        image: 'imageGen',
-        imagegen: 'imageGen',
-        image_gen: 'imageGen',
-        video: 'videoGen',
-        videogen: 'videoGen',
-        video_gen: 'videoGen',
-        text: 'prompt',
-        textinput: 'prompt',
-        text_input: 'prompt',
-        gridsplit: 'imageGridSplit',
-        grid_split: 'imageGridSplit',
-        stitch: 'videoStitch',
-        trim: 'videoTrim',
-        tts: 'textToSpeech',
-        text_to_speech: 'textToSpeech',
-        lipsync: 'lipSync',
-        lip_sync: 'lipSync',
-        voice_change: 'voiceChange',
         frame_extract: 'videoFrameExtract',
         frameextract: 'videoFrameExtract',
+        grid_split: 'imageGridSplit',
+        gridsplit: 'imageGridSplit',
+        image: 'imageGen',
+        image_gen: 'imageGen',
+        imagegen: 'imageGen',
+        lip_sync: 'lipSync',
+        lipsync: 'lipSync',
         motion: 'motionControl',
         motion_control: 'motionControl',
+        stitch: 'videoStitch',
+        text: 'prompt',
+        text_input: 'prompt',
+        text_to_speech: 'textToSpeech',
+        textinput: 'prompt',
+        trim: 'videoTrim',
+        tts: 'textToSpeech',
+        video: 'videoGen',
+        video_gen: 'videoGen',
+        videogen: 'videoGen',
+        voice_change: 'voiceChange',
       };
       const normalized = (node.type || '').toLowerCase().replace(/[-\s]/g, '_');
       if (typeMap[normalized]) {

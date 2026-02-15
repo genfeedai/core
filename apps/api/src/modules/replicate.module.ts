@@ -10,6 +10,8 @@ import { ReplicatePollerService } from '@/services/replicate-poller.service';
 import { SchemaMapperService } from '@/services/schema-mapper.service';
 
 @Module({
+  controllers: [ReplicateController],
+  exports: [ReplicateService, ReplicatePollerService, SchemaMapperService],
   imports: [
     forwardRef(() => ExecutionsModule),
     forwardRef(() => WorkflowsModule),
@@ -17,8 +19,6 @@ import { SchemaMapperService } from '@/services/schema-mapper.service';
     CostModule,
     FilesModule,
   ],
-  controllers: [ReplicateController],
   providers: [ReplicateService, ReplicatePollerService, SchemaMapperService],
-  exports: [ReplicateService, ReplicatePollerService, SchemaMapperService],
 })
 export class ReplicateModule {}

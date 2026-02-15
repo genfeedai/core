@@ -12,20 +12,20 @@ const mockGetEdges = vi.fn(() => mockEdges);
 
 vi.mock('@xyflow/react', () => ({
   useReactFlow: () => ({
-    setNodes: mockSetNodes,
-    setEdges: mockSetEdges,
     fitView: mockFitView,
-    screenToFlowPosition: mockScreenToFlowPosition,
-    getNodes: mockGetNodes,
     getEdges: mockGetEdges,
+    getNodes: mockGetNodes,
+    screenToFlowPosition: mockScreenToFlowPosition,
+    setEdges: mockSetEdges,
+    setNodes: mockSetNodes,
   }),
 }));
 
 // Mock workflowStore
 const mockAddNode = vi.fn();
 const mockNodes = [
-  { id: 'node-1', type: 'imageGen', data: {}, position: { x: 0, y: 0 } },
-  { id: 'node-2', type: 'llm', data: {}, position: { x: 100, y: 0 } },
+  { data: {}, id: 'node-1', position: { x: 0, y: 0 }, type: 'imageGen' },
+  { data: {}, id: 'node-2', position: { x: 100, y: 0 }, type: 'llm' },
 ];
 const mockEdges = [{ id: 'edge-1', source: 'node-1', target: 'node-2' }];
 
@@ -33,8 +33,8 @@ vi.mock('@/store/workflowStore', () => {
   const store = (selector?: (state: unknown) => unknown) => {
     const state = {
       addNode: mockAddNode,
-      nodes: mockNodes,
       edges: mockEdges,
+      nodes: mockNodes,
     };
     return selector ? selector(state) : state;
   };

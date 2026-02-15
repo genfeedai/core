@@ -22,8 +22,8 @@ describe('ExecutionsService', () => {
     return createConstructableMockModel(
       {
         find: vi.fn().mockReturnValue({
-          sort: vi.fn().mockReturnThis(),
           exec: vi.fn().mockResolvedValue([mockExecution]),
+          sort: vi.fn().mockReturnThis(),
         }),
         findOne: vi.fn().mockReturnValue({
           exec: vi.fn().mockResolvedValue(mockExecution),
@@ -47,8 +47,8 @@ describe('ExecutionsService', () => {
     return createConstructableMockModel(
       {
         find: vi.fn().mockReturnValue({
-          sort: vi.fn().mockReturnThis(),
           exec: vi.fn().mockResolvedValue([mockJob]),
+          sort: vi.fn().mockReturnThis(),
         }),
         findOne: vi.fn().mockReturnValue({
           exec: vi.fn().mockResolvedValue(mockJob),
@@ -333,8 +333,8 @@ describe('ExecutionsService', () => {
   describe('updateJob', () => {
     it('should update a job', async () => {
       const result = await service.updateJob('prediction-123', {
-        status: 'completed',
         progress: 100,
+        status: 'completed',
       });
 
       expect(result).toBeDefined();

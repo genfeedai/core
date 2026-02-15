@@ -28,6 +28,8 @@ import { TTSService } from '@/services/tts.service';
 import { WorkflowInterfaceService } from '@/services/workflow-interface.service';
 import { WorkflowsService } from '@/services/workflows.service';
 @Module({
+  controllers: [BullBoardController],
+  exports: [QueueManagerService, JobRecoveryService, BullModule],
   imports: [
     ConfigModule,
     ScheduleModule.forRoot(),
@@ -35,6 +37,7 @@ import { WorkflowsService } from '@/services/workflows.service';
     // BullMQ Redis connection
     BullModule.forRootAsync({
       imports: [ConfigModule],
+      inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const redisHost = configService.get<string>('REDIS_HOST', 'localhost');
         const redisPort = configService.get<number>('REDIS_PORT', 6379);
@@ -48,30 +51,29 @@ import { WorkflowsService } from '@/services/workflows.service';
           },
         };
       },
-      inject: [ConfigService],
     }),
 
     // Register queues
     BullModule.registerQueue(
       {
-        name: QUEUE_NAMES.WORKFLOW_ORCHESTRATOR,
         defaultJobOptions: DEFAULT_JOB_OPTIONS[QUEUE_NAMES.WORKFLOW_ORCHESTRATOR],
+        name: QUEUE_NAMES.WORKFLOW_ORCHESTRATOR,
       },
       {
-        name: QUEUE_NAMES.IMAGE_GENERATION,
         defaultJobOptions: DEFAULT_JOB_OPTIONS[QUEUE_NAMES.IMAGE_GENERATION],
+        name: QUEUE_NAMES.IMAGE_GENERATION,
       },
       {
-        name: QUEUE_NAMES.VIDEO_GENERATION,
         defaultJobOptions: DEFAULT_JOB_OPTIONS[QUEUE_NAMES.VIDEO_GENERATION],
+        name: QUEUE_NAMES.VIDEO_GENERATION,
       },
       {
-        name: QUEUE_NAMES.LLM_GENERATION,
         defaultJobOptions: DEFAULT_JOB_OPTIONS[QUEUE_NAMES.LLM_GENERATION],
+        name: QUEUE_NAMES.LLM_GENERATION,
       },
       {
-        name: QUEUE_NAMES.PROCESSING,
         defaultJobOptions: DEFAULT_JOB_OPTIONS[QUEUE_NAMES.PROCESSING],
+        name: QUEUE_NAMES.PROCESSING,
       }
     ),
 
@@ -84,8 +86,8 @@ import { WorkflowsService } from '@/services/workflows.service';
           schema.index({ executionId: 1, status: 1 });
           schema.index({ queueName: 1, status: 1 });
           schema.index({ status: 1, updatedAt: 1 });
-          schema.index({ movedToDlq: 1, createdAt: -1 });
-          schema.index({ status: 1, updatedAt: 1, movedToDlq: 1, recoveryCount: 1 });
+          schema.index({ createdAt: -1, movedToDlq: 1 });
+          schema.index({ movedToDlq: 1, recoveryCount: 1, status: 1, updatedAt: 1 });
           schema.index({ bullJobId: 1 }, { unique: true });
           return schema;
         },
@@ -150,7 +152,5 @@ import { WorkflowsService } from '@/services/workflows.service';
       useExisting: FilesService,
     },
   ],
-  controllers: [BullBoardController],
-  exports: [QueueManagerService, JobRecoveryService, BullModule],
 })
 export class QueueModule {}

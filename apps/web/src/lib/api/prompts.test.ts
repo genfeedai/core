@@ -6,28 +6,28 @@ import { promptsApi } from './prompts';
 // Mock the apiClient
 vi.mock('./client', () => ({
   apiClient: {
+    delete: vi.fn(),
     get: vi.fn(),
     post: vi.fn(),
     put: vi.fn(),
-    delete: vi.fn(),
   },
 }));
 
 describe('promptsApi', () => {
   const mockPromptItem: IPrompt = {
     _id: 'prompt-1',
-    name: 'Test Prompt',
-    description: 'A test prompt',
-    promptText: 'Generate a beautiful sunset',
-    styleSettings: {},
     category: 'landscape',
-    tags: ['nature', 'sunset'],
-    useCount: 5,
+    createdAt: '2026-01-15T00:00:00.000Z',
+    description: 'A test prompt',
+    isDeleted: false,
     isFeatured: false,
     isSystem: false,
-    isDeleted: false,
-    createdAt: '2026-01-15T00:00:00.000Z',
+    name: 'Test Prompt',
+    promptText: 'Generate a beautiful sunset',
+    styleSettings: {},
+    tags: ['nature', 'sunset'],
     updatedAt: '2026-01-15T00:00:00.000Z',
+    useCount: 5,
   };
 
   beforeEach(() => {
@@ -72,8 +72,8 @@ describe('promptsApi', () => {
 
       await promptsApi.getAll({
         category: 'landscape',
-        search: 'sunset',
         limit: 10,
+        search: 'sunset',
       });
 
       expect(apiClient.get).toHaveBeenCalledWith(

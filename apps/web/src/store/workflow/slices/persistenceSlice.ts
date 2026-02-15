@@ -54,59 +54,75 @@ export const createPersistenceSlice: StateCreator<WorkflowStore, [], [], Persist
   set,
   get
 ) => ({
-  loadWorkflow: (workflow) => {
-    const hydratedNodes = hydrateWorkflowNodes(workflow.nodes);
-
-    set({
-      nodes: hydratedNodes,
-      edges: normalizeEdgeTypes(workflow.edges),
-      edgeStyle: workflow.edgeStyle,
-      workflowName: workflow.name,
-      workflowId: null,
-      isDirty: true,
-      groups: workflow.groups ?? [],
-      selectedNodeIds: [],
-    });
-
-    const estimatedCost = calculateWorkflowCost(hydratedNodes);
-    useExecutionStore.getState().setEstimatedCost(estimatedCost);
-
-    // Propagate existing outputs to downstream nodes after load
-    propagateExistingOutputs(hydratedNodes, get().propagateOutputsDownstream);
-
-    // Propagation after load is idempotent; don't trigger save cycle
-    set({ isDirty: false });
-  },
-
   clearWorkflow: () => {
     set({
-      nodes: [],
       edges: [],
-      workflowName: 'Untitled Workflow',
-      workflowId: null,
-      isDirty: false,
       groups: [],
+      isDirty: false,
+      nodes: [],
       selectedNodeIds: [],
+      workflowId: null,
+      workflowName: 'Untitled Workflow',
     });
   },
+
+  createNewWorkflow: async (signal) => {
+    const { edgeStyle } = get();
+
+    const workflow = await workflowsApi.create(
+      {
+        edgeStyle,
+        edges: [],
+        groups: [],
+        name: 'Untitled Workflow',
+        nodes: [],
+      },
+      signal
+    );
+
+    set({
+      edges: [],
+      groups: [],
+      isDirty: false,
+      nodes: [],
+      selectedNodeIds: [],
+      workflowId: workflow._id,
+      workflowName: workflow.name,
+    });
+
+    return workflow._id;
+  },
+
+  deleteWorkflow: async (id, signal) => {
+    await workflowsApi.delete(id, signal);
+
+    const { workflowId } = get();
+    if (workflowId === id) {
+      set({
+        edges: [],
+        isDirty: false,
+        nodes: [],
+        workflowId: null,
+        workflowName: 'Untitled Workflow',
+      });
+    }
+  },
+
+  duplicateWorkflowApi: (id, signal) => workflowsApi.duplicate(id, signal),
 
   exportWorkflow: () => {
     const { nodes, edges, edgeStyle, workflowName, groups } = get();
     return {
-      version: 1,
-      name: workflowName,
-      description: '',
-      nodes,
-      edges,
-      edgeStyle,
-      groups,
       createdAt: new Date().toISOString(),
+      description: '',
+      edgeStyle,
+      edges,
+      groups,
+      name: workflowName,
+      nodes,
       updatedAt: new Date().toISOString(),
+      version: 1,
     };
-  },
-
-  getNodeById: (id) => {
-    return get().nodes.find((node) => node.id === id);
   },
 
   getConnectedInputs: (nodeId) => {
@@ -187,6 +203,145 @@ export const createPersistenceSlice: StateCreator<WorkflowStore, [], [], Persist
     return Array.from(connected);
   },
 
+  getNodeById: (id) => {
+    return get().nodes.find((node) => node.id === id);
+  },
+
+  getNodesWithComments: () => {
+    const { nodes } = get();
+    return nodes
+      .filter((node) => {
+        const data = node.data as WorkflowNodeData;
+        return data.comment?.trim();
+      })
+      .sort((a, b) => {
+        if (Math.abs(a.position.y - b.position.y) < 50) {
+          return a.position.x - b.position.x;
+        }
+        return a.position.y - b.position.y;
+      });
+  },
+
+  getUnviewedCommentCount: () => {
+    const { nodes, viewedCommentIds } = get();
+    return nodes.filter((node) => {
+      const data = node.data as WorkflowNodeData;
+      return data.comment?.trim() && !viewedCommentIds.has(node.id);
+    }).length;
+  },
+
+  listWorkflows: async (signal) => {
+    return workflowsApi.getAll(signal);
+  },
+  loadWorkflow: (workflow) => {
+    const hydratedNodes = hydrateWorkflowNodes(workflow.nodes);
+
+    set({
+      edgeStyle: workflow.edgeStyle,
+      edges: normalizeEdgeTypes(workflow.edges),
+      groups: workflow.groups ?? [],
+      isDirty: true,
+      nodes: hydratedNodes,
+      selectedNodeIds: [],
+      workflowId: null,
+      workflowName: workflow.name,
+    });
+
+    const estimatedCost = calculateWorkflowCost(hydratedNodes);
+    useExecutionStore.getState().setEstimatedCost(estimatedCost);
+
+    // Propagate existing outputs to downstream nodes after load
+    propagateExistingOutputs(hydratedNodes, get().propagateOutputsDownstream);
+
+    // Propagation after load is idempotent; don't trigger save cycle
+    set({ isDirty: false });
+  },
+
+  loadWorkflowById: async (id, signal) => {
+    set({ isLoading: true });
+
+    try {
+      const workflow = await workflowsApi.getById(id, signal);
+      const nodes = hydrateWorkflowNodes(workflow.nodes as WorkflowNode[]);
+
+      set({
+        edgeStyle: workflow.edgeStyle as EdgeStyle,
+        edges: normalizeEdgeTypes(workflow.edges as WorkflowEdge[]),
+        groups: workflow.groups ?? [],
+        isDirty: false,
+        isLoading: false,
+        nodes,
+        workflowId: workflow._id,
+        workflowName: workflow.name,
+      });
+
+      const estimatedCost = calculateWorkflowCost(nodes);
+      useExecutionStore.getState().setEstimatedCost(estimatedCost);
+
+      // Propagate existing outputs to downstream nodes after load
+      propagateExistingOutputs(nodes, get().propagateOutputsDownstream);
+
+      // Propagation after load is idempotent; don't trigger save cycle
+      set({ isDirty: false });
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  markCommentViewed: (nodeId: string) => {
+    set((state) => {
+      const newSet = new Set(state.viewedCommentIds);
+      newSet.add(nodeId);
+      return { viewedCommentIds: newSet };
+    });
+  },
+
+  saveWorkflow: async (signal) => {
+    const { nodes, edges, edgeStyle, workflowName, workflowId, groups } = get();
+    set({ isSaving: true });
+
+    try {
+      let workflow: WorkflowData;
+
+      if (workflowId) {
+        workflow = await workflowsApi.update(
+          workflowId,
+          { edgeStyle, edges, groups, name: workflowName, nodes },
+          signal
+        );
+      } else {
+        workflow = await workflowsApi.create(
+          { edgeStyle, edges, groups, name: workflowName, nodes },
+          signal
+        );
+      }
+
+      set({
+        isDirty: false,
+        isSaving: false,
+        workflowId: workflow._id,
+      });
+
+      return workflow;
+    } catch (error) {
+      set({ isSaving: false });
+      throw error;
+    }
+  },
+
+  setDirty: (dirty) => {
+    set({ isDirty: dirty });
+  },
+
+  setNavigationTarget: (nodeId: string | null) => {
+    set({ navigationTargetId: nodeId });
+  },
+
+  setWorkflowName: (name) => {
+    set({ isDirty: true, workflowName: name });
+  },
+
   validateWorkflow: () => {
     const { nodes, edges } = get();
     const errors: { nodeId: string; message: string; severity: 'error' | 'warning' }[] = [];
@@ -194,20 +349,20 @@ export const createPersistenceSlice: StateCreator<WorkflowStore, [], [], Persist
 
     if (nodes.length === 0) {
       errors.push({
-        nodeId: '',
         message: 'Workflow is empty - add some nodes first',
+        nodeId: '',
         severity: 'error',
       });
-      return { isValid: false, errors, warnings };
+      return { errors, isValid: false, warnings };
     }
 
     if (edges.length === 0 && nodes.length > 1) {
       errors.push({
-        nodeId: '',
         message: 'No connections - connect your nodes together',
+        nodeId: '',
         severity: 'error',
       });
-      return { isValid: false, errors, warnings };
+      return { errors, isValid: false, warnings };
     }
 
     const hasNodeOutput = (node: WorkflowNode): boolean => {
@@ -246,16 +401,16 @@ export const createPersistenceSlice: StateCreator<WorkflowStore, [], [], Persist
           const connectionEdge = incomingEdges.find((e) => e.targetHandle === input.id);
           if (!connectionEdge) {
             errors.push({
-              nodeId: node.id,
               message: `Missing required input: ${input.label}`,
+              nodeId: node.id,
               severity: 'error',
             });
           } else {
             const sourceNode = nodes.find((n) => n.id === connectionEdge.source);
             if (sourceNode && !hasNodeOutput(sourceNode)) {
               errors.push({
-                nodeId: sourceNode.id,
                 message: `${(sourceNode.data as WorkflowNodeData).label} is empty`,
+                nodeId: sourceNode.id,
                 severity: 'error',
               });
             }
@@ -286,8 +441,8 @@ export const createPersistenceSlice: StateCreator<WorkflowStore, [], [], Persist
     for (const node of nodes) {
       if (hasCycle(node.id)) {
         errors.push({
-          nodeId: node.id,
           message: 'Workflow contains a cycle',
+          nodeId: node.id,
           severity: 'error',
         });
         break;
@@ -299,14 +454,14 @@ export const createPersistenceSlice: StateCreator<WorkflowStore, [], [], Persist
         const refData = node.data as WorkflowRefNodeData;
         if (!refData.referencedWorkflowId) {
           errors.push({
-            nodeId: node.id,
             message: 'Subworkflow node must reference a workflow',
+            nodeId: node.id,
             severity: 'error',
           });
         } else if (!refData.cachedInterface) {
           warnings.push({
-            nodeId: node.id,
             message: 'Subworkflow interface not loaded - refresh to update handles',
+            nodeId: node.id,
             severity: 'warning',
           });
         }
@@ -314,165 +469,9 @@ export const createPersistenceSlice: StateCreator<WorkflowStore, [], [], Persist
     }
 
     return {
-      isValid: errors.length === 0,
       errors,
+      isValid: errors.length === 0,
       warnings,
     };
-  },
-
-  setDirty: (dirty) => {
-    set({ isDirty: dirty });
-  },
-
-  setWorkflowName: (name) => {
-    set({ workflowName: name, isDirty: true });
-  },
-
-  saveWorkflow: async (signal) => {
-    const { nodes, edges, edgeStyle, workflowName, workflowId, groups } = get();
-    set({ isSaving: true });
-
-    try {
-      let workflow: WorkflowData;
-
-      if (workflowId) {
-        workflow = await workflowsApi.update(
-          workflowId,
-          { name: workflowName, nodes, edges, edgeStyle, groups },
-          signal
-        );
-      } else {
-        workflow = await workflowsApi.create(
-          { name: workflowName, nodes, edges, edgeStyle, groups },
-          signal
-        );
-      }
-
-      set({
-        workflowId: workflow._id,
-        isDirty: false,
-        isSaving: false,
-      });
-
-      return workflow;
-    } catch (error) {
-      set({ isSaving: false });
-      throw error;
-    }
-  },
-
-  loadWorkflowById: async (id, signal) => {
-    set({ isLoading: true });
-
-    try {
-      const workflow = await workflowsApi.getById(id, signal);
-      const nodes = hydrateWorkflowNodes(workflow.nodes as WorkflowNode[]);
-
-      set({
-        nodes,
-        edges: normalizeEdgeTypes(workflow.edges as WorkflowEdge[]),
-        edgeStyle: workflow.edgeStyle as EdgeStyle,
-        workflowName: workflow.name,
-        workflowId: workflow._id,
-        groups: workflow.groups ?? [],
-        isDirty: false,
-        isLoading: false,
-      });
-
-      const estimatedCost = calculateWorkflowCost(nodes);
-      useExecutionStore.getState().setEstimatedCost(estimatedCost);
-
-      // Propagate existing outputs to downstream nodes after load
-      propagateExistingOutputs(nodes, get().propagateOutputsDownstream);
-
-      // Propagation after load is idempotent; don't trigger save cycle
-      set({ isDirty: false });
-    } catch (error) {
-      set({ isLoading: false });
-      throw error;
-    }
-  },
-
-  listWorkflows: async (signal) => {
-    return workflowsApi.getAll(signal);
-  },
-
-  deleteWorkflow: async (id, signal) => {
-    await workflowsApi.delete(id, signal);
-
-    const { workflowId } = get();
-    if (workflowId === id) {
-      set({
-        nodes: [],
-        edges: [],
-        workflowName: 'Untitled Workflow',
-        workflowId: null,
-        isDirty: false,
-      });
-    }
-  },
-
-  duplicateWorkflowApi: (id, signal) => workflowsApi.duplicate(id, signal),
-
-  createNewWorkflow: async (signal) => {
-    const { edgeStyle } = get();
-
-    const workflow = await workflowsApi.create(
-      {
-        name: 'Untitled Workflow',
-        nodes: [],
-        edges: [],
-        edgeStyle,
-        groups: [],
-      },
-      signal
-    );
-
-    set({
-      nodes: [],
-      edges: [],
-      workflowName: workflow.name,
-      workflowId: workflow._id,
-      isDirty: false,
-      groups: [],
-      selectedNodeIds: [],
-    });
-
-    return workflow._id;
-  },
-
-  getNodesWithComments: () => {
-    const { nodes } = get();
-    return nodes
-      .filter((node) => {
-        const data = node.data as WorkflowNodeData;
-        return data.comment?.trim();
-      })
-      .sort((a, b) => {
-        if (Math.abs(a.position.y - b.position.y) < 50) {
-          return a.position.x - b.position.x;
-        }
-        return a.position.y - b.position.y;
-      });
-  },
-
-  markCommentViewed: (nodeId: string) => {
-    set((state) => {
-      const newSet = new Set(state.viewedCommentIds);
-      newSet.add(nodeId);
-      return { viewedCommentIds: newSet };
-    });
-  },
-
-  setNavigationTarget: (nodeId: string | null) => {
-    set({ navigationTargetId: nodeId });
-  },
-
-  getUnviewedCommentCount: () => {
-    const { nodes, viewedCommentIds } = get();
-    return nodes.filter((node) => {
-      const data = node.data as WorkflowNodeData;
-      return data.comment?.trim() && !viewedCommentIds.has(node.id);
-    }).length;
   },
 });

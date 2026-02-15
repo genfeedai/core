@@ -5,9 +5,9 @@ import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { type EdgeStyle, useSettingsStore } from '@/store/settingsStore';
 
 const EDGE_STYLES: { value: EdgeStyle; label: string; description: string }[] = [
-  { value: 'default', label: 'Curved', description: 'Smooth bezier curves' },
-  { value: 'smoothstep', label: 'Smooth Step', description: 'Right-angled with rounded corners' },
-  { value: 'straight', label: 'Straight', description: 'Direct lines between nodes' },
+  { description: 'Smooth bezier curves', label: 'Curved', value: 'default' },
+  { description: 'Right-angled with rounded corners', label: 'Smooth Step', value: 'smoothstep' },
+  { description: 'Direct lines between nodes', label: 'Straight', value: 'straight' },
 ];
 
 export function AppearanceTab() {

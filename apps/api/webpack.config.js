@@ -5,54 +5,54 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const rootDir = path.resolve(__dirname, '../..');
 
 module.exports = {
-  entry: './src/main.ts',
-  target: 'node',
-  mode: 'development',
   devtool: 'eval-cheap-module-source-map',
+  entry: './src/main.ts',
 
   externals: [
     nodeExternals({
-      modulesDir: path.resolve(rootDir, 'node_modules'),
       // Allow bundling of workspace packages (not in npm registry)
       allowlist: [/^@genfeedai\//],
+      modulesDir: path.resolve(rootDir, 'node_modules'),
     }),
   ],
+  mode: 'development',
+
+  module: {
+    rules: [
+      {
+        exclude: /node_modules/,
+        test: /\.ts$/,
+        use: {
+          loader: 'ts-loader',
+          options: {
+            compilerOptions: {
+              emitDecoratorMetadata: true,
+              experimentalDecorators: true,
+            },
+            transpileOnly: true,
+          },
+        },
+      },
+    ],
+  },
 
   output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'main.js',
     clean: true,
+    filename: 'main.js',
+    path: path.resolve(__dirname, 'dist'),
   },
 
   resolve: {
-    extensions: ['.ts', '.tsx', '.js', '.json'],
     alias: {
-      '@genfeedai/types': path.resolve(rootDir, 'packages/types/dist'),
       '@genfeedai/core': path.resolve(rootDir, 'packages/core/dist'),
+      '@genfeedai/types': path.resolve(rootDir, 'packages/types/dist'),
     },
+    extensions: ['.ts', '.tsx', '.js', '.json'],
     plugins: [
       new TsconfigPathsPlugin({
         configFile: path.resolve(__dirname, 'tsconfig.json'),
       }),
     ],
   },
-
-  module: {
-    rules: [
-      {
-        test: /\.ts$/,
-        exclude: /node_modules/,
-        use: {
-          loader: 'ts-loader',
-          options: {
-            transpileOnly: true,
-            compilerOptions: {
-              emitDecoratorMetadata: true,
-              experimentalDecorators: true,
-            },
-          },
-        },
-      },
-    ],
-  },
+  target: 'node',
 };

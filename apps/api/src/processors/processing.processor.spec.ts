@@ -7,36 +7,36 @@ import { POLL_CONFIGS } from '@/services/replicate-poller.service';
 
 // Mock dependencies
 vi.mock('@nestjs/bullmq', () => ({
+  OnWorkerEvent: () => vi.fn(),
   Processor: () => vi.fn(),
   WorkerHost: class {},
-  OnWorkerEvent: () => vi.fn(),
 }));
 
 // Create mock services
 const mockQueueManager = {
-  updateJobStatus: vi.fn(),
   addJobLog: vi.fn(),
-  moveToDeadLetterQueue: vi.fn(),
   continueExecution: vi.fn(),
+  moveToDeadLetterQueue: vi.fn(),
+  updateJobStatus: vi.fn(),
 };
 
 const mockExecutionsService = {
-  updateNodeResult: vi.fn(),
   findExistingJob: vi.fn().mockResolvedValue(null),
+  updateNodeResult: vi.fn(),
 };
 
 const mockReplicateService: Record<string, ReturnType<typeof vi.fn>> = {
+  generateLipSync: vi.fn(),
+  getPredictionStatus: vi.fn(),
   reframeImage: vi.fn(),
   reframeVideo: vi.fn(),
   upscaleImage: vi.fn(),
   upscaleVideo: vi.fn(),
-  generateLipSync: vi.fn(),
-  getPredictionStatus: vi.fn(),
 };
 
 const mockReplicatePollerService = {
-  pollForCompletion: vi.fn(),
   createJobProgressCallback: vi.fn().mockReturnValue(() => {}),
+  pollForCompletion: vi.fn(),
 };
 
 const mockTTSService = {
@@ -44,11 +44,11 @@ const mockTTSService = {
 };
 
 const mockFFmpegService = {
-  extractFrame: vi.fn(),
-  replaceAudio: vi.fn(),
   addSubtitles: vi.fn(),
-  stitchVideos: vi.fn(),
+  extractFrame: vi.fn(),
   imageToVideo: vi.fn(),
+  replaceAudio: vi.fn(),
+  stitchVideos: vi.fn(),
 };
 
 const mockFilesService = {
@@ -66,16 +66,16 @@ describe('ProcessingProcessor', () => {
     nodeData: Record<string, unknown> = {}
   ): Job<ProcessingJobData> =>
     ({
-      id: 'job-123',
+      attemptsMade: 0,
       data: {
         executionId: 'exec-1',
+        nodeData,
         nodeId: 'node-1',
         nodeType,
-        nodeData,
       },
-      updateProgress: vi.fn().mockResolvedValue(undefined),
-      attemptsMade: 0,
+      id: 'job-123',
       opts: { attempts: 3 },
+      updateProgress: vi.fn().mockResolvedValue(undefined),
     }) as unknown as Job<ProcessingJobData>;
 
   beforeEach(() => {
@@ -86,14 +86,14 @@ describe('ProcessingProcessor', () => {
 
     // Reset pollForCompletion to return success by default
     mockReplicatePollerService.pollForCompletion.mockResolvedValue({
-      success: true,
       output: 'https://example.com/result.png',
+      success: true,
     });
 
     // Reset file save to success by default
     mockFilesService.downloadAndSaveOutput.mockResolvedValue({
-      url: 'https://saved.example.com/result.png',
       path: '/local/path/result.png',
+      url: 'https://saved.example.com/result.png',
     });
 
     processor = new ProcessingProcessor(
@@ -110,11 +110,11 @@ describe('ProcessingProcessor', () => {
   describe('process - lumaReframeImage', () => {
     it('should process luma reframe image job', async () => {
       const job = createMockJob(ReframeNodeType.LUMA_REFRAME_IMAGE, {
-        image: 'https://example.com/image.png',
         aspectRatio: '16:9',
+        gridPosition: 'center',
+        image: 'https://example.com/image.png',
         model: 'photon-flash-1',
         prompt: 'Expand the image',
-        gridPosition: 'center',
       });
 
       mockReplicateService.reframeImage.mockResolvedValueOnce({
@@ -122,19 +122,19 @@ describe('ProcessingProcessor', () => {
       });
 
       mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
-        success: true,
         output: 'https://example.com/reframed.png',
         predictTime: 5.2,
+        success: true,
       });
 
       const result = await processor.process(job);
 
       expect(mockReplicateService.reframeImage).toHaveBeenCalledWith('exec-1', 'node-1', {
-        image: 'https://example.com/image.png',
         aspectRatio: '16:9',
+        gridPosition: 'center',
+        image: 'https://example.com/image.png',
         model: 'photon-flash-1',
         prompt: 'Expand the image',
-        gridPosition: 'center',
       });
 
       expect(result.success).toBe(true);
@@ -168,11 +168,11 @@ describe('ProcessingProcessor', () => {
   describe('process - lumaReframeVideo', () => {
     it('should process luma reframe video job', async () => {
       const job = createMockJob(ReframeNodeType.LUMA_REFRAME_VIDEO, {
-        video: 'https://example.com/video.mp4',
         aspectRatio: '9:16',
-        prompt: 'Convert to portrait',
         gridPosition: 'top',
         inputType: 'video',
+        prompt: 'Convert to portrait',
+        video: 'https://example.com/video.mp4',
       });
 
       mockReplicateService.reframeVideo.mockResolvedValueOnce({
@@ -180,17 +180,17 @@ describe('ProcessingProcessor', () => {
       });
 
       mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
-        success: true,
         output: 'https://example.com/reframed.mp4',
+        success: true,
       });
 
       const result = await processor.process(job);
 
       expect(mockReplicateService.reframeVideo).toHaveBeenCalledWith('exec-1', 'node-1', {
-        video: 'https://example.com/video.mp4',
         aspectRatio: '9:16',
-        prompt: 'Convert to portrait',
         gridPosition: 'top',
+        prompt: 'Convert to portrait',
+        video: 'https://example.com/video.mp4',
       });
 
       expect(result.success).toBe(true);
@@ -200,13 +200,13 @@ describe('ProcessingProcessor', () => {
   describe('process - topazImageUpscale', () => {
     it('should process topaz image upscale job', async () => {
       const job = createMockJob(UpscaleNodeType.TOPAZ_IMAGE_UPSCALE, {
-        image: 'https://example.com/image.png',
         enhanceModel: 'standard-v2',
-        upscaleFactor: '2x',
-        outputFormat: 'png',
         faceEnhancement: true,
-        faceEnhancementStrength: 0.8,
         faceEnhancementCreativity: 0.5,
+        faceEnhancementStrength: 0.8,
+        image: 'https://example.com/image.png',
+        outputFormat: 'png',
+        upscaleFactor: '2x',
       });
 
       mockReplicateService.upscaleImage.mockResolvedValueOnce({
@@ -214,20 +214,20 @@ describe('ProcessingProcessor', () => {
       });
 
       mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
-        success: true,
         output: 'https://example.com/upscaled.png',
+        success: true,
       });
 
       const result = await processor.process(job);
 
       expect(mockReplicateService.upscaleImage).toHaveBeenCalledWith('exec-1', 'node-1', {
-        image: 'https://example.com/image.png',
         enhanceModel: 'standard-v2',
-        upscaleFactor: '2x',
-        outputFormat: 'png',
         faceEnhancement: true,
-        faceEnhancementStrength: 0.8,
         faceEnhancementCreativity: 0.5,
+        faceEnhancementStrength: 0.8,
+        image: 'https://example.com/image.png',
+        outputFormat: 'png',
+        upscaleFactor: '2x',
       });
 
       expect(result.success).toBe(true);
@@ -237,10 +237,10 @@ describe('ProcessingProcessor', () => {
   describe('process - topazVideoUpscale', () => {
     it('should process topaz video upscale job', async () => {
       const job = createMockJob(UpscaleNodeType.TOPAZ_VIDEO_UPSCALE, {
-        video: 'https://example.com/video.mp4',
-        targetResolution: '4k',
-        targetFps: 60,
         inputType: 'video',
+        targetFps: 60,
+        targetResolution: '4k',
+        video: 'https://example.com/video.mp4',
       });
 
       mockReplicateService.upscaleVideo.mockResolvedValueOnce({
@@ -248,16 +248,16 @@ describe('ProcessingProcessor', () => {
       });
 
       mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
-        success: true,
         output: 'https://example.com/4k-video.mp4',
+        success: true,
       });
 
       const result = await processor.process(job);
 
       expect(mockReplicateService.upscaleVideo).toHaveBeenCalledWith('exec-1', 'node-1', {
-        video: 'https://example.com/video.mp4',
-        targetResolution: '4k',
         targetFps: 60,
+        targetResolution: '4k',
+        video: 'https://example.com/video.mp4',
       });
 
       expect(result.success).toBe(true);
@@ -281,9 +281,9 @@ describe('ProcessingProcessor', () => {
       mockReplicateService.reframeImage.mockResolvedValueOnce({ id: 'pred-1' });
 
       mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
-        success: true,
         output: 'result.png',
         predictTime: 10.5,
+        success: true,
       });
 
       const result = await processor.process(job);
@@ -300,8 +300,8 @@ describe('ProcessingProcessor', () => {
 
       mockReplicateService.upscaleImage.mockResolvedValueOnce({ id: 'pred-1' });
       mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
-        success: false,
         error: 'Model error: Invalid input',
+        success: false,
       });
 
       const result = await processor.process(job);
@@ -312,14 +312,14 @@ describe('ProcessingProcessor', () => {
 
     it('should return failure when prediction is canceled', async () => {
       const job = createMockJob(ReframeNodeType.LUMA_REFRAME_VIDEO, {
-        video: 'test.mp4',
         inputType: 'video',
+        video: 'test.mp4',
       });
 
       mockReplicateService.reframeVideo.mockResolvedValueOnce({ id: 'pred-1' });
       mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
-        success: false,
         error: 'Prediction canceled',
+        success: false,
       });
 
       const result = await processor.process(job);
@@ -359,8 +359,8 @@ describe('ProcessingProcessor', () => {
 
     it('should update node status to error', async () => {
       const job = createMockJob(UpscaleNodeType.TOPAZ_VIDEO_UPSCALE, {
-        video: 'test.mp4',
         inputType: 'video',
+        video: 'test.mp4',
       });
 
       mockReplicateService.upscaleVideo.mockRejectedValueOnce(new Error('Processing failed'));
@@ -448,8 +448,8 @@ describe('ProcessingProcessor', () => {
 
     it('should log job completion', async () => {
       const job = createMockJob(ReframeNodeType.LUMA_REFRAME_VIDEO, {
-        video: 'test.mp4',
         inputType: 'video',
+        video: 'test.mp4',
       });
 
       mockReplicateService.reframeVideo.mockResolvedValueOnce({ id: 'pred-1' });
@@ -469,8 +469,8 @@ describe('ProcessingProcessor', () => {
 
       mockReplicateService.reframeImage.mockResolvedValueOnce({ id: 'pred-1' });
       mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
-        success: true,
         output: { url: 'https://example.com/result.png' },
+        success: true,
       });
 
       await processor.process(job);
@@ -488,8 +488,8 @@ describe('ProcessingProcessor', () => {
   describe('polling timeouts', () => {
     it('should use video poll config for lumaReframeVideo', async () => {
       const job = createMockJob(ReframeNodeType.LUMA_REFRAME_VIDEO, {
-        video: 'test.mp4',
         inputType: 'video',
+        video: 'test.mp4',
       });
 
       mockReplicateService.reframeVideo.mockResolvedValueOnce({ id: 'pred-1' });
@@ -506,8 +506,8 @@ describe('ProcessingProcessor', () => {
 
     it('should use video poll config for topazVideoUpscale', async () => {
       const job = createMockJob(UpscaleNodeType.TOPAZ_VIDEO_UPSCALE, {
-        video: 'test.mp4',
         inputType: 'video',
+        video: 'test.mp4',
       });
 
       mockReplicateService.upscaleVideo.mockResolvedValueOnce({ id: 'pred-1' });
@@ -525,8 +525,8 @@ describe('ProcessingProcessor', () => {
     it('should use video poll config for lipSync', async () => {
       const job = createMockJob(ProcessingNodeType.LIP_SYNC, {
         audio: 'test.mp3',
-        video: 'test.mp4',
         model: 'wav2lip',
+        video: 'test.mp4',
       });
 
       mockReplicateService.generateLipSync = vi.fn().mockResolvedValueOnce({ id: 'pred-1' });
@@ -578,8 +578,8 @@ describe('ProcessingProcessor', () => {
 
       mockReplicateService.reframeImage.mockResolvedValueOnce({ id: 'pred-1' });
       mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
-        success: true,
         output: 'https://example.com/reframed.png',
+        success: true,
       });
 
       await processor.process(job);
@@ -598,8 +598,8 @@ describe('ProcessingProcessor', () => {
 
       mockReplicateService.upscaleImage.mockResolvedValueOnce({ id: 'pred-1' });
       mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
-        success: true,
         output: 'https://example.com/upscaled.png',
+        success: true,
       });
 
       await processor.process(job);
@@ -614,14 +614,14 @@ describe('ProcessingProcessor', () => {
 
     it('should save lumaReframeVideo output under video key', async () => {
       const job = createMockJob(ReframeNodeType.LUMA_REFRAME_VIDEO, {
-        video: 'test.mp4',
         inputType: 'video',
+        video: 'test.mp4',
       });
 
       mockReplicateService.reframeVideo.mockResolvedValueOnce({ id: 'pred-1' });
       mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
-        success: true,
         output: 'https://example.com/reframed.mp4',
+        success: true,
       });
 
       await processor.process(job);
@@ -636,14 +636,14 @@ describe('ProcessingProcessor', () => {
 
     it('should save topazVideoUpscale output under video key', async () => {
       const job = createMockJob(UpscaleNodeType.TOPAZ_VIDEO_UPSCALE, {
-        video: 'test.mp4',
         inputType: 'video',
+        video: 'test.mp4',
       });
 
       mockReplicateService.upscaleVideo.mockResolvedValueOnce({ id: 'pred-1' });
       mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
-        success: true,
         output: 'https://example.com/upscaled.mp4',
+        success: true,
       });
 
       await processor.process(job);
@@ -658,15 +658,15 @@ describe('ProcessingProcessor', () => {
 
     it('should use inputType for generic reframe node', async () => {
       const job = createMockJob(ReframeNodeType.REFRAME, {
-        video: 'test.mp4',
         aspectRatio: '16:9',
         inputType: 'video',
+        video: 'test.mp4',
       });
 
       mockReplicateService.reframeVideo.mockResolvedValueOnce({ id: 'pred-1' });
       mockReplicatePollerService.pollForCompletion.mockResolvedValueOnce({
-        success: true,
         output: 'https://example.com/reframed.mp4',
+        success: true,
       });
 
       await processor.process(job);

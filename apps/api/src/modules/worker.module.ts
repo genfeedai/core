@@ -37,7 +37,6 @@ import { WorkflowsService } from '@/services/workflows.service';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true,
       envFilePath: [
         '.env.production',
         '.env.local',
@@ -46,21 +45,23 @@ import { WorkflowsService } from '@/services/workflows.service';
         '../../.env.local',
         '../../.env',
       ],
+      isGlobal: true,
     }),
     ScheduleModule.forRoot(),
 
     // MongoDB Connection (for job persistence)
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
+      inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('MONGODB_URI'),
       }),
-      inject: [ConfigService],
     }),
 
     // BullMQ Redis connection
     BullModule.forRootAsync({
       imports: [ConfigModule],
+      inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const redisHost = configService.get<string>('REDIS_HOST', 'localhost');
         const redisPort = configService.get<number>('REDIS_PORT', 6379);
@@ -74,26 +75,25 @@ import { WorkflowsService } from '@/services/workflows.service';
           },
         };
       },
-      inject: [ConfigService],
     }),
 
     // Register queues based on WORKER_TYPE
     BullModule.registerQueue(
       {
-        name: QUEUE_NAMES.IMAGE_GENERATION,
         defaultJobOptions: DEFAULT_JOB_OPTIONS[QUEUE_NAMES.IMAGE_GENERATION],
+        name: QUEUE_NAMES.IMAGE_GENERATION,
       },
       {
-        name: QUEUE_NAMES.VIDEO_GENERATION,
         defaultJobOptions: DEFAULT_JOB_OPTIONS[QUEUE_NAMES.VIDEO_GENERATION],
+        name: QUEUE_NAMES.VIDEO_GENERATION,
       },
       {
-        name: QUEUE_NAMES.LLM_GENERATION,
         defaultJobOptions: DEFAULT_JOB_OPTIONS[QUEUE_NAMES.LLM_GENERATION],
+        name: QUEUE_NAMES.LLM_GENERATION,
       },
       {
-        name: QUEUE_NAMES.PROCESSING,
         defaultJobOptions: DEFAULT_JOB_OPTIONS[QUEUE_NAMES.PROCESSING],
+        name: QUEUE_NAMES.PROCESSING,
       }
     ),
 

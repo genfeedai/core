@@ -22,52 +22,6 @@ interface ContextMenuState {
 }
 
 export const useContextMenuStore = create<ContextMenuState>((set) => ({
-  isOpen: false,
-  position: { x: 0, y: 0 },
-  menuType: null,
-  targetId: null,
-  targetIds: null,
-
-  openNodeMenu: (nodeId, x, y) => {
-    set({
-      isOpen: true,
-      position: { x, y },
-      menuType: 'node',
-      targetId: nodeId,
-      targetIds: null,
-    });
-  },
-
-  openEdgeMenu: (edgeId, x, y) => {
-    set({
-      isOpen: true,
-      position: { x, y },
-      menuType: 'edge',
-      targetId: edgeId,
-      targetIds: null,
-    });
-  },
-
-  openPaneMenu: (x, y) => {
-    set({
-      isOpen: true,
-      position: { x, y },
-      menuType: 'pane',
-      targetId: null,
-      targetIds: null,
-    });
-  },
-
-  openSelectionMenu: (nodeIds, x, y) => {
-    set({
-      isOpen: true,
-      position: { x, y },
-      menuType: 'selection',
-      targetId: null,
-      targetIds: nodeIds,
-    });
-  },
-
   close: () => {
     set({
       isOpen: false,
@@ -76,4 +30,49 @@ export const useContextMenuStore = create<ContextMenuState>((set) => ({
       targetIds: null,
     });
   },
+  isOpen: false,
+  menuType: null,
+
+  openEdgeMenu: (edgeId, x, y) => {
+    set({
+      isOpen: true,
+      menuType: 'edge',
+      position: { x, y },
+      targetId: edgeId,
+      targetIds: null,
+    });
+  },
+
+  openNodeMenu: (nodeId, x, y) => {
+    set({
+      isOpen: true,
+      menuType: 'node',
+      position: { x, y },
+      targetId: nodeId,
+      targetIds: null,
+    });
+  },
+
+  openPaneMenu: (x, y) => {
+    set({
+      isOpen: true,
+      menuType: 'pane',
+      position: { x, y },
+      targetId: null,
+      targetIds: null,
+    });
+  },
+
+  openSelectionMenu: (nodeIds, x, y) => {
+    set({
+      isOpen: true,
+      menuType: 'selection',
+      position: { x, y },
+      targetId: null,
+      targetIds: nodeIds,
+    });
+  },
+  position: { x: 0, y: 0 },
+  targetId: null,
+  targetIds: null,
 }));

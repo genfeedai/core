@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException, type OnModuleInit } from '@nestj
 import { InjectModel } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
 import type { CreateTemplateDto } from '@/dto/create-template.dto';
+import type { MongoFilterQuery } from '@/interfaces/execution-types.interface';
 import { Template, type TemplateDocument } from '@/schemas/template.schema';
 import { SYSTEM_TEMPLATES } from '@/templates/templates.seed';
 
@@ -24,7 +25,7 @@ export class TemplatesService implements OnModuleInit {
 
     for (const template of SYSTEM_TEMPLATES) {
       const existing = await this.templateModel
-        .findOne({ name: template.name, isSystem: true })
+        .findOne({ isSystem: true, name: template.name })
         .exec();
 
       if (existing) {
@@ -46,18 +47,18 @@ export class TemplatesService implements OnModuleInit {
 
   async create(dto: CreateTemplateDto): Promise<TemplateDocument> {
     const template = new this.templateModel({
-      name: dto.name,
-      description: dto.description ?? '',
       category: dto.category,
-      nodes: dto.nodes ?? [],
+      description: dto.description ?? '',
       edges: dto.edges ?? [],
+      name: dto.name,
+      nodes: dto.nodes ?? [],
       thumbnail: dto.thumbnail,
     });
     return template.save();
   }
 
   async findAll(options?: { category?: string; search?: string }): Promise<TemplateDocument[]> {
-    const filter: Record<string, unknown> = { isDeleted: false };
+    const filter: MongoFilterQuery = { isDeleted: false };
     if (options?.category && options.category !== 'all') {
       filter.category = options.category;
     }

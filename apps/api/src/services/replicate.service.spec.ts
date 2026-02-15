@@ -15,27 +15,27 @@ describe('ReplicateService', () => {
 
   const mockExecutionsService = {
     createJob: vi.fn().mockResolvedValue({ _id: 'job-123' }),
+    findExecution: vi.fn().mockResolvedValue({
+      workflowId: 'workflow-123',
+    }),
     findJobByPredictionId: vi.fn().mockResolvedValue({
       executionId: 'execution-123',
       nodeId: 'node-1',
     }),
-    findExecution: vi.fn().mockResolvedValue({
-      workflowId: 'workflow-123',
-    }),
+    updateExecutionCost: vi.fn().mockResolvedValue({}),
     updateJob: vi.fn().mockResolvedValue({}),
     updateNodeResult: vi.fn().mockResolvedValue({}),
-    updateExecutionCost: vi.fn().mockResolvedValue({}),
   };
 
   const mockWorkflowsService = {
     findOne: vi.fn().mockResolvedValue({
-      nodes: [{ id: 'node-1', data: { model: 'nano-banana' } }],
+      nodes: [{ data: { model: 'nano-banana' }, id: 'node-1' }],
     }),
   };
 
   const mockCostCalculatorService = {
+    buildJobCostBreakdown: vi.fn().mockReturnValue({ cost: 0.05, model: 'nano-banana' }),
     calculatePredictionCost: vi.fn().mockReturnValue(0.05),
-    buildJobCostBreakdown: vi.fn().mockReturnValue({ model: 'nano-banana', cost: 0.05 }),
   };
 
   const mockConfigService = {
@@ -58,7 +58,7 @@ describe('ReplicateService', () => {
       workflowId: 'workflow-123',
     });
     mockWorkflowsService.findOne.mockResolvedValue({
-      nodes: [{ id: 'node-1', data: { model: 'nano-banana' } }],
+      nodes: [{ data: { model: 'nano-banana' }, id: 'node-1' }],
     });
 
     const module: TestingModule = await Test.createTestingModule({
@@ -79,8 +79,8 @@ describe('ReplicateService', () => {
         {
           provide: SchemaMapperService,
           useValue: {
-            mapSchemaToInput: vi.fn().mockReturnValue({}),
             mapImageInput: vi.fn().mockReturnValue({ prompt: 'A test image' }),
+            mapSchemaToInput: vi.fn().mockReturnValue({}),
             mapVideoInput: vi.fn().mockReturnValue({ prompt: 'A test video' }),
           },
         },
@@ -93,8 +93,8 @@ describe('ReplicateService', () => {
   describe('generateImage', () => {
     it('should create a prediction with nano-banana model', async () => {
       const result = await service.generateImage('execution-1', 'node-1', 'nano-banana', {
-        prompt: 'A test image',
         aspectRatio: '16:9',
+        prompt: 'A test image',
       });
 
       expect(result).toBeDefined();
@@ -128,8 +128,8 @@ describe('ReplicateService', () => {
 
     it('should include image input when provided', async () => {
       await service.generateImage('execution-1', 'node-1', 'nano-banana', {
-        prompt: 'Test image',
         inputImages: ['https://example.com/input.png'],
+        prompt: 'Test image',
       });
 
       expect(mockExecutionsService.createJob).toHaveBeenCalled();
@@ -139,8 +139,8 @@ describe('ReplicateService', () => {
   describe('generateVideo', () => {
     it('should create a prediction with veo-3.1-fast model', async () => {
       const result = await service.generateVideo('execution-1', 'node-1', 'veo-3.1-fast', {
-        prompt: 'A test video',
         duration: 5,
+        prompt: 'A test video',
       });
 
       expect(result).toBeDefined();
@@ -176,8 +176,8 @@ describe('ReplicateService', () => {
 
     it('should handle audio generation setting', async () => {
       await service.generateVideo('execution-1', 'node-1', 'veo-3.1', {
-        prompt: 'Test video',
         generateAudio: false,
+        prompt: 'Test video',
       });
 
       expect(mockExecutionsService.createJob).toHaveBeenCalled();
@@ -204,9 +204,9 @@ describe('ReplicateService', () => {
 
     it('should accept custom parameters', async () => {
       const result = await service.generateText({
+        maxTokens: 500,
         prompt: 'Test prompt',
         systemPrompt: 'You are a helpful assistant',
-        maxTokens: 500,
         temperature: 0.5,
         topP: 0.8,
       });

@@ -11,17 +11,17 @@ import { SettingsField } from '@/components/ui/settings-section';
 import { type ProviderType, useSettingsStore } from '@/store/settingsStore';
 
 const IMAGE_MODELS = [
-  { value: 'nano-banana', label: 'Nano Banana', description: 'Fast, $0.039/image' },
+  { description: 'Fast, $0.039/image', label: 'Nano Banana', value: 'nano-banana' },
   {
-    value: 'nano-banana-pro',
-    label: 'Nano Banana Pro',
     description: 'High quality, $0.15-0.30/image',
+    label: 'Nano Banana Pro',
+    value: 'nano-banana-pro',
   },
 ];
 
 const VIDEO_MODELS = [
-  { value: 'veo-3.1-fast', label: 'Veo 3.1 Fast', description: 'Fast, $0.10-0.15/sec' },
-  { value: 'veo-3.1', label: 'Veo 3.1', description: 'High quality, $0.20-0.40/sec' },
+  { description: 'Fast, $0.10-0.15/sec', label: 'Veo 3.1 Fast', value: 'veo-3.1-fast' },
+  { description: 'High quality, $0.20-0.40/sec', label: 'Veo 3.1', value: 'veo-3.1' },
 ];
 
 export function DefaultsTab() {

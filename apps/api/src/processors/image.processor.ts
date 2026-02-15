@@ -1,6 +1,7 @@
 import { OnWorkerEvent, Processor } from '@nestjs/bullmq';
 import { forwardRef, Inject, Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
+import type { NodeOutput } from '@/interfaces/execution-types.interface';
 import type { ImageJobData, JobResult } from '@/interfaces/job-data.interface';
 import { BaseProcessor } from '@/processors/base.processor';
 import { JOB_STATUS, QUEUE_CONCURRENCY, QUEUE_NAMES } from '@/queue/queue.constants';
@@ -52,7 +53,7 @@ export class ImageProcessor extends BaseProcessor<ImageJobData> {
         // Resume polling existing prediction
         this.logger.log(`Retry: resuming existing prediction ${existingJob.predictionId}`);
         predictionId = existingJob.predictionId;
-        await job.updateProgress({ percent: 30, message: 'Resuming existing prediction' });
+        await job.updateProgress({ message: 'Resuming existing prediction', percent: 30 });
       } else {
         // Create new prediction
         const model = nodeData.model ?? 'nano-banana';
@@ -66,14 +67,14 @@ export class ImageProcessor extends BaseProcessor<ImageJobData> {
         const prompt = (nodeData.inputPrompt ?? nodeData.prompt) as string | undefined;
 
         const prediction = await this.replicateService.generateImage(executionId, nodeId, model, {
-          prompt: prompt ?? '',
-          inputImages,
           aspectRatio: nodeData.aspectRatio,
-          resolution: nodeData.resolution,
-          outputFormat: nodeData.outputFormat,
-          selectedModel: nodeData.selectedModel,
-          schemaParams: nodeData.schemaParams,
           debugMode,
+          inputImages,
+          outputFormat: nodeData.outputFormat,
+          prompt: prompt ?? '',
+          resolution: nodeData.resolution,
+          schemaParams: nodeData.schemaParams,
+          selectedModel: nodeData.selectedModel,
         });
 
         // Handle debug mode - skip polling and return mock data
@@ -90,9 +91,9 @@ export class ImageProcessor extends BaseProcessor<ImageJobData> {
 
           await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.COMPLETED, {
             result: {
-              success: true,
-              output: mockOutput,
               debugPayload: prediction.debugPayload,
+              output: mockOutput,
+              success: true,
             },
           });
 
@@ -100,22 +101,22 @@ export class ImageProcessor extends BaseProcessor<ImageJobData> {
           await this.queueManager.continueExecution(executionId, job.data.workflowId);
 
           return {
-            success: true,
             output: mockOutput,
             predictionId: prediction.id,
+            success: true,
           };
         }
 
         predictionId = prediction.id;
-        await job.updateProgress({ percent: 30, message: 'Prediction created' });
+        await job.updateProgress({ message: 'Prediction created', percent: 30 });
         await this.queueManager.addJobLog(job.id as string, `Created prediction: ${predictionId}`);
       }
 
       // Poll for completion using shared service
       const result = await this.replicatePollerService.pollForCompletion(predictionId, {
         ...POLL_CONFIGS.image,
-        onProgress: this.replicatePollerService.createJobProgressCallback(job),
         onHeartbeat: () => this.queueManager.heartbeatJob(job.id as string),
+        onProgress: this.replicatePollerService.createJobProgressCallback(job),
       });
 
       // Update execution node result
@@ -145,11 +146,7 @@ export class ImageProcessor extends BaseProcessor<ImageJobData> {
         );
       }
 
-      await this.completeJob(
-        job,
-        result as unknown as Record<string, unknown>,
-        'Image generation completed'
-      );
+      await this.completeJob(job, result as unknown as NodeOutput, 'Image generation completed');
 
       return result;
     } catch (error) {

@@ -5,23 +5,23 @@ import { POLL_CONFIGS } from '@/services/replicate-poller.service';
 
 // Mock BullMQ WorkerHost
 vi.mock('@nestjs/bullmq', () => ({
+  OnWorkerEvent: () => vi.fn(),
   Processor: () => vi.fn(),
   WorkerHost: class {},
-  OnWorkerEvent: () => vi.fn(),
 }));
 
 // Create mock services
 const mockQueueManager = {
-  updateJobStatus: vi.fn(),
   addJobLog: vi.fn(),
-  moveToDeadLetterQueue: vi.fn(),
   continueExecution: vi.fn(),
   heartbeatJob: vi.fn(),
+  moveToDeadLetterQueue: vi.fn(),
+  updateJobStatus: vi.fn(),
 };
 
 const mockExecutionsService = {
-  updateNodeResult: vi.fn(),
   findExistingJob: vi.fn().mockResolvedValue(null),
+  updateNodeResult: vi.fn(),
 };
 
 const mockReplicateService = {
@@ -29,13 +29,13 @@ const mockReplicateService = {
 };
 
 const mockReplicatePollerService = {
-  pollForCompletion: vi.fn(),
   createJobProgressCallback: vi.fn().mockReturnValue(() => {}),
+  pollForCompletion: vi.fn(),
 };
 
 const mockFilesService = {
-  downloadAndSaveOutput: vi.fn(),
   downloadAndSaveMultipleOutputs: vi.fn(),
+  downloadAndSaveOutput: vi.fn(),
   urlsToBase64Async: vi.fn().mockResolvedValue([]),
 };
 
@@ -50,20 +50,20 @@ describe('ImageProcessor', () => {
   const mockPredictionId = 'pred-123';
 
   const createMockJob = (overrides = {}) => ({
-    id: 'job-123',
+    attemptsMade: 0,
     data: {
       executionId: mockExecutionId,
-      workflowId: 'workflow-123',
-      nodeId: mockNodeId,
-      nodeType: 'imageGen',
       nodeData: {
-        prompt: 'A beautiful sunset',
         aspectRatio: '16:9',
         model: 'flux-pro',
+        prompt: 'A beautiful sunset',
       },
+      nodeId: mockNodeId,
+      nodeType: 'imageGen',
       timestamp: new Date().toISOString(),
+      workflowId: 'workflow-123',
     },
-    attemptsMade: 0,
+    id: 'job-123',
     opts: { attempts: 3 },
     updateProgress: vi.fn().mockResolvedValue(undefined),
     ...overrides,
@@ -80,15 +80,15 @@ describe('ImageProcessor', () => {
 
     // Reset pollForCompletion to return success by default
     mockReplicatePollerService.pollForCompletion.mockResolvedValue({
-      success: true,
       output: ['https://example.com/image.png'],
       predictTime: 5.2,
+      success: true,
     });
 
     // Reset file save to success by default
     mockFilesService.downloadAndSaveOutput.mockResolvedValue({
-      url: 'https://saved.example.com/image.png',
       path: '/local/path/image.png',
+      url: 'https://saved.example.com/image.png',
     });
 
     // Reset urlsToBase64Async
@@ -130,8 +130,8 @@ describe('ImageProcessor', () => {
       await processor.process(job as never);
 
       expect(job.updateProgress).toHaveBeenCalledWith({
-        percent: 10,
         message: 'Starting image generation',
+        percent: 10,
       });
     });
 
@@ -145,8 +145,8 @@ describe('ImageProcessor', () => {
         mockNodeId,
         'flux-pro',
         expect.objectContaining({
-          prompt: 'A beautiful sunset',
           aspectRatio: '16:9',
+          prompt: 'A beautiful sunset',
         })
       );
     });
@@ -155,11 +155,11 @@ describe('ImageProcessor', () => {
       const job = createMockJob({
         data: {
           executionId: mockExecutionId,
-          workflowId: 'workflow-123',
+          nodeData: { prompt: 'test' },
           nodeId: mockNodeId,
           nodeType: 'imageGen',
-          nodeData: { prompt: 'test' },
           timestamp: new Date().toISOString(),
+          workflowId: 'workflow-123',
         },
       });
 
@@ -204,9 +204,9 @@ describe('ImageProcessor', () => {
 
       expect(result).toEqual(
         expect.objectContaining({
-          success: true,
           output: ['https://example.com/image.png'],
           predictTime: 5.2,
+          success: true,
         })
       );
     });
@@ -266,8 +266,8 @@ describe('ImageProcessor', () => {
 
     it('should return failure result when prediction fails', async () => {
       mockReplicatePollerService.pollForCompletion.mockResolvedValue({
-        success: false,
         error: 'Model error',
+        success: false,
       });
       const job = createMockJob();
 
@@ -275,16 +275,16 @@ describe('ImageProcessor', () => {
 
       expect(result).toEqual(
         expect.objectContaining({
-          success: false,
           error: 'Model error',
+          success: false,
         })
       );
     });
 
     it('should update node result to error when prediction fails', async () => {
       mockReplicatePollerService.pollForCompletion.mockResolvedValue({
-        success: false,
         error: 'Model error',
+        success: false,
       });
       const job = createMockJob();
 
@@ -309,8 +309,8 @@ describe('ImageProcessor', () => {
         'job-123',
         JOB_STATUS.FAILED,
         expect.objectContaining({
-          error: 'API error',
           attemptsMade: 0,
+          error: 'API error',
         })
       );
     });

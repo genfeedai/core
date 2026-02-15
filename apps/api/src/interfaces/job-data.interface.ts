@@ -1,5 +1,6 @@
 import type { Types } from 'mongoose';
 import { KlingQuality, ReframeNodeType, UpscaleNodeType } from '@genfeedai/types';
+import type { ModelInputSchema, NodeOutput, SchemaParams } from './execution-types.interface';
 
 export interface BaseJobData {
   executionId: string;
@@ -25,7 +26,7 @@ export interface SelectedModelInfo {
   provider: string;
   modelId: string;
   displayName?: string;
-  inputSchema?: Record<string, unknown>;
+  inputSchema?: ModelInputSchema;
 }
 
 export interface ImageJobData extends NodeJobData {
@@ -39,7 +40,7 @@ export interface ImageJobData extends NodeJobData {
     resolution?: string;
     outputFormat?: string;
     selectedModel?: SelectedModelInfo;
-    schemaParams?: Record<string, unknown>;
+    schemaParams?: SchemaParams;
   };
 }
 
@@ -60,7 +61,7 @@ export interface VideoJobData extends NodeJobData {
     negativePrompt?: string;
     seed?: number;
     selectedModel?: SelectedModelInfo;
-    schemaParams?: Record<string, unknown>;
+    schemaParams?: SchemaParams;
   };
 }
 
@@ -78,7 +79,7 @@ export interface LLMJobData extends NodeJobData {
     provider?: LLMProvider;
     ollamaModel?: string;
     selectedModel?: SelectedModelInfo;
-    schemaParams?: Record<string, unknown>;
+    schemaParams?: SchemaParams;
   };
 }
 
@@ -260,7 +261,7 @@ export type ProcessingJobData =
 
 export interface JobResult {
   success: boolean;
-  output?: string | string[] | Record<string, unknown>;
+  output?: string | string[] | NodeOutput;
   error?: string;
   cost?: number;
   predictTime?: number;
@@ -290,8 +291,8 @@ export interface QueueJobDocument {
   executionId: Types.ObjectId;
   nodeId: string;
   status: string;
-  data: Record<string, unknown>;
-  result?: Record<string, unknown>;
+  data: NodeJobData;
+  result?: NodeOutput;
   error?: string;
   attemptsMade: number;
   processedAt?: Date;

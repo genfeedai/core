@@ -10,10 +10,10 @@ import { Pagination } from '@/components/gallery/Pagination';
 import type { GalleryFilterType, GalleryItem, GalleryResponse } from '@/lib/gallery/types';
 
 const FILTERS: { type: GalleryFilterType; label: string; icon: typeof ImageIcon }[] = [
-  { type: 'all', label: 'All', icon: ImageIcon },
-  { type: 'image', label: 'Images', icon: ImageIcon },
-  { type: 'video', label: 'Videos', icon: Film },
-  { type: 'audio', label: 'Audio', icon: Music },
+  { icon: ImageIcon, label: 'All', type: 'all' },
+  { icon: ImageIcon, label: 'Images', type: 'image' },
+  { icon: Film, label: 'Videos', type: 'video' },
+  { icon: Music, label: 'Audio', type: 'audio' },
 ];
 
 export default function GalleryPage() {
@@ -29,9 +29,9 @@ export default function GalleryPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [counts, setCounts] = useState<GalleryResponse['counts']>({
     all: 0,
+    audio: 0,
     image: 0,
     video: 0,
-    audio: 0,
   });
 
   const selectedItem = selectedIndex !== null ? items[selectedIndex] : null;
@@ -96,7 +96,7 @@ export default function GalleryPage() {
       setIsRefreshing(true);
       await fetchGallery(newPage, filter);
       setIsRefreshing(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ behavior: 'smooth', top: 0 });
     },
     [fetchGallery, filter]
   );

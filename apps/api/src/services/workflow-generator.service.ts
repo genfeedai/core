@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Replicate from 'replicate';
+import type { ReplicateModelInput } from '@/interfaces/execution-types.interface';
 
 // =============================================================================
 // TYPES
@@ -23,20 +24,20 @@ interface ModelConfig {
 }
 
 const MODEL_CONFIGS: Record<string, ModelConfig> = {
-  'meta/meta-llama-3.1-70b-instruct': {
-    supportsSystemPrompt: true,
-    inputTokenPrice: 0.64,
-    outputTokenPrice: 0.8,
-  },
-  'meta/meta-llama-3.3-70b-instruct': {
-    supportsSystemPrompt: true,
-    inputTokenPrice: 0.64,
-    outputTokenPrice: 0.8,
-  },
   'deepseek-ai/deepseek-r1': {
-    supportsSystemPrompt: false,
     inputTokenPrice: 3.75,
     outputTokenPrice: 10.0,
+    supportsSystemPrompt: false,
+  },
+  'meta/meta-llama-3.1-70b-instruct': {
+    inputTokenPrice: 0.64,
+    outputTokenPrice: 0.8,
+    supportsSystemPrompt: true,
+  },
+  'meta/meta-llama-3.3-70b-instruct': {
+    inputTokenPrice: 0.64,
+    outputTokenPrice: 0.8,
+    supportsSystemPrompt: true,
   },
 };
 
@@ -227,7 +228,7 @@ export class WorkflowGeneratorService {
       const modelConfig = MODEL_CONFIGS[model] ?? MODEL_CONFIGS[DEFAULT_MODEL];
 
       // Build input based on model capabilities
-      const input: Record<string, unknown> = {
+      const input: ReplicateModelInput = {
         max_tokens: 4096,
         temperature: 0.3,
         top_p: 0.9,

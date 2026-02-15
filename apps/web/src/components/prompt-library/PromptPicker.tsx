@@ -15,7 +15,7 @@ interface PromptPickerProps {
 
 function PromptPickerComponent({ onSelect, label }: PromptPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const [dropdownPosition, setDropdownPosition] = useState({ left: 0, top: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -27,8 +27,8 @@ function PromptPickerComponent({ onSelect, label }: PromptPickerProps) {
     if (isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       setDropdownPosition({
-        top: rect.bottom + 4,
         left: rect.left,
+        top: rect.bottom + 4,
       });
     }
   }, [isOpen]);
@@ -112,7 +112,7 @@ function PromptPickerComponent({ onSelect, label }: PromptPickerProps) {
           <div
             ref={dropdownRef}
             className="fixed z-[100] w-64 overflow-hidden rounded-lg border border-border bg-card shadow-lg"
-            style={{ top: dropdownPosition.top, left: dropdownPosition.left }}
+            style={{ left: dropdownPosition.left, top: dropdownPosition.top }}
           >
             {/* Header */}
             <div className="border-b border-border px-3 py-2 text-xs font-medium text-muted-foreground">

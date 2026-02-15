@@ -9,23 +9,23 @@ import { createConstructableMockModel, createObjectId } from '@/test/mocks/mongo
 function createMockPrompt(overrides = {}) {
   return {
     _id: createObjectId(),
-    name: 'Test Prompt',
-    description: 'A test prompt',
-    promptText: 'Generate something amazing',
-    styleSettings: {},
     aspectRatio: '16:9',
-    preferredModel: 'nano-banana',
     category: 'custom',
-    tags: ['test', 'sample'],
-    isFeatured: false,
-    useCount: 0,
-    thumbnail: null,
-    isDeleted: false,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    description: 'A test prompt',
+    isDeleted: false,
+    isFeatured: false,
+    name: 'Test Prompt',
+    preferredModel: 'nano-banana',
+    promptText: 'Generate something amazing',
     save: vi.fn().mockImplementation(function (this: unknown) {
       return Promise.resolve(this);
     }),
+    styleSettings: {},
+    tags: ['test', 'sample'],
+    thumbnail: null,
+    updatedAt: new Date(),
+    useCount: 0,
     ...overrides,
   };
 }
@@ -39,10 +39,10 @@ describe('PromptsService', () => {
     return createConstructableMockModel(
       {
         find: vi.fn().mockReturnValue({
-          sort: vi.fn().mockReturnThis(),
-          skip: vi.fn().mockReturnThis(),
-          limit: vi.fn().mockReturnThis(),
           exec: vi.fn().mockResolvedValue([mockPrompt]),
+          limit: vi.fn().mockReturnThis(),
+          skip: vi.fn().mockReturnThis(),
+          sort: vi.fn().mockReturnThis(),
         }),
         findOne: vi.fn().mockReturnValue({
           exec: vi.fn().mockResolvedValue(mockPrompt),
@@ -77,9 +77,9 @@ describe('PromptsService', () => {
   describe('create', () => {
     it('should create a new prompt library item', async () => {
       const dto = {
+        category: 'custom' as const,
         name: 'Test Prompt',
         promptText: 'Generate something amazing',
-        category: 'custom' as const,
       };
 
       const result = await service.create(dto);
@@ -90,15 +90,15 @@ describe('PromptsService', () => {
 
     it('should create prompt with all optional fields', async () => {
       const dto = {
-        name: 'Full Prompt',
+        aspectRatio: '16:9',
+        category: 'custom' as const,
         description: 'A complete prompt',
+        isFeatured: true,
+        name: 'Full Prompt',
+        preferredModel: 'nano-banana',
         promptText: 'Generate something',
         styleSettings: { mood: 'cinematic' },
-        aspectRatio: '16:9',
-        preferredModel: 'nano-banana',
-        category: 'custom' as const,
         tags: ['test'],
-        isFeatured: true,
         thumbnail: 'https://example.com/thumb.jpg',
       };
 
@@ -135,7 +135,7 @@ describe('PromptsService', () => {
     });
 
     it('should support pagination', async () => {
-      const result = await service.findAll({ offset: 0, limit: 10 });
+      const result = await service.findAll({ limit: 10, offset: 0 });
 
       expect(result).toHaveLength(1);
     });

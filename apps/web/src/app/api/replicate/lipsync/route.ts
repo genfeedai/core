@@ -31,12 +31,12 @@ export async function POST(request: NextRequest) {
     const prediction = await generateLipSync(
       (config.model || 'sync/lipsync-2') as LipSyncModel,
       {
-        video,
-        image,
+        active_speaker: config.activeSpeaker ?? false,
         audio,
+        image,
         sync_mode: config.syncMode || 'loop',
         temperature: config.temperature ?? 0.5,
-        active_speaker: config.activeSpeaker ?? false,
+        video,
       },
       webhookUrl
     );

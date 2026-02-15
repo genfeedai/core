@@ -4,9 +4,9 @@ import { JOB_STATUS } from '@/queue/queue.constants';
 
 // Mock BullMQ WorkerHost
 vi.mock('@nestjs/bullmq', () => ({
+  OnWorkerEvent: () => vi.fn(),
   Processor: () => vi.fn(),
   WorkerHost: class {},
-  OnWorkerEvent: () => vi.fn(),
 }));
 
 // Mock @genfeedai/core
@@ -22,12 +22,13 @@ vi.mock('@genfeedai/core', () => ({
 }));
 
 // Mock passthrough node types to empty so test nodes are not skipped
-vi.mock('@/queue/queue.constants', async () => {
-  const actual =
-    await vi.importActual<typeof import('@/queue/queue.constants')>('@/queue/queue.constants');
+vi.mock('@/registry/node-type.registry', async () => {
+  const actual = await vi.importActual<typeof import('@/registry/node-type.registry')>(
+    '@/registry/node-type.registry'
+  );
   return {
     ...actual,
-    PASSTHROUGH_NODE_TYPES: [],
+    QUEUE_PASSTHROUGH_TYPES: [],
   };
 });
 
@@ -56,25 +57,25 @@ describe('WorkflowProcessor', () => {
 
   const mockWorkflow = {
     _id: mockWorkflowId,
-    name: 'Test Workflow',
-    nodes: [
-      { id: 'node-1', type: 'imageGen', data: { prompt: 'test 1' } },
-      { id: 'node-2', type: 'llm', data: { prompt: 'test 2' } },
-      { id: 'node-3', type: 'videoGen', data: { model: 'test' } },
-    ],
     edges: [
       { source: 'node-1', target: 'node-2' },
       { source: 'node-2', target: 'node-3' },
     ],
+    name: 'Test Workflow',
+    nodes: [
+      { data: { prompt: 'test 1' }, id: 'node-1', type: 'imageGen' },
+      { data: { prompt: 'test 2' }, id: 'node-2', type: 'llm' },
+      { data: { model: 'test' }, id: 'node-3', type: 'videoGen' },
+    ],
   };
 
   const createMockJob = (overrides = {}) => ({
-    id: 'job-123',
     data: {
       executionId: mockExecutionId,
-      workflowId: mockWorkflowId,
       timestamp: new Date().toISOString(),
+      workflowId: mockWorkflowId,
     },
+    id: 'job-123',
     updateProgress: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   });
@@ -83,15 +84,15 @@ describe('WorkflowProcessor', () => {
     vi.clearAllMocks();
 
     mockQueueManager = {
-      updateJobStatus: vi.fn().mockResolvedValue(undefined),
       enqueueNode: vi.fn().mockResolvedValue('enqueued-job-id'),
+      updateJobStatus: vi.fn().mockResolvedValue(undefined),
     };
 
     mockExecutionsService = {
+      removeFromPendingNodes: vi.fn().mockResolvedValue(undefined),
+      setPendingNodes: vi.fn().mockResolvedValue(undefined),
       updateExecutionStatus: vi.fn().mockResolvedValue(undefined),
       updateNodeResult: vi.fn().mockResolvedValue(undefined),
-      setPendingNodes: vi.fn().mockResolvedValue(undefined),
-      removeFromPendingNodes: vi.fn().mockResolvedValue(undefined),
     };
 
     mockWorkflowsService = {
@@ -174,18 +175,18 @@ describe('WorkflowProcessor', () => {
 
       // All 3 nodes should be in pending nodes
       expect(mockExecutionsService.setPendingNodes).toHaveBeenCalledWith(mockExecutionId, [
-        { nodeId: 'node-1', nodeType: 'imageGen', nodeData: { prompt: 'test 1' }, dependsOn: [] },
+        { dependsOn: [], nodeData: { prompt: 'test 1' }, nodeId: 'node-1', nodeType: 'imageGen' },
         {
+          dependsOn: ['node-1'],
+          nodeData: { prompt: 'test 2' },
           nodeId: 'node-2',
           nodeType: 'llm',
-          nodeData: { prompt: 'test 2' },
-          dependsOn: ['node-1'],
         },
         {
+          dependsOn: ['node-2'],
+          nodeData: { model: 'test' },
           nodeId: 'node-3',
           nodeType: 'videoGen',
-          nodeData: { model: 'test' },
-          dependsOn: ['node-2'],
         },
       ]);
 
@@ -198,7 +199,7 @@ describe('WorkflowProcessor', () => {
         'imageGen',
         { prompt: 'test 1' },
         [],
-        { nodes: mockWorkflow.nodes, edges: mockWorkflow.edges },
+        { edges: mockWorkflow.edges, nodes: mockWorkflow.nodes },
         { debugMode: undefined }
       );
 

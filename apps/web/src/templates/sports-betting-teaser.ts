@@ -1,35 +1,136 @@
 import type { WorkflowTemplate } from '@genfeedai/types';
 
 export const SPORTS_BETTING_TEASER_TEMPLATE: WorkflowTemplate = {
-  version: 1,
-  name: 'Sports Betting Teaser',
+  createdAt: new Date().toISOString(),
   description:
     'Hype clip for sports betting events: generate dramatic scenes, animate with fast cuts, overlay odds/CTA text',
+  edgeStyle: 'smoothstep',
+  edges: [
+    // Concept → LLM
+    {
+      id: 'e-concept-llm',
+      source: 'concept',
+      sourceHandle: 'text',
+      target: 'llm-scenes',
+      targetHandle: 'prompt',
+    },
+
+    // LLM → Images
+    {
+      id: 'e-llm-img1',
+      source: 'llm-scenes',
+      sourceHandle: 'text',
+      target: 'imageGen-1',
+      targetHandle: 'prompt',
+    },
+    {
+      id: 'e-llm-img2',
+      source: 'llm-scenes',
+      sourceHandle: 'text',
+      target: 'imageGen-2',
+      targetHandle: 'prompt',
+    },
+
+    // Images → Videos
+    {
+      id: 'e-img1-vid1',
+      source: 'imageGen-1',
+      sourceHandle: 'image',
+      target: 'videoGen-1',
+      targetHandle: 'image',
+    },
+    {
+      id: 'e-img2-vid2',
+      source: 'imageGen-2',
+      sourceHandle: 'image',
+      target: 'videoGen-2',
+      targetHandle: 'image',
+    },
+
+    // LLM → Videos (motion prompts)
+    {
+      id: 'e-llm-vid1',
+      source: 'llm-scenes',
+      sourceHandle: 'text',
+      target: 'videoGen-1',
+      targetHandle: 'prompt',
+    },
+    {
+      id: 'e-llm-vid2',
+      source: 'llm-scenes',
+      sourceHandle: 'text',
+      target: 'videoGen-2',
+      targetHandle: 'prompt',
+    },
+
+    // Videos → Stitch
+    {
+      id: 'e-vid1-stitch',
+      source: 'videoGen-1',
+      sourceHandle: 'video',
+      target: 'stitch',
+      targetHandle: 'videos',
+    },
+    {
+      id: 'e-vid2-stitch',
+      source: 'videoGen-2',
+      sourceHandle: 'video',
+      target: 'stitch',
+      targetHandle: 'videos',
+    },
+
+    // Stitch → Subtitle
+    {
+      id: 'e-stitch-subtitle',
+      source: 'stitch',
+      sourceHandle: 'video',
+      target: 'subtitle',
+      targetHandle: 'video',
+    },
+
+    // LLM → Subtitle (headline text)
+    {
+      id: 'e-llm-subtitle',
+      source: 'llm-scenes',
+      sourceHandle: 'text',
+      target: 'subtitle',
+      targetHandle: 'text',
+    },
+
+    // Subtitle → Output
+    {
+      id: 'e-subtitle-output',
+      source: 'subtitle',
+      sourceHandle: 'video',
+      target: 'output',
+      targetHandle: 'video',
+    },
+  ],
+  name: 'Sports Betting Teaser',
   nodes: [
     // Stage 1: Event Description
     {
-      id: 'concept',
-      type: 'prompt',
-      position: { x: 50, y: 300 },
       data: {
         label: 'Event Description',
-        status: 'idle',
         prompt:
           'UFC 310 Main Event: Champion vs Challenger — explosive knockout odds, electric arena atmosphere, dramatic walkout',
+        status: 'idle',
         variables: {},
       },
+      id: 'concept',
+      position: { x: 50, y: 300 },
+      type: 'prompt',
     },
 
     // Stage 2: LLM — generate 2 dramatic scene prompts + headline text
     {
-      id: 'llm-scenes',
-      type: 'llm',
-      position: { x: 350, y: 300 },
       data: {
-        label: 'Scene & Headline Writer',
-        status: 'idle',
         inputPrompt: null,
+        jobId: null,
+        label: 'Scene & Headline Writer',
+        maxTokens: 1024,
         outputText: null,
+        status: 'idle',
         systemPrompt: `You are a sports betting content creator. Generate exactly 2 dramatic scene prompts and a bold headline for a betting teaser.
 
 For each scene, provide a detailed image generation prompt with:
@@ -43,247 +144,146 @@ Format:
 
 [HEADLINE] Short, punchy betting CTA with odds format (e.g. "+250 KNOCKOUT") [/HEADLINE]`,
         temperature: 0.8,
-        maxTokens: 1024,
         topP: 0.9,
-        jobId: null,
       },
+      id: 'llm-scenes',
+      position: { x: 350, y: 300 },
+      type: 'llm',
     },
 
     // Stage 3: Image Generation — 2 action shots (9:16 vertical)
     {
-      id: 'imageGen-1',
-      type: 'imageGen',
-      position: { x: 700, y: 150 },
       data: {
-        label: 'Scene 1 Image',
-        status: 'idle',
+        aspectRatio: '9:16',
         inputImages: [],
         inputPrompt: null,
-        outputImage: null,
-        model: 'nano-banana-pro',
-        aspectRatio: '9:16',
-        resolution: '2K',
-        outputFormat: 'jpg',
         jobId: null,
+        label: 'Scene 1 Image',
+        model: 'nano-banana-pro',
+        outputFormat: 'jpg',
+        outputImage: null,
+        resolution: '2K',
+        status: 'idle',
       },
+      id: 'imageGen-1',
+      position: { x: 700, y: 150 },
+      type: 'imageGen',
     },
     {
-      id: 'imageGen-2',
-      type: 'imageGen',
-      position: { x: 700, y: 450 },
       data: {
-        label: 'Scene 2 Image',
-        status: 'idle',
+        aspectRatio: '9:16',
         inputImages: [],
         inputPrompt: null,
-        outputImage: null,
-        model: 'nano-banana-pro',
-        aspectRatio: '9:16',
-        resolution: '2K',
-        outputFormat: 'jpg',
         jobId: null,
+        label: 'Scene 2 Image',
+        model: 'nano-banana-pro',
+        outputFormat: 'jpg',
+        outputImage: null,
+        resolution: '2K',
+        status: 'idle',
       },
+      id: 'imageGen-2',
+      position: { x: 700, y: 450 },
+      type: 'imageGen',
     },
 
     // Stage 4: Video Generation — dynamic motion
     {
-      id: 'videoGen-1',
-      type: 'videoGen',
-      position: { x: 1050, y: 150 },
       data: {
-        label: 'Scene 1 Video',
-        status: 'idle',
+        aspectRatio: '9:16',
+        duration: 5,
+        generateAudio: false,
         inputImage: null,
-        lastFrame: null,
-        referenceImages: [],
         inputPrompt: null,
+        jobId: null,
+        label: 'Scene 1 Video',
+        lastFrame: null,
+        model: 'veo-3.1',
         negativePrompt: 'blurry, distorted, low quality, static',
         outputVideo: null,
-        model: 'veo-3.1',
-        duration: 5,
-        aspectRatio: '9:16',
+        referenceImages: [],
         resolution: '1080p',
-        generateAudio: false,
-        jobId: null,
+        status: 'idle',
       },
+      id: 'videoGen-1',
+      position: { x: 1050, y: 150 },
+      type: 'videoGen',
     },
     {
-      id: 'videoGen-2',
-      type: 'videoGen',
-      position: { x: 1050, y: 450 },
       data: {
-        label: 'Scene 2 Video',
-        status: 'idle',
+        aspectRatio: '9:16',
+        duration: 5,
+        generateAudio: false,
         inputImage: null,
-        lastFrame: null,
-        referenceImages: [],
         inputPrompt: null,
+        jobId: null,
+        label: 'Scene 2 Video',
+        lastFrame: null,
+        model: 'veo-3.1',
         negativePrompt: 'blurry, distorted, low quality, static',
         outputVideo: null,
-        model: 'veo-3.1',
-        duration: 5,
-        aspectRatio: '9:16',
+        referenceImages: [],
         resolution: '1080p',
-        generateAudio: false,
-        jobId: null,
+        status: 'idle',
       },
+      id: 'videoGen-2',
+      position: { x: 1050, y: 450 },
+      type: 'videoGen',
     },
 
     // Stage 5: Video Stitch — fast cut transitions
     {
-      id: 'stitch',
-      type: 'videoStitch',
-      position: { x: 1400, y: 300 },
       data: {
-        label: 'Fast Cut Stitch',
-        status: 'idle',
-        inputVideos: [],
-        outputVideo: null,
-        transitionType: 'crossfade',
-        transitionDuration: 0.2,
-        seamlessLoop: false,
         audioCodec: 'aac',
+        inputVideos: [],
+        label: 'Fast Cut Stitch',
         outputQuality: 'full',
+        outputVideo: null,
+        seamlessLoop: false,
+        status: 'idle',
+        transitionDuration: 0.2,
+        transitionType: 'crossfade',
       },
+      id: 'stitch',
+      position: { x: 1400, y: 300 },
+      type: 'videoStitch',
     },
 
     // Stage 6: Subtitle — bold overlay with odds/CTA text
     {
-      id: 'subtitle',
-      type: 'subtitle',
-      position: { x: 1750, y: 300 },
       data: {
-        label: 'Odds Overlay',
-        status: 'idle',
-        inputVideo: null,
-        inputText: null,
-        outputVideo: null,
-        style: 'modern',
-        position: 'center',
-        fontSize: 48,
-        fontColor: '#FFD700',
         backgroundColor: 'rgba(0,0,0,0.6)',
+        fontColor: '#FFD700',
         fontFamily: 'Arial',
+        fontSize: 48,
+        inputText: null,
+        inputVideo: null,
         jobId: null,
+        label: 'Odds Overlay',
+        outputVideo: null,
+        position: 'center',
+        status: 'idle',
+        style: 'modern',
       },
+      id: 'subtitle',
+      position: { x: 1750, y: 300 },
+      type: 'subtitle',
     },
 
     // Output
     {
-      id: 'output',
-      type: 'download',
-      position: { x: 2100, y: 300 },
       data: {
-        label: 'Final Teaser',
-        status: 'idle',
         inputMedia: null,
         inputType: 'video',
+        label: 'Final Teaser',
         outputName: 'sports-betting-teaser',
+        status: 'idle',
       },
+      id: 'output',
+      position: { x: 2100, y: 300 },
+      type: 'download',
     },
   ],
-  edges: [
-    // Concept → LLM
-    {
-      id: 'e-concept-llm',
-      source: 'concept',
-      target: 'llm-scenes',
-      sourceHandle: 'text',
-      targetHandle: 'prompt',
-    },
-
-    // LLM → Images
-    {
-      id: 'e-llm-img1',
-      source: 'llm-scenes',
-      target: 'imageGen-1',
-      sourceHandle: 'text',
-      targetHandle: 'prompt',
-    },
-    {
-      id: 'e-llm-img2',
-      source: 'llm-scenes',
-      target: 'imageGen-2',
-      sourceHandle: 'text',
-      targetHandle: 'prompt',
-    },
-
-    // Images → Videos
-    {
-      id: 'e-img1-vid1',
-      source: 'imageGen-1',
-      target: 'videoGen-1',
-      sourceHandle: 'image',
-      targetHandle: 'image',
-    },
-    {
-      id: 'e-img2-vid2',
-      source: 'imageGen-2',
-      target: 'videoGen-2',
-      sourceHandle: 'image',
-      targetHandle: 'image',
-    },
-
-    // LLM → Videos (motion prompts)
-    {
-      id: 'e-llm-vid1',
-      source: 'llm-scenes',
-      target: 'videoGen-1',
-      sourceHandle: 'text',
-      targetHandle: 'prompt',
-    },
-    {
-      id: 'e-llm-vid2',
-      source: 'llm-scenes',
-      target: 'videoGen-2',
-      sourceHandle: 'text',
-      targetHandle: 'prompt',
-    },
-
-    // Videos → Stitch
-    {
-      id: 'e-vid1-stitch',
-      source: 'videoGen-1',
-      target: 'stitch',
-      sourceHandle: 'video',
-      targetHandle: 'videos',
-    },
-    {
-      id: 'e-vid2-stitch',
-      source: 'videoGen-2',
-      target: 'stitch',
-      sourceHandle: 'video',
-      targetHandle: 'videos',
-    },
-
-    // Stitch → Subtitle
-    {
-      id: 'e-stitch-subtitle',
-      source: 'stitch',
-      target: 'subtitle',
-      sourceHandle: 'video',
-      targetHandle: 'video',
-    },
-
-    // LLM → Subtitle (headline text)
-    {
-      id: 'e-llm-subtitle',
-      source: 'llm-scenes',
-      target: 'subtitle',
-      sourceHandle: 'text',
-      targetHandle: 'text',
-    },
-
-    // Subtitle → Output
-    {
-      id: 'e-subtitle-output',
-      source: 'subtitle',
-      target: 'output',
-      sourceHandle: 'video',
-      targetHandle: 'video',
-    },
-  ],
-  edgeStyle: 'smoothstep',
-  createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
+  version: 1,
 };

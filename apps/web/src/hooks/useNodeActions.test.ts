@@ -9,13 +9,13 @@ const mockDuplicateNode = vi.fn();
 vi.mock('@/store/workflowStore', () => {
   const store = (selector?: (state: unknown) => unknown) => {
     const state = {
+      duplicateNode: mockDuplicateNode,
       nodes: [
-        { id: 'node-1', type: 'imageGen', data: {}, position: { x: 0, y: 0 } },
-        { id: 'node-2', type: 'llm', data: {}, position: { x: 100, y: 0 } },
-        { id: 'node-3', type: 'output', data: {}, position: { x: 200, y: 0 } },
+        { data: {}, id: 'node-1', position: { x: 0, y: 0 }, type: 'imageGen' },
+        { data: {}, id: 'node-2', position: { x: 100, y: 0 }, type: 'llm' },
+        { data: {}, id: 'node-3', position: { x: 200, y: 0 }, type: 'output' },
       ],
       removeNode: mockRemoveNode,
-      duplicateNode: mockDuplicateNode,
     };
     return selector ? selector(state) : state;
   };

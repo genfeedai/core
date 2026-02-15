@@ -21,10 +21,10 @@ class WorkflowNode {
   @Prop({ required: true })
   type: string;
 
-  @Prop({ type: Object, required: true })
+  @Prop({ required: true, type: Object })
   position: Position;
 
-  @Prop({ type: Object, required: true })
+  @Prop({ required: true, type: Object })
   data: Record<string, unknown>;
 }
 
@@ -59,7 +59,7 @@ class NodeGroup {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ type: [String], default: [] })
+  @Prop({ default: [], type: [String] })
   nodeIds: string[];
 
   @Prop({ default: false })
@@ -81,7 +81,7 @@ class WorkflowInterfaceInput {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ required: true, enum: ['image', 'video', 'text', 'audio', 'number'] })
+  @Prop({ enum: ['image', 'video', 'text', 'audio', 'number'], required: true })
   type: string;
 
   @Prop({ default: true })
@@ -97,21 +97,21 @@ class WorkflowInterfaceOutput {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ required: true, enum: ['image', 'video', 'text', 'audio', 'number'] })
+  @Prop({ enum: ['image', 'video', 'text', 'audio', 'number'], required: true })
   type: string;
 }
 
 // Workflow interface (computed from boundary nodes)
 @Schema({ _id: false })
 class WorkflowInterfaceSchema {
-  @Prop({ type: [Object], default: [] })
+  @Prop({ default: [], type: [Object] })
   inputs: WorkflowInterfaceInput[];
 
-  @Prop({ type: [Object], default: [] })
+  @Prop({ default: [], type: [Object] })
   outputs: WorkflowInterfaceOutput[];
 }
 
-@Schema({ timestamps: true, collection: 'workflows' })
+@Schema({ collection: 'workflows', timestamps: true })
 export class Workflow extends Document {
   @Prop({ required: true })
   name: string;
@@ -122,23 +122,23 @@ export class Workflow extends Document {
   @Prop({ default: 1 })
   version: number;
 
-  @Prop({ type: [Object], default: [] })
+  @Prop({ default: [], type: [Object] })
   nodes: WorkflowNode[];
 
-  @Prop({ type: [Object], default: [] })
+  @Prop({ default: [], type: [Object] })
   edges: WorkflowEdge[];
 
   @Prop({ default: 'smoothstep' })
   edgeStyle: string;
 
-  @Prop({ type: [Object], default: [] })
+  @Prop({ default: [], type: [Object] })
   groups: NodeGroup[];
 
   @Prop({ default: false, index: true })
   isDeleted: boolean;
 
   // Composition: computed interface from WorkflowInput/WorkflowOutput boundary nodes
-  @Prop({ type: Object, default: { inputs: [], outputs: [] } })
+  @Prop({ default: { inputs: [], outputs: [] }, type: Object })
   interface: WorkflowInterfaceSchema;
 
   // Composition: true if workflow has defined interface (inputs or outputs)
@@ -146,11 +146,11 @@ export class Workflow extends Document {
   isReusable: boolean;
 
   // Thumbnail: URL of video/image to display as workflow preview
-  @Prop({ type: String, default: null })
+  @Prop({ default: null, type: String })
   thumbnail: string | null;
 
   // Thumbnail node ID: which node's output is used as thumbnail
-  @Prop({ type: String, default: null })
+  @Prop({ default: null, type: String })
   thumbnailNodeId: string | null;
 
   createdAt: Date;

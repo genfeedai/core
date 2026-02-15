@@ -34,10 +34,10 @@ export async function pollPrediction(
     }>(`/replicate/predictions/${predictionId}${queryParams}`);
 
     executionStore.updateJob(predictionId, {
-      status: data.status as Job['status'],
-      progress: data.progress ?? 0,
-      output: data.output,
       error: data.error ?? null,
+      output: data.output,
+      progress: data.progress ?? 0,
+      status: data.status as Job['status'],
     });
 
     workflowStore.updateNodeData(nodeId, {
@@ -52,8 +52,8 @@ export async function pollPrediction(
       );
       // Clear error on success
       workflowStore.updateNodeData(nodeId, {
-        status: NodeStatusEnum.COMPLETE,
         error: undefined,
+        status: NodeStatusEnum.COMPLETE,
         ...outputUpdate,
       });
       workflowStore.propagateOutputsDownstream(nodeId);
@@ -62,8 +62,8 @@ export async function pollPrediction(
 
     if (data.status === 'failed' || data.status === 'canceled') {
       workflowStore.updateNodeData(nodeId, {
-        status: NodeStatusEnum.ERROR,
         error: data.error ?? 'Job failed',
+        status: NodeStatusEnum.ERROR,
       });
       return;
     }
@@ -93,7 +93,7 @@ export async function pollPrediction(
   }
 
   workflowStore.updateNodeData(nodeId, {
-    status: NodeStatusEnum.ERROR,
     error: 'Job timed out',
+    status: NodeStatusEnum.ERROR,
   });
 }

@@ -1,4 +1,5 @@
 import { Type } from 'class-transformer';
+import type { ModelInputSchema, SchemaParams } from '@/interfaces/execution-types.interface';
 import {
   IsArray,
   IsBoolean,
@@ -23,7 +24,7 @@ class SelectedModelDto {
 
   @IsOptional()
   @IsObject()
-  inputSchema?: Record<string, unknown>;
+  inputSchema?: ModelInputSchema;
 }
 
 export class GenerateVideoDto {
@@ -85,7 +86,7 @@ export class GenerateVideoDto {
 
   @IsOptional()
   @IsObject()
-  schemaParams?: Record<string, unknown>;
+  schemaParams?: SchemaParams;
 
   @IsOptional()
   @IsBoolean()

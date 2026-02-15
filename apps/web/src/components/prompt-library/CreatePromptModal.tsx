@@ -22,14 +22,14 @@ function CreatePromptModalComponent() {
   const isEditing = !!editingItem;
 
   const [formData, setFormData] = useState<ICreatePrompt>({
-    name: editingItem?.name ?? '',
+    aspectRatio: editingItem?.aspectRatio ?? '',
+    category: editingItem?.category ?? 'custom',
     description: editingItem?.description ?? '',
+    name: editingItem?.name ?? '',
+    preferredModel: editingItem?.preferredModel ?? '',
     promptText: editingItem?.promptText ?? '',
     styleSettings: editingItem?.styleSettings ?? {},
-    category: editingItem?.category ?? 'custom',
     tags: editingItem?.tags ?? [],
-    aspectRatio: editingItem?.aspectRatio ?? '',
-    preferredModel: editingItem?.preferredModel ?? '',
   });
 
   const [tagInput, setTagInput] = useState('');

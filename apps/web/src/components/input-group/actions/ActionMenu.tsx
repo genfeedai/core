@@ -15,16 +15,16 @@ interface ActionMenuProps {
 }
 
 const ALIGN_CLASSES: Record<MenuAlign, string> = {
-  start: 'left-0',
   center: 'left-1/2 -translate-x-1/2',
   end: 'right-0',
+  start: 'left-0',
 };
 
 const SIDE_CLASSES: Record<MenuSide, string> = {
-  top: 'bottom-full mb-1',
-  right: 'left-full ml-1 top-0',
   bottom: 'top-full mt-1',
   left: 'right-full mr-1 top-0',
+  right: 'left-full ml-1 top-0',
+  top: 'bottom-full mb-1',
 };
 
 function ActionMenuComponent({

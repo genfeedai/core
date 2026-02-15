@@ -87,12 +87,12 @@ function CapabilityBadge({ capability }: { capability: ModelCapability }) {
 // =============================================================================
 
 const USE_CASE_CONFIG: Record<ModelUseCase, { label: string; icon: typeof Sparkles }> = {
-  [ModelUseCaseEnum.STYLE_TRANSFER]: { label: 'Style Transfer', icon: Palette },
-  [ModelUseCaseEnum.CHARACTER_CONSISTENT]: { label: 'Character Consistent', icon: User },
-  [ModelUseCaseEnum.IMAGE_VARIATION]: { label: 'Image Variation', icon: Repeat },
-  [ModelUseCaseEnum.INPAINTING]: { label: 'Inpainting', icon: Layers },
-  [ModelUseCaseEnum.UPSCALE]: { label: 'Upscale', icon: ZoomIn },
-  [ModelUseCaseEnum.GENERAL]: { label: 'General', icon: Sparkles },
+  [ModelUseCaseEnum.STYLE_TRANSFER]: { icon: Palette, label: 'Style Transfer' },
+  [ModelUseCaseEnum.CHARACTER_CONSISTENT]: { icon: User, label: 'Character Consistent' },
+  [ModelUseCaseEnum.IMAGE_VARIATION]: { icon: Repeat, label: 'Image Variation' },
+  [ModelUseCaseEnum.INPAINTING]: { icon: Layers, label: 'Inpainting' },
+  [ModelUseCaseEnum.UPSCALE]: { icon: ZoomIn, label: 'Upscale' },
+  [ModelUseCaseEnum.GENERAL]: { icon: Sparkles, label: 'General' },
 };
 
 function UseCaseBadge({ useCase }: { useCase: ModelUseCase }) {
@@ -312,8 +312,8 @@ function ModelBrowserModalComponent({
   const handleSelect = useCallback(
     (model: ProviderModel) => {
       addRecentModel({
-        id: model.id,
         displayName: model.displayName,
+        id: model.id,
         provider: model.provider,
       });
       onSelect(model);

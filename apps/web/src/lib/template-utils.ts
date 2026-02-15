@@ -13,30 +13,30 @@ export type ProviderName =
 
 // Map node types to their primary providers
 const NODE_TYPE_PROVIDERS: Partial<Record<NodeType, ProviderName>> = {
+  animation: 'FFmpeg',
   imageGen: 'Replicate',
-  videoGen: 'Replicate',
-  llm: 'Gemini',
   lipSync: 'Replicate',
-  textToSpeech: 'ElevenLabs',
-  transcribe: 'Replicate',
+  llm: 'Gemini',
   reframe: 'Luma',
   resize: 'Luma',
+  subtitle: 'FFmpeg',
+  textToSpeech: 'ElevenLabs',
+  transcribe: 'Replicate',
   upscale: 'Topaz',
-  animation: 'FFmpeg',
+  videoGen: 'Replicate',
   videoStitch: 'FFmpeg',
   videoTrim: 'FFmpeg',
-  subtitle: 'FFmpeg',
 };
 
 // Map model ID prefixes to providers
 const MODEL_PREFIX_PROVIDERS: Record<string, ProviderName> = {
+  'bytedance/': 'Replicate',
   'fal-ai/': 'Fal',
+  'photon-': 'Luma',
+  'pixverse/': 'Replicate',
   'replicate/': 'Replicate',
   'sync/': 'Replicate',
-  'bytedance/': 'Replicate',
-  'pixverse/': 'Replicate',
   'topaz-': 'Topaz',
-  'photon-': 'Luma',
 };
 
 /**
@@ -62,9 +62,9 @@ export function extractProviders(nodes: WorkflowNode[]): ProviderName[] {
     // Check selected model provider
     if (selectedModel?.provider) {
       const providerMap: Record<string, ProviderName> = {
-        replicate: 'Replicate',
         fal: 'Fal',
         huggingface: 'Replicate',
+        replicate: 'Replicate',
       };
       const mapped = providerMap[selectedModel.provider];
       if (mapped) {
@@ -99,13 +99,13 @@ export function getDifficulty(nodeCount: number): Difficulty {
  */
 export function getProviderColor(provider: ProviderName): string {
   const colors: Record<ProviderName, string> = {
-    Replicate: 'bg-blue-500/20 text-blue-400',
-    Fal: 'bg-purple-500/20 text-purple-400',
-    Luma: 'bg-pink-500/20 text-pink-400',
     ElevenLabs: 'bg-green-500/20 text-green-400',
-    Gemini: 'bg-cyan-500/20 text-cyan-400',
-    Topaz: 'bg-orange-500/20 text-orange-400',
+    Fal: 'bg-purple-500/20 text-purple-400',
     FFmpeg: 'bg-gray-500/20 text-gray-400',
+    Gemini: 'bg-cyan-500/20 text-cyan-400',
+    Luma: 'bg-pink-500/20 text-pink-400',
+    Replicate: 'bg-blue-500/20 text-blue-400',
+    Topaz: 'bg-orange-500/20 text-orange-400',
   };
   return colors[provider] ?? 'bg-gray-500/20 text-gray-400';
 }

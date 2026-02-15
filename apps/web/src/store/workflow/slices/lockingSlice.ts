@@ -19,51 +19,22 @@ export const createLockingSlice: StateCreator<WorkflowStore, [], [], LockingSlic
 ) => ({
   _setNodeLockState: (predicate, lock) => {
     set((state) => ({
+      isDirty: true,
       nodes: state.nodes.map((n) =>
         predicate(n.id)
           ? {
               ...n,
-              draggable: !lock,
               data: {
                 ...n.data,
                 isLocked: lock,
                 lockTimestamp: lock ? Date.now() : undefined,
                 ...(lock && { cachedOutput: getNodeOutput(n) }),
               },
+              draggable: !lock,
             }
           : n
       ),
-      isDirty: true,
     }));
-  },
-
-  toggleNodeLock: (nodeId) => {
-    const node = get().getNodeById(nodeId);
-    if (!node) return;
-    const shouldLock = !(node.data.isLocked ?? false);
-    get()._setNodeLockState((id) => id === nodeId, shouldLock);
-  },
-
-  lockNode: (nodeId) => {
-    const node = get().getNodeById(nodeId);
-    if (!node || node.data.isLocked) return;
-    get()._setNodeLockState((id) => id === nodeId, true);
-  },
-
-  unlockNode: (nodeId) => {
-    get()._setNodeLockState((id) => id === nodeId, false);
-  },
-
-  lockMultipleNodes: (nodeIds) => {
-    get()._setNodeLockState((id) => nodeIds.includes(id), true);
-  },
-
-  unlockMultipleNodes: (nodeIds) => {
-    get()._setNodeLockState((id) => nodeIds.includes(id), false);
-  },
-
-  unlockAllNodes: () => {
-    get()._setNodeLockState(() => true, false);
   },
 
   isNodeLocked: (nodeId) => {
@@ -74,5 +45,34 @@ export const createLockingSlice: StateCreator<WorkflowStore, [], [], LockingSlic
     if (node.data.isLocked) return true;
 
     return groups.some((group) => group.isLocked && group.nodeIds.includes(nodeId));
+  },
+
+  lockMultipleNodes: (nodeIds) => {
+    get()._setNodeLockState((id) => nodeIds.includes(id), true);
+  },
+
+  lockNode: (nodeId) => {
+    const node = get().getNodeById(nodeId);
+    if (!node || node.data.isLocked) return;
+    get()._setNodeLockState((id) => id === nodeId, true);
+  },
+
+  toggleNodeLock: (nodeId) => {
+    const node = get().getNodeById(nodeId);
+    if (!node) return;
+    const shouldLock = !(node.data.isLocked ?? false);
+    get()._setNodeLockState((id) => id === nodeId, shouldLock);
+  },
+
+  unlockAllNodes: () => {
+    get()._setNodeLockState(() => true, false);
+  },
+
+  unlockMultipleNodes: (nodeIds) => {
+    get()._setNodeLockState((id) => nodeIds.includes(id), false);
+  },
+
+  unlockNode: (nodeId) => {
+    get()._setNodeLockState((id) => id === nodeId, false);
   },
 });

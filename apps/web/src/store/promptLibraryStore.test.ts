@@ -5,12 +5,12 @@ import { usePromptLibraryStore } from './promptLibraryStore';
 // Mock the API
 vi.mock('@/lib/api', () => ({
   promptsApi: {
-    getAll: vi.fn().mockResolvedValue([]),
-    getFeatured: vi.fn().mockResolvedValue([]),
     create: vi.fn().mockResolvedValue({ _id: 'new-item' }),
-    update: vi.fn().mockResolvedValue({ _id: 'updated-item' }),
     delete: vi.fn().mockResolvedValue({}),
     duplicate: vi.fn().mockResolvedValue({ _id: 'duplicated-item', name: 'Copy' }),
+    getAll: vi.fn().mockResolvedValue([]),
+    getFeatured: vi.fn().mockResolvedValue([]),
+    update: vi.fn().mockResolvedValue({ _id: 'updated-item' }),
     use: vi.fn().mockResolvedValue({ _id: 'used-item', useCount: 11 }),
   },
 }));
@@ -18,21 +18,21 @@ vi.mock('@/lib/api', () => ({
 describe('usePromptLibraryStore', () => {
   const mockItem: IPrompt = {
     _id: 'item-1',
-    name: 'Test Prompt',
-    description: 'A test prompt',
-    promptText: 'Generate a beautiful image',
-    styleSettings: {},
     aspectRatio: '16:9',
-    preferredModel: 'nano-banana-pro',
     category: 'landscape',
-    tags: ['nature'],
+    createdAt: new Date().toISOString(),
+    description: 'A test prompt',
+    isDeleted: false,
     isFeatured: false,
     isSystem: false,
+    name: 'Test Prompt',
+    preferredModel: 'nano-banana-pro',
+    promptText: 'Generate a beautiful image',
+    styleSettings: {},
+    tags: ['nature'],
     thumbnail: undefined,
-    useCount: 5,
-    isDeleted: false,
-    createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    useCount: 5,
   };
 
   beforeEach(() => {
@@ -40,16 +40,16 @@ describe('usePromptLibraryStore', () => {
 
     // Reset store to initial state
     usePromptLibraryStore.setState({
-      items: [],
-      featuredItems: [],
-      selectedItem: null,
-      isLoading: false,
-      error: null,
-      searchQuery: '',
       categoryFilter: null,
-      isPickerOpen: false,
-      isCreateModalOpen: false,
       editingItem: null,
+      error: null,
+      featuredItems: [],
+      isCreateModalOpen: false,
+      isLoading: false,
+      isPickerOpen: false,
+      items: [],
+      searchQuery: '',
+      selectedItem: null,
     });
   });
 
@@ -170,8 +170,8 @@ describe('usePromptLibraryStore', () => {
 
       it('should close the create modal', () => {
         usePromptLibraryStore.setState({
-          isCreateModalOpen: true,
           editingItem: mockItem,
+          isCreateModalOpen: true,
         });
         const { closeCreateModal } = usePromptLibraryStore.getState();
 
@@ -201,8 +201,8 @@ describe('usePromptLibraryStore', () => {
 
       it('should use search query and category filter', async () => {
         usePromptLibraryStore.setState({
-          searchQuery: 'sunset',
           categoryFilter: 'landscape',
+          searchQuery: 'sunset',
         });
 
         const { promptsApi } = await import('@/lib/api');
@@ -211,8 +211,8 @@ describe('usePromptLibraryStore', () => {
 
         expect(promptsApi.getAll).toHaveBeenCalledWith(
           expect.objectContaining({
-            search: 'sunset',
             category: 'landscape',
+            search: 'sunset',
           }),
           undefined
         );
@@ -363,8 +363,8 @@ describe('usePromptLibraryStore', () => {
     describe('recordItemUsage', () => {
       it('should update item use count and close picker', async () => {
         usePromptLibraryStore.setState({
-          items: [mockItem],
           isPickerOpen: true,
+          items: [mockItem],
         });
         const { promptsApi } = await import('@/lib/api');
         const usedItem = { ...mockItem, useCount: 6 };

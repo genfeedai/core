@@ -12,16 +12,24 @@ export const createJobSlice: StateCreator<ExecutionStore, [], [], JobSlice> = (s
     set((state) => {
       const newJobs = new Map(state.jobs);
       newJobs.set(predictionId, {
-        nodeId,
-        predictionId,
-        status: 'pending',
-        progress: 0,
-        output: null,
-        error: null,
         createdAt: new Date().toISOString(),
+        error: null,
+        nodeId,
+        output: null,
+        predictionId,
+        progress: 0,
+        status: 'pending',
       });
       return { jobs: newJobs };
     });
+  },
+
+  getJobByNodeId: (nodeId) => {
+    const { jobs } = get();
+    for (const job of jobs.values()) {
+      if (job.nodeId === nodeId) return job;
+    }
+    return undefined;
   },
 
   updateJob: (predictionId, updates) => {
@@ -33,13 +41,5 @@ export const createJobSlice: StateCreator<ExecutionStore, [], [], JobSlice> = (s
       }
       return { jobs: newJobs };
     });
-  },
-
-  getJobByNodeId: (nodeId) => {
-    const { jobs } = get();
-    for (const job of jobs.values()) {
-      if (job.nodeId === nodeId) return job;
-    }
-    return undefined;
   },
 });

@@ -10,9 +10,10 @@ import {
 import { ReframeNodeType, UpscaleNodeType } from '@genfeedai/types';
 import { Injectable } from '@nestjs/common';
 import type {
-  CostBreakdownItem,
-  CostEstimate,
+  CostBreakdown,
   JobCostBreakdown,
+  NodeCostEstimate,
+  NodeDataForCost,
   WorkflowNodeForCost,
 } from '@/interfaces/cost.interface';
 
@@ -21,20 +22,21 @@ export class CostCalculatorService {
   /**
    * Calculate estimated cost for a workflow before execution
    */
-  calculateWorkflowEstimate(nodes: WorkflowNodeForCost[]): CostEstimate {
-    const breakdown: CostBreakdownItem[] = [];
+  calculateWorkflowEstimate(nodes: WorkflowNodeForCost[]): CostBreakdown {
+    const items: NodeCostEstimate[] = [];
     let total = 0;
 
     for (const node of nodes) {
       const cost = this.calculateNodeCost(node);
       if (cost > 0) {
-        const item: CostBreakdownItem = {
-          nodeId: node.id,
-          nodeType: node.type,
+        const item: NodeCostEstimate = {
           model: node.data.model ?? 'unknown',
-          unitPrice: this.getUnitPrice(node),
+          nodeId: node.id,
+          nodeLabel: node.type,
+          nodeType: node.type,
           quantity: 1,
           subtotal: cost,
+          unitPrice: this.getUnitPrice(node),
         };
 
         // Add video-specific details
@@ -43,12 +45,12 @@ export class CostCalculatorService {
           item.withAudio = node.data.generateAudio ?? true;
         }
 
-        breakdown.push(item);
+        items.push(item);
         total += cost;
       }
     }
 
-    return { total, breakdown };
+    return { items, total };
   }
 
   /**
@@ -79,7 +81,7 @@ export class CostCalculatorService {
 
     // Topaz Upscale nodes
     if (this.isTopazNode(type)) {
-      return this.calculateTopazCost(type, data as unknown as Record<string, unknown>);
+      return this.calculateTopazCost(type, data);
     }
 
     return 0;
@@ -211,35 +213,34 @@ export class CostCalculatorService {
   /**
    * Calculate Topaz Upscale cost (unified node)
    */
-  calculateTopazCost(nodeType: string, data: Record<string, unknown>): number {
+  calculateTopazCost(nodeType: string, data: NodeDataForCost): number {
     // Specific video node type
     if (nodeType === UpscaleNodeType.TOPAZ_VIDEO_UPSCALE) {
-      const resolution = (data.targetResolution as string) ?? '1080p';
-      const fps = (data.targetFps as number) ?? 30;
-      const duration = (data.duration as number) ?? 10;
+      const resolution = data.targetResolution ?? '1080p';
+      const fps = data.targetFps ?? 30;
+      const duration = data.duration ?? 10;
       return this.calculateTopazVideoCost(resolution, fps, duration);
     }
 
     // Specific image node type
     if (nodeType === UpscaleNodeType.TOPAZ_IMAGE_UPSCALE) {
       const baseMP = 2;
-      const factor = this.getUpscaleMultiplier(data.upscaleFactor as string);
+      const factor = this.getUpscaleMultiplier(data.upscaleFactor);
       const outputMP = baseMP * factor;
       return this.calculateTopazImageCost(outputMP);
     }
 
     // For unified 'upscale' node, check inputType
     if (nodeType === UpscaleNodeType.UPSCALE) {
-      const inputType = data.inputType as string;
-      if (inputType === 'video') {
-        const resolution = (data.targetResolution as string) ?? '1080p';
-        const fps = (data.targetFps as number) ?? 30;
-        const duration = (data.duration as number) ?? 10;
+      if (data.inputType === 'video') {
+        const resolution = data.targetResolution ?? '1080p';
+        const fps = data.targetFps ?? 30;
+        const duration = data.duration ?? 10;
         return this.calculateTopazVideoCost(resolution, fps, duration);
       }
       // Default to image
       const baseMP = 2;
-      const factor = this.getUpscaleMultiplier(data.upscaleFactor as string);
+      const factor = this.getUpscaleMultiplier(data.upscaleFactor);
       const outputMP = baseMP * factor;
       return this.calculateTopazImageCost(outputMP);
     }
@@ -349,12 +350,12 @@ export class CostCalculatorService {
     resolution?: string
   ): JobCostBreakdown {
     return {
-      model,
-      resolution,
       duration,
-      withAudio,
-      unitPrice: cost,
+      model,
       quantity: 1,
+      resolution,
+      unitPrice: cost,
+      withAudio,
     };
   }
 

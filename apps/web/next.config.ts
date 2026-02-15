@@ -3,20 +3,20 @@ import type { NextConfig } from 'next';
 import path from 'node:path';
 
 const nextConfig: NextConfig = {
-  outputFileTracingRoot: path.join(__dirname, '../../'),
-  reactStrictMode: true,
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
         hostname: 'replicate.delivery',
+        protocol: 'https',
       },
       {
-        protocol: 'https',
         hostname: 'pbxt.replicate.delivery',
+        protocol: 'https',
       },
     ],
   },
+  outputFileTracingRoot: path.join(__dirname, '../../'),
+  reactStrictMode: true,
   turbopack: {},
   webpack: (config) => {
     // Configure sass-loader to use modern compiler and handle CSS imports
@@ -85,13 +85,13 @@ const nextConfig: NextConfig = {
     const appStores = path.resolve(__dirname, 'src/store');
     config.resolve.alias = {
       ...config.resolve.alias,
+      '@genfeedai/core': path.resolve(__dirname, '../../packages/core/dist'),
+      '@genfeedai/types': path.resolve(__dirname, '../../packages/types/dist'),
       // Resolve workspace packages (Bun workspace linking bypasses node_modules)
       '@genfeedai/types/replicate/schemas.json': path.resolve(
         __dirname,
         '../../packages/types/src/replicate/schemas.json'
       ),
-      '@genfeedai/types': path.resolve(__dirname, '../../packages/types/dist'),
-      '@genfeedai/core': path.resolve(__dirname, '../../packages/core/dist'),
       // Map tw-animate-css to its CSS file directly (bypasses style export condition)
       'tw-animate-css': path.join(__dirname, 'node_modules/tw-animate-css/dist/tw-animate.css'),
       // Unify workflow-ui stores with app stores (single Zustand instance)
@@ -109,11 +109,11 @@ const nextConfig: NextConfig = {
 };
 
 export default withSentryConfig(nextConfig, {
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+  },
   org: 'genfeedai',
   project: 'core-web',
   silent: !process.env.CI,
   widenClientFileUpload: true,
-  bundleSizeOptimizations: {
-    excludeDebugStatements: true,
-  },
 });

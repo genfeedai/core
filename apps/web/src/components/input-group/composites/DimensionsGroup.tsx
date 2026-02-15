@@ -42,8 +42,8 @@ function DimensionsGroupComponent({
         const newHeight = Math.round(clampedWidth / aspectRatio);
         onChange({
           ...value,
-          width: clampedWidth,
           height: Math.min(maxHeight, Math.max(minHeight, newHeight)),
+          width: clampedWidth,
         });
       } else {
         onChange({ ...value, width: clampedWidth });
@@ -59,8 +59,8 @@ function DimensionsGroupComponent({
         const newWidth = Math.round(clampedHeight * aspectRatio);
         onChange({
           ...value,
-          width: Math.min(maxWidth, Math.max(minWidth, newWidth)),
           height: clampedHeight,
+          width: Math.min(maxWidth, Math.max(minWidth, newWidth)),
         });
       } else {
         onChange({ ...value, height: clampedHeight });

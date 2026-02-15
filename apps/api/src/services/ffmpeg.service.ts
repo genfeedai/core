@@ -366,9 +366,9 @@ export class FFmpegService {
     }
 
     return {
-      fontsize,
-      fontcolor: hexToAssColor(input.fontColor),
       boxcolor,
+      fontcolor: hexToAssColor(input.fontColor),
+      fontsize,
       yPosition,
     };
   }

@@ -4,15 +4,16 @@ import { InjectModel } from '@nestjs/mongoose';
 import type { Queue } from 'bullmq';
 import type { Model } from 'mongoose';
 import { Types } from 'mongoose';
+import type { JobStatusUpdatePayload, NodeOutput } from '@/interfaces/execution-types.interface';
 import type { JobResult, NodeJobData, WorkflowJobData } from '@/interfaces/job-data.interface';
 import {
   JOB_PRIORITY,
   JOB_STATUS,
   JOB_TYPES,
-  NODE_TYPE_TO_QUEUE,
   QUEUE_NAMES,
   type QueueName,
 } from '@/queue/queue.constants';
+import { NODE_TYPE_TO_QUEUE } from '@/registry/node-type.registry';
 import { QueueJob, type QueueJobDocument } from '@/schemas/queue-job.schema';
 import type { ExecutionsService, WorkflowDefinition } from '@/services/executions.service';
 import type { WorkflowsService } from '@/services/workflows.service';
@@ -58,11 +59,11 @@ export class QueueManagerService {
     options?: { debugMode?: boolean; selectedNodeIds?: string[] }
   ): Promise<string> {
     const jobData: WorkflowJobData = {
-      executionId,
-      workflowId,
-      timestamp: new Date().toISOString(),
       debugMode: options?.debugMode ?? false,
+      executionId,
       selectedNodeIds: options?.selectedNodeIds ?? [],
+      timestamp: new Date().toISOString(),
+      workflowId,
     };
 
     const job = await this.workflowQueue.add(JOB_TYPES.EXECUTE_WORKFLOW, jobData, {
@@ -75,11 +76,11 @@ export class QueueManagerService {
       { bullJobId: job.id },
       {
         $set: {
-          queueName: QUEUE_NAMES.WORKFLOW_ORCHESTRATOR,
+          data: jobData,
           executionId: new Types.ObjectId(executionId),
           nodeId: 'root',
+          queueName: QUEUE_NAMES.WORKFLOW_ORCHESTRATOR,
           status: JOB_STATUS.PENDING,
-          data: jobData,
         },
         $setOnInsert: { recoveryCount: 0 },
       },
@@ -128,14 +129,14 @@ export class QueueManagerService {
     }
 
     const jobData: NodeJobData = {
+      debugMode: options?.debugMode ?? false,
+      dependsOn,
       executionId,
-      workflowId,
+      nodeData: resolvedNodeData,
       nodeId,
       nodeType,
-      nodeData: resolvedNodeData,
-      dependsOn,
       timestamp: new Date().toISOString(),
-      debugMode: options?.debugMode ?? false,
+      workflowId,
     };
 
     const job = await queue.add(this.getJobTypeForNodeType(nodeType), jobData, {
@@ -148,11 +149,11 @@ export class QueueManagerService {
       { bullJobId: job.id },
       {
         $set: {
-          queueName,
+          data: jobData,
           executionId: new Types.ObjectId(executionId),
           nodeId,
+          queueName,
           status: JOB_STATUS.PENDING,
-          data: jobData,
         },
         $setOnInsert: { recoveryCount: 0 },
       },
@@ -189,10 +190,10 @@ export class QueueManagerService {
       const dbJob = await this.queueJobModel.findOne({ bullJobId: jobId });
       if (dbJob) {
         return {
-          status: dbJob.status,
+          error: dbJob.error,
           progress: dbJob.status === JOB_STATUS.COMPLETED ? 100 : 0,
           result: dbJob.result as JobResult | undefined,
-          error: dbJob.error,
+          status: dbJob.status,
         };
       }
       throw new Error(`Job not found: ${jobId}`);
@@ -205,10 +206,10 @@ export class QueueManagerService {
         : ((job.progress as { percent?: number })?.percent ?? 0);
 
     return {
-      status: state,
+      error: job.failedReason,
       progress,
       result: job.returnvalue as JobResult | undefined,
-      error: job.failedReason,
+      status: state,
     };
   }
 
@@ -229,12 +230,12 @@ export class QueueManagerService {
     bullJobId: string,
     status: string,
     updates?: {
-      result?: Record<string, unknown>;
+      result?: NodeOutput;
       error?: string;
       attemptsMade?: number;
     }
   ): Promise<void> {
-    const updateData: Record<string, unknown> = { status };
+    const updateData: JobStatusUpdatePayload = { status };
 
     if (status === JOB_STATUS.ACTIVE) {
       updateData.processedAt = new Date();
@@ -273,9 +274,9 @@ export class QueueManagerService {
       {
         $push: {
           logs: {
-            timestamp: new Date(),
-            message,
             level,
+            message,
+            timestamp: new Date(),
           },
         },
       }
@@ -303,8 +304,8 @@ export class QueueManagerService {
       { bullJobId },
       {
         $set: {
-          movedToDlq: true,
           failedReason: error,
+          movedToDlq: true,
           status: JOB_STATUS.FAILED,
         },
       }
@@ -337,12 +338,12 @@ export class QueueManagerService {
 
     for (const [name, queue] of this.queues) {
       metrics.push({
-        name,
-        waiting: await queue.getWaitingCount(),
         active: await queue.getActiveCount(),
         completed: await queue.getCompletedCount(),
-        failed: await queue.getFailedCount(),
         delayed: await queue.getDelayedCount(),
+        failed: await queue.getFailedCount(),
+        name,
+        waiting: await queue.getWaitingCount(),
       });
     }
 
@@ -376,13 +377,13 @@ export class QueueManagerService {
 
   private static readonly NODE_TYPE_TO_JOB_TYPE: Record<string, string> = {
     imageGen: JOB_TYPES.GENERATE_IMAGE,
-    videoGen: JOB_TYPES.GENERATE_VIDEO,
     llm: JOB_TYPES.GENERATE_TEXT,
+    videoGen: JOB_TYPES.GENERATE_VIDEO,
   };
 
   private static readonly NODE_TYPE_TO_PRIORITY: Record<string, number> = {
-    llm: JOB_PRIORITY.HIGH,
     imageGen: JOB_PRIORITY.NORMAL,
+    llm: JOB_PRIORITY.HIGH,
     videoGen: JOB_PRIORITY.LOW, // Video is expensive, lower priority
   };
 
@@ -434,16 +435,16 @@ export class QueueManagerService {
     if (!workflowDef) {
       const fetchedWorkflow = await this.workflowsService.findOne(workflowId);
       workflowDef = {
-        nodes: fetchedWorkflow.nodes as Array<{
-          id: string;
-          type: string;
-          data: Record<string, unknown>;
-        }>,
         edges: fetchedWorkflow.edges as Array<{
           source: string;
           target: string;
           sourceHandle?: string;
           targetHandle?: string;
+        }>,
+        nodes: fetchedWorkflow.nodes as Array<{
+          id: string;
+          type: string;
+          data: Record<string, unknown>;
         }>,
       };
     }

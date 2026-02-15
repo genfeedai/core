@@ -12,12 +12,12 @@ describe('QueueManagerService', () => {
   // Mock queue with basic operations
   const createMockQueue = () => ({
     add: vi.fn().mockResolvedValue({ id: 'job-123' }),
-    getJob: vi.fn(),
-    getWaitingCount: vi.fn().mockResolvedValue(5),
     getActiveCount: vi.fn().mockResolvedValue(2),
     getCompletedCount: vi.fn().mockResolvedValue(100),
-    getFailedCount: vi.fn().mockResolvedValue(3),
     getDelayedCount: vi.fn().mockResolvedValue(1),
+    getFailedCount: vi.fn().mockResolvedValue(3),
+    getJob: vi.fn(),
+    getWaitingCount: vi.fn().mockResolvedValue(5),
   });
 
   const mockWorkflowQueue = createMockQueue();
@@ -28,8 +28,8 @@ describe('QueueManagerService', () => {
   // Mock Mongoose model
   const mockQueueJobModel = {
     create: vi.fn().mockResolvedValue({}),
-    findOne: vi.fn(),
     find: vi.fn(),
+    findOne: vi.fn(),
     updateOne: vi.fn().mockResolvedValue({}),
   };
 
@@ -38,8 +38,8 @@ describe('QueueManagerService', () => {
 
     // Reset mock implementations
     mockQueueJobModel.find.mockReturnValue({
-      sort: vi.fn().mockReturnThis(),
       exec: vi.fn().mockResolvedValue([]),
+      sort: vi.fn().mockReturnThis(),
     });
 
     // Create service instance with mocks
@@ -53,9 +53,9 @@ describe('QueueManagerService', () => {
     (service as unknown as Record<string, unknown>).llmQueue = mockLlmQueue;
     (service as unknown as Record<string, unknown>).queueJobModel = mockQueueJobModel;
     (service as unknown as Record<string, unknown>).logger = {
+      error: vi.fn(),
       log: vi.fn(),
       warn: vi.fn(),
-      error: vi.fn(),
     };
 
     // Set up queues Map
@@ -92,8 +92,8 @@ describe('QueueManagerService', () => {
       expect(mockQueueJobModel.create).toHaveBeenCalledWith(
         expect.objectContaining({
           bullJobId: 'job-123',
-          queueName: QUEUE_NAMES.WORKFLOW_ORCHESTRATOR,
           nodeId: 'root',
+          queueName: QUEUE_NAMES.WORKFLOW_ORCHESTRATOR,
           status: JOB_STATUS.PENDING,
         })
       );
@@ -129,9 +129,9 @@ describe('QueueManagerService', () => {
         JOB_TYPES.GENERATE_IMAGE,
         expect.objectContaining({
           executionId: mockExecutionId,
+          nodeData,
           nodeId: 'node-1',
           nodeType: 'imageGen',
-          nodeData,
         }),
         expect.objectContaining({
           jobId: `${mockExecutionId}-node-1`,
@@ -216,29 +216,29 @@ describe('QueueManagerService', () => {
   describe('getJobStatus', () => {
     it('should get status from BullMQ job', async () => {
       const mockJob = {
+        failedReason: undefined,
         getState: vi.fn().mockResolvedValue('completed'),
         progress: 100,
         returnvalue: { output: 'result' },
-        failedReason: undefined,
       };
       mockWorkflowQueue.getJob.mockResolvedValue(mockJob);
 
       const result = await service.getJobStatus(QUEUE_NAMES.WORKFLOW_ORCHESTRATOR, 'job-123');
 
       expect(result).toEqual({
-        status: 'completed',
+        error: undefined,
         progress: 100,
         result: { output: 'result' },
-        error: undefined,
+        status: 'completed',
       });
     });
 
     it('should handle progress as object', async () => {
       const mockJob = {
+        failedReason: undefined,
         getState: vi.fn().mockResolvedValue('active'),
         progress: { percent: 50 },
         returnvalue: undefined,
-        failedReason: undefined,
       };
       mockWorkflowQueue.getJob.mockResolvedValue(mockJob);
 
@@ -250,27 +250,27 @@ describe('QueueManagerService', () => {
     it('should fallback to MongoDB when job not in queue', async () => {
       mockWorkflowQueue.getJob.mockResolvedValue(null);
       mockQueueJobModel.findOne.mockResolvedValue({
-        status: JOB_STATUS.COMPLETED,
-        result: { data: 'from-db' },
         error: undefined,
+        result: { data: 'from-db' },
+        status: JOB_STATUS.COMPLETED,
       });
 
       const result = await service.getJobStatus(QUEUE_NAMES.WORKFLOW_ORCHESTRATOR, 'job-123');
 
       expect(result).toEqual({
-        status: JOB_STATUS.COMPLETED,
+        error: undefined,
         progress: 100,
         result: { data: 'from-db' },
-        error: undefined,
+        status: JOB_STATUS.COMPLETED,
       });
     });
 
     it('should return pending progress for non-completed MongoDB job', async () => {
       mockWorkflowQueue.getJob.mockResolvedValue(null);
       mockQueueJobModel.findOne.mockResolvedValue({
-        status: JOB_STATUS.PENDING,
-        result: undefined,
         error: undefined,
+        result: undefined,
+        status: JOB_STATUS.PENDING,
       });
 
       const result = await service.getJobStatus(QUEUE_NAMES.WORKFLOW_ORCHESTRATOR, 'job-123');
@@ -302,8 +302,8 @@ describe('QueueManagerService', () => {
       ];
 
       mockQueueJobModel.find.mockReturnValue({
-        sort: vi.fn().mockReturnThis(),
         exec: vi.fn().mockResolvedValue(mockJobs),
+        sort: vi.fn().mockReturnThis(),
       });
 
       const result = await service.getExecutionJobs(mockExecutionId);
@@ -317,8 +317,8 @@ describe('QueueManagerService', () => {
     it('should sort jobs by creation date', async () => {
       const sortMock = vi.fn().mockReturnThis();
       mockQueueJobModel.find.mockReturnValue({
-        sort: sortMock,
         exec: vi.fn().mockResolvedValue([]),
+        sort: sortMock,
       });
 
       await service.getExecutionJobs(mockExecutionId);
@@ -335,8 +335,8 @@ describe('QueueManagerService', () => {
         { bullJobId: 'job-123' },
         {
           $set: expect.objectContaining({
-            status: JOB_STATUS.COMPLETED,
             finishedAt: expect.any(Date),
+            status: JOB_STATUS.COMPLETED,
           }),
         }
       );
@@ -437,9 +437,9 @@ describe('QueueManagerService', () => {
         {
           $push: {
             logs: {
-              timestamp: expect.any(Date),
-              message: 'Processing started',
               level: 'info',
+              message: 'Processing started',
+              timestamp: expect.any(Date),
             },
           },
         }
@@ -504,8 +504,8 @@ describe('QueueManagerService', () => {
         { bullJobId: 'job-123' },
         {
           $set: {
-            movedToDlq: true,
             failedReason: 'Max retries exceeded',
+            movedToDlq: true,
             status: JOB_STATUS.FAILED,
           },
         }
@@ -520,12 +520,12 @@ describe('QueueManagerService', () => {
       expect(result).toHaveLength(4);
       expect(result).toContainEqual(
         expect.objectContaining({
-          name: QUEUE_NAMES.WORKFLOW_ORCHESTRATOR,
-          waiting: 5,
           active: 2,
           completed: 100,
-          failed: 3,
           delayed: 1,
+          failed: 3,
+          name: QUEUE_NAMES.WORKFLOW_ORCHESTRATOR,
+          waiting: 5,
         })
       );
     });

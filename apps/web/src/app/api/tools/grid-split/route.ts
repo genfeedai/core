@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
         const height = cellHeight - safeInset * 2;
 
         // Extract the cell
-        let pipeline = sharp(imageBuffer).extract({ left, top, width, height });
+        let pipeline = sharp(imageBuffer).extract({ height, left, top, width });
 
         // Apply output format
         switch (outputFormat) {
@@ -135,29 +135,29 @@ export async function POST(request: NextRequest) {
         const url = `/api/gallery/tmp/grid-cells/${gridId}/${filename}`;
 
         results.push({
+          height,
           index,
           url,
           width,
-          height,
         });
       }
     }
 
     logger.info(`Grid split complete: ${gridRows}x${gridCols} = ${results.length} cells`, {
-      gridId,
       context: 'api/tools/grid-split',
+      gridId,
     });
 
     return NextResponse.json({
-      success: true,
-      gridId,
-      totalCells: gridRows * gridCols,
-      gridRows,
-      gridCols,
-      originalDimensions: { width: metadata.width, height: metadata.height },
-      cellDimensions: { width: cellWidth - safeInset * 2, height: cellHeight - safeInset * 2 },
       borderInset: safeInset,
+      cellDimensions: { height: cellHeight - safeInset * 2, width: cellWidth - safeInset * 2 },
+      gridCols,
+      gridId,
+      gridRows,
       images: results,
+      originalDimensions: { height: metadata.height, width: metadata.width },
+      success: true,
+      totalCells: gridRows * gridCols,
     });
   } catch (error) {
     logger.error('Grid split error', error, { context: 'api/tools/grid-split' });

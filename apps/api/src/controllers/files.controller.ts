@@ -25,17 +25,17 @@ import {
 function getMimeType(filename: string): string {
   const ext = filename.toLowerCase().split('.').pop();
   const mimeTypes: Record<string, string> = {
-    jpg: 'image/jpeg',
-    jpeg: 'image/jpeg',
-    png: 'image/png',
     gif: 'image/gif',
-    webp: 'image/webp',
-    mp4: 'video/mp4',
-    webm: 'video/webm',
+    jpeg: 'image/jpeg',
+    jpg: 'image/jpeg',
     mov: 'video/quicktime',
     mp3: 'audio/mpeg',
-    wav: 'audio/wav',
+    mp4: 'video/mp4',
     ogg: 'audio/ogg',
+    png: 'image/png',
+    wav: 'audio/wav',
+    webm: 'video/webm',
+    webp: 'image/webp',
   };
   return mimeTypes[ext ?? ''] ?? 'application/octet-stream';
 }
@@ -44,18 +44,18 @@ function getMimeType(filename: string): string {
  * Maximum file sizes by type (in bytes)
  */
 const MAX_FILE_SIZES: Record<FileType, number> = {
+  audio: 50 * 1024 * 1024, // 50MB
   image: 20 * 1024 * 1024, // 20MB
   video: 200 * 1024 * 1024, // 200MB
-  audio: 50 * 1024 * 1024, // 50MB
 };
 
 /**
  * Allowed MIME types by file type
  */
 const ALLOWED_MIME_TYPES: Record<FileType, string[]> = {
+  audio: ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp3'],
   image: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
   video: ['video/mp4', 'video/webm', 'video/quicktime'],
-  audio: ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp3'],
 };
 
 @Controller('files')

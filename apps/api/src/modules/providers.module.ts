@@ -3,7 +3,7 @@ import { ProvidersController } from '@/controllers/providers.controller';
 
 @Module({
   controllers: [ProvidersController],
-  providers: [],
   exports: [],
+  providers: [],
 })
 export class ProvidersModule {}

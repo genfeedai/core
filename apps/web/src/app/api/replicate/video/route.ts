@@ -22,15 +22,15 @@ export async function POST(request: NextRequest) {
     const prediction = await generateVideo(
       config.model || 'veo-3.1-fast',
       {
-        prompt,
+        aspect_ratio: config.aspectRatio || '16:9',
+        duration: config.duration || 8,
+        generate_audio: config.generateAudio ?? true,
         image: inputs.image || config.inputImage,
         last_frame: inputs.lastFrame || config.lastFrame,
-        reference_images: config.referenceImages,
-        duration: config.duration || 8,
-        aspect_ratio: config.aspectRatio || '16:9',
-        resolution: config.resolution || '1080p',
-        generate_audio: config.generateAudio ?? true,
         negative_prompt: config.negativePrompt,
+        prompt,
+        reference_images: config.referenceImages,
+        resolution: config.resolution || '1080p',
       },
       webhookUrl
     );

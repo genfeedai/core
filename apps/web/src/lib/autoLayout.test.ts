@@ -4,10 +4,10 @@ import { getLayoutedNodes } from './autoLayout';
 
 describe('getLayoutedNodes', () => {
   const createNode = (id: string, x = 0, y = 0): Node => ({
-    id,
-    type: 'default',
     data: {},
+    id,
     position: { x, y },
+    type: 'default',
   });
 
   const createEdge = (source: string, target: string): Edge => ({
@@ -138,18 +138,18 @@ describe('getLayoutedNodes', () => {
     it('should use measured dimensions when available', () => {
       const nodes: Node[] = [
         {
-          id: 'node-1',
-          type: 'default',
           data: {},
+          id: 'node-1',
+          measured: { height: 200, width: 300 },
           position: { x: 0, y: 0 },
-          measured: { width: 300, height: 200 },
+          type: 'default',
         },
         {
-          id: 'node-2',
-          type: 'default',
           data: {},
+          id: 'node-2',
+          measured: { height: 200, width: 300 },
           position: { x: 0, y: 0 },
-          measured: { width: 300, height: 200 },
+          type: 'default',
         },
       ];
       const edges = [createEdge('node-1', 'node-2')];
@@ -217,10 +217,10 @@ describe('getLayoutedNodes', () => {
     it('should preserve node data and type', () => {
       const nodes: Node[] = [
         {
-          id: 'node-1',
-          type: 'imageGen',
           data: { model: 'nano-banana', prompt: 'test' },
+          id: 'node-1',
           position: { x: 0, y: 0 },
+          type: 'imageGen',
         },
       ];
 

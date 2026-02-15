@@ -1,10 +1,10 @@
-import { TemplateCategory } from '@genfeedai/types';
+import { WorkflowTemplateCategory } from '@genfeedai/types';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, type HydratedDocument } from 'mongoose';
 
 export type TemplateDocument = HydratedDocument<Template>;
 
-@Schema({ timestamps: true, collection: 'templates' })
+@Schema({ collection: 'templates', timestamps: true })
 export class Template extends Document {
   @Prop({ required: true })
   name: string;
@@ -12,8 +12,8 @@ export class Template extends Document {
   @Prop({ default: '' })
   description: string;
 
-  @Prop({ type: String, required: true, enum: Object.values(TemplateCategory) })
-  category: TemplateCategory;
+  @Prop({ enum: Object.values(WorkflowTemplateCategory), required: true, type: String })
+  category: WorkflowTemplateCategory;
 
   @Prop()
   thumbnail?: string;
@@ -21,10 +21,10 @@ export class Template extends Document {
   @Prop({ default: 1 })
   version: number;
 
-  @Prop({ type: [Object], default: [] })
+  @Prop({ default: [], type: [Object] })
   nodes: Record<string, unknown>[];
 
-  @Prop({ type: [Object], default: [] })
+  @Prop({ default: [], type: [Object] })
   edges: Record<string, unknown>[];
 
   @Prop({ default: 'smoothstep' })

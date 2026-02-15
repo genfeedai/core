@@ -55,19 +55,46 @@ interface FetchOptions extends RequestInit {
 // Add session header to options
 function withSession(options?: { signal?: AbortSignal }): FetchOptions {
   return {
-    signal: options?.signal,
     headers: {
       'X-Session-Id': getSessionId(),
     },
+    signal: options?.signal,
   };
 }
 
 export const settingsApi = {
   /**
+   * Add a model to recent models
+   */
+  addRecentModel: async (
+    model: Omit<RecentModelData, 'timestamp'>,
+    signal?: AbortSignal
+  ): Promise<RecentModelData[]> => {
+    return apiClient.post<RecentModelData[]>(
+      '/settings/recent-models',
+      model,
+      withSession({ signal })
+    );
+  },
+
+  /**
+   * Clear recent models
+   */
+  clearRecentModels: async (signal?: AbortSignal): Promise<RecentModelData[]> => {
+    return apiClient.delete<RecentModelData[]>('/settings/recent-models', withSession({ signal }));
+  },
+  /**
    * Get all settings for current user
    */
   getAll: async (signal?: AbortSignal): Promise<SettingsData> => {
     return apiClient.get<SettingsData>('/settings', withSession({ signal }));
+  },
+
+  /**
+   * Reset all settings to defaults
+   */
+  reset: async (signal?: AbortSignal): Promise<SettingsData> => {
+    return apiClient.delete<SettingsData>('/settings', withSession({ signal }));
   },
 
   /**
@@ -106,33 +133,5 @@ export const settingsApi = {
       preferences,
       withSession({ signal })
     );
-  },
-
-  /**
-   * Add a model to recent models
-   */
-  addRecentModel: async (
-    model: Omit<RecentModelData, 'timestamp'>,
-    signal?: AbortSignal
-  ): Promise<RecentModelData[]> => {
-    return apiClient.post<RecentModelData[]>(
-      '/settings/recent-models',
-      model,
-      withSession({ signal })
-    );
-  },
-
-  /**
-   * Clear recent models
-   */
-  clearRecentModels: async (signal?: AbortSignal): Promise<RecentModelData[]> => {
-    return apiClient.delete<RecentModelData[]>('/settings/recent-models', withSession({ signal }));
-  },
-
-  /**
-   * Reset all settings to defaults
-   */
-  reset: async (signal?: AbortSignal): Promise<SettingsData> => {
-    return apiClient.delete<SettingsData>('/settings', withSession({ signal }));
   },
 };

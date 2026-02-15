@@ -4,10 +4,10 @@ import { ComparisonSlider } from './comparison-slider';
 
 describe('ComparisonSlider', () => {
   const defaultProps = {
-    beforeSrc: '/images/before.jpg',
     afterSrc: '/images/after.jpg',
-    position: 50,
+    beforeSrc: '/images/before.jpg',
     onPositionChange: vi.fn(),
+    position: 50,
   };
 
   beforeEach(() => {
@@ -67,15 +67,15 @@ describe('ComparisonSlider', () => {
 
       // Mock getBoundingClientRect
       vi.spyOn(slider, 'getBoundingClientRect').mockReturnValue({
-        left: 0,
-        width: 200,
-        top: 0,
         bottom: 0,
-        right: 200,
         height: 128,
+        left: 0,
+        right: 200,
+        toJSON: () => ({}),
+        top: 0,
+        width: 200,
         x: 0,
         y: 0,
-        toJSON: () => ({}),
       });
 
       fireEvent.mouseDown(slider, { clientX: 100 });
@@ -88,15 +88,15 @@ describe('ComparisonSlider', () => {
       const slider = container.firstChild as HTMLElement;
 
       vi.spyOn(slider, 'getBoundingClientRect').mockReturnValue({
-        left: 0,
-        width: 200,
-        top: 0,
         bottom: 0,
-        right: 200,
         height: 128,
+        left: 0,
+        right: 200,
+        toJSON: () => ({}),
+        top: 0,
+        width: 200,
         x: 0,
         y: 0,
-        toJSON: () => ({}),
       });
 
       // Start dragging
@@ -123,15 +123,15 @@ describe('ComparisonSlider', () => {
       const slider = container.firstChild as HTMLElement;
 
       vi.spyOn(slider, 'getBoundingClientRect').mockReturnValue({
-        left: 0,
-        width: 200,
-        top: 0,
         bottom: 0,
-        right: 200,
         height: 128,
+        left: 0,
+        right: 200,
+        toJSON: () => ({}),
+        top: 0,
+        width: 200,
         x: 0,
         y: 0,
-        toJSON: () => ({}),
       });
 
       fireEvent.mouseDown(slider, { clientX: 100 });
@@ -148,15 +148,15 @@ describe('ComparisonSlider', () => {
       const slider = container.firstChild as HTMLElement;
 
       vi.spyOn(slider, 'getBoundingClientRect').mockReturnValue({
-        left: 0,
-        width: 200,
-        top: 0,
         bottom: 0,
-        right: 200,
         height: 128,
+        left: 0,
+        right: 200,
+        toJSON: () => ({}),
+        top: 0,
+        width: 200,
         x: 0,
         y: 0,
-        toJSON: () => ({}),
       });
 
       fireEvent.mouseDown(slider, { clientX: 100 });
@@ -173,15 +173,15 @@ describe('ComparisonSlider', () => {
       const slider = container.firstChild as HTMLElement;
 
       vi.spyOn(slider, 'getBoundingClientRect').mockReturnValue({
-        left: 0,
-        width: 200,
-        top: 0,
         bottom: 0,
-        right: 200,
         height: 128,
+        left: 0,
+        right: 200,
+        toJSON: () => ({}),
+        top: 0,
+        width: 200,
         x: 0,
         y: 0,
-        toJSON: () => ({}),
       });
 
       // Click beyond right edge
@@ -202,15 +202,15 @@ describe('ComparisonSlider', () => {
       const slider = container.firstChild as HTMLElement;
 
       vi.spyOn(slider, 'getBoundingClientRect').mockReturnValue({
-        left: 0,
-        width: 200,
-        top: 0,
         bottom: 0,
-        right: 200,
         height: 128,
+        left: 0,
+        right: 200,
+        toJSON: () => ({}),
+        top: 0,
+        width: 200,
         x: 0,
         y: 0,
-        toJSON: () => ({}),
       });
 
       fireEvent.touchStart(slider, {
@@ -225,15 +225,15 @@ describe('ComparisonSlider', () => {
       const slider = container.firstChild as HTMLElement;
 
       vi.spyOn(slider, 'getBoundingClientRect').mockReturnValue({
-        left: 0,
-        width: 200,
-        top: 0,
         bottom: 0,
-        right: 200,
         height: 128,
+        left: 0,
+        right: 200,
+        toJSON: () => ({}),
+        top: 0,
+        width: 200,
         x: 0,
         y: 0,
-        toJSON: () => ({}),
       });
 
       fireEvent.touchStart(slider, { touches: [{ clientX: 100 }] });
@@ -249,15 +249,15 @@ describe('ComparisonSlider', () => {
       const slider = container.firstChild as HTMLElement;
 
       vi.spyOn(slider, 'getBoundingClientRect').mockReturnValue({
-        left: 0,
-        width: 200,
-        top: 0,
         bottom: 0,
-        right: 200,
         height: 128,
+        left: 0,
+        right: 200,
+        toJSON: () => ({}),
+        top: 0,
+        width: 200,
         x: 0,
         y: 0,
-        toJSON: () => ({}),
       });
 
       fireEvent.touchStart(slider, { touches: [{ clientX: 100 }] });

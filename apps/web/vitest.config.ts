@@ -4,38 +4,38 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [react()],
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}'],
-    server: {
-      deps: {
-        inline: [/react/, /react-dom/],
-      },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
     },
+    dedupe: ['react', 'react-dom'],
+  },
+  test: {
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'json-summary', 'html'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/types/**', 'src/test/**', 'src/**/index.ts'],
       include: [
         'src/lib/**/*.ts',
         'src/store/**/*.ts',
         'src/hooks/**/*.ts',
         'src/components/**/*.tsx',
       ],
-      exclude: ['src/**/*.test.{ts,tsx}', 'src/types/**', 'src/test/**', 'src/**/index.ts'],
+      provider: 'v8',
+      reporter: ['text', 'json', 'json-summary', 'html'],
       thresholds: {
-        statements: 20,
         branches: 65,
         functions: 50,
         lines: 20,
+        statements: 20,
       },
     },
-  },
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
+    environment: 'jsdom',
+    globals: true,
+    include: ['src/**/*.test.{ts,tsx}'],
+    server: {
+      deps: {
+        inline: [/react/, /react-dom/],
+      },
     },
-    dedupe: ['react', 'react-dom'],
+    setupFiles: ['./src/test/setup.ts'],
   },
 });

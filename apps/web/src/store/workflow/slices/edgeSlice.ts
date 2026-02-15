@@ -22,26 +22,60 @@ export interface EdgeSlice {
 }
 
 export const createEdgeSlice: StateCreator<WorkflowStore, [], [], EdgeSlice> = (set, get) => ({
-  onNodesChange: (changes) => {
-    const hasMeaningfulChange = changes.some(
-      (change) => change.type === 'add' || change.type === 'remove' || change.type === 'replace'
+  findCompatibleHandle: (sourceNodeId, sourceHandleId, targetNodeId) => {
+    const { nodes, edges } = get();
+
+    const sourceNode = nodes.find((n) => n.id === sourceNodeId);
+    const targetNode = nodes.find((n) => n.id === targetNodeId);
+
+    if (!sourceNode || !targetNode) return null;
+
+    const sourceType = getHandleType(sourceNode.type as NodeType, sourceHandleId, 'source');
+
+    if (!sourceType) return null;
+
+    const targetDef = NODE_DEFINITIONS[targetNode.type as NodeType];
+    if (!targetDef) return null;
+
+    const existingTargetHandles = new Set(
+      edges.filter((e) => e.target === targetNodeId).map((e) => e.targetHandle)
     );
 
-    set((state) => ({
-      nodes: applyNodeChanges(changes, state.nodes) as WorkflowNode[],
-      ...(hasMeaningfulChange && { isDirty: true }),
-    }));
+    for (const input of targetDef.inputs) {
+      // Skip handles that already have connections, unless they support multiple connections
+      const hasExistingConnection = existingTargetHandles.has(input.id);
+      if (hasExistingConnection && !input.multiple) continue;
+
+      if (CONNECTION_RULES[sourceType]?.includes(input.type)) {
+        return input.id;
+      }
+    }
+
+    return null;
   },
 
-  onEdgesChange: (changes) => {
-    const hasMeaningfulChange = changes.some(
-      (change) => change.type === 'add' || change.type === 'remove' || change.type === 'replace'
+  isValidConnection: (connection) => {
+    const { nodes } = get();
+
+    const sourceNode = nodes.find((n) => n.id === connection.source);
+    const targetNode = nodes.find((n) => n.id === connection.target);
+
+    if (!sourceNode || !targetNode) return false;
+
+    const sourceType = getHandleType(
+      sourceNode.type as NodeType,
+      connection.sourceHandle ?? null,
+      'source'
+    );
+    const targetType = getHandleType(
+      targetNode.type as NodeType,
+      connection.targetHandle ?? null,
+      'target'
     );
 
-    set((state) => ({
-      edges: applyEdgeChanges(changes, state.edges) as WorkflowEdge[],
-      ...(hasMeaningfulChange && { isDirty: true }),
-    }));
+    if (!sourceType || !targetType) return false;
+
+    return CONNECTION_RULES[sourceType]?.includes(targetType) ?? false;
   },
 
   onConnect: (connection) => {
@@ -66,6 +100,27 @@ export const createEdgeSlice: StateCreator<WorkflowStore, [], [], EdgeSlice> = (
     if (connection.source) {
       propagateOutputsDownstream(connection.source);
     }
+  },
+
+  onEdgesChange: (changes) => {
+    const hasMeaningfulChange = changes.some(
+      (change) => change.type === 'add' || change.type === 'remove' || change.type === 'replace'
+    );
+
+    set((state) => ({
+      edges: applyEdgeChanges(changes, state.edges) as WorkflowEdge[],
+      ...(hasMeaningfulChange && { isDirty: true }),
+    }));
+  },
+  onNodesChange: (changes) => {
+    const hasMeaningfulChange = changes.some(
+      (change) => change.type === 'add' || change.type === 'remove' || change.type === 'replace'
+    );
+
+    set((state) => ({
+      nodes: applyNodeChanges(changes, state.nodes) as WorkflowNode[],
+      ...(hasMeaningfulChange && { isDirty: true }),
+    }));
   },
 
   removeEdge: (edgeId) => {
@@ -98,61 +153,5 @@ export const createEdgeSlice: StateCreator<WorkflowStore, [], [], EdgeSlice> = (
       ),
       isDirty: true,
     }));
-  },
-
-  isValidConnection: (connection) => {
-    const { nodes } = get();
-
-    const sourceNode = nodes.find((n) => n.id === connection.source);
-    const targetNode = nodes.find((n) => n.id === connection.target);
-
-    if (!sourceNode || !targetNode) return false;
-
-    const sourceType = getHandleType(
-      sourceNode.type as NodeType,
-      connection.sourceHandle ?? null,
-      'source'
-    );
-    const targetType = getHandleType(
-      targetNode.type as NodeType,
-      connection.targetHandle ?? null,
-      'target'
-    );
-
-    if (!sourceType || !targetType) return false;
-
-    return CONNECTION_RULES[sourceType]?.includes(targetType) ?? false;
-  },
-
-  findCompatibleHandle: (sourceNodeId, sourceHandleId, targetNodeId) => {
-    const { nodes, edges } = get();
-
-    const sourceNode = nodes.find((n) => n.id === sourceNodeId);
-    const targetNode = nodes.find((n) => n.id === targetNodeId);
-
-    if (!sourceNode || !targetNode) return null;
-
-    const sourceType = getHandleType(sourceNode.type as NodeType, sourceHandleId, 'source');
-
-    if (!sourceType) return null;
-
-    const targetDef = NODE_DEFINITIONS[targetNode.type as NodeType];
-    if (!targetDef) return null;
-
-    const existingTargetHandles = new Set(
-      edges.filter((e) => e.target === targetNodeId).map((e) => e.targetHandle)
-    );
-
-    for (const input of targetDef.inputs) {
-      // Skip handles that already have connections, unless they support multiple connections
-      const hasExistingConnection = existingTargetHandles.has(input.id);
-      if (hasExistingConnection && !input.multiple) continue;
-
-      if (CONNECTION_RULES[sourceType]?.includes(input.type)) {
-        return input.id;
-      }
-    }
-
-    return null;
   },
 });

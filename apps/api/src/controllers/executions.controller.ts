@@ -1,6 +1,7 @@
 import { Body, Controller, forwardRef, Get, Inject, Param, Post, Sse } from '@nestjs/common';
 import { from, interval, map, Observable, startWith, switchMap, takeWhile } from 'rxjs';
 import type { ExecutionCostDetails } from '@/interfaces/cost.interface';
+import type { NodeOutput } from '@/interfaces/execution-types.interface';
 import { ExecutionsService } from '@/services/executions.service';
 import { QueueManagerService } from '@/services/queue-manager.service';
 
@@ -127,7 +128,7 @@ export class ExecutionsController {
     @Body() updates: {
       status?: string;
       progress?: number;
-      output?: Record<string, unknown>;
+      output?: NodeOutput;
       error?: string;
     }
   ) {

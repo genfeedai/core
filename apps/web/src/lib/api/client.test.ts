@@ -159,9 +159,9 @@ describe('apiClient', () => {
         http.post(`${API_BASE_URL}/test`, () => {
           return HttpResponse.json(
             {
-              message: 'Validation failed',
               code: 'VALIDATION_ERROR',
               details: ['field required'],
+              message: 'Validation failed',
             },
             { status: 400 }
           );

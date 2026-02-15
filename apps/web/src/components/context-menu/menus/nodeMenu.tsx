@@ -33,20 +33,20 @@ export function getNodeMenuItems({
 }: NodeMenuOptions): ContextMenuItemConfig[] {
   const items: ContextMenuItemConfig[] = [
     {
+      icon: <Copy className="w-4 h-4" />,
       id: 'duplicate',
       label: 'Duplicate',
-      icon: <Copy className="w-4 h-4" />,
-      shortcut: '⌘D',
       onClick: () => onDuplicate(nodeId),
+      shortcut: '⌘D',
     },
   ];
 
   // Add "Set as Thumbnail" option for nodes with media output
   if (hasMediaOutput && onSetAsThumbnail) {
     items.push({
+      icon: <Image className="w-4 h-4" />,
       id: 'setThumbnail',
       label: 'Set as Thumbnail',
-      icon: <Image className="w-4 h-4" />,
       onClick: () => onSetAsThumbnail(nodeId),
     });
   }
@@ -57,22 +57,22 @@ export function getNodeMenuItems({
       const colorValue = NODE_COLOR_VALUES[color];
       const isSelected = colorValue === currentColor || (color === 'none' && !currentColor);
       return {
-        id: `color-${color}`,
-        label: `${isSelected ? '✓ ' : ''}${NODE_COLOR_LABELS[color]}`,
         icon: (
           <div
             className="w-4 h-4 rounded-sm border border-border"
             style={{ backgroundColor: colorValue || 'transparent' }}
           />
         ),
+        id: `color-${color}`,
+        label: `${isSelected ? '✓ ' : ''}${NODE_COLOR_LABELS[color]}`,
         onClick: () => onSetColor(nodeId, colorValue),
       };
     });
 
     items.push({
+      icon: <Palette className="w-4 h-4" />,
       id: 'setColor',
       label: 'Set Color',
-      icon: <Palette className="w-4 h-4" />,
       submenu: colorSubmenu,
     });
   }
@@ -82,18 +82,18 @@ export function getNodeMenuItems({
   items.push(
     isLocked
       ? {
+          icon: <LockOpen className="w-4 h-4" />,
           id: 'unlock',
           label: 'Unlock Node',
-          icon: <LockOpen className="w-4 h-4" />,
-          shortcut: 'L',
           onClick: () => onUnlock(nodeId),
+          shortcut: 'L',
         }
       : {
+          icon: <Lock className="w-4 h-4" />,
           id: 'lock',
           label: 'Lock Node',
-          icon: <Lock className="w-4 h-4" />,
-          shortcut: 'L',
           onClick: () => onLock(nodeId),
+          shortcut: 'L',
         }
   );
 
@@ -101,30 +101,30 @@ export function getNodeMenuItems({
 
   items.push(
     {
+      icon: <Scissors className="w-4 h-4" />,
       id: 'cut',
       label: 'Cut',
-      icon: <Scissors className="w-4 h-4" />,
-      shortcut: '⌘X',
       onClick: () => onCut(nodeId),
+      shortcut: '⌘X',
     },
     {
+      icon: <Copy className="w-4 h-4" />,
       id: 'copy',
       label: 'Copy',
-      icon: <Copy className="w-4 h-4" />,
-      shortcut: '⌘C',
       onClick: () => onCopy(nodeId),
+      shortcut: '⌘C',
     }
   );
 
   items.push(createSeparator('separator-3'));
 
   items.push({
+    danger: true,
+    icon: <Trash2 className="w-4 h-4" />,
     id: 'delete',
     label: 'Delete',
-    icon: <Trash2 className="w-4 h-4" />,
-    shortcut: '⌫',
-    danger: true,
     onClick: () => onDelete(nodeId),
+    shortcut: '⌫',
   });
 
   return items;

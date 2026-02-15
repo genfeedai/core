@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException, type OnModuleInit } from '@nestj
 import { InjectModel } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
 import type { CreatePromptDto } from '@/dto/create-prompt.dto';
+import type { MongoFilterQuery } from '@/interfaces/execution-types.interface';
 import type { QueryPromptsDto } from '@/dto/query-prompts.dto';
 import { Prompt, type PromptDocument } from '@/schemas/prompt.schema';
 import { SYSTEM_PROMPTS } from '@/templates/prompts.seed';
@@ -24,7 +25,7 @@ export class PromptsService implements OnModuleInit {
     let updated = 0;
 
     for (const prompt of SYSTEM_PROMPTS) {
-      const existing = await this.promptModel.findOne({ name: prompt.name, isSystem: true }).exec();
+      const existing = await this.promptModel.findOne({ isSystem: true, name: prompt.name }).exec();
 
       if (existing) {
         await this.promptModel.updateOne({ _id: existing._id }, { $set: prompt }).exec();
@@ -45,22 +46,22 @@ export class PromptsService implements OnModuleInit {
 
   async create(dto: CreatePromptDto): Promise<PromptDocument> {
     const prompt = new this.promptModel({
-      name: dto.name,
+      aspectRatio: dto.aspectRatio,
+      category: dto.category,
       description: dto.description ?? '',
+      isFeatured: dto.isFeatured ?? false,
+      name: dto.name,
+      preferredModel: dto.preferredModel,
       promptText: dto.promptText,
       styleSettings: dto.styleSettings ?? {},
-      aspectRatio: dto.aspectRatio,
-      preferredModel: dto.preferredModel,
-      category: dto.category,
       tags: dto.tags ?? [],
-      isFeatured: dto.isFeatured ?? false,
       thumbnail: dto.thumbnail,
     });
     return prompt.save();
   }
 
   async findAll(query: QueryPromptsDto): Promise<PromptDocument[]> {
-    const filter: Record<string, unknown> = { isDeleted: false };
+    const filter: MongoFilterQuery = { isDeleted: false };
 
     if (query.category) filter.category = query.category;
     if (query.tag) filter.tags = query.tag;
@@ -128,16 +129,16 @@ export class PromptsService implements OnModuleInit {
   async duplicate(id: string): Promise<PromptDocument> {
     const original = await this.findOne(id);
     const duplicate = new this.promptModel({
-      name: `${original.name} (copy)`,
+      aspectRatio: original.aspectRatio,
+      category: original.category,
       description: original.description,
+      isFeatured: false,
+      name: `${original.name} (copy)`,
+      preferredModel: original.preferredModel,
       promptText: original.promptText,
       styleSettings: original.styleSettings,
-      aspectRatio: original.aspectRatio,
-      preferredModel: original.preferredModel,
-      category: original.category,
       tags: original.tags,
       thumbnail: original.thumbnail,
-      isFeatured: false,
       useCount: 0,
     });
     return duplicate.save();

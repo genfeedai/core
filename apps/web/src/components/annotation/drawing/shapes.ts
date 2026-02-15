@@ -115,11 +115,11 @@ export function getShapeBounds(
   switch (shape.type) {
     case 'rectangle': {
       const s = shape as { x: number; y: number; width: number; height: number };
-      return { x: s.x, y: s.y, width: s.width, height: s.height };
+      return { height: s.height, width: s.width, x: s.x, y: s.y };
     }
     case 'circle': {
       const s = shape as { x: number; y: number; radius: number };
-      return { x: s.x - s.radius, y: s.y - s.radius, width: s.radius * 2, height: s.radius * 2 };
+      return { height: s.radius * 2, width: s.radius * 2, x: s.x - s.radius, y: s.y - s.radius };
     }
     case 'arrow':
     case 'freehand': {
@@ -135,15 +135,15 @@ export function getShapeBounds(
         minY = Math.min(minY, s.points[i + 1]);
         maxY = Math.max(maxY, s.points[i + 1]);
       }
-      return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+      return { height: maxY - minY, width: maxX - minX, x: minX, y: minY };
     }
     case 'text': {
       const s = shape as { x: number; y: number; text: string; fontSize: number };
       return {
+        height: s.fontSize ?? 16,
+        width: s.text.length * 10,
         x: s.x,
         y: s.y - (s.fontSize ?? 16),
-        width: s.text.length * 10,
-        height: s.fontSize ?? 16,
       };
     }
     default:

@@ -1,4 +1,4 @@
-import { TemplateCategory } from '@genfeedai/types';
+import { WorkflowTemplateCategory } from '@genfeedai/types';
 import { IsArray, IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class CreateTemplateDto {
@@ -9,8 +9,8 @@ export class CreateTemplateDto {
   @IsString()
   description?: string;
 
-  @IsEnum(TemplateCategory)
-  category: TemplateCategory;
+  @IsEnum(WorkflowTemplateCategory)
+  category: WorkflowTemplateCategory;
 
   @IsOptional()
   @IsString()

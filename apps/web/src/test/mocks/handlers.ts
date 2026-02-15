@@ -5,39 +5,39 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://local.genfeed.ai
 // Mock data
 export const mockWorkflow = {
   _id: 'workflow-123',
-  name: 'Test Workflow',
-  description: 'A test workflow',
-  nodes: [],
-  edges: [],
-  edgeStyle: 'bezier',
-  isDeleted: false,
   createdAt: new Date().toISOString(),
+  description: 'A test workflow',
+  edgeStyle: 'bezier',
+  edges: [],
+  isDeleted: false,
+  name: 'Test Workflow',
+  nodes: [],
   updatedAt: new Date().toISOString(),
 };
 
 export const mockExecution = {
   _id: 'execution-123',
-  workflowId: 'workflow-123',
-  status: 'pending',
-  startedAt: new Date().toISOString(),
-  totalCost: 0,
-  nodeResults: [],
-  isDeleted: false,
   createdAt: new Date().toISOString(),
+  isDeleted: false,
+  nodeResults: [],
+  startedAt: new Date().toISOString(),
+  status: 'pending',
+  totalCost: 0,
   updatedAt: new Date().toISOString(),
+  workflowId: 'workflow-123',
 };
 
 export const mockTemplate = {
   _id: 'template-123',
-  name: 'Test Template',
-  description: 'A test template',
   category: 'custom',
-  nodes: [],
-  edges: [],
-  edgeStyle: 'bezier',
-  isSystem: false,
-  isDeleted: false,
   createdAt: new Date().toISOString(),
+  description: 'A test template',
+  edgeStyle: 'bezier',
+  edges: [],
+  isDeleted: false,
+  isSystem: false,
+  name: 'Test Template',
+  nodes: [],
   updatedAt: new Date().toISOString(),
 };
 
@@ -71,16 +71,16 @@ export const replicateHandlers = [
   http.get(`${API_BASE_URL}/replicate/predictions/:id`, ({ params }) => {
     return HttpResponse.json({
       id: params.id,
-      status: 'succeeded',
       output: ['https://replicate.delivery/mock-output.png'],
+      status: 'succeeded',
     });
   }),
 
   // Cancel prediction
   http.post(`${API_BASE_URL}/replicate/predictions/:id/cancel`, ({ params }) => {
     return HttpResponse.json({
-      id: params.id,
       cancelled: true,
+      id: params.id,
     });
   }),
 ];

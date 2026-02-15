@@ -37,19 +37,19 @@ export function createObjectId(): Types.ObjectId {
 export function createMockExecution(overrides = {}) {
   return {
     _id: createObjectId(),
-    workflowId: createObjectId(),
-    status: 'pending',
-    startedAt: new Date(),
     completedAt: null,
-    totalCost: 0,
-    nodeResults: [],
+    createdAt: new Date(),
     error: null,
     isDeleted: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    nodeResults: [],
     save: vi.fn().mockImplementation(function (this: unknown) {
       return Promise.resolve(this);
     }),
+    startedAt: new Date(),
+    status: 'pending',
+    totalCost: 0,
+    updatedAt: new Date(),
+    workflowId: createObjectId(),
     ...overrides,
   };
 }
@@ -58,19 +58,19 @@ export function createMockExecution(overrides = {}) {
 export function createMockJob(overrides = {}) {
   return {
     _id: createObjectId(),
-    executionId: createObjectId(),
-    nodeId: 'node-1',
-    predictionId: 'prediction-123',
-    status: 'pending',
-    progress: 0,
-    output: null,
-    error: null,
     cost: 0,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    error: null,
+    executionId: createObjectId(),
+    nodeId: 'node-1',
+    output: null,
+    predictionId: 'prediction-123',
+    progress: 0,
     save: vi.fn().mockImplementation(function (this: unknown) {
       return Promise.resolve(this);
     }),
+    status: 'pending',
+    updatedAt: new Date(),
     ...overrides,
   };
 }
@@ -79,17 +79,17 @@ export function createMockJob(overrides = {}) {
 export function createMockWorkflow(overrides = {}) {
   return {
     _id: createObjectId(),
-    name: 'Test Workflow',
-    description: 'A test workflow',
-    nodes: [],
-    edges: [],
-    edgeStyle: 'bezier',
-    isDeleted: false,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    description: 'A test workflow',
+    edgeStyle: 'bezier',
+    edges: [],
+    isDeleted: false,
+    name: 'Test Workflow',
+    nodes: [],
     save: vi.fn().mockImplementation(function (this: unknown) {
       return Promise.resolve(this);
     }),
+    updatedAt: new Date(),
     ...overrides,
   };
 }
@@ -98,19 +98,19 @@ export function createMockWorkflow(overrides = {}) {
 export function createMockTemplate(overrides = {}) {
   return {
     _id: createObjectId(),
-    name: 'Test Template',
-    description: 'A test template',
     category: 'custom',
-    nodes: [],
-    edges: [],
-    edgeStyle: 'bezier',
-    isSystem: false,
-    isDeleted: false,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    description: 'A test template',
+    edgeStyle: 'bezier',
+    edges: [],
+    isDeleted: false,
+    isSystem: false,
+    name: 'Test Template',
+    nodes: [],
     save: vi.fn().mockImplementation(function (this: unknown) {
       return Promise.resolve(this);
     }),
+    updatedAt: new Date(),
     ...overrides,
   };
 }
@@ -118,8 +118,8 @@ export function createMockTemplate(overrides = {}) {
 // Create mock Mongoose model
 export function createMockModel<T>(documents: T[] = []) {
   const findMock = vi.fn().mockReturnValue({
-    sort: vi.fn().mockReturnThis(),
     exec: vi.fn().mockResolvedValue(documents),
+    sort: vi.fn().mockReturnThis(),
   });
 
   const findOneMock = vi.fn().mockReturnValue({
@@ -135,15 +135,15 @@ export function createMockModel<T>(documents: T[] = []) {
   });
 
   return {
+    create: vi.fn().mockImplementation((doc) => Promise.resolve({ ...doc, _id: createObjectId() })),
+    deleteMany: vi.fn().mockResolvedValue({ deletedCount: documents.length }),
+    deleteOne: vi.fn().mockResolvedValue({ deletedCount: 1 }),
     find: findMock,
-    findOne: findOneMock,
     findById: vi.fn().mockReturnValue({
       exec: vi.fn().mockResolvedValue(documents[0] || null),
     }),
     findByIdAndUpdate: findByIdAndUpdateMock,
+    findOne: findOneMock,
     findOneAndUpdate: findOneAndUpdateMock,
-    create: vi.fn().mockImplementation((doc) => Promise.resolve({ ...doc, _id: createObjectId() })),
-    deleteOne: vi.fn().mockResolvedValue({ deletedCount: 1 }),
-    deleteMany: vi.fn().mockResolvedValue({ deletedCount: documents.length }),
   };
 }

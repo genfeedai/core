@@ -62,40 +62,40 @@ function HelperLinesComponent({ draggingNodeId }: HelperLinesProps) {
 
         // Check vertical alignments (X positions)
         const verticalChecks = [
-          { dragPos: dragLeft, nodePos: nodeLeft, label: 'left-left' },
-          { dragPos: dragLeft, nodePos: nodeRight, label: 'left-right' },
-          { dragPos: dragRight, nodePos: nodeLeft, label: 'right-left' },
-          { dragPos: dragRight, nodePos: nodeRight, label: 'right-right' },
-          { dragPos: dragCenterX, nodePos: nodeCenterX, label: 'center-center-x' },
+          { dragPos: dragLeft, label: 'left-left', nodePos: nodeLeft },
+          { dragPos: dragLeft, label: 'left-right', nodePos: nodeRight },
+          { dragPos: dragRight, label: 'right-left', nodePos: nodeLeft },
+          { dragPos: dragRight, label: 'right-right', nodePos: nodeRight },
+          { dragPos: dragCenterX, label: 'center-center-x', nodePos: nodeCenterX },
         ];
 
         for (const check of verticalChecks) {
           if (Math.abs(check.dragPos - check.nodePos) <= SNAP_THRESHOLD) {
             newLines.push({
-              type: 'vertical',
+              end: Math.max(dragBottom, nodeBottom) + 20,
               position: check.nodePos,
               start: Math.min(dragTop, nodeTop) - 20,
-              end: Math.max(dragBottom, nodeBottom) + 20,
+              type: 'vertical',
             });
           }
         }
 
         // Check horizontal alignments (Y positions)
         const horizontalChecks = [
-          { dragPos: dragTop, nodePos: nodeTop, label: 'top-top' },
-          { dragPos: dragTop, nodePos: nodeBottom, label: 'top-bottom' },
-          { dragPos: dragBottom, nodePos: nodeTop, label: 'bottom-top' },
-          { dragPos: dragBottom, nodePos: nodeBottom, label: 'bottom-bottom' },
-          { dragPos: dragCenterY, nodePos: nodeCenterY, label: 'center-center-y' },
+          { dragPos: dragTop, label: 'top-top', nodePos: nodeTop },
+          { dragPos: dragTop, label: 'top-bottom', nodePos: nodeBottom },
+          { dragPos: dragBottom, label: 'bottom-top', nodePos: nodeTop },
+          { dragPos: dragBottom, label: 'bottom-bottom', nodePos: nodeBottom },
+          { dragPos: dragCenterY, label: 'center-center-y', nodePos: nodeCenterY },
         ];
 
         for (const check of horizontalChecks) {
           if (Math.abs(check.dragPos - check.nodePos) <= SNAP_THRESHOLD) {
             newLines.push({
-              type: 'horizontal',
+              end: Math.max(dragRight, nodeRight) + 20,
               position: check.nodePos,
               start: Math.min(dragLeft, nodeLeft) - 20,
-              end: Math.max(dragRight, nodeRight) + 20,
+              type: 'horizontal',
             });
           }
         }
@@ -144,7 +144,7 @@ function HelperLinesComponent({ draggingNodeId }: HelperLinesProps) {
   return (
     <svg
       className="absolute inset-0 pointer-events-none z-[1000]"
-      style={{ width: '100%', height: '100%', overflow: 'visible' }}
+      style={{ height: '100%', overflow: 'visible', width: '100%' }}
     >
       {lines.map((line, index) => {
         if (line.type === 'vertical') {

@@ -60,32 +60,32 @@ export function useContextMenu() {
 
   // Stable reference for handlers that don't need to change
   const stableHandlersRef = useRef({
-    duplicate,
+    addNodeAtPosition,
+    autoLayout,
     copyNode,
     cutNode,
-    deleteNode,
     deleteMultipleNodes,
+    deleteNode,
+    duplicate,
     duplicateMultipleNodes,
-    removeEdge,
-    addNodeAtPosition,
-    selectAll,
     fitView,
-    autoLayout,
+    removeEdge,
+    selectAll,
   });
 
   // Update ref on each render (avoids stale closures while maintaining stable reference)
   stableHandlersRef.current = {
-    duplicate,
+    addNodeAtPosition,
+    autoLayout,
     copyNode,
     cutNode,
-    deleteNode,
     deleteMultipleNodes,
+    deleteNode,
+    duplicate,
     duplicateMultipleNodes,
-    removeEdge,
-    addNodeAtPosition,
-    selectAll,
     fitView,
-    autoLayout,
+    removeEdge,
+    selectAll,
   };
 
   const lockNode = useCallback(
@@ -260,18 +260,18 @@ export function useContextMenu() {
         const nodeHasMediaOutput = hasMediaOutput(targetId);
         const currentColor = (node?.data as { color?: string })?.color;
         return getNodeMenuItems({
-          nodeId: targetId,
-          isLocked,
-          hasMediaOutput: nodeHasMediaOutput,
           currentColor,
+          hasMediaOutput: nodeHasMediaOutput,
+          isLocked,
+          nodeId: targetId,
+          onCopy: handlers.copyNode,
+          onCut: handlers.cutNode,
+          onDelete: handlers.deleteNode,
           onDuplicate: handlers.duplicate,
           onLock: lockNode,
-          onUnlock: unlockNode,
-          onCut: handlers.cutNode,
-          onCopy: handlers.copyNode,
-          onDelete: handlers.deleteNode,
           onSetAsThumbnail: workflowId ? setAsThumbnail : undefined,
           onSetColor: setNodeColor,
+          onUnlock: unlockNode,
         });
       }
 
@@ -284,27 +284,27 @@ export function useContextMenu() {
 
       case 'pane':
         return getPaneMenuItems({
-          screenX: position.x,
-          screenY: position.y,
           hasClipboard: !!clipboard,
           onAddNode: handlers.addNodeAtPosition,
+          onAutoLayout: () => handlers.autoLayout('LR'),
+          onFitView: handlers.fitView,
           onPaste: pasteNodes,
           onSelectAll: handlers.selectAll,
-          onFitView: handlers.fitView,
-          onAutoLayout: () => handlers.autoLayout('LR'),
+          screenX: position.x,
+          screenY: position.y,
         });
 
       case 'selection':
         if (!targetIds || targetIds.length === 0) return [];
         return getSelectionMenuItems({
           nodeIds: targetIds,
-          onGroup: groupNodes,
-          onDuplicateAll: handlers.duplicateMultipleNodes,
-          onLockAll: lockAllNodes,
-          onUnlockAll: unlockAllNodes,
           onAlignHorizontal: alignNodesHorizontally,
           onAlignVertical: alignNodesVertically,
           onDeleteAll: handlers.deleteMultipleNodes,
+          onDuplicateAll: handlers.duplicateMultipleNodes,
+          onGroup: groupNodes,
+          onLockAll: lockAllNodes,
+          onUnlockAll: unlockAllNodes,
         });
 
       default:
@@ -334,14 +334,14 @@ export function useContextMenu() {
   const menuItems = useMemo(() => getMenuItems(), [getMenuItems]);
 
   return {
+    close,
     isOpen,
-    position,
-    menuType,
     menuItems,
-    openNodeMenu,
+    menuType,
     openEdgeMenu,
+    openNodeMenu,
     openPaneMenu,
     openSelectionMenu,
-    close,
+    position,
   };
 }

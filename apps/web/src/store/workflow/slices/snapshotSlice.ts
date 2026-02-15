@@ -28,42 +28,40 @@ export const createSnapshotSlice: StateCreator<
   [],
   SnapshotSlice
 > = (set, get) => ({
-  previousWorkflowSnapshot: null,
-  manualChangeCount: 0,
+  applyEditOperations: (operations) => {
+    const state = get();
+    const result = applyEditOperations(operations, {
+      edges: state.edges,
+      nodes: state.nodes,
+    });
+
+    set({
+      edges: result.edges,
+      isDirty: true,
+      nodes: result.nodes,
+    });
+
+    return { applied: result.applied, skipped: result.skipped };
+  },
 
   captureSnapshot: () => {
     const state = get();
     const snapshot: WorkflowSnapshot = {
-      nodes: JSON.parse(JSON.stringify(state.nodes)),
+      edgeStyle: state.edgeStyle,
       edges: JSON.parse(JSON.stringify(state.edges)),
       groups: JSON.parse(JSON.stringify(state.groups)),
-      edgeStyle: state.edgeStyle,
+      nodes: JSON.parse(JSON.stringify(state.nodes)),
     };
     set({
-      previousWorkflowSnapshot: snapshot,
       manualChangeCount: 0,
+      previousWorkflowSnapshot: snapshot,
     });
-  },
-
-  revertToSnapshot: () => {
-    const state = get();
-    if (state.previousWorkflowSnapshot) {
-      set({
-        nodes: state.previousWorkflowSnapshot.nodes,
-        edges: state.previousWorkflowSnapshot.edges,
-        groups: state.previousWorkflowSnapshot.groups,
-        edgeStyle: state.previousWorkflowSnapshot.edgeStyle,
-        previousWorkflowSnapshot: null,
-        manualChangeCount: 0,
-        isDirty: true,
-      });
-    }
   },
 
   clearSnapshot: () => {
     set({
-      previousWorkflowSnapshot: null,
       manualChangeCount: 0,
+      previousWorkflowSnapshot: null,
     });
   },
 
@@ -74,27 +72,28 @@ export const createSnapshotSlice: StateCreator<
     // Automatically clear snapshot after 3 manual changes
     if (newCount >= 3) {
       set({
-        previousWorkflowSnapshot: null,
         manualChangeCount: 0,
+        previousWorkflowSnapshot: null,
       });
     } else {
       set({ manualChangeCount: newCount });
     }
   },
+  manualChangeCount: 0,
+  previousWorkflowSnapshot: null,
 
-  applyEditOperations: (operations) => {
+  revertToSnapshot: () => {
     const state = get();
-    const result = applyEditOperations(operations, {
-      nodes: state.nodes,
-      edges: state.edges,
-    });
-
-    set({
-      nodes: result.nodes,
-      edges: result.edges,
-      isDirty: true,
-    });
-
-    return { applied: result.applied, skipped: result.skipped };
+    if (state.previousWorkflowSnapshot) {
+      set({
+        edgeStyle: state.previousWorkflowSnapshot.edgeStyle,
+        edges: state.previousWorkflowSnapshot.edges,
+        groups: state.previousWorkflowSnapshot.groups,
+        isDirty: true,
+        manualChangeCount: 0,
+        nodes: state.previousWorkflowSnapshot.nodes,
+        previousWorkflowSnapshot: null,
+      });
+    }
   },
 });

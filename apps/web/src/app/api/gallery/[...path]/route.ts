@@ -39,7 +39,7 @@ function parseRangeHeader(
   // Clamp end to file size
   end = Math.min(end, fileSize - 1);
 
-  return { start, end };
+  return { end, start };
 }
 
 export async function GET(
@@ -71,9 +71,9 @@ export async function GET(
 
     // Common headers
     const baseHeaders: Record<string, string> = {
-      'Content-Type': mimeType,
       'Accept-Ranges': 'bytes',
       'Cache-Control': 'public, max-age=31536000, immutable',
+      'Content-Type': mimeType,
     };
 
     if (range) {
@@ -81,16 +81,16 @@ export async function GET(
       const { start, end } = range;
       const contentLength = end - start + 1;
 
-      const stream = createReadStream(filePath, { start, end });
+      const stream = createReadStream(filePath, { end, start });
       const readableStream = nodeStreamToWeb(stream);
 
       return new Response(readableStream, {
-        status: 206,
         headers: {
           ...baseHeaders,
           'Content-Length': contentLength.toString(),
           'Content-Range': `bytes ${start}-${end}/${fileSize}`,
         },
+        status: 206,
       });
     }
 
@@ -99,11 +99,11 @@ export async function GET(
     const readableStream = nodeStreamToWeb(stream);
 
     return new Response(readableStream, {
-      status: 200,
       headers: {
         ...baseHeaders,
         'Content-Length': fileSize.toString(),
       },
+      status: 200,
     });
   } catch {
     return new NextResponse('Not Found', { status: 404 });
@@ -117,6 +117,9 @@ function nodeStreamToWeb(
   nodeStream: ReturnType<typeof createReadStream>
 ): ReadableStream<Uint8Array> {
   return new ReadableStream({
+    cancel() {
+      nodeStream.destroy();
+    },
     start(controller) {
       nodeStream.on('data', (chunk: Buffer | string) => {
         const buffer = typeof chunk === 'string' ? Buffer.from(chunk) : chunk;
@@ -128,9 +131,6 @@ function nodeStreamToWeb(
       nodeStream.on('error', (err) => {
         controller.error(err);
       });
-    },
-    cancel() {
-      nodeStream.destroy();
     },
   });
 }

@@ -6,12 +6,12 @@ import type { AnnotationTool } from '@genfeedai/workflow-ui/stores';
  * Tool configuration for the annotation toolbar
  */
 export const TOOLS: { tool: AnnotationTool; icon: LucideIcon; label: string }[] = [
-  { tool: 'select', icon: MousePointer, label: 'Select' },
-  { tool: 'rectangle', icon: Square, label: 'Rectangle' },
-  { tool: 'circle', icon: Circle, label: 'Circle' },
-  { tool: 'arrow', icon: ArrowRight, label: 'Arrow' },
-  { tool: 'freehand', icon: Pencil, label: 'Freehand' },
-  { tool: 'text', icon: Type, label: 'Text' },
+  { icon: MousePointer, label: 'Select', tool: 'select' },
+  { icon: Square, label: 'Rectangle', tool: 'rectangle' },
+  { icon: Circle, label: 'Circle', tool: 'circle' },
+  { icon: ArrowRight, label: 'Arrow', tool: 'arrow' },
+  { icon: Pencil, label: 'Freehand', tool: 'freehand' },
+  { icon: Type, label: 'Text', tool: 'text' },
 ];
 
 /**

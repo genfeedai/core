@@ -113,55 +113,55 @@ export function createChatTools(_nodeIds: string[]) {
     answerQuestion: tool({
       description:
         'Answer questions about how to use Genfeed. Use this for informational questions. Does NOT modify the workflow.',
+      execute: async ({ answer }) => ({ answer }),
       parameters: z.object({
         answer: z.string().describe('The helpful answer to the user question'),
       }),
-      execute: async ({ answer }) => ({ answer }),
     }),
 
     createWorkflow: tool({
       description:
         'Create a brand new workflow from scratch based on user description. Use when user wants to start fresh or build something new.',
+      execute: async ({ description }) => ({ description }),
       parameters: z.object({
         description: z.string().describe('Description of what the workflow should do'),
       }),
-      execute: async ({ description }) => ({ description }),
     }),
 
     editWorkflow: tool({
       description:
         'Make targeted edits to the current workflow. Use when user wants to add, remove, or modify nodes and connections. Reference nodes by their ID.',
+      execute: async ({ operations, explanation }) => ({ explanation, operations }),
       parameters: z.object({
+        explanation: z
+          .string()
+          .describe('Brief explanation of what changes are being made and why'),
         operations: z
           .array(
             z.object({
-              type: z.enum(['addNode', 'removeNode', 'updateNode', 'addEdge', 'removeEdge']),
-              nodeType: z
-                .string()
-                .optional()
-                .describe(`Node type for addNode. Valid: ${VALID_NODE_TYPES.join(', ')}`),
-              nodeId: z.string().optional().describe('Target node ID for removeNode/updateNode'),
               data: z
                 .record(z.string(), z.unknown())
                 .optional()
                 .describe('Node data to set/merge for addNode/updateNode'),
+              edgeId: z.string().optional().describe('Edge ID for removeEdge'),
+              nodeId: z.string().optional().describe('Target node ID for removeNode/updateNode'),
+              nodeType: z
+                .string()
+                .optional()
+                .describe(`Node type for addNode. Valid: ${VALID_NODE_TYPES.join(', ')}`),
               position: z
                 .object({ x: z.number(), y: z.number() })
                 .optional()
                 .describe('Position for addNode'),
               source: z.string().optional().describe('Source node ID for addEdge'),
-              target: z.string().optional().describe('Target node ID for addEdge'),
               sourceHandle: z.string().optional().describe('Source handle type for addEdge'),
+              target: z.string().optional().describe('Target node ID for addEdge'),
               targetHandle: z.string().optional().describe('Target handle type for addEdge'),
-              edgeId: z.string().optional().describe('Edge ID for removeEdge'),
+              type: z.enum(['addNode', 'removeNode', 'updateNode', 'addEdge', 'removeEdge']),
             })
           )
           .describe('List of edit operations to apply'),
-        explanation: z
-          .string()
-          .describe('Brief explanation of what changes are being made and why'),
       }),
-      execute: async ({ operations, explanation }) => ({ operations, explanation }),
     }),
   };
 }

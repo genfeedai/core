@@ -20,7 +20,7 @@ function WorkflowSwitcherComponent({ className }: WorkflowSwitcherProps) {
 
   // Dropdown state
   const [isOpen, setIsOpen] = useState(false);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const [dropdownPosition, setDropdownPosition] = useState({ left: 0, top: 0 });
   const [workflows, setWorkflows] = useState<WorkflowData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
@@ -48,8 +48,8 @@ function WorkflowSwitcherComponent({ className }: WorkflowSwitcherProps) {
     if (isOpen && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
       setDropdownPosition({
-        top: rect.bottom + 4,
         left: rect.left,
+        top: rect.bottom + 4,
       });
     }
   }, [isOpen]);
@@ -201,7 +201,7 @@ function WorkflowSwitcherComponent({ className }: WorkflowSwitcherProps) {
           <div
             ref={dropdownRef}
             className="fixed z-[100] w-80 overflow-hidden rounded-lg border border-border bg-card shadow-lg"
-            style={{ top: dropdownPosition.top, left: dropdownPosition.left }}
+            style={{ left: dropdownPosition.left, top: dropdownPosition.top }}
           >
             {/* Header */}
             <div className="border-b border-border px-3 py-2 text-xs font-medium text-muted-foreground">

@@ -18,15 +18,15 @@ describe('POST /api/replicate/webhook', () => {
 
   it('should store successful webhook result', async () => {
     const body = {
-      id: 'pred-123',
-      status: 'succeeded',
-      output: ['https://example.com/image.png'],
       error: null,
+      id: 'pred-123',
+      output: ['https://example.com/image.png'],
+      status: 'succeeded',
     };
 
     const request = new NextRequest('http://localhost/api/replicate/webhook', {
-      method: 'POST',
       body: JSON.stringify(body),
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -34,23 +34,23 @@ describe('POST /api/replicate/webhook', () => {
 
     expect(data.received).toBe(true);
     expect(mockedSetWebhookResult).toHaveBeenCalledWith('pred-123', {
-      status: 'succeeded',
-      output: ['https://example.com/image.png'],
       error: null,
+      output: ['https://example.com/image.png'],
+      status: 'succeeded',
     });
   });
 
   it('should store failed webhook result', async () => {
     const body = {
-      id: 'pred-456',
-      status: 'failed',
-      output: null,
       error: 'Model error: Out of memory',
+      id: 'pred-456',
+      output: null,
+      status: 'failed',
     };
 
     const request = new NextRequest('http://localhost/api/replicate/webhook', {
-      method: 'POST',
       body: JSON.stringify(body),
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -58,39 +58,39 @@ describe('POST /api/replicate/webhook', () => {
 
     expect(data.received).toBe(true);
     expect(mockedSetWebhookResult).toHaveBeenCalledWith('pred-456', {
-      status: 'failed',
-      output: null,
       error: 'Model error: Out of memory',
+      output: null,
+      status: 'failed',
     });
   });
 
   it('should handle processing status', async () => {
     const body = {
-      id: 'pred-789',
-      status: 'processing',
-      output: null,
       error: null,
+      id: 'pred-789',
+      output: null,
+      status: 'processing',
     };
 
     const request = new NextRequest('http://localhost/api/replicate/webhook', {
-      method: 'POST',
       body: JSON.stringify(body),
+      method: 'POST',
     });
 
     const response = await POST(request);
 
     expect(response.status).toBe(200);
     expect(mockedSetWebhookResult).toHaveBeenCalledWith('pred-789', {
-      status: 'processing',
-      output: null,
       error: null,
+      output: null,
+      status: 'processing',
     });
   });
 
   it('should handle invalid JSON body', async () => {
     const request = new NextRequest('http://localhost/api/replicate/webhook', {
-      method: 'POST',
       body: 'invalid json',
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -108,8 +108,8 @@ describe('POST /api/replicate/webhook', () => {
     };
 
     const request = new NextRequest('http://localhost/api/replicate/webhook', {
-      method: 'POST',
       body: JSON.stringify(body),
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -117,9 +117,9 @@ describe('POST /api/replicate/webhook', () => {
 
     expect(data.received).toBe(true);
     expect(mockedSetWebhookResult).toHaveBeenCalledWith('pred-empty', {
-      status: 'succeeded',
-      output: undefined,
       error: undefined,
+      output: undefined,
+      status: 'succeeded',
     });
   });
 });

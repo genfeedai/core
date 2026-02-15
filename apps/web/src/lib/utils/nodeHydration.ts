@@ -18,9 +18,9 @@ const MODEL_TO_REPLICATE_ID: Record<string, string> = {
   // Image models
   'nano-banana': 'google/nano-banana',
   'nano-banana-pro': 'google/nano-banana-pro',
+  'veo-3.1': 'google/veo-3.1',
   // Video models
   'veo-3.1-fast': 'google/veo-3.1-fast',
-  'veo-3.1': 'google/veo-3.1',
 };
 
 interface SchemaEntry {
@@ -41,11 +41,11 @@ function lookupModelSchema(model: string): SelectedModel | null {
   if (!schemaEntry) return null;
 
   return {
-    provider: 'replicate',
-    modelId: replicateId,
+    componentSchemas: schemaEntry.componentSchemas,
     displayName: schemaEntry.name,
     inputSchema: schemaEntry.inputSchema,
-    componentSchemas: schemaEntry.componentSchemas,
+    modelId: replicateId,
+    provider: 'replicate',
   };
 }
 
@@ -82,11 +82,11 @@ export function hydrateWorkflowNodes(nodes: WorkflowNode[]): WorkflowNode[] {
       ...node,
       data: {
         ...data,
-        selectedModel,
         schemaParams:
           data.schemaParams && Object.keys(data.schemaParams).length > 0
             ? data.schemaParams
             : getSchemaDefaults(selectedModel.inputSchema),
+        selectedModel,
       },
     };
   });

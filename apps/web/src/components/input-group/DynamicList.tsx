@@ -46,21 +46,17 @@ function DynamicListComponent<
 
   const createHelpers = useCallback(
     (index: number): RowHelpers<T> => ({
-      update: (data: Partial<T>) => {
-        const newItems = [...items];
-        newItems[index] = { ...newItems[index], ...data };
-        onChange(newItems);
-      },
-      remove: () => {
-        if (!canRemove) return;
-        const newItems = items.filter((_, i) => i !== index);
-        onChange(newItems);
-      },
       duplicate: () => {
         if (!canAdd) return;
         const newItem = { ...items[index], id: nanoid() } as T;
         const newItems = [...items];
         newItems.splice(index + 1, 0, newItem);
+        onChange(newItems);
+      },
+      moveDown: () => {
+        if (index === items.length - 1) return;
+        const newItems = [...items];
+        [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
         onChange(newItems);
       },
       moveUp: () => {
@@ -69,10 +65,14 @@ function DynamicListComponent<
         [newItems[index - 1], newItems[index]] = [newItems[index], newItems[index - 1]];
         onChange(newItems);
       },
-      moveDown: () => {
-        if (index === items.length - 1) return;
+      remove: () => {
+        if (!canRemove) return;
+        const newItems = items.filter((_, i) => i !== index);
+        onChange(newItems);
+      },
+      update: (data: Partial<T>) => {
         const newItems = [...items];
-        [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
+        newItems[index] = { ...newItems[index], ...data };
         onChange(newItems);
       },
     }),

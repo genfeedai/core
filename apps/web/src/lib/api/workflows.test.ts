@@ -5,25 +5,25 @@ import { workflowsApi } from './workflows';
 // Mock the apiClient
 vi.mock('./client', () => ({
   apiClient: {
+    delete: vi.fn(),
     get: vi.fn(),
     post: vi.fn(),
     put: vi.fn(),
-    delete: vi.fn(),
   },
 }));
 
 describe('workflowsApi', () => {
   const mockWorkflow: WorkflowData = {
     _id: 'workflow-1',
-    name: 'Test Workflow',
-    description: 'A test workflow',
-    version: 1,
-    nodes: [],
-    edges: [],
-    edgeStyle: 'bezier',
-    groups: [],
     createdAt: '2025-01-01T00:00:00.000Z',
+    description: 'A test workflow',
+    edgeStyle: 'bezier',
+    edges: [],
+    groups: [],
+    name: 'Test Workflow',
+    nodes: [],
     updatedAt: '2025-01-01T00:00:00.000Z',
+    version: 1,
   };
 
   beforeEach(() => {
@@ -74,9 +74,9 @@ describe('workflowsApi', () => {
       vi.mocked(apiClient.post).mockResolvedValueOnce(mockWorkflow);
 
       const createData = {
+        edges: [],
         name: 'Test Workflow',
         nodes: [],
-        edges: [],
       };
 
       const result = await workflowsApi.create(createData);
@@ -90,12 +90,12 @@ describe('workflowsApi', () => {
       vi.mocked(apiClient.post).mockResolvedValueOnce(mockWorkflow);
 
       const createData = {
-        name: 'Full Workflow',
         description: 'With all fields',
-        nodes: [],
-        edges: [],
         edgeStyle: 'step',
+        edges: [],
         groups: [],
+        name: 'Full Workflow',
+        nodes: [],
       };
 
       await workflowsApi.create(createData);
@@ -124,15 +124,15 @@ describe('workflowsApi', () => {
       vi.mocked(apiClient.put).mockResolvedValueOnce(mockWorkflow);
 
       const updateData = {
+        edges: [],
         nodes: [
           {
+            data: { label: 'Prompt', prompt: '', status: 'idle' },
             id: 'node-1',
-            type: 'prompt',
             position: { x: 0, y: 0 },
-            data: { label: 'Prompt', status: 'idle', prompt: '' },
+            type: 'prompt',
           },
         ],
-        edges: [],
       };
 
       await workflowsApi.update(
@@ -143,8 +143,8 @@ describe('workflowsApi', () => {
       expect(apiClient.put).toHaveBeenCalledWith(
         '/workflows/workflow-1',
         expect.objectContaining({
-          nodes: expect.any(Array),
           edges: expect.any(Array),
+          nodes: expect.any(Array),
         }),
         { signal: undefined }
       );

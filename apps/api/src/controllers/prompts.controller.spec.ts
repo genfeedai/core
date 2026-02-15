@@ -7,25 +7,25 @@ describe('PromptsController', () => {
   let controller: PromptsController;
 
   const mockPromptItem = {
+    category: 'landscape',
     id: 'prompt-1',
     name: 'Test Prompt',
     promptText: 'Generate a beautiful image',
-    category: 'landscape',
     tags: ['nature'],
     useCount: 5,
   };
 
   const mockService = {
     create: vi.fn().mockResolvedValue(mockPromptItem),
-    findAll: vi.fn().mockResolvedValue([mockPromptItem]),
-    findFeatured: vi.fn().mockResolvedValue([mockPromptItem]),
-    findOne: vi.fn().mockResolvedValue(mockPromptItem),
-    update: vi.fn().mockResolvedValue(mockPromptItem),
-    remove: vi.fn().mockResolvedValue(mockPromptItem),
-    incrementUseCount: vi.fn().mockResolvedValue({ ...mockPromptItem, useCount: 6 }),
     duplicate: vi
       .fn()
       .mockResolvedValue({ ...mockPromptItem, id: 'prompt-2', name: 'Test Prompt (Copy)' }),
+    findAll: vi.fn().mockResolvedValue([mockPromptItem]),
+    findFeatured: vi.fn().mockResolvedValue([mockPromptItem]),
+    findOne: vi.fn().mockResolvedValue(mockPromptItem),
+    incrementUseCount: vi.fn().mockResolvedValue({ ...mockPromptItem, useCount: 6 }),
+    remove: vi.fn().mockResolvedValue(mockPromptItem),
+    update: vi.fn().mockResolvedValue(mockPromptItem),
   };
 
   beforeEach(() => {

@@ -2,11 +2,8 @@
 
 import { Brain, ChevronDown, ChevronRight, Film, Image, Mic } from 'lucide-react';
 import { memo, useMemo, useRef, useState } from 'react';
-import {
-  type CostBreakdownItem,
-  calculateWorkflowCostWithBreakdown,
-  PRICING,
-} from '@/lib/replicate/client';
+import type { NodeCostEstimate } from '@genfeedai/types';
+import { calculateWorkflowCostWithBreakdown, PRICING } from '@/lib/replicate/client';
 import { useExecutionStore } from '@/store/executionStore';
 import { useWorkflowStore } from '@/store/workflowStore';
 
@@ -18,7 +15,7 @@ interface NodeTypeGroup {
   type: string;
   label: string;
   icon: React.ReactNode;
-  items: CostBreakdownItem[];
+  items: NodeCostEstimate[];
   subtotal: number;
 }
 
@@ -36,9 +33,9 @@ function formatCost(cost: number): string {
 function getNodeTypeLabel(type: string): string {
   const labels: Record<string, string> = {
     imageGen: 'Image Generation',
-    videoGen: 'Video Generation',
     lipSync: 'Lip Sync',
     llm: 'LLM / Text',
+    videoGen: 'Video Generation',
   };
   return labels[type] ?? type;
 }
@@ -107,12 +104,14 @@ const NodeTypeGroupSection = memo(function NodeTypeGroupSection({
               className="flex items-center justify-between border-b border-border/50 px-4 py-2 last:border-b-0"
             >
               <div className="flex flex-col">
-                <span className="text-sm text-foreground">{item.label}</span>
+                <span className="text-sm text-foreground">{item.nodeLabel}</span>
                 <span className="text-xs text-muted-foreground">
                   {item.model} - {item.details}
                 </span>
               </div>
-              <span className="text-sm font-medium text-foreground">{formatCost(item.cost)}</span>
+              <span className="text-sm font-medium text-foreground">
+                {formatCost(item.subtotal)}
+              </span>
             </div>
           ))}
         </div>
@@ -165,13 +164,13 @@ function extractCostRelevantData(
   // Create a stable string representation of only cost-affecting properties
   return JSON.stringify(
     nodes.map((node) => ({
+      duration: node.data.duration,
+      generateAudio: node.data.generateAudio,
       id: node.id,
-      type: node.type,
       // Only include data properties that affect cost calculation
       model: node.data.model,
       resolution: node.data.resolution,
-      duration: node.data.duration,
-      generateAudio: node.data.generateAudio,
+      type: node.type,
     }))
   );
 }
@@ -187,12 +186,12 @@ function CostBreakdownTabComponent() {
 
   // Track previous cost-relevant data to avoid unnecessary recalculations
   const prevCostDataRef = useRef<string>('');
-  const cachedResultRef = useRef<{ total: number; breakdown: CostBreakdownItem[] }>({
+  const cachedResultRef = useRef<{ total: number; items: NodeCostEstimate[] }>({
+    items: [],
     total: 0,
-    breakdown: [],
   });
 
-  const { total, breakdown } = useMemo(() => {
+  const { total, items } = useMemo(() => {
     // Extract only cost-relevant properties (excludes position, status, etc.)
     const costData = extractCostRelevantData(nodes);
 
@@ -205,24 +204,24 @@ function CostBreakdownTabComponent() {
     return cachedResultRef.current;
   }, [nodes]);
 
-  // Group breakdown by node type
+  // Group items by node type
   const groups = useMemo((): NodeTypeGroup[] => {
-    const groupMap = new Map<string, CostBreakdownItem[]>();
+    const groupMap = new Map<string, NodeCostEstimate[]>();
 
-    for (const item of breakdown) {
+    for (const item of items) {
       const existing = groupMap.get(item.nodeType) ?? [];
       existing.push(item);
       groupMap.set(item.nodeType, existing);
     }
 
-    return Array.from(groupMap.entries()).map(([type, items]) => ({
-      type,
-      label: getNodeTypeLabel(type),
+    return Array.from(groupMap.entries()).map(([type, groupItems]) => ({
       icon: getNodeTypeIcon(type),
-      items,
-      subtotal: items.reduce((sum, item) => sum + item.cost, 0),
+      items: groupItems,
+      label: getNodeTypeLabel(type),
+      subtotal: groupItems.reduce((sum, item) => sum + item.subtotal, 0),
+      type,
     }));
-  }, [breakdown]);
+  }, [items]);
 
   const hasVariance = actualCost > 0 && Math.abs(actualCost - total) > 0.01;
   const variancePercent = actualCost > 0 ? ((actualCost - total) / total) * 100 : 0;
@@ -254,7 +253,7 @@ function CostBreakdownTabComponent() {
       </div>
 
       {/* Empty State */}
-      {breakdown.length === 0 && (
+      {items.length === 0 && (
         <div className="rounded-lg border border-border p-8 text-center">
           <div className="text-muted-foreground">No billable nodes in workflow</div>
           <p className="mt-2 text-sm text-muted-foreground">

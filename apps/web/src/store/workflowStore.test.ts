@@ -6,17 +6,17 @@ import { useWorkflowStore } from './workflowStore';
 vi.mock('@/lib/api', () => ({
   workflowsApi: {
     create: vi.fn().mockResolvedValue({ _id: 'new-workflow-id', name: 'Test Workflow' }),
-    update: vi.fn().mockResolvedValue({ _id: 'workflow-id', name: 'Updated Workflow' }),
-    getById: vi.fn().mockResolvedValue({
-      _id: 'workflow-id',
-      name: 'Loaded Workflow',
-      nodes: [],
-      edges: [],
-      edgeStyle: 'default',
-    }),
-    getAll: vi.fn().mockResolvedValue([]),
     delete: vi.fn().mockResolvedValue({}),
     duplicate: vi.fn().mockResolvedValue({ _id: 'duplicate-id', name: 'Workflow (Copy)' }),
+    getAll: vi.fn().mockResolvedValue([]),
+    getById: vi.fn().mockResolvedValue({
+      _id: 'workflow-id',
+      edgeStyle: 'default',
+      edges: [],
+      name: 'Loaded Workflow',
+      nodes: [],
+    }),
+    update: vi.fn().mockResolvedValue({ _id: 'workflow-id', name: 'Updated Workflow' }),
   },
 }));
 
@@ -24,14 +24,14 @@ describe('useWorkflowStore', () => {
   beforeEach(() => {
     // Reset store to initial state
     useWorkflowStore.setState({
-      nodes: [],
-      edges: [],
       edgeStyle: 'default',
-      workflowName: 'Untitled Workflow',
-      workflowId: null,
+      edges: [],
       isDirty: false,
-      isSaving: false,
       isLoading: false,
+      isSaving: false,
+      nodes: [],
+      workflowId: null,
+      workflowName: 'Untitled Workflow',
     });
   });
 
@@ -186,21 +186,21 @@ describe('useWorkflowStore', () => {
       const { loadWorkflow } = useWorkflowStore.getState();
 
       const workflowFile: WorkflowFile = {
-        version: 1,
-        name: 'Loaded Workflow',
+        createdAt: new Date().toISOString(),
         description: '',
+        edgeStyle: 'straight',
+        edges: [],
+        name: 'Loaded Workflow',
         nodes: [
           {
+            data: { label: 'Prompt', prompt: '', status: 'idle', variables: {} },
             id: 'node-1',
-            type: 'prompt',
             position: { x: 0, y: 0 },
-            data: { label: 'Prompt', status: 'idle', prompt: '', variables: {} },
+            type: 'prompt',
           },
         ],
-        edges: [],
-        edgeStyle: 'straight',
-        createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        version: 1,
       };
       loadWorkflow(workflowFile);
 

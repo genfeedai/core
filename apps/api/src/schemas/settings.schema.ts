@@ -67,31 +67,31 @@ class UiPreferences {
 const NodeDefaultsSchema = SchemaFactory.createForClass(NodeDefaults);
 const UiPreferencesSchema = SchemaFactory.createForClass(UiPreferences);
 
-@Schema({ timestamps: true, collection: 'settings' })
+@Schema({ collection: 'settings', timestamps: true })
 export class Settings extends Document {
   // User identifier (could be anonymous session ID or authenticated user ID)
-  @Prop({ required: true, unique: true, index: true })
+  @Prop({ index: true, required: true, unique: true })
   userId: string;
 
   // Node defaults
-  @Prop({ type: NodeDefaultsSchema, default: {} })
+  @Prop({ default: {}, type: NodeDefaultsSchema })
   nodeDefaults: NodeDefaults;
 
   // UI preferences
-  @Prop({ type: UiPreferencesSchema, default: {} })
+  @Prop({ default: {}, type: UiPreferencesSchema })
   uiPreferences: UiPreferences;
 
   // Recent models (for model browser)
   @Prop({
+    default: [],
     type: [
       {
-        id: String,
         displayName: String,
+        id: String,
         provider: String,
         timestamp: Number,
       },
     ],
-    default: [],
   })
   recentModels: Array<{
     id: string;

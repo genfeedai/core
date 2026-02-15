@@ -63,8 +63,8 @@ class Logger {
     });
 
     this.errorReporter?.({
-      message,
       error,
+      message,
       options,
     });
   }

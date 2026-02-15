@@ -6,66 +6,22 @@ import type {
   ExecutionCostDetails,
   JobCostBreakdown,
 } from '@/interfaces/cost.interface';
+import type {
+  DebugPayload,
+  ExecutionStatusUpdate,
+  NodeOutput,
+  PendingNode,
+} from '@/interfaces/execution-types.interface';
+import type {
+  WorkflowDefinition,
+  WorkflowEdge,
+  WorkflowNode,
+} from '@/interfaces/workflow.interface';
+import { DATA_PASSTHROUGH_TYPES, PASSTHROUGH_OUTPUT_MAP } from '@/registry/node-type.registry';
 import { Execution, type ExecutionDocument } from '@/schemas/execution.schema';
 import { Job, type JobDocument } from '@/schemas/job.schema';
 
-/**
- * Workflow node structure for input resolution
- */
-interface WorkflowNode {
-  id: string;
-  type: string;
-  data: Record<string, unknown>;
-}
-
-/**
- * Workflow edge structure for input resolution
- */
-interface WorkflowEdge {
-  source: string;
-  target: string;
-  sourceHandle?: string;
-  targetHandle?: string;
-}
-
-/**
- * Workflow definition for input resolution
- */
-export interface WorkflowDefinition {
-  nodes: WorkflowNode[];
-  edges: WorkflowEdge[];
-}
-
-/**
- * Passthrough node types - their output comes directly from node data
- */
-const PASSTHROUGH_NODE_TYPES = [
-  'imageInput',
-  'videoInput',
-  'audioInput',
-  'prompt',
-  'promptConstructor',
-  'template',
-  'workflowInput',
-  'workflowOutput',
-  'input',
-  'output',
-] as const;
-
-/**
- * Mapping of node types to their output handle -> data field mapping
- * Used to extract output values from passthrough nodes
- * Note: 'output' is the default handle name when sourceHandle is undefined in React Flow edges
- */
-const PASSTHROUGH_OUTPUT_MAP: Record<string, Record<string, string>> = {
-  imageInput: { image: 'image', output: 'image' },
-  videoInput: { video: 'video', output: 'video' },
-  audioInput: { audio: 'audio', output: 'audio' },
-  prompt: { text: 'prompt', output: 'prompt' },
-  promptConstructor: { text: 'outputText', output: 'outputText' },
-  template: { text: 'resolvedPrompt', output: 'resolvedPrompt' },
-  workflowInput: { value: 'value', output: 'value' },
-};
+export type { WorkflowDefinition };
 
 @Injectable()
 export class ExecutionsService {
@@ -84,17 +40,17 @@ export class ExecutionsService {
     options?: { debugMode?: boolean; selectedNodeIds?: string[] }
   ): Promise<ExecutionDocument> {
     const execution = new this.executionModel({
-      workflowId: new Types.ObjectId(workflowId),
-      status: 'pending',
       debugMode: options?.debugMode ?? false,
       selectedNodeIds: options?.selectedNodeIds ?? [],
+      status: 'pending',
+      workflowId: new Types.ObjectId(workflowId),
     });
     return execution.save();
   }
 
   async findExecutionsByWorkflow(workflowId: string): Promise<ExecutionDocument[]> {
     return this.executionModel
-      .find({ workflowId: new Types.ObjectId(workflowId), isDeleted: false })
+      .find({ isDeleted: false, workflowId: new Types.ObjectId(workflowId) })
       .sort({ createdAt: -1 })
       .exec();
   }
@@ -117,11 +73,11 @@ export class ExecutionsService {
     depth: number
   ): Promise<ExecutionDocument> {
     const execution = new this.executionModel({
-      workflowId: new Types.ObjectId(workflowId),
-      status: 'pending',
+      depth,
       parentExecutionId: new Types.ObjectId(parentExecutionId),
       parentNodeId,
-      depth,
+      status: 'pending',
+      workflowId: new Types.ObjectId(workflowId),
     });
     return execution.save();
   }
@@ -143,7 +99,7 @@ export class ExecutionsService {
     status: string,
     error?: string
   ): Promise<ExecutionDocument> {
-    const updates: Record<string, unknown> = { status };
+    const updates: ExecutionStatusUpdate = { status };
     if (error) updates.error = error;
     if (status === 'running') updates.startedAt = new Date();
     if (status === 'completed' || status === 'failed') updates.completedAt = new Date();
@@ -170,18 +126,18 @@ export class ExecutionsService {
     executionId: string,
     nodeId: string,
     status: string,
-    output?: Record<string, unknown>,
+    output?: NodeOutput,
     error?: string,
     cost?: number
   ): Promise<ExecutionDocument> {
     const nodeResult = {
-      nodeId,
-      status,
-      output,
-      error,
-      cost: cost ?? 0,
-      startedAt: status === 'processing' ? new Date() : undefined,
       completedAt: status === 'complete' || status === 'error' ? new Date() : undefined,
+      cost: cost ?? 0,
+      error,
+      nodeId,
+      output,
+      startedAt: status === 'processing' ? new Date() : undefined,
+      status,
     };
 
     // Try to update existing node result, or add new one
@@ -225,16 +181,16 @@ export class ExecutionsService {
     executionId: string,
     nodeId: string,
     mockPredictionId: string,
-    output: Record<string, unknown>,
-    debugPayload: { model: string; input: Record<string, unknown>; timestamp: string }
+    output: NodeOutput,
+    debugPayload: DebugPayload
   ): Promise<Job> {
     const job = new this.jobModel({
       executionId: new Types.ObjectId(executionId),
       nodeId,
-      predictionId: mockPredictionId,
-      status: 'succeeded',
       output,
+      predictionId: mockPredictionId,
       result: { debugPayload },
+      status: 'succeeded',
     });
     return job.save();
   }
@@ -252,13 +208,8 @@ export class ExecutionsService {
     execution: ExecutionDocument;
     workflow: {
       _id: Types.ObjectId;
-      nodes: Array<{ id: string; type: string; data: Record<string, unknown> }>;
-      edges: Array<{
-        source: string;
-        target: string;
-        sourceHandle?: string;
-        targetHandle?: string;
-      }>;
+      nodes: WorkflowNode[];
+      edges: WorkflowEdge[];
     };
   } | null> {
     const result = await this.jobModel
@@ -266,41 +217,41 @@ export class ExecutionsService {
         { $match: { predictionId } },
         {
           $lookup: {
+            as: 'execution',
+            foreignField: '_id',
             from: 'executions',
             localField: 'executionId',
-            foreignField: '_id',
-            as: 'execution',
           },
         },
         { $unwind: '$execution' },
         {
           $lookup: {
+            as: 'workflow',
+            foreignField: '_id',
             from: 'workflows',
             localField: 'execution.workflowId',
-            foreignField: '_id',
-            as: 'workflow',
-            pipeline: [{ $project: { _id: 1, nodes: 1, edges: 1 } }],
+            pipeline: [{ $project: { _id: 1, edges: 1, nodes: 1 } }],
           },
         },
         { $unwind: '$workflow' },
         {
           $project: {
+            execution: '$execution',
             job: {
               _id: '$_id',
-              executionId: '$executionId',
-              nodeId: '$nodeId',
-              predictionId: '$predictionId',
-              status: '$status',
-              progress: '$progress',
-              output: '$output',
-              error: '$error',
               cost: '$cost',
               costBreakdown: '$costBreakdown',
-              predictTime: '$predictTime',
               createdAt: '$createdAt',
+              error: '$error',
+              executionId: '$executionId',
+              nodeId: '$nodeId',
+              output: '$output',
+              predictionId: '$predictionId',
+              predictTime: '$predictTime',
+              progress: '$progress',
+              status: '$status',
               updatedAt: '$updatedAt',
             },
-            execution: '$execution',
             workflow: '$workflow',
           },
         },
@@ -316,13 +267,8 @@ export class ExecutionsService {
       execution: ExecutionDocument;
       workflow: {
         _id: Types.ObjectId;
-        nodes: Array<{ id: string; type: string; data: Record<string, unknown> }>;
-        edges: Array<{
-          source: string;
-          target: string;
-          sourceHandle?: string;
-          targetHandle?: string;
-        }>;
+        nodes: WorkflowNode[];
+        edges: WorkflowEdge[];
       };
     };
   }
@@ -332,7 +278,7 @@ export class ExecutionsService {
     updates: {
       status?: string;
       progress?: number;
-      output?: Record<string, unknown>;
+      output?: NodeOutput;
       error?: string;
       cost?: number;
       costBreakdown?: JobCostBreakdown;
@@ -397,7 +343,7 @@ export class ExecutionsService {
       let outputValue: unknown;
 
       // Check if source is a passthrough node
-      if ((PASSTHROUGH_NODE_TYPES as readonly string[]).includes(sourceNode.type)) {
+      if (DATA_PASSTHROUGH_TYPES.includes(sourceNode.type)) {
         outputValue = this.getPassthroughOutput(sourceNode, edge.sourceHandle);
         this.logger.log(
           `Passthrough ${sourceNode.type} output (handle=${edge.sourceHandle ?? 'undefined'}): ${outputValue === undefined ? 'UNDEFINED' : outputValue === null ? 'NULL' : typeof outputValue === 'string' ? outputValue.substring(0, 80) : JSON.stringify(outputValue)}`
@@ -407,7 +353,7 @@ export class ExecutionsService {
         const nodeResult = execution.nodeResults.find((r) => r.nodeId === edge.source);
         if (nodeResult?.status === 'complete' && nodeResult.output) {
           const sourceHandle = edge.sourceHandle ?? 'output';
-          outputValue = (nodeResult.output as Record<string, unknown>)[sourceHandle];
+          outputValue = (nodeResult.output as NodeOutput)[sourceHandle];
         }
       }
 
@@ -488,16 +434,16 @@ export class ExecutionsService {
     // Common input field mappings
     // 'input' is the default when targetHandle is undefined in React Flow
     const handleMappings: Record<string, string[]> = {
-      images: ['inputImages', 'imageInput'],
+      audio: ['inputAudio', 'audio'],
       image: ['inputImage', 'image', 'imageInput', 'inputImages'],
+      images: ['inputImages', 'imageInput'],
+      // Default fallback for undefined handle IDs
+      input: ['inputImage', 'inputImages', 'inputVideo', 'inputAudio', 'inputPrompt', 'inputMedia'],
       lastFrame: ['lastFrame', 'inputLastFrame'], // Video end frame
+      media: ['inputMedia'],
       prompt: ['inputPrompt', 'prompt'],
       text: ['inputText', 'inputPrompt', 'text'],
       video: ['inputVideo', 'video'],
-      audio: ['inputAudio', 'audio'],
-      media: ['inputMedia'],
-      // Default fallback for undefined handle IDs
-      input: ['inputImage', 'inputImages', 'inputVideo', 'inputAudio', 'inputPrompt', 'inputMedia'],
     };
 
     const candidates = handleMappings[targetHandle] ?? [];
@@ -546,20 +492,20 @@ export class ExecutionsService {
     const jobs = await this.findJobsByExecution(executionId);
 
     const summary: CostSummary = {
-      estimated: execution.costSummary?.estimated ?? 0,
       actual: execution.costSummary?.actual ?? execution.totalCost ?? 0,
+      estimated: execution.costSummary?.estimated ?? 0,
       variance: execution.costSummary?.variance ?? 0,
     };
 
     return {
-      summary,
       jobs: jobs.map((job) => ({
+        breakdown: job.costBreakdown,
+        cost: job.cost ?? 0,
         nodeId: job.nodeId,
         predictionId: job.predictionId,
-        cost: job.cost ?? 0,
-        breakdown: job.costBreakdown,
         predictTime: job.predictTime,
       })),
+      summary,
     };
   }
 
@@ -568,15 +514,7 @@ export class ExecutionsService {
   /**
    * Set pending nodes for sequential execution
    */
-  async setPendingNodes(
-    executionId: string,
-    nodes: Array<{
-      nodeId: string;
-      nodeType: string;
-      nodeData: Record<string, unknown>;
-      dependsOn: string[];
-    }>
-  ): Promise<void> {
+  async setPendingNodes(executionId: string, nodes: PendingNode[]): Promise<void> {
     await this.executionModel
       .updateOne({ _id: executionId }, { $set: { pendingNodes: nodes } })
       .exec();
@@ -585,14 +523,7 @@ export class ExecutionsService {
   /**
    * Get nodes that are ready to execute (all dependencies complete)
    */
-  async getReadyNodes(executionId: string): Promise<
-    Array<{
-      nodeId: string;
-      nodeType: string;
-      nodeData: Record<string, unknown>;
-      dependsOn: string[];
-    }>
-  > {
+  async getReadyNodes(executionId: string): Promise<PendingNode[]> {
     const execution = await this.findExecution(executionId);
     const pendingNodes = execution.pendingNodes ?? [];
     const completedNodeIds = new Set(
@@ -729,21 +660,6 @@ export class ExecutionsService {
       {
         $group: {
           _id: null,
-          totalExecutions: { $sum: 1 },
-          failedExecutions: {
-            $sum: { $cond: [{ $eq: ['$status', 'failed'] }, 1, 0] },
-          },
-          totalRunTimeMs: {
-            $sum: {
-              $cond: [
-                {
-                  $and: [{ $ifNull: ['$startedAt', false] }, { $ifNull: ['$completedAt', false] }],
-                },
-                { $subtract: ['$completedAt', '$startedAt'] },
-                0,
-              ],
-            },
-          },
           completedCount: {
             $sum: {
               $cond: [
@@ -755,7 +671,22 @@ export class ExecutionsService {
               ],
             },
           },
+          failedExecutions: {
+            $sum: { $cond: [{ $eq: ['$status', 'failed'] }, 1, 0] },
+          },
           totalCost: { $sum: { $ifNull: ['$costSummary.actual', 0] } },
+          totalExecutions: { $sum: 1 },
+          totalRunTimeMs: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [{ $ifNull: ['$startedAt', false] }, { $ifNull: ['$completedAt', false] }],
+                },
+                { $subtract: ['$completedAt', '$startedAt'] },
+                0,
+              ],
+            },
+          },
         },
       },
     ];
@@ -764,11 +695,11 @@ export class ExecutionsService {
 
     if (!result) {
       return {
-        totalExecutions: 0,
+        avgRunTimeMs: 0,
         failedExecutions: 0,
         failureRate: 0,
-        avgRunTimeMs: 0,
         totalCost: 0,
+        totalExecutions: 0,
       };
     }
 
@@ -781,11 +712,11 @@ export class ExecutionsService {
       result.completedCount > 0 ? Math.round(result.totalRunTimeMs / result.completedCount) : 0;
 
     return {
-      totalExecutions: result.totalExecutions,
+      avgRunTimeMs,
       failedExecutions: result.failedExecutions,
       failureRate,
-      avgRunTimeMs,
       totalCost: result.totalCost,
+      totalExecutions: result.totalExecutions,
     };
   }
 }

@@ -5,9 +5,9 @@ import { Settings, SettingsSchema } from '@/schemas/settings.schema';
 import { SettingsService } from '@/services/settings.service';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: Settings.name, schema: SettingsSchema }])],
   controllers: [SettingsController],
-  providers: [SettingsService],
   exports: [SettingsService],
+  imports: [MongooseModule.forFeature([{ name: Settings.name, schema: SettingsSchema }])],
+  providers: [SettingsService],
 })
 export class SettingsModule {}

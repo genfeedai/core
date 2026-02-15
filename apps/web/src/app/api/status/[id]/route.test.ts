@@ -25,10 +25,10 @@ describe('GET /api/status/[id]', () => {
 
   it('should return webhook result if available', async () => {
     mockedGetWebhookResult.mockReturnValue({
-      status: 'succeeded',
-      output: ['https://example.com/image.png'],
-      error: undefined,
       completedAt: new Date().toISOString(),
+      error: undefined,
+      output: ['https://example.com/image.png'],
+      status: 'succeeded',
     });
 
     const request = new NextRequest(`http://localhost/api/status/${mockPredictionId}`);
@@ -43,11 +43,11 @@ describe('GET /api/status/[id]', () => {
   it('should fall back to Replicate API when no webhook result', async () => {
     mockedGetWebhookResult.mockReturnValue(undefined);
     mockedGetPredictionStatus.mockResolvedValue({
-      id: mockPredictionId,
-      status: 'succeeded',
-      output: ['https://api.com/output.png'],
       error: undefined,
+      id: mockPredictionId,
       metrics: { predict_time: 5.2 },
+      output: ['https://api.com/output.png'],
+      status: 'succeeded',
     });
 
     const request = new NextRequest(`http://localhost/api/status/${mockPredictionId}`);
@@ -62,11 +62,11 @@ describe('GET /api/status/[id]', () => {
   it('should return processing status with progress', async () => {
     mockedGetWebhookResult.mockReturnValue(undefined);
     mockedGetPredictionStatus.mockResolvedValue({
-      id: mockPredictionId,
-      status: 'processing',
-      output: undefined,
       error: undefined,
+      id: mockPredictionId,
       metrics: undefined,
+      output: undefined,
+      status: 'processing',
     });
 
     const request = new NextRequest(`http://localhost/api/status/${mockPredictionId}`);
@@ -79,10 +79,10 @@ describe('GET /api/status/[id]', () => {
 
   it('should return failed status with error', async () => {
     mockedGetWebhookResult.mockReturnValue({
-      status: 'failed',
-      output: undefined,
-      error: 'Model failed to generate output',
       completedAt: new Date().toISOString(),
+      error: 'Model failed to generate output',
+      output: undefined,
+      status: 'failed',
     });
 
     const request = new NextRequest(`http://localhost/api/status/${mockPredictionId}`);

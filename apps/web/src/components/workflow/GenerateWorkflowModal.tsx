@@ -23,25 +23,25 @@ interface GeneratorModel {
 
 const GENERATOR_MODELS: GeneratorModel[] = [
   {
+    description: 'Fast and capable, good for most workflows',
     id: 'meta/meta-llama-3.1-70b-instruct',
     name: 'Llama 3.1 70B',
-    provider: 'Meta',
-    description: 'Fast and capable, good for most workflows',
     pricing: '~$0.001/generation',
+    provider: 'Meta',
   },
   {
+    description: 'Latest Llama model with improved reasoning',
     id: 'meta/meta-llama-3.3-70b-instruct',
     name: 'Llama 3.3 70B',
-    provider: 'Meta',
-    description: 'Latest Llama model with improved reasoning',
     pricing: '~$0.001/generation',
+    provider: 'Meta',
   },
   {
+    description: 'Strong reasoning for complex workflows',
     id: 'deepseek-ai/deepseek-r1',
     name: 'DeepSeek R1',
-    provider: 'DeepSeek',
-    description: 'Strong reasoning for complex workflows',
     pricing: '~$0.01/generation',
+    provider: 'DeepSeek',
   },
 ];
 
@@ -71,19 +71,19 @@ interface GeneratedWorkflow {
 
 const CONTENT_LEVELS: { value: ContentLevel; label: string; description: string }[] = [
   {
-    value: 'empty',
-    label: 'Empty',
     description: 'Just the structure, you fill in all content',
+    label: 'Empty',
+    value: 'empty',
   },
   {
-    value: 'minimal',
-    label: 'Placeholders',
     description: 'Structure with placeholder text to guide you',
+    label: 'Placeholders',
+    value: 'minimal',
   },
   {
-    value: 'full',
-    label: 'Full Content',
     description: 'AI generates all prompts and settings',
+    label: 'Full Content',
+    value: 'full',
   },
 ];
 
@@ -126,9 +126,9 @@ function GenerateWorkflowModalComponent() {
 
     try {
       const response = await fetch('/api/workflows/generate', {
-        method: 'POST',
+        body: JSON.stringify({ contentLevel, description, model }),
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description, contentLevel, model }),
+        method: 'POST',
       });
 
       if (!response.ok) {
@@ -150,15 +150,15 @@ function GenerateWorkflowModalComponent() {
 
     // Cast to workflow file format - the generated nodes should match the expected structure
     loadWorkflow({
-      version: 1,
-      name: generatedWorkflow.name,
-      description: generatedWorkflow.description,
-      nodes: generatedWorkflow.nodes as Parameters<typeof loadWorkflow>[0]['nodes'],
-      edges: generatedWorkflow.edges as Parameters<typeof loadWorkflow>[0]['edges'],
-      edgeStyle: 'default',
-      groups: [],
       createdAt: new Date().toISOString(),
+      description: generatedWorkflow.description,
+      edgeStyle: 'default',
+      edges: generatedWorkflow.edges as Parameters<typeof loadWorkflow>[0]['edges'],
+      groups: [],
+      name: generatedWorkflow.name,
+      nodes: generatedWorkflow.nodes as Parameters<typeof loadWorkflow>[0]['nodes'],
       updatedAt: new Date().toISOString(),
+      version: 1,
     });
 
     // Reset and close

@@ -12,50 +12,50 @@ describe('WorkflowsController', () => {
 
   const mockWorkflow = {
     _id: mockWorkflowId,
-    name: 'Test Workflow',
+    createdAt: new Date(),
     description: 'A test workflow',
+    edgeStyle: 'bezier',
+    edges: [{ id: 'edge-1', source: 'node-1', target: 'node-2' }],
+    isDeleted: false,
+    name: 'Test Workflow',
     nodes: [
-      { id: 'node-1', type: 'prompt', position: { x: 0, y: 0 }, data: {} },
+      { data: {}, id: 'node-1', position: { x: 0, y: 0 }, type: 'prompt' },
       {
-        id: 'node-2',
-        type: 'imageGen',
-        position: { x: 200, y: 0 },
         data: { model: 'nano-banana-pro' },
+        id: 'node-2',
+        position: { x: 200, y: 0 },
+        type: 'imageGen',
       },
     ],
-    edges: [{ id: 'edge-1', source: 'node-1', target: 'node-2' }],
-    edgeStyle: 'bezier',
-    isDeleted: false,
-    createdAt: new Date(),
     updatedAt: new Date(),
   };
 
   const mockWorkflowsService = {
     create: vi.fn().mockResolvedValue(mockWorkflow),
-    findAll: vi.fn().mockResolvedValue([mockWorkflow]),
-    findOne: vi.fn().mockResolvedValue(mockWorkflow),
-    update: vi.fn().mockResolvedValue(mockWorkflow),
-    remove: vi.fn().mockResolvedValue({ ...mockWorkflow, isDeleted: true }),
     duplicate: vi.fn().mockResolvedValue({
       ...mockWorkflow,
       _id: new Types.ObjectId(),
       name: 'Test Workflow (Copy)',
     }),
+    findAll: vi.fn().mockResolvedValue([mockWorkflow]),
+    findOne: vi.fn().mockResolvedValue(mockWorkflow),
+    remove: vi.fn().mockResolvedValue({ ...mockWorkflow, isDeleted: true }),
+    update: vi.fn().mockResolvedValue(mockWorkflow),
   };
 
   const mockCostCalculatorService = {
     calculateWorkflowEstimate: vi.fn().mockReturnValue({
-      total: 0.15,
       breakdown: [
         {
+          model: 'nano-banana-pro',
           nodeId: 'node-2',
           nodeType: 'imageGen',
-          model: 'nano-banana-pro',
-          unitPrice: 0.15,
           quantity: 1,
           subtotal: 0.15,
+          unitPrice: 0.15,
         },
       ],
+      total: 0.15,
     }),
   };
 
@@ -77,8 +77,8 @@ describe('WorkflowsController', () => {
   describe('create', () => {
     it('should create a new workflow', async () => {
       const createDto = {
-        name: 'New Workflow',
         description: 'A new workflow',
+        name: 'New Workflow',
       };
 
       const result = await controller.create(createDto);

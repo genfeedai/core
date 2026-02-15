@@ -27,11 +27,11 @@ export async function POST(request: NextRequest) {
     const prediction = await generateImage(
       config.model || 'nano-banana-pro',
       {
-        prompt,
-        image_input: images,
         aspect_ratio: config.aspectRatio || '1:1',
-        resolution: config.resolution || '2K',
+        image_input: images,
         output_format: config.outputFormat || 'jpg',
+        prompt,
+        resolution: config.resolution || '2K',
       },
       webhookUrl
     );

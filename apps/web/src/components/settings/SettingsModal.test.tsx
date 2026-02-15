@@ -17,16 +17,16 @@ vi.mock('@/components/ui/select', () => ({
   Select: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="select">{children}</div>
   ),
-  SelectTrigger: ({ children }: { children: React.ReactNode }) => (
-    <button data-testid="select-trigger">{children}</button>
-  ),
-  SelectValue: () => <span data-testid="select-value" />,
   SelectContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="select-content">{children}</div>
   ),
   SelectItem: ({ children, value }: { children: React.ReactNode; value: string }) => (
     <div data-testid={`select-item-${value}`}>{children}</div>
   ),
+  SelectTrigger: ({ children }: { children: React.ReactNode }) => (
+    <button data-testid="select-trigger">{children}</button>
+  ),
+  SelectValue: () => <span data-testid="select-value" />,
 }));
 
 vi.mock('@/components/ui/button', () => ({
@@ -46,43 +46,43 @@ vi.mock('@/components/ui/button', () => ({
 }));
 
 vi.mock('@/store/settingsStore', () => ({
-  useSettingsStore: vi.fn(() => ({
-    providers: {
-      replicate: { apiKey: null, enabled: true },
-      fal: { apiKey: null, enabled: true },
-      huggingface: { apiKey: null, enabled: true },
+  PROVIDER_INFO: {
+    fal: {
+      description: 'Fast inference for image and video generation',
+      docsUrl: 'https://fal.ai/docs',
+      name: 'fal.ai',
     },
+    huggingface: {
+      description: 'The AI community platform with 500k+ models',
+      docsUrl: 'https://huggingface.co/docs/api-inference',
+      name: 'Hugging Face',
+    },
+    replicate: {
+      description: 'Access thousands of open-source AI models',
+      docsUrl: 'https://replicate.com/docs',
+      name: 'Replicate',
+    },
+  },
+  useSettingsStore: vi.fn(() => ({
+    debugMode: false,
     defaults: {
       imageModel: 'nano-banana-pro',
-      videoModel: 'veo-3.1',
       imageProvider: 'replicate',
+      videoModel: 'veo-3.1',
       videoProvider: 'replicate',
     },
     edgeStyle: 'default',
-    showMinimap: true,
-    debugMode: false,
+    providers: {
+      fal: { apiKey: null, enabled: true },
+      huggingface: { apiKey: null, enabled: true },
+      replicate: { apiKey: null, enabled: true },
+    },
+    setDebugMode: mockSetDebugMode,
     setDefaultModel: mockSetDefaultModel,
     setEdgeStyle: mockSetEdgeStyle,
     setShowMinimap: mockSetShowMinimap,
-    setDebugMode: mockSetDebugMode,
+    showMinimap: true,
   })),
-  PROVIDER_INFO: {
-    replicate: {
-      name: 'Replicate',
-      description: 'Access thousands of open-source AI models',
-      docsUrl: 'https://replicate.com/docs',
-    },
-    fal: {
-      name: 'fal.ai',
-      description: 'Fast inference for image and video generation',
-      docsUrl: 'https://fal.ai/docs',
-    },
-    huggingface: {
-      name: 'Hugging Face',
-      description: 'The AI community platform with 500k+ models',
-      docsUrl: 'https://huggingface.co/docs/api-inference',
-    },
-  },
 }));
 
 vi.mock('@genfeedai/workflow-ui/stores', () => ({

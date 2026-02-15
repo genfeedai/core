@@ -2,17 +2,17 @@
  * Queue names for BullMQ
  */
 export const QUEUE_NAMES = {
-  WORKFLOW_ORCHESTRATOR: 'workflow-orchestrator',
-  IMAGE_GENERATION: 'image-generation',
-  VIDEO_GENERATION: 'video-generation',
-  LLM_GENERATION: 'llm-generation',
-  PROCESSING: 'processing',
-  // Dead letter queues
-  DLQ_WORKFLOW: 'dlq-workflow-orchestrator',
   DLQ_IMAGE: 'dlq-image-generation',
-  DLQ_VIDEO: 'dlq-video-generation',
   DLQ_LLM: 'dlq-llm-generation',
   DLQ_PROCESSING: 'dlq-processing',
+  DLQ_VIDEO: 'dlq-video-generation',
+  // Dead letter queues
+  DLQ_WORKFLOW: 'dlq-workflow-orchestrator',
+  IMAGE_GENERATION: 'image-generation',
+  LLM_GENERATION: 'llm-generation',
+  PROCESSING: 'processing',
+  VIDEO_GENERATION: 'video-generation',
+  WORKFLOW_ORCHESTRATOR: 'workflow-orchestrator',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
@@ -21,13 +21,13 @@ export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
  * Job types for each queue
  */
 export const JOB_TYPES = {
+  EXECUTE_NODE: 'execute-node',
   // Workflow orchestrator
   EXECUTE_WORKFLOW: 'execute-workflow',
-  EXECUTE_NODE: 'execute-node',
   // Generation jobs
   GENERATE_IMAGE: 'generate-image',
-  GENERATE_VIDEO: 'generate-video',
   GENERATE_TEXT: 'generate-text',
+  GENERATE_VIDEO: 'generate-video',
   // Processing jobs
   REFRAME_IMAGE: 'reframe-image',
   REFRAME_VIDEO: 'reframe-video',
@@ -43,8 +43,8 @@ export type JobType = (typeof JOB_TYPES)[keyof typeof JOB_TYPES];
 export const JOB_PRIORITY = {
   CRITICAL: 1,
   HIGH: 2,
-  NORMAL: 5,
   LOW: 10,
+  NORMAL: 5,
 } as const;
 
 /**
@@ -53,33 +53,33 @@ export const JOB_PRIORITY = {
 export const DEFAULT_JOB_OPTIONS = {
   [QUEUE_NAMES.WORKFLOW_ORCHESTRATOR]: {
     attempts: 3,
-    backoff: { type: 'exponential' as const, delay: 2000 },
+    backoff: { delay: 2000, type: 'exponential' as const },
     removeOnComplete: { age: 3600, count: 1000 },
     removeOnFail: { age: 86400, count: 5000 },
   },
   [QUEUE_NAMES.IMAGE_GENERATION]: {
     attempts: 3,
     // Exponential backoff starting at 10s to respect Replicate rate limits (429 retry_after ~6-8s)
-    backoff: { type: 'exponential' as const, delay: 10000 },
+    backoff: { delay: 10000, type: 'exponential' as const },
     removeOnComplete: { age: 3600, count: 1000 },
     removeOnFail: { age: 86400, count: 5000 },
   },
   [QUEUE_NAMES.VIDEO_GENERATION]: {
     attempts: 3,
     // Exponential backoff starting at 10s to respect Replicate rate limits
-    backoff: { type: 'exponential' as const, delay: 10000 },
+    backoff: { delay: 10000, type: 'exponential' as const },
     removeOnComplete: { age: 3600, count: 500 },
     removeOnFail: { age: 86400, count: 2000 },
   },
   [QUEUE_NAMES.LLM_GENERATION]: {
     attempts: 3,
-    backoff: { type: 'fixed' as const, delay: 500 },
+    backoff: { delay: 500, type: 'fixed' as const },
     removeOnComplete: { age: 3600, count: 2000 },
     removeOnFail: { age: 86400, count: 5000 },
   },
   [QUEUE_NAMES.PROCESSING]: {
     attempts: 3,
-    backoff: { type: 'exponential' as const, delay: 2000 },
+    backoff: { delay: 2000, type: 'exponential' as const },
     removeOnComplete: { age: 3600, count: 500 },
     removeOnFail: { age: 86400, count: 2000 },
   },
@@ -98,37 +98,21 @@ export const QUEUE_CONCURRENCY = {
   [QUEUE_NAMES.PROCESSING]: 10,
 } as const;
 
-/**
- * Map node types to queue names
- */
-export const NODE_TYPE_TO_QUEUE: Record<string, QueueName> = {
-  imageGen: QUEUE_NAMES.IMAGE_GENERATION,
-  videoGen: QUEUE_NAMES.VIDEO_GENERATION,
-  llm: QUEUE_NAMES.LLM_GENERATION,
-  motionControl: QUEUE_NAMES.VIDEO_GENERATION, // Uses video generation queue
-  reframe: QUEUE_NAMES.PROCESSING,
-  upscale: QUEUE_NAMES.PROCESSING,
-  videoFrameExtract: QUEUE_NAMES.PROCESSING,
-  lipSync: QUEUE_NAMES.PROCESSING,
-  voiceChange: QUEUE_NAMES.PROCESSING,
-  textToSpeech: QUEUE_NAMES.PROCESSING,
-  transcribe: QUEUE_NAMES.PROCESSING,
-  // Composition: workflowRef triggers nested workflow execution via orchestrator
-  workflowRef: QUEUE_NAMES.WORKFLOW_ORCHESTRATOR,
-};
+// NODE_TYPE_TO_QUEUE has moved to @/registry/node-type.registry
+// Import from there: import { NODE_TYPE_TO_QUEUE } from '@/registry/node-type.registry';
 
 /**
  * Job status constants (for queue jobs)
  */
 export const JOB_STATUS = {
-  PENDING: 'pending',
   ACTIVE: 'active',
   COMPLETED: 'completed',
-  FAILED: 'failed',
   DELAYED: 'delayed',
-  WAITING: 'waiting',
-  STALLED: 'stalled',
+  FAILED: 'failed',
+  PENDING: 'pending',
   RECOVERED: 'recovered',
+  STALLED: 'stalled',
+  WAITING: 'waiting',
 } as const;
 
 export type JobStatus = (typeof JOB_STATUS)[keyof typeof JOB_STATUS];
@@ -137,11 +121,11 @@ export type JobStatus = (typeof JOB_STATUS)[keyof typeof JOB_STATUS];
  * Execution status constants (for workflow executions)
  */
 export const EXECUTION_STATUS = {
-  PENDING: 'pending',
-  RUNNING: 'running',
+  CANCELLED: 'cancelled',
   COMPLETED: 'completed',
   FAILED: 'failed',
-  CANCELLED: 'cancelled',
+  PENDING: 'pending',
+  RUNNING: 'running',
 } as const;
 
 export type ExecutionStatus = (typeof EXECUTION_STATUS)[keyof typeof EXECUTION_STATUS];
@@ -150,11 +134,11 @@ export type ExecutionStatus = (typeof EXECUTION_STATUS)[keyof typeof EXECUTION_S
  * Prediction status constants (for Replicate jobs)
  */
 export const PREDICTION_STATUS = {
+  CANCELED: 'canceled',
+  FAILED: 'failed',
   PENDING: 'pending',
   PROCESSING: 'processing',
   SUCCEEDED: 'succeeded',
-  FAILED: 'failed',
-  CANCELED: 'canceled',
 } as const;
 
 export type PredictionStatus = (typeof PREDICTION_STATUS)[keyof typeof PREDICTION_STATUS];
@@ -163,34 +147,16 @@ export type PredictionStatus = (typeof PREDICTION_STATUS)[keyof typeof PREDICTIO
  * Node result status constants
  */
 export const NODE_RESULT_STATUS = {
-  PENDING: 'pending',
-  PROCESSING: 'processing',
   COMPLETE: 'complete',
   ERROR: 'error',
+  PENDING: 'pending',
+  PROCESSING: 'processing',
 } as const;
 
 export type NodeResultStatus = (typeof NODE_RESULT_STATUS)[keyof typeof NODE_RESULT_STATUS];
 
-/**
- * Node types that are passthrough (no processing needed)
- * These are marked as complete immediately without enqueueing
- * Includes all input nodes, output nodes, and composition nodes that don't need processing
- */
-export const PASSTHROUGH_NODE_TYPES = [
-  // Composition nodes
-  'workflowInput',
-  'workflowOutput',
-  // Basic input nodes
-  'input',
-  'prompt',
-  'imageInput',
-  'videoInput',
-  'audioInput',
-  // Output node
-  'download',
-] as const;
-
-export type PassthroughNodeType = (typeof PASSTHROUGH_NODE_TYPES)[number];
+// PASSTHROUGH_NODE_TYPES has moved to @/registry/node-type.registry
+// Import from there: import { QUEUE_PASSTHROUGH_TYPES } from '@/registry/node-type.registry';
 
 /**
  * Maximum number of times a job can be recovered before being moved to DLQ

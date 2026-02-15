@@ -16,20 +16,8 @@ export const useExecutionStore = create<ExecutionStore>()((...args) => {
   const [set] = args;
 
   return {
-    // Initial state
-    isRunning: false,
-    executionId: null,
-    currentNodeId: null,
-    executingNodeIds: [],
-    validationErrors: null,
-    eventSource: null,
-    lastFailedNodeId: null,
-    pausedAtNodeId: null,
-    jobs: new Map(),
-    estimatedCost: 0,
-    actualCost: 0,
-    debugPayloads: [],
     activeNodeExecutions: new Map(),
+    actualCost: 0,
 
     // Debug payload actions
     addDebugPayload: (payload: DebugPayload) => {
@@ -41,6 +29,18 @@ export const useExecutionStore = create<ExecutionStore>()((...args) => {
     clearDebugPayloads: () => {
       set({ debugPayloads: [] });
     },
+    currentNodeId: null,
+    debugPayloads: [],
+    estimatedCost: 0,
+    eventSource: null,
+    executingNodeIds: [],
+    executionId: null,
+    // Initial state
+    isRunning: false,
+    jobs: new Map(),
+    lastFailedNodeId: null,
+    pausedAtNodeId: null,
+    validationErrors: null,
 
     // Compose slices
     ...createJobSlice(...args),

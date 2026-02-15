@@ -14,41 +14,41 @@ interface ShortcutItem {
 
 const SHORTCUTS: ShortcutItem[] = [
   // Navigation
-  { keys: 'Scroll', description: 'Pan canvas', category: 'Navigation' },
-  { keys: 'Ctrl + Scroll', description: 'Zoom in/out', category: 'Navigation' },
-  { keys: 'F', description: 'Fit view to selection (or all)', category: 'Navigation' },
-  { keys: 'M', description: 'Toggle sidebar', category: 'Navigation' },
+  { category: 'Navigation', description: 'Pan canvas', keys: 'Scroll' },
+  { category: 'Navigation', description: 'Zoom in/out', keys: 'Ctrl + Scroll' },
+  { category: 'Navigation', description: 'Fit view to selection (or all)', keys: 'F' },
+  { category: 'Navigation', description: 'Toggle sidebar', keys: 'M' },
 
   // Selection
-  { keys: 'Click', description: 'Select node', category: 'Selection' },
-  { keys: 'Shift + Click', description: 'Add to selection', category: 'Selection' },
-  { keys: 'Drag', description: 'Marquee select', category: 'Selection' },
-  { keys: 'Ctrl + A', description: 'Select all nodes', category: 'Selection' },
-  { keys: 'Ctrl + F', description: 'Search nodes', category: 'Selection' },
+  { category: 'Selection', description: 'Select node', keys: 'Click' },
+  { category: 'Selection', description: 'Add to selection', keys: 'Shift + Click' },
+  { category: 'Selection', description: 'Marquee select', keys: 'Drag' },
+  { category: 'Selection', description: 'Select all nodes', keys: 'Ctrl + A' },
+  { category: 'Selection', description: 'Search nodes', keys: 'Ctrl + F' },
 
   // Editing
-  { keys: 'Ctrl + Z', description: 'Undo', category: 'Editing' },
-  { keys: 'Ctrl + Shift + Z', description: 'Redo', category: 'Editing' },
-  { keys: 'Ctrl + C', description: 'Copy', category: 'Editing' },
-  { keys: 'Ctrl + X', description: 'Cut', category: 'Editing' },
-  { keys: 'Ctrl + V', description: 'Paste', category: 'Editing' },
-  { keys: 'Ctrl + D', description: 'Duplicate', category: 'Editing' },
-  { keys: 'Delete / Backspace', description: 'Delete selected', category: 'Editing' },
+  { category: 'Editing', description: 'Undo', keys: 'Ctrl + Z' },
+  { category: 'Editing', description: 'Redo', keys: 'Ctrl + Shift + Z' },
+  { category: 'Editing', description: 'Copy', keys: 'Ctrl + C' },
+  { category: 'Editing', description: 'Cut', keys: 'Ctrl + X' },
+  { category: 'Editing', description: 'Paste', keys: 'Ctrl + V' },
+  { category: 'Editing', description: 'Duplicate', keys: 'Ctrl + D' },
+  { category: 'Editing', description: 'Delete selected', keys: 'Delete / Backspace' },
 
   // Nodes
-  { keys: 'Shift + I', description: 'Add Image Gen node', category: 'Nodes' },
-  { keys: 'Shift + V', description: 'Add Video Gen node', category: 'Nodes' },
-  { keys: 'Shift + P', description: 'Add Prompt node', category: 'Nodes' },
-  { keys: 'Shift + L', description: 'Add LLM node', category: 'Nodes' },
+  { category: 'Nodes', description: 'Add Image Gen node', keys: 'Shift + I' },
+  { category: 'Nodes', description: 'Add Video Gen node', keys: 'Shift + V' },
+  { category: 'Nodes', description: 'Add Prompt node', keys: 'Shift + P' },
+  { category: 'Nodes', description: 'Add LLM node', keys: 'Shift + L' },
 
   // Organization
-  { keys: 'L', description: 'Toggle lock on selected', category: 'Organization' },
-  { keys: 'Ctrl + G', description: 'Group selected nodes', category: 'Organization' },
-  { keys: 'Ctrl + Shift + G', description: 'Ungroup', category: 'Organization' },
-  { keys: 'Ctrl + Shift + L', description: 'Unlock all nodes', category: 'Organization' },
+  { category: 'Organization', description: 'Toggle lock on selected', keys: 'L' },
+  { category: 'Organization', description: 'Group selected nodes', keys: 'Ctrl + G' },
+  { category: 'Organization', description: 'Ungroup', keys: 'Ctrl + Shift + G' },
+  { category: 'Organization', description: 'Unlock all nodes', keys: 'Ctrl + Shift + L' },
 
   // Help
-  { keys: '?', description: 'Show this help', category: 'Help' },
+  { category: 'Help', description: 'Show this help', keys: '?' },
 ];
 
 const CATEGORIES = ['Navigation', 'Selection', 'Editing', 'Nodes', 'Organization', 'Help'];

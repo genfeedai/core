@@ -23,7 +23,7 @@ export class StyleSettings {
   scene?: string; // indoor, outdoor, urban, nature, etc.
 }
 
-@Schema({ timestamps: true, collection: 'prompts' })
+@Schema({ collection: 'prompts', timestamps: true })
 export class Prompt extends Document {
   // Core prompt content
   @Prop({ required: true })
@@ -36,7 +36,7 @@ export class Prompt extends Document {
   promptText: string;
 
   // Style settings (embedded)
-  @Prop({ type: Object, default: {} })
+  @Prop({ default: {}, type: Object })
   styleSettings: StyleSettings;
 
   // Generation defaults
@@ -47,10 +47,10 @@ export class Prompt extends Document {
   preferredModel?: string;
 
   // Organization
-  @Prop({ type: String, enum: PROMPT_CATEGORIES, default: 'custom' })
+  @Prop({ default: 'custom', enum: PROMPT_CATEGORIES, type: String })
   category: PromptCategory;
 
-  @Prop({ type: [String], default: [], index: true })
+  @Prop({ default: [], index: true, type: [String] })
   tags: string[];
 
   // Preview thumbnail (URL or base64)

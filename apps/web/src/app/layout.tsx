@@ -4,14 +4,14 @@ import './tw-animate.css';
 import './globals.scss';
 
 const inter = Inter({
-  subsets: ['latin'],
   display: 'swap',
+  subsets: ['latin'],
   variable: '--font-inter',
 });
 
 export const metadata: Metadata = {
-  title: 'Genfeed - AI Content Generation',
   description: 'Visual workflow editor for AI-powered content generation with Replicate',
+  title: 'Genfeed - AI Content Generation',
 };
 
 export default function RootLayout({

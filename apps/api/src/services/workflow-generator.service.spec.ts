@@ -35,42 +35,42 @@ describe('WorkflowGeneratorService', () => {
   describe('generate', () => {
     it('should generate a workflow from description', async () => {
       const mockWorkflow = {
-        name: 'Image Generation',
         description: 'Generate an image',
-        nodes: [
-          {
-            id: 'prompt-1',
-            type: 'prompt',
-            position: { x: 100, y: 100 },
-            data: { label: 'Prompt', status: 'idle', prompt: 'A sunset' },
-          },
-          {
-            id: 'image-gen-1',
-            type: 'imageGen',
-            position: { x: 400, y: 100 },
-            data: { label: 'Image Generator', status: 'idle' },
-          },
-          {
-            id: 'output-1',
-            type: 'output',
-            position: { x: 700, y: 100 },
-            data: { label: 'Output', status: 'idle' },
-          },
-        ],
         edges: [
           {
             id: 'e1',
             source: 'prompt-1',
-            target: 'image-gen-1',
             sourceHandle: 'text',
+            target: 'image-gen-1',
             targetHandle: 'prompt',
           },
           {
             id: 'e2',
             source: 'image-gen-1',
-            target: 'output-1',
             sourceHandle: 'image',
+            target: 'output-1',
             targetHandle: 'media',
+          },
+        ],
+        name: 'Image Generation',
+        nodes: [
+          {
+            data: { label: 'Prompt', prompt: 'A sunset', status: 'idle' },
+            id: 'prompt-1',
+            position: { x: 100, y: 100 },
+            type: 'prompt',
+          },
+          {
+            data: { label: 'Image Generator', status: 'idle' },
+            id: 'image-gen-1',
+            position: { x: 400, y: 100 },
+            type: 'imageGen',
+          },
+          {
+            data: { label: 'Output', status: 'idle' },
+            id: 'output-1',
+            position: { x: 700, y: 100 },
+            type: 'output',
           },
         ],
       };
@@ -78,8 +78,8 @@ describe('WorkflowGeneratorService', () => {
       mockReplicateRun.mockResolvedValueOnce([JSON.stringify(mockWorkflow)]);
 
       const result = await service.generate({
-        description: 'Create a workflow that generates an image from a prompt',
         contentLevel: 'full',
+        description: 'Create a workflow that generates an image from a prompt',
       });
 
       expect(mockReplicateRun).toHaveBeenCalledWith(
@@ -107,32 +107,32 @@ describe('WorkflowGeneratorService', () => {
 
       await expect(
         serviceNoToken.generate({
-          description: 'test',
           contentLevel: 'empty',
+          description: 'test',
         })
       ).rejects.toThrow('Replicate API token not configured');
     });
 
     it('should handle empty content level', async () => {
       const mockWorkflow = {
-        name: 'Empty Workflow',
         description: '',
+        edges: [],
+        name: 'Empty Workflow',
         nodes: [
           {
+            data: { label: 'Prompt', prompt: '', status: 'idle' },
             id: 'p1',
-            type: 'prompt',
             position: { x: 100, y: 100 },
-            data: { label: 'Prompt', status: 'idle', prompt: '' },
+            type: 'prompt',
           },
         ],
-        edges: [],
       };
 
       mockReplicateRun.mockResolvedValueOnce([JSON.stringify(mockWorkflow)]);
 
       const result = await service.generate({
-        description: 'Create workflow',
         contentLevel: 'empty',
+        description: 'Create workflow',
       });
 
       // Verify the prompt includes empty content instructions
@@ -143,24 +143,24 @@ describe('WorkflowGeneratorService', () => {
 
     it('should handle minimal content level', async () => {
       const mockWorkflow = {
-        name: 'Minimal Workflow',
         description: 'Test workflow',
+        edges: [],
+        name: 'Minimal Workflow',
         nodes: [
           {
-            id: 'p1',
-            type: 'prompt',
-            position: { x: 100, y: 100 },
             data: { label: 'Prompt', prompt: '[Your prompt here]' },
+            id: 'p1',
+            position: { x: 100, y: 100 },
+            type: 'prompt',
           },
         ],
-        edges: [],
       };
 
       mockReplicateRun.mockResolvedValueOnce([JSON.stringify(mockWorkflow)]);
 
       const result = await service.generate({
-        description: 'Create workflow',
         contentLevel: 'minimal',
+        description: 'Create workflow',
       });
 
       const callArgs = mockReplicateRun.mock.calls[0][1].input.prompt;
@@ -175,8 +175,8 @@ describe('WorkflowGeneratorService', () => {
       mockReplicateRun.mockResolvedValueOnce([responseWithMarkdown]);
 
       const result = await service.generate({
-        description: 'test',
         contentLevel: 'empty',
+        description: 'test',
       });
 
       expect(result.name).toBe('Test');
@@ -189,8 +189,8 @@ describe('WorkflowGeneratorService', () => {
       mockReplicateRun.mockResolvedValueOnce([responseWithMarkdown]);
 
       const result = await service.generate({
-        description: 'test',
         contentLevel: 'empty',
+        description: 'test',
       });
 
       expect(result.name).toBe('Test2');
@@ -203,8 +203,8 @@ describe('WorkflowGeneratorService', () => {
       mockReplicateRun.mockResolvedValueOnce([mixedResponse]);
 
       const result = await service.generate({
-        description: 'test',
         contentLevel: 'empty',
+        description: 'test',
       });
 
       expect(result.name).toBe('Mixed');
@@ -215,31 +215,31 @@ describe('WorkflowGeneratorService', () => {
 
       await expect(
         service.generate({
-          description: 'test',
           contentLevel: 'empty',
+          description: 'test',
         })
       ).rejects.toThrow('Failed to parse generated workflow');
     });
 
     it('should validate and fix workflow structure', async () => {
       const incompleteWorkflow = {
+        edges: [],
         name: '',
         nodes: [
           {
-            id: 'old-id',
-            type: 'prompt',
             // Missing position
             data: {}, // Missing label and status
+            id: 'old-id',
+            type: 'prompt',
           },
         ],
-        edges: [],
       };
 
       mockReplicateRun.mockResolvedValueOnce([JSON.stringify(incompleteWorkflow)]);
 
       const result = await service.generate({
-        description: 'test',
         contentLevel: 'empty',
+        description: 'test',
       });
 
       // Should fix missing name
@@ -256,28 +256,28 @@ describe('WorkflowGeneratorService', () => {
 
     it('should fix edge references after node ID changes', async () => {
       const workflowWithEdges = {
-        name: 'Edge Test',
         description: '',
-        nodes: [
-          { id: 'prompt', type: 'prompt', position: { x: 100, y: 100 }, data: {} },
-          { id: 'image', type: 'imageGen', position: { x: 400, y: 100 }, data: {} },
-        ],
         edges: [
           {
             id: 'e1',
             source: 'prompt',
-            target: 'image',
             sourceHandle: 'text',
+            target: 'image',
             targetHandle: 'prompt',
           },
+        ],
+        name: 'Edge Test',
+        nodes: [
+          { data: {}, id: 'prompt', position: { x: 100, y: 100 }, type: 'prompt' },
+          { data: {}, id: 'image', position: { x: 400, y: 100 }, type: 'imageGen' },
         ],
       };
 
       mockReplicateRun.mockResolvedValueOnce([JSON.stringify(workflowWithEdges)]);
 
       const result = await service.generate({
-        description: 'test',
         contentLevel: 'empty',
+        description: 'test',
       });
 
       // Edge references should be updated to new IDs
@@ -287,25 +287,25 @@ describe('WorkflowGeneratorService', () => {
 
     it('should remove edges with invalid node references', async () => {
       const workflowWithInvalidEdge = {
-        name: 'Invalid Edge Test',
         description: '',
-        nodes: [{ id: 'node1', type: 'prompt', position: { x: 100, y: 100 }, data: {} }],
         edges: [
           {
             id: 'e1',
             source: 'node1',
-            target: 'nonexistent',
             sourceHandle: 'text',
+            target: 'nonexistent',
             targetHandle: 'prompt',
           },
         ],
+        name: 'Invalid Edge Test',
+        nodes: [{ data: {}, id: 'node1', position: { x: 100, y: 100 }, type: 'prompt' }],
       };
 
       mockReplicateRun.mockResolvedValueOnce([JSON.stringify(workflowWithInvalidEdge)]);
 
       const result = await service.generate({
-        description: 'test',
         contentLevel: 'empty',
+        description: 'test',
       });
 
       // Invalid edge should be removed
@@ -313,7 +313,7 @@ describe('WorkflowGeneratorService', () => {
     });
 
     it('should handle array output from Replicate', async () => {
-      const _workflow = { name: 'Array Test', description: '', nodes: [], edges: [] };
+      const _workflow = { description: '', edges: [], name: 'Array Test', nodes: [] };
 
       // Replicate returns array of strings
       mockReplicateRun.mockResolvedValueOnce([
@@ -323,21 +323,21 @@ describe('WorkflowGeneratorService', () => {
       ]);
 
       const result = await service.generate({
-        description: 'test',
         contentLevel: 'empty',
+        description: 'test',
       });
 
       expect(result.name).toBe('Array Test');
     });
 
     it('should handle string output from Replicate', async () => {
-      const workflow = { name: 'String Test', description: '', nodes: [], edges: [] };
+      const workflow = { description: '', edges: [], name: 'String Test', nodes: [] };
 
       mockReplicateRun.mockResolvedValueOnce(JSON.stringify(workflow));
 
       const result = await service.generate({
-        description: 'test',
         contentLevel: 'empty',
+        description: 'test',
       });
 
       expect(result.name).toBe('String Test');
@@ -348,8 +348,8 @@ describe('WorkflowGeneratorService', () => {
 
       await expect(
         service.generate({
-          description: 'test',
           contentLevel: 'empty',
+          description: 'test',
         })
       ).rejects.toThrow('API rate limit exceeded');
     });
@@ -361,7 +361,7 @@ describe('WorkflowGeneratorService', () => {
         '{"name":"Test","description":"","nodes":[],"edges":[]}',
       ]);
 
-      await service.generate({ description: 'test', contentLevel: 'empty' });
+      await service.generate({ contentLevel: 'empty', description: 'test' });
 
       const systemPrompt = mockReplicateRun.mock.calls[0][1].input.system_prompt;
 
@@ -393,7 +393,7 @@ describe('WorkflowGeneratorService', () => {
         '{"name":"Test","description":"","nodes":[],"edges":[]}',
       ]);
 
-      await service.generate({ description: 'test', contentLevel: 'empty' });
+      await service.generate({ contentLevel: 'empty', description: 'test' });
 
       const systemPrompt = mockReplicateRun.mock.calls[0][1].input.system_prompt;
 
@@ -407,7 +407,7 @@ describe('WorkflowGeneratorService', () => {
         '{"name":"Test","description":"","nodes":[],"edges":[]}',
       ]);
 
-      await service.generate({ description: 'test', contentLevel: 'empty' });
+      await service.generate({ contentLevel: 'empty', description: 'test' });
 
       const systemPrompt = mockReplicateRun.mock.calls[0][1].input.system_prompt;
 

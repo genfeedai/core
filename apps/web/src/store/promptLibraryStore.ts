@@ -46,98 +46,25 @@ interface PromptLibraryStore {
 }
 
 export const usePromptLibraryStore = create<PromptLibraryStore>((set, get) => ({
-  // Initial state
-  items: [],
-  featuredItems: [],
-  selectedItem: null,
-  isLoading: false,
-  error: null,
-  searchQuery: '',
   categoryFilter: null,
-  isPickerOpen: false,
-  isCreateModalOpen: false,
-  editingItem: null,
-
-  // UI Actions
-  setSearchQuery: (query) => set({ searchQuery: query }),
-
-  setCategoryFilter: (category) => set({ categoryFilter: category }),
-
-  setSelectedItem: (item) => set({ selectedItem: item }),
-
-  openPicker: () => set({ isPickerOpen: true }),
-
-  closePicker: () => set({ isPickerOpen: false }),
-
-  openCreateModal: (editItem) =>
-    set({
-      isCreateModalOpen: true,
-      editingItem: editItem ?? null,
-    }),
 
   closeCreateModal: () =>
     set({
-      isCreateModalOpen: false,
       editingItem: null,
+      isCreateModalOpen: false,
     }),
 
-  // API Actions
-  loadItems: async (query, signal) => {
-    set({ isLoading: true, error: null });
-    try {
-      const { searchQuery, categoryFilter } = get();
-      const finalQuery: IQueryPrompts = {
-        ...query,
-        search: query?.search ?? (searchQuery || undefined),
-        category: query?.category ?? categoryFilter ?? undefined,
-      };
-      const items = await promptsApi.getAll(finalQuery, signal);
-      set({ items, isLoading: false });
-    } catch (error) {
-      if ((error as Error).name !== 'AbortError') {
-        set({ error: (error as Error).message, isLoading: false });
-      }
-    }
-  },
-
-  loadFeatured: async (signal) => {
-    try {
-      const featuredItems = await promptsApi.getFeatured(10, signal);
-      set({ featuredItems });
-    } catch (error) {
-      if ((error as Error).name !== 'AbortError') {
-        logger.error('Failed to load featured items', error, { context: 'promptLibraryStore' });
-      }
-    }
-  },
+  closePicker: () => set({ isPickerOpen: false }),
 
   createItem: async (data, signal) => {
-    set({ isLoading: true, error: null });
+    set({ error: null, isLoading: true });
     try {
       const item = await promptsApi.create(data, signal);
       set((state) => ({
+        editingItem: null,
+        isCreateModalOpen: false,
+        isLoading: false,
         items: [item, ...state.items],
-        isLoading: false,
-        isCreateModalOpen: false,
-        editingItem: null,
-      }));
-      return item;
-    } catch (error) {
-      set({ error: (error as Error).message, isLoading: false });
-      throw error;
-    }
-  },
-
-  updateItem: async (id, data, signal) => {
-    set({ isLoading: true, error: null });
-    try {
-      const item = await promptsApi.update(id, data, signal);
-      set((state) => ({
-        items: state.items.map((i) => (i._id === id ? item : i)),
-        selectedItem: state.selectedItem?._id === id ? item : state.selectedItem,
-        isLoading: false,
-        isCreateModalOpen: false,
-        editingItem: null,
       }));
       return item;
     } catch (error) {
@@ -171,17 +98,90 @@ export const usePromptLibraryStore = create<PromptLibraryStore>((set, get) => ({
       throw error;
     }
   },
+  editingItem: null,
+  error: null,
+  featuredItems: [],
+  isCreateModalOpen: false,
+  isLoading: false,
+  isPickerOpen: false,
+  // Initial state
+  items: [],
+
+  loadFeatured: async (signal) => {
+    try {
+      const featuredItems = await promptsApi.getFeatured(10, signal);
+      set({ featuredItems });
+    } catch (error) {
+      if ((error as Error).name !== 'AbortError') {
+        logger.error('Failed to load featured items', error, { context: 'promptLibraryStore' });
+      }
+    }
+  },
+
+  // API Actions
+  loadItems: async (query, signal) => {
+    set({ error: null, isLoading: true });
+    try {
+      const { searchQuery, categoryFilter } = get();
+      const finalQuery: IQueryPrompts = {
+        ...query,
+        category: query?.category ?? categoryFilter ?? undefined,
+        search: query?.search ?? (searchQuery || undefined),
+      };
+      const items = await promptsApi.getAll(finalQuery, signal);
+      set({ isLoading: false, items });
+    } catch (error) {
+      if ((error as Error).name !== 'AbortError') {
+        set({ error: (error as Error).message, isLoading: false });
+      }
+    }
+  },
+
+  openCreateModal: (editItem) =>
+    set({
+      editingItem: editItem ?? null,
+      isCreateModalOpen: true,
+    }),
+
+  openPicker: () => set({ isPickerOpen: true }),
 
   recordItemUsage: async (id, signal) => {
     try {
       const item = await promptsApi.use(id, signal);
       set((state) => ({
-        items: state.items.map((i) => (i._id === id ? item : i)),
         isPickerOpen: false,
+        items: state.items.map((i) => (i._id === id ? item : i)),
       }));
       return item;
     } catch (error) {
       set({ error: (error as Error).message });
+      throw error;
+    }
+  },
+  searchQuery: '',
+  selectedItem: null,
+
+  setCategoryFilter: (category) => set({ categoryFilter: category }),
+
+  // UI Actions
+  setSearchQuery: (query) => set({ searchQuery: query }),
+
+  setSelectedItem: (item) => set({ selectedItem: item }),
+
+  updateItem: async (id, data, signal) => {
+    set({ error: null, isLoading: true });
+    try {
+      const item = await promptsApi.update(id, data, signal);
+      set((state) => ({
+        editingItem: null,
+        isCreateModalOpen: false,
+        isLoading: false,
+        items: state.items.map((i) => (i._id === id ? item : i)),
+        selectedItem: state.selectedItem?._id === id ? item : state.selectedItem,
+      }));
+      return item;
+    } catch (error) {
+      set({ error: (error as Error).message, isLoading: false });
       throw error;
     }
   },

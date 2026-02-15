@@ -44,10 +44,10 @@ export function extractSubgraph(
   // Early return for no selection - return everything
   if (selectedNodeIds.length === 0) {
     return {
-      selectedNodes: nodes,
-      selectedEdges: edges,
-      restSummary: null,
       isScoped: false,
+      restSummary: null,
+      selectedEdges: edges,
+      selectedNodes: nodes,
     };
   }
 
@@ -90,28 +90,28 @@ export function extractSubgraph(
     if (targetSelected) {
       return {
         direction: 'incoming' as const,
-        selectedNodeId: edge.target,
-        otherNodeId: edge.source,
         handleType: edge.targetHandle || 'unknown',
+        otherNodeId: edge.source,
+        selectedNodeId: edge.target,
       };
     } else {
       return {
         direction: 'outgoing' as const,
-        selectedNodeId: edge.source,
-        otherNodeId: edge.target,
         handleType: edge.sourceHandle || 'unknown',
+        otherNodeId: edge.target,
+        selectedNodeId: edge.source,
       };
     }
   });
 
   return {
-    selectedNodes,
-    selectedEdges,
+    isScoped: true,
     restSummary: {
+      boundaryConnections,
       nodeCount: unselectedNodes.length,
       typeBreakdown,
-      boundaryConnections,
     },
-    isScoped: true,
+    selectedEdges,
+    selectedNodes,
   };
 }

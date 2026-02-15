@@ -15,6 +15,7 @@ import type {
   VideoStitchJobData,
   VoiceChangeJobData,
 } from '@/interfaces/job-data.interface';
+import type { NodeOutput } from '@/interfaces/execution-types.interface';
 import { BaseProcessor } from '@/processors/base.processor';
 import { JOB_STATUS, QUEUE_CONCURRENCY, QUEUE_NAMES } from '@/queue/queue.constants';
 import type { ExecutionsService } from '@/services/executions.service';
@@ -64,14 +65,14 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
     outputKey: 'image' | 'audio' | 'video'
   ): Promise<JobResult> {
     const { executionId, nodeId, nodeType, workflowId } = job.data;
-    const output = { [outputKey]: resultUrl } as Record<string, unknown>;
+    const output: NodeOutput = { [outputKey]: resultUrl };
 
     // Update execution node result
     await this.executionsService.updateNodeResult(executionId, nodeId, 'complete', output);
 
-    await job.updateProgress({ percent: 100, message: 'Completed' });
+    await job.updateProgress({ message: 'Completed', percent: 100 });
     await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.COMPLETED, {
-      result: { [`${outputKey}Url`]: resultUrl } as unknown as Record<string, unknown>,
+      result: { [`${outputKey}Url`]: resultUrl } as NodeOutput,
     });
     await this.queueManager.addJobLog(job.id as string, `${nodeType} completed`);
 
@@ -79,8 +80,8 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
     await this.queueManager.continueExecution(executionId, workflowId);
 
     return {
-      success: true,
       output,
+      success: true,
     };
   }
 
@@ -174,7 +175,7 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
 
       // Only poll for Replicate-based operations
       if (predictionId) {
-        await job.updateProgress({ percent: 30, message: 'Prediction created' });
+        await job.updateProgress({ message: 'Prediction created', percent: 30 });
         await this.queueManager.addJobLog(job.id as string, `Created prediction: ${predictionId}`);
 
         // Determine poll config based on whether this is a video operation
@@ -251,11 +252,7 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
           );
         }
 
-        await this.completeJob(
-          job,
-          result as unknown as Record<string, unknown>,
-          `${nodeType} completed`
-        );
+        await this.completeJob(job, result as unknown as NodeOutput, `${nodeType} completed`);
 
         return result;
       }
@@ -282,17 +279,17 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
     const prediction =
       nodeData.inputType === 'video'
         ? await this.replicateService.reframeVideo(executionId, nodeId, {
-            video: nodeData.video!,
             aspectRatio: nodeData.aspectRatio,
-            prompt: nodeData.prompt,
             gridPosition: nodeData.gridPosition,
+            prompt: nodeData.prompt,
+            video: nodeData.video!,
           })
         : await this.replicateService.reframeImage(executionId, nodeId, {
-            image: nodeData.image!,
             aspectRatio: nodeData.aspectRatio,
+            gridPosition: nodeData.gridPosition,
+            image: nodeData.image!,
             model: nodeData.model,
             prompt: nodeData.prompt,
-            gridPosition: nodeData.gridPosition,
           });
 
     return prediction.id;
@@ -313,18 +310,18 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
     const prediction =
       nodeData.inputType === 'video'
         ? await this.replicateService.upscaleVideo(executionId, nodeId, {
-            video: nodeData.video!,
-            targetResolution: nodeData.targetResolution ?? '1080p',
             targetFps: nodeData.targetFps ?? 30,
+            targetResolution: nodeData.targetResolution ?? '1080p',
+            video: nodeData.video!,
           })
         : await this.replicateService.upscaleImage(executionId, nodeId, {
-            image: nodeData.image!,
             enhanceModel: nodeData.enhanceModel ?? 'Standard V2',
-            upscaleFactor: nodeData.upscaleFactor ?? '2x',
-            outputFormat: nodeData.outputFormat ?? 'png',
             faceEnhancement: nodeData.faceEnhancement,
-            faceEnhancementStrength: nodeData.faceEnhancementStrength,
             faceEnhancementCreativity: nodeData.faceEnhancementCreativity,
+            faceEnhancementStrength: nodeData.faceEnhancementStrength,
+            image: nodeData.image!,
+            outputFormat: nodeData.outputFormat ?? 'png',
+            upscaleFactor: nodeData.upscaleFactor ?? '2x',
           });
 
     return prediction.id;
@@ -358,25 +355,25 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
     const isSyncLabsModel = nodeData.model.startsWith('sync/');
     if (isSyncLabsModel && image && !video) {
       this.logger.log(`Converting image to video for Sync Labs lip sync (node ${nodeId})`);
-      await job.updateProgress({ percent: 15, message: 'Converting image to video' });
+      await job.updateProgress({ message: 'Converting image to video', percent: 15 });
       await this.queueManager.addJobLog(
         job.id as string,
         'Converting image to video for Sync Labs'
       );
 
       // Create a 5-second static video from the image (lip sync will adjust to audio length)
-      const result = await this.ffmpegService.imageToVideo({ image, duration: 5 });
+      const result = await this.ffmpegService.imageToVideo({ duration: 5, image });
       video = result.videoUrl;
     }
 
     const prediction = await this.replicateService.generateLipSync(executionId, nodeId, {
-      image: isSyncLabsModel ? undefined : image, // Only pass image to non-Sync Labs models
-      video,
+      activeSpeaker: nodeData.activeSpeaker,
       audio,
+      image: isSyncLabsModel ? undefined : image, // Only pass image to non-Sync Labs models
       model: nodeData.model,
       syncMode: nodeData.syncMode,
       temperature: nodeData.temperature,
-      activeSpeaker: nodeData.activeSpeaker,
+      video,
     });
     return prediction.id;
   }
@@ -413,10 +410,10 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
     const { executionId, nodeId, nodeData } = job.data;
 
     const frameResult = await this.ffmpegService.extractFrame(executionId, nodeId, {
-      video: nodeData.video,
+      percentagePosition: nodeData.percentagePosition,
       selectionMode: nodeData.selectionMode,
       timestampSeconds: nodeData.timestampSeconds,
-      percentagePosition: nodeData.percentagePosition,
+      video: nodeData.video,
     });
 
     return this.completeLocalJob(job, frameResult.imageUrl, 'image');
@@ -435,12 +432,12 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
     }
 
     const ttsResult = await this.ttsService.generateSpeech(executionId, nodeId, {
-      text,
-      voice: nodeData.voice,
       provider: nodeData.provider,
-      stability: nodeData.stability,
       similarityBoost: nodeData.similarityBoost,
       speed: nodeData.speed,
+      stability: nodeData.stability,
+      text,
+      voice: nodeData.voice,
     });
 
     return this.completeLocalJob(job, ttsResult.audioUrl, 'audio');
@@ -453,10 +450,10 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
     const { executionId, nodeId, nodeData } = job.data;
 
     const voiceResult = await this.ffmpegService.replaceAudio(executionId, nodeId, {
-      video: nodeData.video,
       audio: nodeData.audio,
-      preserveOriginalAudio: nodeData.preserveOriginalAudio,
       audioMixLevel: nodeData.audioMixLevel,
+      preserveOriginalAudio: nodeData.preserveOriginalAudio,
+      video: nodeData.video,
     });
 
     return this.completeLocalJob(job, voiceResult.videoUrl, 'video');
@@ -469,14 +466,14 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
     const { executionId, nodeId, nodeData } = job.data;
 
     const subtitleResult = await this.ffmpegService.addSubtitles(executionId, nodeId, {
-      video: nodeData.video,
-      text: nodeData.text,
-      style: nodeData.style,
-      position: nodeData.position,
-      fontSize: nodeData.fontSize,
-      fontColor: nodeData.fontColor,
       backgroundColor: nodeData.backgroundColor,
+      fontColor: nodeData.fontColor,
       fontFamily: nodeData.fontFamily,
+      fontSize: nodeData.fontSize,
+      position: nodeData.position,
+      style: nodeData.style,
+      text: nodeData.text,
+      video: nodeData.video,
     });
 
     return this.completeLocalJob(job, subtitleResult.videoUrl, 'video');
@@ -489,12 +486,12 @@ export class ProcessingProcessor extends BaseProcessor<ProcessingJobData> {
     const { executionId, nodeId, nodeData } = job.data;
 
     const stitchResult = await this.ffmpegService.stitchVideos(executionId, nodeId, {
-      videos: nodeData.inputVideos,
-      transitionType: nodeData.transitionType,
-      transitionDuration: nodeData.transitionDuration,
-      seamlessLoop: nodeData.seamlessLoop,
       audioCodec: nodeData.audioCodec ?? 'aac',
       outputQuality: nodeData.outputQuality ?? 'full',
+      seamlessLoop: nodeData.seamlessLoop,
+      transitionDuration: nodeData.transitionDuration,
+      transitionType: nodeData.transitionType,
+      videos: nodeData.inputVideos,
     });
 
     return this.completeLocalJob(job, stitchResult.videoUrl, 'video');

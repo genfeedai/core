@@ -10,6 +10,7 @@ import {
   QUEUE_NAMES,
   type QueueName,
 } from '@/queue/queue.constants';
+import type { NodeJobData, WorkflowJobData } from '@/interfaces/job-data.interface';
 import { QueueJob, type QueueJobDocument } from '@/schemas/queue-job.schema';
 import type { ExecutionsService } from '@/services/executions.service';
 import { QueueManagerService } from '@/services/queue-manager.service';
@@ -20,7 +21,7 @@ interface StalledJob {
   queueName: string;
   executionId: Types.ObjectId;
   nodeId: string;
-  data: Record<string, unknown>;
+  data: NodeJobData | WorkflowJobData;
   recoveryCount?: number;
 }
 
@@ -68,9 +69,9 @@ export class JobRecoveryService implements OnModuleInit {
       .find({
         $and: [
           {
+            movedToDlq: false,
             status: { $in: [JOB_STATUS.ACTIVE, JOB_STATUS.PENDING] },
             updatedAt: { $lt: staleThreshold },
-            movedToDlq: false,
           },
           {
             $or: [
@@ -125,14 +126,14 @@ export class JobRecoveryService implements OnModuleInit {
       await this.queueJobModel.updateMany(
         { _id: { $in: terminalJobIds } },
         {
-          $set: { status: JOB_STATUS.COMPLETED },
           $push: {
             logs: {
-              timestamp: new Date(),
-              message: 'Skipped recovery — parent execution already terminal',
               level: 'info',
+              message: 'Skipped recovery — parent execution already terminal',
+              timestamp: new Date(),
             },
           },
+          $set: { status: JOB_STATUS.COMPLETED },
         }
       );
       this.logger.log(`Skipped ${terminalJobs.length} jobs — parent executions already terminal`);
@@ -198,32 +199,30 @@ export class JobRecoveryService implements OnModuleInit {
     await this.queueJobModel.updateOne(
       { _id: job._id },
       {
-        $set: { status: JOB_STATUS.RECOVERED },
         $inc: { recoveryCount: 1 },
         $push: {
           logs: {
-            timestamp: new Date(),
-            message: `Job recovered after stall detection (attempt ${recoveryCount + 1}/${MAX_RECOVERY_ATTEMPTS})`,
             level: 'warn',
+            message: `Job recovered after stall detection (attempt ${recoveryCount + 1}/${MAX_RECOVERY_ATTEMPTS})`,
+            timestamp: new Date(),
           },
         },
+        $set: { status: JOB_STATUS.RECOVERED },
       }
     );
 
     // Re-enqueue based on queue type (upsert in enqueue prevents duplicate MongoDB docs)
     if (job.queueName === QUEUE_NAMES.WORKFLOW_ORCHESTRATOR) {
-      await this.queueManager.enqueueWorkflow(
-        job.executionId.toString(),
-        job.data.workflowId as string
-      );
+      await this.queueManager.enqueueWorkflow(job.executionId.toString(), job.data.workflowId);
     } else {
+      const nodeData = job.data as NodeJobData;
       await this.queueManager.enqueueNode(
         job.executionId.toString(),
-        job.data.workflowId as string,
+        nodeData.workflowId,
         job.nodeId,
-        job.data.nodeType as string,
-        job.data.nodeData as Record<string, unknown>,
-        job.data.dependsOn as string[] | undefined
+        nodeData.nodeType,
+        nodeData.nodeData,
+        nodeData.dependsOn
       );
     }
   }
@@ -235,8 +234,8 @@ export class JobRecoveryService implements OnModuleInit {
     const incompleteJobs = await this.queueJobModel
       .find({
         executionId: new Types.ObjectId(executionId),
-        status: { $nin: [JOB_STATUS.COMPLETED, JOB_STATUS.FAILED] },
         movedToDlq: false,
+        status: { $nin: [JOB_STATUS.COMPLETED, JOB_STATUS.FAILED] },
       })
       .lean<StalledJob[]>();
 
@@ -279,9 +278,9 @@ export class JobRecoveryService implements OnModuleInit {
     const pipeline = [
       {
         $facet: {
-          total: [{ $count: 'count' }],
           byStatus: [{ $group: { _id: '$status', count: { $sum: 1 } } }],
           inDlq: [{ $match: { movedToDlq: true } }, { $count: 'count' }],
+          total: [{ $count: 'count' }],
         },
       },
     ];
@@ -295,13 +294,13 @@ export class JobRecoveryService implements OnModuleInit {
     );
 
     return {
-      total: (result.total[0]?.count as number) ?? 0,
-      pending: statusCounts.get(JOB_STATUS.PENDING) ?? 0,
       active: statusCounts.get(JOB_STATUS.ACTIVE) ?? 0,
       completed: statusCounts.get(JOB_STATUS.COMPLETED) ?? 0,
       failed: statusCounts.get(JOB_STATUS.FAILED) ?? 0,
-      recovered: statusCounts.get(JOB_STATUS.RECOVERED) ?? 0,
       inDlq: (result.inDlq[0]?.count as number) ?? 0,
+      pending: statusCounts.get(JOB_STATUS.PENDING) ?? 0,
+      recovered: statusCounts.get(JOB_STATUS.RECOVERED) ?? 0,
+      total: (result.total[0]?.count as number) ?? 0,
     };
   }
 
@@ -326,32 +325,30 @@ export class JobRecoveryService implements OnModuleInit {
     await this.queueJobModel.updateOne(
       { _id: job._id },
       {
-        $set: { movedToDlq: false, status: JOB_STATUS.PENDING, recoveryCount: 0 },
         $push: {
           logs: {
-            timestamp: new Date(),
-            message: 'Job retried from DLQ',
             level: 'info',
+            message: 'Job retried from DLQ',
+            timestamp: new Date(),
           },
         },
+        $set: { movedToDlq: false, recoveryCount: 0, status: JOB_STATUS.PENDING },
       }
     );
 
     // Re-enqueue
     if (job.queueName === QUEUE_NAMES.WORKFLOW_ORCHESTRATOR) {
-      return this.queueManager.enqueueWorkflow(
-        job.executionId.toString(),
-        job.data.workflowId as string
-      );
+      return this.queueManager.enqueueWorkflow(job.executionId.toString(), job.data.workflowId);
     }
 
+    const nodeData = job.data as NodeJobData;
     return this.queueManager.enqueueNode(
       job.executionId.toString(),
-      job.data.workflowId as string,
+      nodeData.workflowId,
       job.nodeId,
-      job.data.nodeType as string,
-      job.data.nodeData as Record<string, unknown>,
-      job.data.dependsOn as string[] | undefined
+      nodeData.nodeType,
+      nodeData.nodeData,
+      nodeData.dependsOn
     );
   }
 

@@ -81,6 +81,7 @@ export default function WorkflowEditorPage() {
           return result;
         },
       },
+      ModelBrowserModal,
       modelSchema: {
         fetchModelSchema: async (
           modelId: string,
@@ -95,13 +96,12 @@ export default function WorkflowEditorPage() {
           return data.models?.find((m: { id: string }) => m.id === modelId) ?? null;
         },
       },
+      PromptPicker,
       promptLibrary: promptsApi,
       workflowsApi: {
         setThumbnail: (workflowId, thumbnailUrl, nodeId, signal) =>
           workflowsApi.setThumbnail(workflowId, thumbnailUrl, nodeId, signal).then(() => {}),
       },
-      ModelBrowserModal,
-      PromptPicker,
     }),
     []
   );

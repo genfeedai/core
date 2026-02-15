@@ -13,45 +13,45 @@ describe('ExecutionsController', () => {
 
   const mockExecution = {
     _id: mockExecutionId,
-    id: mockExecutionId.toString(),
-    workflowId: mockWorkflowId,
-    status: 'pending',
-    startedAt: new Date(),
-    nodeStatuses: {},
-    estimatedCost: 0.15,
     actualCost: 0,
     createdAt: new Date(),
+    estimatedCost: 0.15,
+    id: mockExecutionId.toString(),
+    nodeStatuses: {},
+    startedAt: new Date(),
+    status: 'pending',
     updatedAt: new Date(),
+    workflowId: mockWorkflowId,
   };
 
   const mockJob = {
-    predictionId: mockPredictionId,
+    createdAt: new Date(),
+    error: null,
     executionId: mockExecutionId,
     nodeId: 'node-1',
-    status: 'pending',
-    progress: 0,
     output: null,
-    error: null,
-    createdAt: new Date(),
+    predictionId: mockPredictionId,
+    progress: 0,
+    status: 'pending',
     updatedAt: new Date(),
   };
 
   const mockCostDetails = {
-    estimatedCost: 0.15,
     actualCost: 0.15,
     breakdown: [],
+    estimatedCost: 0.15,
   };
 
   const mockService = {
     createExecution: vi.fn().mockResolvedValue(mockExecution),
-    findExecutionsByWorkflow: vi.fn().mockResolvedValue([mockExecution]),
     findExecution: vi.fn().mockResolvedValue(mockExecution),
-    updateExecutionStatus: vi.fn().mockResolvedValue({ ...mockExecution, status: 'cancelled' }),
-    findJobsByExecution: vi.fn().mockResolvedValue([mockJob]),
+    findExecutionsByWorkflow: vi.fn().mockResolvedValue([mockExecution]),
     findJobByPredictionId: vi.fn().mockResolvedValue(mockJob),
-    updateJob: vi.fn().mockResolvedValue({ ...mockJob, status: 'completed', progress: 100 }),
+    findJobsByExecution: vi.fn().mockResolvedValue([mockJob]),
     getExecutionCostDetails: vi.fn().mockResolvedValue(mockCostDetails),
     getStats: vi.fn().mockResolvedValue({ total: 0 }),
+    updateExecutionStatus: vi.fn().mockResolvedValue({ ...mockExecution, status: 'cancelled' }),
+    updateJob: vi.fn().mockResolvedValue({ ...mockJob, progress: 100, status: 'completed' }),
   };
 
   const mockQueueManager = {
@@ -152,7 +152,7 @@ describe('ExecutionsController', () => {
 
   describe('updateJob', () => {
     it('should update job status', async () => {
-      const updates = { status: 'completed', progress: 100 };
+      const updates = { progress: 100, status: 'completed' };
 
       const result = await controller.updateJob(mockPredictionId, updates);
 
@@ -162,7 +162,7 @@ describe('ExecutionsController', () => {
     });
 
     it('should update job with error', async () => {
-      const updates = { status: 'failed', error: 'API error' };
+      const updates = { error: 'API error', status: 'failed' };
 
       await controller.updateJob(mockPredictionId, updates);
 
@@ -170,7 +170,7 @@ describe('ExecutionsController', () => {
     });
 
     it('should update job with output', async () => {
-      const updates = { status: 'completed', output: { url: 'https://example.com/image.png' } };
+      const updates = { output: { url: 'https://example.com/image.png' }, status: 'completed' };
 
       await controller.updateJob(mockPredictionId, updates);
 

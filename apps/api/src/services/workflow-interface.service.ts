@@ -8,13 +8,9 @@ import type {
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
+import type { MongoFilterQuery } from '@/interfaces/execution-types.interface';
+import type { WorkflowNode } from '@/interfaces/workflow.interface';
 import { Workflow, type WorkflowDocument } from '@/schemas/workflow.schema';
-
-interface WorkflowNode {
-  id: string;
-  type: string;
-  data: Record<string, unknown>;
-}
 
 @Injectable()
 export class WorkflowInterfaceService {
@@ -36,16 +32,16 @@ export class WorkflowInterfaceService {
       if (node.type === 'workflowInput') {
         const data = node.data as WorkflowInputNodeData;
         inputs.push({
-          nodeId: node.id,
           name: data.inputName || 'input',
-          type: (data.inputType as HandleType) || 'image',
+          nodeId: node.id,
           required: data.required ?? true,
+          type: (data.inputType as HandleType) || 'image',
         });
       } else if (node.type === 'workflowOutput') {
         const data = node.data as WorkflowOutputNodeData;
         outputs.push({
-          nodeId: node.id,
           name: data.outputName || 'output',
+          nodeId: node.id,
           type: (data.outputType as HandleType) || 'image',
         });
       }
@@ -115,7 +111,7 @@ export class WorkflowInterfaceService {
    * Excludes a specific workflow ID (to prevent self-reference)
    */
   async findReferencableWorkflows(excludeWorkflowId?: string): Promise<WorkflowDocument[]> {
-    const query: Record<string, unknown> = {
+    const query: MongoFilterQuery = {
       isDeleted: false,
       isReusable: true,
     };

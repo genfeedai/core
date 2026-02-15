@@ -42,76 +42,76 @@ import { useUIStore } from '@genfeedai/workflow-ui/stores';
 
 // Icon mapping
 const ICONS: Record<string, typeof Image> = {
-  // Input
-  Image,
-  MessageSquare,
-  FileText,
-  FileVideo,
-  Volume2,
-  Puzzle,
-  // AI
-  Sparkles,
-  Video,
-  Brain,
-  Mic,
-  AudioLines,
-  Navigation,
-  // Processing
-  Maximize2,
-  Wand2,
-  Layers,
-  Scissors,
-  Film,
-  Crop,
-  Maximize,
-  Grid3X3,
-  Pencil,
-  Subtitles,
-  LayoutGrid,
-  Columns2,
-  // Output
-  CheckCircle,
-  Eye,
-  Download,
+  ArrowLeftFromLine,
   // Composition
   ArrowRightToLine,
-  ArrowLeftFromLine,
+  AudioLines,
+  Brain,
+  // Output
+  CheckCircle,
+  Columns2,
+  Crop,
+  Download,
+  Eye,
+  FileText,
+  FileVideo,
+  Film,
   GitBranch,
+  Grid3X3,
+  // Input
+  Image,
+  Layers,
+  LayoutGrid,
+  Maximize,
+  // Processing
+  Maximize2,
+  MessageSquare,
+  Mic,
+  Navigation,
+  Pencil,
+  Puzzle,
+  Scissors,
+  // AI
+  Sparkles,
+  Subtitles,
+  Video,
+  Volume2,
+  Wand2,
 };
 
 const CATEGORY_LABELS: Record<NodeCategory, string> = {
-  input: 'Input',
   ai: 'AI Generation',
-  processing: 'Processing',
-  output: 'Output',
   composition: 'Composition',
+  input: 'Input',
+  output: 'Output',
+  processing: 'Processing',
 };
 
 const CATEGORY_COLORS: Record<NodeCategory, { icon: string; hover: string; cssVar: string }> = {
-  input: {
-    icon: 'bg-[var(--category-input)]/20 text-[var(--category-input)]',
-    hover: 'hover:border-[var(--category-input)]',
-    cssVar: 'var(--category-input)',
-  },
   ai: {
-    icon: 'bg-[var(--category-ai)]/20 text-[var(--category-ai)]',
-    hover: 'hover:border-[var(--category-ai)]',
     cssVar: 'var(--category-ai)',
-  },
-  processing: {
-    icon: 'bg-[var(--category-processing)]/20 text-[var(--category-processing)]',
-    hover: 'hover:border-[var(--category-processing)]',
-    cssVar: 'var(--category-processing)',
-  },
-  output: {
-    icon: 'bg-[var(--category-output)]/20 text-[var(--category-output)]',
-    hover: 'hover:border-[var(--category-output)]',
-    cssVar: 'var(--category-output)',
+    hover: 'hover:border-[var(--category-ai)]',
+    icon: 'bg-[var(--category-ai)]/20 text-[var(--category-ai)]',
   },
   composition: {
-    icon: 'bg-[var(--category-composition)]/20 text-[var(--category-composition)]',
-    hover: 'hover:border-[var(--category-composition)]',
     cssVar: 'var(--category-composition)',
+    hover: 'hover:border-[var(--category-composition)]',
+    icon: 'bg-[var(--category-composition)]/20 text-[var(--category-composition)]',
+  },
+  input: {
+    cssVar: 'var(--category-input)',
+    hover: 'hover:border-[var(--category-input)]',
+    icon: 'bg-[var(--category-input)]/20 text-[var(--category-input)]',
+  },
+  output: {
+    cssVar: 'var(--category-output)',
+    hover: 'hover:border-[var(--category-output)]',
+    icon: 'bg-[var(--category-output)]/20 text-[var(--category-output)]',
+  },
+  processing: {
+    cssVar: 'var(--category-processing)',
+    hover: 'hover:border-[var(--category-processing)]',
+    icon: 'bg-[var(--category-processing)]/20 text-[var(--category-processing)]',
   },
 };
 

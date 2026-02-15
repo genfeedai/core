@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
+import type { NodeOutput } from '@/interfaces/execution-types.interface';
 import type { JobResult, NodeJobData } from '@/interfaces/job-data.interface';
 import { ReplicateService } from '@/services/replicate.service';
 
@@ -22,28 +23,28 @@ export const POLL_CONFIGS = {
   image: {
     maxAttempts: 60, // 5 minutes with 5s intervals
     pollInterval: 5000,
-    progressStart: 30,
     progressEnd: 90,
-  },
-  video: {
-    maxAttempts: 120, // 20 minutes with 10s intervals
-    pollInterval: 10000,
-    progressStart: 15,
-    progressEnd: 95,
+    progressStart: 30,
   },
   processing: {
     image: {
       maxAttempts: 180, // 15 minutes with 5s intervals
       pollInterval: 5000,
-      progressStart: 30,
       progressEnd: 90,
+      progressStart: 30,
     },
     video: {
       maxAttempts: 180, // 30 minutes with 10s intervals
       pollInterval: 10000,
-      progressStart: 30,
       progressEnd: 90,
+      progressStart: 30,
     },
+  },
+  video: {
+    maxAttempts: 120, // 20 minutes with 10s intervals
+    pollInterval: 10000,
+    progressEnd: 95,
+    progressStart: 15,
   },
 } as const;
 
@@ -100,18 +101,18 @@ export class ReplicatePollerService {
           await onProgress(100, 'Completed');
         }
         return {
-          success: true,
-          output: prediction.output as string | string[] | Record<string, unknown> | undefined,
+          output: prediction.output as string | string[] | NodeOutput | undefined,
           predictionId,
           predictTime: prediction.metrics?.predict_time,
+          success: true,
         };
       }
 
       if (prediction.status === 'failed' || prediction.status === 'canceled') {
         return {
-          success: false,
           error: prediction.error ?? `Prediction ${prediction.status}`,
           predictionId,
+          success: false,
         };
       }
 
@@ -122,9 +123,9 @@ export class ReplicatePollerService {
     // Timeout
     this.logger.warn(`Prediction ${predictionId} timed out after ${maxAttempts} attempts`);
     return {
-      success: false,
       error: 'Prediction timed out',
       predictionId,
+      success: false,
     };
   }
 
@@ -133,7 +134,7 @@ export class ReplicatePollerService {
    */
   createJobProgressCallback<T extends NodeJobData>(job: Job<T>) {
     return async (progress: number, message: string): Promise<void> => {
-      await job.updateProgress({ percent: progress, message: `Status: ${message}` });
+      await job.updateProgress({ message: `Status: ${message}`, percent: progress });
     };
   }
 }

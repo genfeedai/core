@@ -17,6 +17,14 @@ export interface GroupSlice {
 }
 
 export const createGroupSlice: StateCreator<WorkflowStore, [], [], GroupSlice> = (set, get) => ({
+  addToGroup: (groupId, nodeIds) => {
+    set((state) => ({
+      groups: state.groups.map((g) =>
+        g.id === groupId ? { ...g, nodeIds: [...new Set([...g.nodeIds, ...nodeIds])] } : g
+      ),
+      isDirty: true,
+    }));
+  },
   createGroup: (nodeIds, name) => {
     if (nodeIds.length === 0) return '';
 
@@ -25,11 +33,11 @@ export const createGroupSlice: StateCreator<WorkflowStore, [], [], GroupSlice> =
     const colorIndex = groups.length % DEFAULT_GROUP_COLORS.length;
 
     const newGroup: NodeGroup = {
+      color: DEFAULT_GROUP_COLORS[colorIndex],
       id: groupId,
+      isLocked: false,
       name: name ?? `Group ${groups.length + 1}`,
       nodeIds,
-      isLocked: false,
-      color: DEFAULT_GROUP_COLORS[colorIndex],
     };
 
     set((state) => ({
@@ -47,13 +55,12 @@ export const createGroupSlice: StateCreator<WorkflowStore, [], [], GroupSlice> =
     }));
   },
 
-  addToGroup: (groupId, nodeIds) => {
-    set((state) => ({
-      groups: state.groups.map((g) =>
-        g.id === groupId ? { ...g, nodeIds: [...new Set([...g.nodeIds, ...nodeIds])] } : g
-      ),
-      isDirty: true,
-    }));
+  getGroupById: (groupId) => {
+    return get().groups.find((g) => g.id === groupId);
+  },
+
+  getGroupByNodeId: (nodeId) => {
+    return get().groups.find((g) => g.nodeIds.includes(nodeId));
   },
 
   removeFromGroup: (groupId, nodeIds) => {
@@ -61,6 +68,20 @@ export const createGroupSlice: StateCreator<WorkflowStore, [], [], GroupSlice> =
       groups: state.groups.map((g) =>
         g.id === groupId ? { ...g, nodeIds: g.nodeIds.filter((id) => !nodeIds.includes(id)) } : g
       ),
+      isDirty: true,
+    }));
+  },
+
+  renameGroup: (groupId, name) => {
+    set((state) => ({
+      groups: state.groups.map((g) => (g.id === groupId ? { ...g, name } : g)),
+      isDirty: true,
+    }));
+  },
+
+  setGroupColor: (groupId, color) => {
+    set((state) => ({
+      groups: state.groups.map((g) => (g.id === groupId ? { ...g, color } : g)),
       isDirty: true,
     }));
   },
@@ -80,27 +101,5 @@ export const createGroupSlice: StateCreator<WorkflowStore, [], [], GroupSlice> =
     } else {
       unlockMultipleNodes(group.nodeIds);
     }
-  },
-
-  renameGroup: (groupId, name) => {
-    set((state) => ({
-      groups: state.groups.map((g) => (g.id === groupId ? { ...g, name } : g)),
-      isDirty: true,
-    }));
-  },
-
-  setGroupColor: (groupId, color) => {
-    set((state) => ({
-      groups: state.groups.map((g) => (g.id === groupId ? { ...g, color } : g)),
-      isDirty: true,
-    }));
-  },
-
-  getGroupByNodeId: (nodeId) => {
-    return get().groups.find((g) => g.nodeIds.includes(nodeId));
-  },
-
-  getGroupById: (groupId) => {
-    return get().groups.find((g) => g.id === groupId);
   },
 });

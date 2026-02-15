@@ -77,12 +77,12 @@ export class AppService {
     const redisHealthy = await this.checkRedis();
 
     return {
-      ready: dbHealthy && redisHealthy,
-      timestamp: new Date().toISOString(),
       checks: {
         database: dbHealthy,
         redis: redisHealthy,
       },
+      ready: dbHealthy && redisHealthy,
+      timestamp: new Date().toISOString(),
     };
   }
 
@@ -104,14 +104,14 @@ export class AppService {
     }
 
     return {
-      status,
-      timestamp: new Date().toISOString(),
-      uptime: this.getUptime(),
-      version: this.version,
       components: {
         database: dbHealth,
         redis: redisHealth,
       },
+      status,
+      timestamp: new Date().toISOString(),
+      uptime: this.getUptime(),
+      version: this.version,
     };
   }
 
@@ -133,9 +133,9 @@ export class AppService {
           queue.getCompletedCount(),
           queue.getFailedCount(),
         ]);
-        queueMetrics[name] = { waiting, active, completed, failed };
+        queueMetrics[name] = { active, completed, failed, waiting };
       } catch {
-        queueMetrics[name] = { waiting: 0, active: 0, completed: 0, failed: 0 };
+        queueMetrics[name] = { active: 0, completed: 0, failed: 0, waiting: 0 };
       }
     }
 
@@ -162,29 +162,29 @@ export class AppService {
     }
 
     return {
-      timestamp: new Date().toISOString(),
-      uptime: this.getUptime(),
-      memory: {
-        heapUsed: memUsage.heapUsed,
-        heapTotal: memUsage.heapTotal,
-        external: memUsage.external,
-        rss: memUsage.rss,
-      },
       cpu: {
-        user: cpuUsage.user,
         system: cpuUsage.system,
-      },
-      workflows: {
-        total: workflowTotal,
-        active: 0, // Would need execution tracking
+        user: cpuUsage.user,
       },
       executions: {
-        total: executionTotal,
-        running: executionRunning,
         completed: executionCompleted,
         failed: executionFailed,
+        running: executionRunning,
+        total: executionTotal,
+      },
+      memory: {
+        external: memUsage.external,
+        heapTotal: memUsage.heapTotal,
+        heapUsed: memUsage.heapUsed,
+        rss: memUsage.rss,
       },
       queues: queueMetrics,
+      timestamp: new Date().toISOString(),
+      uptime: this.getUptime(),
+      workflows: {
+        active: 0, // Would need execution tracking
+        total: workflowTotal,
+      },
     };
   }
 
@@ -218,10 +218,10 @@ export class AppService {
 
       if (!isConnected) {
         return {
-          status: 'unhealthy',
+          lastCheck: new Date().toISOString(),
           latency,
           message: 'MongoDB connection not ready',
-          lastCheck: new Date().toISOString(),
+          status: 'unhealthy',
         };
       }
 
@@ -234,17 +234,17 @@ export class AppService {
       const pingLatency = Date.now() - start;
 
       return {
-        status: pingLatency > 1000 ? 'degraded' : 'healthy',
+        lastCheck: new Date().toISOString(),
         latency: pingLatency,
         message: pingLatency > 1000 ? 'High latency detected' : undefined,
-        lastCheck: new Date().toISOString(),
+        status: pingLatency > 1000 ? 'degraded' : 'healthy',
       };
     } catch (error) {
       return {
-        status: 'unhealthy',
+        lastCheck: new Date().toISOString(),
         latency: Date.now() - start,
         message: error instanceof Error ? error.message : 'Unknown error',
-        lastCheck: new Date().toISOString(),
+        status: 'unhealthy',
       };
     }
   }
@@ -255,10 +255,10 @@ export class AppService {
       const queue = this.queues.get(QUEUE_NAMES.WORKFLOW_ORCHESTRATOR);
       if (!queue) {
         return {
-          status: 'unhealthy',
+          lastCheck: new Date().toISOString(),
           latency: Date.now() - start,
           message: 'Queue not initialized',
-          lastCheck: new Date().toISOString(),
+          status: 'unhealthy',
         };
       }
 
@@ -266,17 +266,17 @@ export class AppService {
       const latency = Date.now() - start;
 
       return {
-        status: latency > 500 ? 'degraded' : 'healthy',
+        lastCheck: new Date().toISOString(),
         latency,
         message: latency > 500 ? 'High latency detected' : undefined,
-        lastCheck: new Date().toISOString(),
+        status: latency > 500 ? 'degraded' : 'healthy',
       };
     } catch (error) {
       return {
-        status: 'unhealthy',
+        lastCheck: new Date().toISOString(),
         latency: Date.now() - start,
         message: error instanceof Error ? error.message : 'Unknown error',
-        lastCheck: new Date().toISOString(),
+        status: 'unhealthy',
       };
     }
   }

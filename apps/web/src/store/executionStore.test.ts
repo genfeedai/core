@@ -5,13 +5,13 @@ import { useExecutionStore } from './executionStore';
 vi.mock('./workflowStore', () => ({
   useWorkflowStore: {
     getState: vi.fn(() => ({
-      nodes: [],
       edges: [],
-      validateWorkflow: vi.fn(() => ({ isValid: true, errors: [], warnings: [] })),
-      getNodeById: vi.fn(),
-      updateNodeData: vi.fn(),
       getConnectedInputs: vi.fn(() => new Map()),
+      getNodeById: vi.fn(),
       isNodeLocked: vi.fn(() => false),
+      nodes: [],
+      updateNodeData: vi.fn(),
+      validateWorkflow: vi.fn(() => ({ errors: [], isValid: true, warnings: [] })),
     })),
   },
 }));
@@ -26,15 +26,15 @@ describe('useExecutionStore', () => {
 
     // Reset store to initial state
     useExecutionStore.setState({
-      isRunning: false,
-      executionId: null,
-      currentNodeId: null,
-      validationErrors: null,
-      eventSource: null,
-      lastFailedNodeId: null,
-      jobs: new Map(),
-      estimatedCost: 0,
       actualCost: 0,
+      currentNodeId: null,
+      estimatedCost: 0,
+      eventSource: null,
+      executionId: null,
+      isRunning: false,
+      jobs: new Map(),
+      lastFailedNodeId: null,
+      validationErrors: null,
     });
   });
 
@@ -88,7 +88,7 @@ describe('useExecutionStore', () => {
       const { addJob, updateJob } = useExecutionStore.getState();
 
       addJob('node-1', 'prediction-123');
-      updateJob('prediction-123', { status: 'processing', progress: 50 });
+      updateJob('prediction-123', { progress: 50, status: 'processing' });
 
       const job = useExecutionStore.getState().jobs.get('prediction-123');
       expect(job?.status).toBe('processing');
@@ -100,8 +100,8 @@ describe('useExecutionStore', () => {
 
       addJob('node-1', 'prediction-123');
       updateJob('prediction-123', {
-        status: 'succeeded',
         output: 'https://example.com/output.png',
+        status: 'succeeded',
       });
 
       const job = useExecutionStore.getState().jobs.get('prediction-123');
@@ -114,8 +114,8 @@ describe('useExecutionStore', () => {
 
       addJob('node-1', 'prediction-123');
       updateJob('prediction-123', {
-        status: 'failed',
         error: 'API error: Rate limited',
+        status: 'failed',
       });
 
       const job = useExecutionStore.getState().jobs.get('prediction-123');
@@ -160,9 +160,9 @@ describe('useExecutionStore', () => {
   describe('stopExecution', () => {
     it('should stop execution', () => {
       useExecutionStore.setState({
-        isRunning: true,
         currentNodeId: 'node-2',
         executionId: 'exec-123',
+        isRunning: true,
       });
 
       const { stopExecution } = useExecutionStore.getState();
@@ -178,8 +178,8 @@ describe('useExecutionStore', () => {
     it('should clear validation errors', () => {
       useExecutionStore.setState({
         validationErrors: {
+          errors: [{ message: 'Error', nodeId: 'node-1', severity: 'error' }],
           isValid: false,
-          errors: [{ nodeId: 'node-1', message: 'Error', severity: 'error' }],
           warnings: [],
         },
       });
@@ -194,23 +194,23 @@ describe('useExecutionStore', () => {
   describe('resetExecution', () => {
     it('should reset execution state', () => {
       useExecutionStore.setState({
+        actualCost: 1.5,
+        currentNodeId: 'node-3',
+        executionId: 'exec-123',
         jobs: new Map([
           [
             'pred-1',
             {
-              nodeId: 'node-1',
-              predictionId: 'pred-1',
-              status: 'succeeded',
-              progress: 100,
-              output: null,
-              error: null,
               createdAt: '',
+              error: null,
+              nodeId: 'node-1',
+              output: null,
+              predictionId: 'pred-1',
+              progress: 100,
+              status: 'succeeded',
             },
           ],
         ]),
-        currentNodeId: 'node-3',
-        executionId: 'exec-123',
-        actualCost: 1.5,
         lastFailedNodeId: 'node-2',
       });
 
@@ -230,8 +230,8 @@ describe('useExecutionStore', () => {
     it('should return true when there is a failed node and executionId', () => {
       useExecutionStore.setState({
         executionId: 'exec-123',
-        lastFailedNodeId: 'node-1',
         isRunning: false,
+        lastFailedNodeId: 'node-1',
       });
 
       const { canResumeFromFailed } = useExecutionStore.getState();
@@ -241,8 +241,8 @@ describe('useExecutionStore', () => {
     it('should return false when no failed node', () => {
       useExecutionStore.setState({
         executionId: 'exec-123',
-        lastFailedNodeId: null,
         isRunning: false,
+        lastFailedNodeId: null,
       });
 
       const { canResumeFromFailed } = useExecutionStore.getState();
@@ -252,8 +252,8 @@ describe('useExecutionStore', () => {
     it('should return false when still running', () => {
       useExecutionStore.setState({
         executionId: 'exec-123',
-        lastFailedNodeId: 'node-1',
         isRunning: true,
+        lastFailedNodeId: 'node-1',
       });
 
       const { canResumeFromFailed } = useExecutionStore.getState();
@@ -263,8 +263,8 @@ describe('useExecutionStore', () => {
     it('should return false when no executionId', () => {
       useExecutionStore.setState({
         executionId: null,
-        lastFailedNodeId: 'node-1',
         isRunning: false,
+        lastFailedNodeId: 'node-1',
       });
 
       const { canResumeFromFailed } = useExecutionStore.getState();

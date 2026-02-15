@@ -1,3 +1,4 @@
+import type { CostBreakdown, NodeCostEstimate } from '@genfeedai/types';
 import Replicate from 'replicate';
 
 // Initialize Replicate client
@@ -7,38 +8,38 @@ const replicate = new Replicate({
 
 // Model identifiers
 export const MODELS = {
-  nanoBanana: 'google/nano-banana',
-  nanoBananaPro: 'google/nano-banana-pro',
-  veoFast: 'google/veo-3.1-fast',
-  veo: 'google/veo-3.1',
-  llama: 'meta/meta-llama-3.1-405b-instruct',
   // Lip-sync models
   lipsync2: 'sync/lipsync-2',
   lipsync2Pro: 'sync/lipsync-2-pro',
+  llama: 'meta/meta-llama-3.1-405b-instruct',
+  nanoBanana: 'google/nano-banana',
+  nanoBananaPro: 'google/nano-banana-pro',
   pixverseLipsync: 'pixverse/lipsync',
+  veo: 'google/veo-3.1',
+  veoFast: 'google/veo-3.1-fast',
 } as const;
 
 // Pricing per unit
 export const PRICING = {
+  llama: 0.0001, // per 1K tokens
   'nano-banana': 0.039, // per image
   'nano-banana-pro': {
     '1K': 0.15,
     '2K': 0.2,
     '4K': 0.3,
   },
-  'veo-3.1-fast': {
-    withAudio: 0.15, // per second
-    withoutAudio: 0.1,
-  },
+  'pixverse/lipsync': 0.04,
+  // Lip-sync pricing (per second of output)
+  'sync/lipsync-2': 0.05,
+  'sync/lipsync-2-pro': 0.08325,
   'veo-3.1': {
     withAudio: 0.4,
     withoutAudio: 0.2,
   },
-  llama: 0.0001, // per 1K tokens
-  // Lip-sync pricing (per second of output)
-  'sync/lipsync-2': 0.05,
-  'sync/lipsync-2-pro': 0.08325,
-  'pixverse/lipsync': 0.04,
+  'veo-3.1-fast': {
+    withAudio: 0.15, // per second
+    withoutAudio: 0.1,
+  },
 } as const;
 
 // Type definitions
@@ -106,16 +107,16 @@ export async function generateImage(
   const modelId = model === 'nano-banana' ? MODELS.nanoBanana : MODELS.nanoBananaPro;
 
   const prediction = await replicate.predictions.create({
-    model: modelId,
     input: {
-      prompt: input.prompt,
-      image_input: input.image_input ?? [],
       aspect_ratio: input.aspect_ratio ?? '1:1',
+      image_input: input.image_input ?? [],
       output_format: input.output_format ?? 'jpg',
+      prompt: input.prompt,
       ...(model === 'nano-banana-pro' && {
         resolution: input.resolution ?? '2K',
       }),
     },
+    model: modelId,
     ...(webhookUrl && {
       webhook: webhookUrl,
       webhook_events_filter: ['completed'],
@@ -136,19 +137,19 @@ export async function generateVideo(
   const modelId = model === 'veo-3.1-fast' ? MODELS.veoFast : MODELS.veo;
 
   const prediction = await replicate.predictions.create({
-    model: modelId,
     input: {
-      prompt: input.prompt,
+      aspect_ratio: input.aspect_ratio ?? '16:9',
+      duration: input.duration ?? 8,
+      generate_audio: input.generate_audio ?? true,
       image: input.image,
       last_frame: input.last_frame,
-      reference_images: input.reference_images,
-      duration: input.duration ?? 8,
-      aspect_ratio: input.aspect_ratio ?? '16:9',
-      resolution: input.resolution ?? '1080p',
-      generate_audio: input.generate_audio ?? true,
       negative_prompt: input.negative_prompt,
+      prompt: input.prompt,
+      reference_images: input.reference_images,
+      resolution: input.resolution ?? '1080p',
       seed: input.seed,
     },
+    model: modelId,
     ...(webhookUrl && {
       webhook: webhookUrl,
       webhook_events_filter: ['completed'],
@@ -164,9 +165,9 @@ export async function generateVideo(
 export async function generateText(input: LLMInput): Promise<string> {
   const output = await replicate.run(MODELS.llama, {
     input: {
+      max_tokens: input.max_tokens ?? 1024,
       prompt: input.prompt,
       system_prompt: input.system_prompt ?? 'You are a helpful assistant.',
-      max_tokens: input.max_tokens ?? 1024,
       temperature: input.temperature ?? 0.7,
       top_p: input.top_p ?? 0.9,
     },
@@ -190,9 +191,9 @@ export async function generateLipSync(
 ): Promise<PredictionResult> {
   // Map model string to Replicate model identifier
   const modelMap: Record<LipSyncModel, string> = {
+    'pixverse/lipsync': MODELS.pixverseLipsync,
     'sync/lipsync-2': MODELS.lipsync2,
     'sync/lipsync-2-pro': MODELS.lipsync2Pro,
-    'pixverse/lipsync': MODELS.pixverseLipsync,
   };
 
   const modelId = modelMap[model];
@@ -216,8 +217,8 @@ export async function generateLipSync(
   }
 
   const prediction = await replicate.predictions.create({
-    model: modelId,
     input: modelInput,
+    model: modelId,
     ...(webhookUrl && {
       webhook: webhookUrl,
       webhook_events_filter: ['completed'],
@@ -280,61 +281,46 @@ export function calculateWorkflowCost(
   return total;
 }
 
-/**
- * Cost breakdown item for a single node
- */
-export interface CostBreakdownItem {
-  nodeId: string;
-  nodeType: string;
-  label: string;
-  model: string;
-  cost: number;
-  details: string;
-}
-
-/**
- * Result of cost calculation with breakdown
- */
-export interface CostBreakdownResult {
-  total: number;
-  breakdown: CostBreakdownItem[];
-}
+// Re-export canonical cost types for consumers
+export type { CostBreakdown, NodeCostEstimate } from '@genfeedai/types';
 
 /**
  * Calculate total estimated cost for a workflow with detailed breakdown per node
  */
 export function calculateWorkflowCostWithBreakdown(
   nodes: Array<{ id?: string; type: string; data: Record<string, unknown> }>
-): CostBreakdownResult {
-  let totalCost = 0;
-  const breakdown: CostBreakdownItem[] = [];
+): CostBreakdown {
+  let total = 0;
+  const items: NodeCostEstimate[] = [];
 
   for (const node of nodes) {
     const { id, type, data } = node;
     const nodeId = id ?? '';
-    const label = (data.label as string) ?? type;
+    const nodeLabel = (data.label as string) ?? type;
 
     switch (type) {
       case 'imageGen': {
         const model = (data.model as 'nano-banana' | 'nano-banana-pro') ?? 'nano-banana';
         const resolution = (data.resolution as string) ?? '2K';
-        let cost: number;
+        let subtotal: number;
 
         if (model === 'nano-banana') {
-          cost = PRICING['nano-banana'];
+          subtotal = PRICING['nano-banana'];
         } else {
           const res = resolution as keyof (typeof PRICING)['nano-banana-pro'];
-          cost = PRICING['nano-banana-pro'][res] ?? 0.2;
+          subtotal = PRICING['nano-banana-pro'][res] ?? 0.2;
         }
 
-        totalCost += cost;
-        breakdown.push({
-          nodeId,
-          nodeType: type,
-          label,
-          model,
-          cost,
+        total += subtotal;
+        items.push({
           details: model === 'nano-banana' ? 'per image' : `${resolution} resolution`,
+          model,
+          nodeId,
+          nodeLabel,
+          nodeType: type,
+          quantity: 1,
+          subtotal,
+          unitPrice: subtotal,
         });
         break;
       }
@@ -345,16 +331,21 @@ export function calculateWorkflowCostWithBreakdown(
         const generateAudio = (data.generateAudio as boolean) ?? false;
 
         const videoKey = generateAudio ? 'withAudio' : 'withoutAudio';
-        const cost = duration * PRICING[model][videoKey];
-        totalCost += cost;
+        const perSecond = PRICING[model][videoKey];
+        const subtotal = duration * perSecond;
+        total += subtotal;
 
-        breakdown.push({
-          nodeId,
-          nodeType: type,
-          label,
-          model,
-          cost,
+        items.push({
           details: `${duration}s ${generateAudio ? 'with' : 'without'} audio`,
+          duration,
+          model,
+          nodeId,
+          nodeLabel,
+          nodeType: type,
+          quantity: duration,
+          subtotal,
+          unitPrice: perSecond,
+          withAudio: generateAudio,
         });
         break;
       }
@@ -363,35 +354,40 @@ export function calculateWorkflowCostWithBreakdown(
         const model = (data.model as LipSyncModel) ?? 'sync/lipsync-2';
         const pricing = PRICING[model];
         const estimatedDuration = 10;
-        let cost = 0;
+        let subtotal = 0;
 
         if (typeof pricing === 'number') {
-          cost = estimatedDuration * pricing;
-          totalCost += cost;
+          subtotal = estimatedDuration * pricing;
+          total += subtotal;
         }
 
-        breakdown.push({
-          nodeId,
-          nodeType: type,
-          label,
-          model,
-          cost,
+        items.push({
           details: `~${estimatedDuration}s estimated`,
+          duration: estimatedDuration,
+          model,
+          nodeId,
+          nodeLabel,
+          nodeType: type,
+          quantity: estimatedDuration,
+          subtotal,
+          unitPrice: typeof pricing === 'number' ? pricing : 0,
         });
         break;
       }
 
       case 'llm': {
-        const cost = 1000 * PRICING.llama;
-        totalCost += cost;
+        const subtotal = 1000 * PRICING.llama;
+        total += subtotal;
 
-        breakdown.push({
-          nodeId,
-          nodeType: type,
-          label,
-          model: 'llama-3.1-405b',
-          cost,
+        items.push({
           details: '~1000 tokens estimated',
+          model: 'llama-3.1-405b',
+          nodeId,
+          nodeLabel,
+          nodeType: type,
+          quantity: 1000,
+          subtotal,
+          unitPrice: PRICING.llama,
         });
         break;
       }
@@ -402,5 +398,5 @@ export function calculateWorkflowCostWithBreakdown(
     }
   }
 
-  return { total: totalCost, breakdown };
+  return { items, total };
 }

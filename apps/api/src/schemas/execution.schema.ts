@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, type HydratedDocument, Types } from 'mongoose';
+import type { NodeOutput } from '@/interfaces/execution-types.interface';
 import { EXECUTION_STATUS, NODE_RESULT_STATUS } from '@/queue/queue.constants';
 
 export type ExecutionDocument = HydratedDocument<Execution>;
@@ -23,11 +24,11 @@ class NodeResult {
   @Prop({ required: true })
   nodeId: string;
 
-  @Prop({ required: true, enum: Object.values(NODE_RESULT_STATUS) })
+  @Prop({ enum: Object.values(NODE_RESULT_STATUS), required: true })
   status: string;
 
   @Prop({ type: Object })
-  output?: Record<string, unknown>;
+  output?: NodeOutput;
 
   @Prop()
   error?: string;
@@ -42,16 +43,16 @@ class NodeResult {
   completedAt?: Date;
 }
 
-@Schema({ timestamps: true, collection: 'executions' })
+@Schema({ collection: 'executions', timestamps: true })
 export class Execution extends Document {
-  @Prop({ type: Types.ObjectId, ref: 'Workflow', required: true })
+  @Prop({ ref: 'Workflow', required: true, type: Types.ObjectId })
   workflowId: Types.ObjectId;
 
   @Prop({
-    required: true,
-    enum: Object.values(EXECUTION_STATUS),
     default: EXECUTION_STATUS.PENDING,
+    enum: Object.values(EXECUTION_STATUS),
     index: true,
+    required: true,
   })
   status: string;
 
@@ -64,10 +65,10 @@ export class Execution extends Document {
   @Prop({ default: 0 })
   totalCost: number;
 
-  @Prop({ type: CostSummarySchema, default: { estimated: 0, actual: 0, variance: 0 } })
+  @Prop({ default: { actual: 0, estimated: 0, variance: 0 }, type: CostSummarySchema })
   costSummary: CostSummarySchema;
 
-  @Prop({ type: [Object], default: [] })
+  @Prop({ default: [], type: [Object] })
   nodeResults: NodeResult[];
 
   @Prop()
@@ -77,30 +78,30 @@ export class Execution extends Document {
   isDeleted: boolean;
 
   // Queue-related fields
-  @Prop({ enum: ['sync', 'async'], default: 'sync' })
+  @Prop({ default: 'sync', enum: ['sync', 'async'] })
   executionMode: string;
 
-  @Prop({ type: [String], default: [] })
+  @Prop({ default: [], type: [String] })
   queueJobIds: string[];
 
   @Prop()
   resumedFrom?: string; // For recovery - previous execution ID
 
   // Composition: nested execution tracking
-  @Prop({ type: Types.ObjectId, ref: 'Execution', index: true })
+  @Prop({ index: true, ref: 'Execution', type: Types.ObjectId })
   parentExecutionId?: Types.ObjectId;
 
   @Prop()
   parentNodeId?: string; // The workflowRef node ID in parent that triggered this execution
 
-  @Prop({ type: [Types.ObjectId], ref: 'Execution', default: [] })
+  @Prop({ default: [], ref: 'Execution', type: [Types.ObjectId] })
   childExecutionIds: Types.ObjectId[]; // Child executions spawned by workflowRef nodes
 
   @Prop({ default: 0 })
   depth: number; // Nesting level (0 = root execution)
 
   // Sequential execution: pending nodes waiting to be processed
-  @Prop({ type: [Object], default: [] })
+  @Prop({ default: [], type: [Object] })
   pendingNodes: Array<{
     nodeId: string;
     nodeType: string;
@@ -113,7 +114,7 @@ export class Execution extends Document {
   debugMode: boolean;
 
   // Selected nodes for partial execution (empty = execute all)
-  @Prop({ type: [String], default: [] })
+  @Prop({ default: [], type: [String] })
   selectedNodeIds: string[];
 
   createdAt: Date;

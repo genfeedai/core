@@ -81,7 +81,7 @@ export class BullBoardController implements OnModuleInit {
       this.jobRecoveryService.getJobStats(),
     ]);
 
-    return { queues, jobs };
+    return { jobs, queues };
   }
 
   /**
@@ -104,12 +104,12 @@ export class BullBoardController implements OnModuleInit {
     return {
       jobs: jobs.map((job) => ({
         bullJobId: job.bullJobId,
-        queueName: job.queueName,
-        nodeId: job.nodeId,
-        status: job.status,
-        error: job.error,
         createdAt: job.createdAt,
+        error: job.error,
         finishedAt: job.finishedAt,
+        nodeId: job.nodeId,
+        queueName: job.queueName,
+        status: job.status,
       })),
     };
   }
@@ -139,12 +139,12 @@ export class BullBoardController implements OnModuleInit {
 
     return {
       jobs: jobs.map((job) => ({
-        bullJobId: job.bullJobId,
-        queueName: job.queueName,
-        nodeId: job.nodeId,
-        error: job.error,
         attemptsMade: job.attemptsMade,
+        bullJobId: job.bullJobId,
         createdAt: job.createdAt,
+        error: job.error,
+        nodeId: job.nodeId,
+        queueName: job.queueName,
       })),
       total,
     };
@@ -158,7 +158,7 @@ export class BullBoardController implements OnModuleInit {
     @Param('jobId') jobId: string
   ): Promise<{ success: boolean; newJobId: string }> {
     const newJobId = await this.jobRecoveryService.retryFromDlq(jobId);
-    return { success: true, newJobId };
+    return { newJobId, success: true };
   }
 
   /**

@@ -58,8 +58,8 @@ export function usePaneActions() {
 
   return {
     addNodeAtPosition,
-    selectAll,
-    fitView,
     autoLayout,
+    fitView,
+    selectAll,
   };
 }

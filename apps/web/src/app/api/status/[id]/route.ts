@@ -11,10 +11,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const webhookResult = getWebhookResult(id);
     if (webhookResult) {
       return NextResponse.json({
-        id,
-        status: webhookResult.status,
-        output: webhookResult.output,
         error: webhookResult.error,
+        id,
+        output: webhookResult.output,
+        status: webhookResult.status,
       });
     }
 
@@ -22,11 +22,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const prediction = await getPredictionStatus(id);
 
     return NextResponse.json({
-      id,
-      status: prediction.status,
-      output: prediction.output,
       error: prediction.error,
+      id,
+      output: prediction.output,
       progress: prediction.status === 'processing' ? 50 : undefined,
+      status: prediction.status,
     });
   } catch (error) {
     logger.error('Status check error', error, { context: 'api/status' });

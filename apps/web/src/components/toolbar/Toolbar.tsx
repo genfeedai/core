@@ -112,11 +112,11 @@ export function Toolbar() {
   const costRelevantData = useMemo(
     () =>
       nodes.map((node) => ({
-        type: node.type,
-        model: node.data.model,
-        resolution: node.data.resolution,
         duration: node.data.duration,
         generateAudio: node.data.generateAudio,
+        model: node.data.model,
+        resolution: node.data.resolution,
+        type: node.type,
       })),
     [nodes]
   );
@@ -186,9 +186,9 @@ export function Toolbar() {
     if (!workflowId) return;
     try {
       await fetch('/api/open-folder', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ workflowId }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
       });
     } catch (error) {
       logger.error('Failed to open output folder', error, { context: 'Toolbar' });
@@ -235,15 +235,15 @@ export function Toolbar() {
     try {
       const dataUrl = await toPng(viewportEl, {
         backgroundColor: '#171717',
-        width: imageWidth,
         height: imageHeight,
         imagePlaceholder:
           'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
         style: {
-          width: String(imageWidth),
           height: String(imageHeight),
           transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+          width: String(imageWidth),
         },
+        width: imageWidth,
       });
 
       const safeName = (workflowName || 'workflow').toLowerCase().replace(/\s+/g, '-');
@@ -261,33 +261,33 @@ export function Toolbar() {
   const fileMenuItems: DropdownItem[] = useMemo(
     () => [
       {
+        disabled: !workflowId,
+        icon: <Copy className="h-4 w-4" />,
         id: 'duplicate',
         label: 'Duplicate Workflow',
-        icon: <Copy className="h-4 w-4" />,
         onClick: handleDuplicate,
-        disabled: !workflowId,
       },
       {
+        disabled: !workflowId,
+        icon: <SaveAll className="h-4 w-4" />,
         id: 'saveAs',
         label: 'Save As...',
-        icon: <SaveAll className="h-4 w-4" />,
         onClick: () => setShowSaveAsDialog(true),
-        disabled: !workflowId,
       },
       {
         id: 'separator-1',
         separator: true,
       },
       {
+        icon: <Save className="h-4 w-4" />,
         id: 'export',
         label: 'Export Workflow',
-        icon: <Save className="h-4 w-4" />,
         onClick: handleSave,
       },
       {
+        icon: <FolderOpen className="h-4 w-4" />,
         id: 'import',
         label: 'Import Workflow',
-        icon: <FolderOpen className="h-4 w-4" />,
         onClick: handleLoad,
       },
     ],
@@ -297,21 +297,21 @@ export function Toolbar() {
   const resourcesMenuItems: DropdownItem[] = useMemo(
     () => [
       {
+        icon: <LayoutTemplate className="h-4 w-4" />,
         id: 'templates',
         label: 'Templates',
-        icon: <LayoutTemplate className="h-4 w-4" />,
         onClick: () => openModal('templates'),
       },
       {
+        icon: <BookMarked className="h-4 w-4" />,
         id: 'promptLibrary',
         label: 'Prompt Library',
-        icon: <BookMarked className="h-4 w-4" />,
         onClick: () => openModal('promptLibrary'),
       },
       {
+        icon: <Sparkles className="h-4 w-4" />,
         id: 'aiGenerator',
         label: 'AI Generator',
-        icon: <Sparkles className="h-4 w-4" />,
         onClick: toggleAIGenerator,
       },
       {
@@ -319,11 +319,11 @@ export function Toolbar() {
         separator: true,
       },
       {
+        external: true,
+        icon: <Store className="h-4 w-4" />,
         id: 'marketplace',
         label: 'Marketplace',
-        icon: <Store className="h-4 w-4" />,
         onClick: () => window.open('https://marketplace.genfeed.ai', '_blank'),
-        external: true,
       },
     ],
     [openModal, toggleAIGenerator]

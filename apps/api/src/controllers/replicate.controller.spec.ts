@@ -5,31 +5,31 @@ describe('ReplicateController', () => {
   let controller: ReplicateController;
 
   const mockReplicateService = {
+    cancelPrediction: vi.fn().mockResolvedValue(undefined),
     generateImage: vi.fn().mockResolvedValue({
+      debugPayload: undefined,
       id: 'prediction-123',
-      status: 'starting',
-      debugPayload: undefined,
       output: undefined,
-    }),
-    generateVideo: vi.fn().mockResolvedValue({
-      id: 'prediction-456',
       status: 'starting',
-      debugPayload: undefined,
-      output: undefined,
     }),
     generateText: vi.fn().mockResolvedValue('Generated text response'),
-    getPredictionStatus: vi.fn().mockResolvedValue({
-      id: 'prediction-123',
-      status: 'succeeded',
-      output: ['https://example.com/output.png'],
-      error: undefined,
+    generateVideo: vi.fn().mockResolvedValue({
+      debugPayload: undefined,
+      id: 'prediction-456',
+      output: undefined,
+      status: 'starting',
     }),
-    cancelPrediction: vi.fn().mockResolvedValue(undefined),
+    getPredictionStatus: vi.fn().mockResolvedValue({
+      error: undefined,
+      id: 'prediction-123',
+      output: ['https://example.com/output.png'],
+      status: 'succeeded',
+    }),
   };
 
   const mockFilesService = {
-    downloadAndSaveOutput: vi.fn(),
     downloadAndSaveMultipleOutputs: vi.fn(),
+    downloadAndSaveOutput: vi.fn(),
   };
 
   beforeEach(() => {
@@ -41,11 +41,11 @@ describe('ReplicateController', () => {
   describe('POST /replicate/image', () => {
     it('should generate an image and return prediction info', async () => {
       const dto = {
-        executionId: 'execution-123',
-        nodeId: 'node-1',
-        model: 'nano-banana' as const,
-        prompt: 'A beautiful sunset',
         aspectRatio: '16:9',
+        executionId: 'execution-123',
+        model: 'nano-banana' as const,
+        nodeId: 'node-1',
+        prompt: 'A beautiful sunset',
       };
 
       const result = await controller.generateImage(dto);
@@ -76,10 +76,10 @@ describe('ReplicateController', () => {
     it('should pass image input when provided', async () => {
       const dto = {
         executionId: 'execution-123',
-        nodeId: 'node-1',
-        model: 'nano-banana-pro' as const,
-        prompt: 'Enhanced image',
         inputImages: ['https://example.com/input.png'],
+        model: 'nano-banana-pro' as const,
+        nodeId: 'node-1',
+        prompt: 'Enhanced image',
       };
 
       await controller.generateImage(dto);
@@ -98,11 +98,11 @@ describe('ReplicateController', () => {
   describe('POST /replicate/video', () => {
     it('should generate a video and return prediction info', async () => {
       const dto = {
-        executionId: 'execution-123',
-        nodeId: 'node-1',
-        model: 'veo-3.1-fast' as const,
-        prompt: 'A dancing cat',
         duration: 5,
+        executionId: 'execution-123',
+        model: 'veo-3.1-fast' as const,
+        nodeId: 'node-1',
+        prompt: 'A dancing cat',
       };
 
       const result = await controller.generateVideo(dto);
@@ -118,26 +118,26 @@ describe('ReplicateController', () => {
         dto.nodeId,
         dto.model,
         expect.objectContaining({
-          prompt: dto.prompt,
           duration: dto.duration,
+          prompt: dto.prompt,
         })
       );
     });
 
     it('should pass all video options when provided', async () => {
       const dto = {
+        aspectRatio: '16:9',
+        duration: 8,
         executionId: 'execution-123',
-        nodeId: 'node-1',
-        model: 'veo-3.1' as const,
-        prompt: 'Cinematic video',
+        generateAudio: true,
         image: 'https://example.com/start.png',
         lastFrame: 'https://example.com/end.png',
-        referenceImages: ['https://example.com/ref1.png'],
-        duration: 8,
-        aspectRatio: '16:9',
-        resolution: '1080p',
-        generateAudio: true,
+        model: 'veo-3.1' as const,
         negativePrompt: 'blurry, low quality',
+        nodeId: 'node-1',
+        prompt: 'Cinematic video',
+        referenceImages: ['https://example.com/ref1.png'],
+        resolution: '1080p',
         seed: 12345,
       };
 
@@ -189,9 +189,9 @@ describe('ReplicateController', () => {
 
     it('should pass LLM parameters when provided', async () => {
       const dto = {
+        maxTokens: 1000,
         prompt: 'Write a story',
         systemPrompt: 'You are a creative writer',
-        maxTokens: 1000,
         temperature: 0.8,
         topP: 0.95,
       };
@@ -223,10 +223,10 @@ describe('ReplicateController', () => {
 
     it('should include error when present', async () => {
       mockReplicateService.getPredictionStatus.mockResolvedValue({
-        id: 'prediction-123',
-        status: 'failed',
-        output: null,
         error: 'Model failed',
+        id: 'prediction-123',
+        output: null,
+        status: 'failed',
       });
 
       const result = await controller.getPredictionStatus('prediction-123');

@@ -4,8 +4,8 @@ import { GridPositionSelector } from './grid-position-selector';
 
 describe('GridPositionSelector', () => {
   const defaultProps = {
-    position: { x: 0.5, y: 0.5 },
     onPositionChange: vi.fn(),
+    position: { x: 0.5, y: 0.5 },
   };
 
   beforeEach(() => {

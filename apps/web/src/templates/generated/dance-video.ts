@@ -1,128 +1,128 @@
 import type { WorkflowTemplate } from '@genfeedai/types';
 
 export const DANCE_VIDEO_TEMPLATE: WorkflowTemplate = {
-  version: 1,
-  name: 'Dance Video',
+  createdAt: new Date().toISOString(),
   description:
     'Apply dance or motion from a reference video to a static image using Kling v2.6 motion control',
-  nodes: [
-    // Subject Image Input
-    {
-      id: 'subject-image',
-      type: 'imageInput',
-      position: { x: 50, y: 100 },
-      data: {
-        label: 'Subject Image',
-        status: 'idle',
-        image: null,
-        filename: null,
-        dimensions: null,
-        source: 'upload',
-      },
-    },
-    // Motion Video Input
-    {
-      id: 'motion-video',
-      type: 'videoInput',
-      position: { x: 50, y: 350 },
-      data: {
-        label: 'Dance/Motion Video',
-        status: 'idle',
-        video: null,
-        filename: null,
-        duration: null,
-        dimensions: null,
-        source: 'upload',
-      },
-    },
-    // Optional Prompt
-    {
-      id: 'prompt',
-      type: 'prompt',
-      position: { x: 50, y: 550 },
-      data: {
-        label: 'Enhancement Prompt',
-        status: 'idle',
-        prompt: 'Professional dance performance, smooth motion, high quality, detailed',
-        variables: {},
-      },
-    },
-    // Motion Control Node (Kling v2.6)
-    {
-      id: 'motion-control',
-      type: 'motionControl',
-      position: { x: 400, y: 200 },
-      data: {
-        label: 'Motion Control',
-        status: 'idle',
-        inputImage: null,
-        inputVideo: null,
-        inputPrompt: null,
-        outputVideo: null,
-        mode: 'video_transfer',
-        duration: 5,
-        aspectRatio: '9:16',
-        trajectoryPoints: [],
-        cameraMovement: 'static',
-        cameraIntensity: 50,
-        qualityMode: 'pro',
-        characterOrientation: 'image',
-        keepOriginalSound: true,
-        motionStrength: 50,
-        negativePrompt: 'blurry, distorted, low quality',
-        seed: null,
-        jobId: null,
-      },
-    },
-    // Output
-    {
-      id: 'output',
-      type: 'download',
-      position: { x: 750, y: 200 },
-      data: {
-        label: 'Dance Video',
-        status: 'idle',
-        inputMedia: null,
-        inputType: 'video',
-        outputName: 'dance-video',
-      },
-    },
-  ],
+  edgeStyle: 'smoothstep',
   edges: [
     // Subject Image → Motion Control
     {
       id: 'e1',
       source: 'subject-image',
-      target: 'motion-control',
       sourceHandle: 'image',
+      target: 'motion-control',
       targetHandle: 'image',
     },
     // Motion Video → Motion Control
     {
       id: 'e2',
       source: 'motion-video',
-      target: 'motion-control',
       sourceHandle: 'video',
+      target: 'motion-control',
       targetHandle: 'video',
     },
     // Prompt → Motion Control
     {
       id: 'e3',
       source: 'prompt',
-      target: 'motion-control',
       sourceHandle: 'text',
+      target: 'motion-control',
       targetHandle: 'prompt',
     },
     // Motion Control → Output
     {
       id: 'e4',
       source: 'motion-control',
-      target: 'output',
       sourceHandle: 'video',
+      target: 'output',
       targetHandle: 'video',
     },
   ],
-  edgeStyle: 'smoothstep',
-  createdAt: new Date().toISOString(),
+  name: 'Dance Video',
+  nodes: [
+    // Subject Image Input
+    {
+      data: {
+        dimensions: null,
+        filename: null,
+        image: null,
+        label: 'Subject Image',
+        source: 'upload',
+        status: 'idle',
+      },
+      id: 'subject-image',
+      position: { x: 50, y: 100 },
+      type: 'imageInput',
+    },
+    // Motion Video Input
+    {
+      data: {
+        dimensions: null,
+        duration: null,
+        filename: null,
+        label: 'Dance/Motion Video',
+        source: 'upload',
+        status: 'idle',
+        video: null,
+      },
+      id: 'motion-video',
+      position: { x: 50, y: 350 },
+      type: 'videoInput',
+    },
+    // Optional Prompt
+    {
+      data: {
+        label: 'Enhancement Prompt',
+        prompt: 'Professional dance performance, smooth motion, high quality, detailed',
+        status: 'idle',
+        variables: {},
+      },
+      id: 'prompt',
+      position: { x: 50, y: 550 },
+      type: 'prompt',
+    },
+    // Motion Control Node (Kling v2.6)
+    {
+      data: {
+        aspectRatio: '9:16',
+        cameraIntensity: 50,
+        cameraMovement: 'static',
+        characterOrientation: 'image',
+        duration: 5,
+        inputImage: null,
+        inputPrompt: null,
+        inputVideo: null,
+        jobId: null,
+        keepOriginalSound: true,
+        label: 'Motion Control',
+        mode: 'video_transfer',
+        motionStrength: 50,
+        negativePrompt: 'blurry, distorted, low quality',
+        outputVideo: null,
+        qualityMode: 'pro',
+        seed: null,
+        status: 'idle',
+        trajectoryPoints: [],
+      },
+      id: 'motion-control',
+      position: { x: 400, y: 200 },
+      type: 'motionControl',
+    },
+    // Output
+    {
+      data: {
+        inputMedia: null,
+        inputType: 'video',
+        label: 'Dance Video',
+        outputName: 'dance-video',
+        status: 'idle',
+      },
+      id: 'output',
+      position: { x: 750, y: 200 },
+      type: 'download',
+    },
+  ],
   updatedAt: new Date().toISOString(),
+  version: 1,
 };

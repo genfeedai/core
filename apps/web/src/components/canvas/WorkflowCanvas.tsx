@@ -110,18 +110,18 @@ export function WorkflowCanvas() {
   const openNodeSearch = useCallback(() => openModal('nodeSearch'), [openModal]);
 
   useCanvasKeyboardShortcuts({
-    selectedNodeIds,
-    groups,
-    nodes,
-    toggleNodeLock,
+    addNode,
     createGroup,
     deleteGroup,
-    unlockAllNodes,
-    addNode,
-    togglePalette,
     fitView: reactFlow.fitView,
-    openShortcutHelp,
+    groups,
+    nodes,
     openNodeSearch,
+    openShortcutHelp,
+    selectedNodeIds,
+    toggleNodeLock,
+    togglePalette,
+    unlockAllNodes,
   });
 
   useEffect(() => {
@@ -370,8 +370,8 @@ export function WorkflowCanvas() {
     (connection: Connection | WorkflowEdge): boolean => {
       const conn: Connection = {
         source: connection.source,
-        target: connection.target,
         sourceHandle: connection.sourceHandle ?? null,
+        target: connection.target,
         targetHandle: connection.targetHandle ?? null,
       };
       return isValidConnection(conn);
@@ -448,8 +448,8 @@ export function WorkflowCanvas() {
         onMoveEnd={handleMoveEnd}
         deleteKeyCode={['Backspace', 'Delete']}
         defaultEdgeOptions={{
-          type: edgeStyle,
           animated: false,
+          type: edgeStyle,
         }}
         edgesFocusable
         edgesReconnectable

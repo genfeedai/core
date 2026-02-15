@@ -51,10 +51,10 @@ export class SettingsService {
 
     if (!settings) {
       settings = await this.settingsModel.create({
-        userId,
         nodeDefaults: {},
-        uiPreferences: {},
         recentModels: [],
+        uiPreferences: {},
+        userId,
       });
     }
 

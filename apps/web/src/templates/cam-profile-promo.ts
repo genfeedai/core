@@ -1,241 +1,31 @@
 import type { WorkflowTemplate } from '@genfeedai/types';
 
 export const CAM_PROFILE_PROMO_TEMPLATE: WorkflowTemplate = {
-  version: 1,
-  name: 'Cam Profile Promo',
+  createdAt: new Date().toISOString(),
   description:
     'Auto-generate profile promo video from photos: animate with cinematic motion, stitch with crossfade, add intro voiceover and handle overlay',
-  nodes: [
-    // Stage 1: Image Inputs — 3 model/streamer photos
-    {
-      id: 'image-1',
-      type: 'imageInput',
-      position: { x: 50, y: 100 },
-      data: {
-        label: 'Photo 1',
-        status: 'idle',
-        image: null,
-        filename: null,
-        dimensions: null,
-        source: 'upload',
-      },
-    },
-    {
-      id: 'image-2',
-      type: 'imageInput',
-      position: { x: 50, y: 300 },
-      data: {
-        label: 'Photo 2',
-        status: 'idle',
-        image: null,
-        filename: null,
-        dimensions: null,
-        source: 'upload',
-      },
-    },
-    {
-      id: 'image-3',
-      type: 'imageInput',
-      position: { x: 50, y: 500 },
-      data: {
-        label: 'Photo 3',
-        status: 'idle',
-        image: null,
-        filename: null,
-        dimensions: null,
-        source: 'upload',
-      },
-    },
-
-    // Stage 2: Video Generation — subtle cinematic motion from each photo
-    {
-      id: 'videoGen-1',
-      type: 'videoGen',
-      position: { x: 400, y: 100 },
-      data: {
-        label: 'Animate Photo 1',
-        status: 'idle',
-        inputImage: null,
-        lastFrame: null,
-        referenceImages: [],
-        inputPrompt: null,
-        negativePrompt: 'blurry, distorted, low quality',
-        outputVideo: null,
-        model: 'veo-3.1',
-        duration: 5,
-        aspectRatio: '9:16',
-        resolution: '1080p',
-        generateAudio: false,
-        jobId: null,
-      },
-    },
-    {
-      id: 'videoGen-2',
-      type: 'videoGen',
-      position: { x: 400, y: 300 },
-      data: {
-        label: 'Animate Photo 2',
-        status: 'idle',
-        inputImage: null,
-        lastFrame: null,
-        referenceImages: [],
-        inputPrompt: null,
-        negativePrompt: 'blurry, distorted, low quality',
-        outputVideo: null,
-        model: 'veo-3.1',
-        duration: 5,
-        aspectRatio: '9:16',
-        resolution: '1080p',
-        generateAudio: false,
-        jobId: null,
-      },
-    },
-    {
-      id: 'videoGen-3',
-      type: 'videoGen',
-      position: { x: 400, y: 500 },
-      data: {
-        label: 'Animate Photo 3',
-        status: 'idle',
-        inputImage: null,
-        lastFrame: null,
-        referenceImages: [],
-        inputPrompt: null,
-        negativePrompt: 'blurry, distorted, low quality',
-        outputVideo: null,
-        model: 'veo-3.1',
-        duration: 5,
-        aspectRatio: '9:16',
-        resolution: '1080p',
-        generateAudio: false,
-        jobId: null,
-      },
-    },
-
-    // Stage 3: Video Stitch — smooth crossfade
-    {
-      id: 'stitch',
-      type: 'videoStitch',
-      position: { x: 750, y: 300 },
-      data: {
-        label: 'Crossfade Stitch',
-        status: 'idle',
-        inputVideos: [],
-        outputVideo: null,
-        transitionType: 'crossfade',
-        transitionDuration: 0.8,
-        seamlessLoop: true,
-        audioCodec: 'aac',
-        outputQuality: 'full',
-      },
-    },
-
-    // Stage 4: Prompt — streamer name/handle for TTS
-    {
-      id: 'handle-prompt',
-      type: 'prompt',
-      position: { x: 50, y: 700 },
-      data: {
-        label: 'Handle & Schedule',
-        status: 'idle',
-        prompt:
-          "Hey, I'm @StarletStream — catch me live every Friday and Saturday night at 10 PM. Follow for exclusive content!",
-        variables: {},
-      },
-    },
-
-    // Stage 5: Text to Speech — intro voiceover
-    {
-      id: 'tts',
-      type: 'textToSpeech',
-      position: { x: 400, y: 700 },
-      data: {
-        label: 'Intro Voiceover',
-        status: 'idle',
-        inputText: null,
-        outputAudio: null,
-        provider: 'elevenlabs',
-        voice: 'rachel',
-        stability: 0.5,
-        similarityBoost: 0.75,
-        speed: 1.0,
-        jobId: null,
-      },
-    },
-
-    // Stage 6: Subtitle — handle/schedule overlay
-    {
-      id: 'subtitle',
-      type: 'subtitle',
-      position: { x: 1100, y: 200 },
-      data: {
-        label: 'Handle Overlay',
-        status: 'idle',
-        inputVideo: null,
-        inputText: null,
-        outputVideo: null,
-        style: 'modern',
-        position: 'bottom',
-        fontSize: 28,
-        fontColor: '#FF69B4',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        fontFamily: 'Arial',
-        jobId: null,
-      },
-    },
-
-    // Stage 7: Voice Change — mix voiceover onto video
-    {
-      id: 'voice-mix',
-      type: 'voiceChange',
-      position: { x: 1100, y: 450 },
-      data: {
-        label: 'Audio Mixer',
-        status: 'idle',
-        inputVideo: null,
-        inputAudio: null,
-        outputVideo: null,
-        preserveOriginalAudio: false,
-        audioMixLevel: 0.8,
-        jobId: null,
-      },
-    },
-
-    // Output
-    {
-      id: 'output',
-      type: 'download',
-      position: { x: 1450, y: 350 },
-      data: {
-        label: 'Final Promo',
-        status: 'idle',
-        inputMedia: null,
-        inputType: 'video',
-        outputName: 'cam-profile-promo',
-      },
-    },
-  ],
+  edgeStyle: 'smoothstep',
   edges: [
     // Images → Videos
     {
       id: 'e-img1-vid1',
       source: 'image-1',
-      target: 'videoGen-1',
       sourceHandle: 'image',
+      target: 'videoGen-1',
       targetHandle: 'image',
     },
     {
       id: 'e-img2-vid2',
       source: 'image-2',
-      target: 'videoGen-2',
       sourceHandle: 'image',
+      target: 'videoGen-2',
       targetHandle: 'image',
     },
     {
       id: 'e-img3-vid3',
       source: 'image-3',
-      target: 'videoGen-3',
       sourceHandle: 'image',
+      target: 'videoGen-3',
       targetHandle: 'image',
     },
 
@@ -243,22 +33,22 @@ export const CAM_PROFILE_PROMO_TEMPLATE: WorkflowTemplate = {
     {
       id: 'e-vid1-stitch',
       source: 'videoGen-1',
-      target: 'stitch',
       sourceHandle: 'video',
+      target: 'stitch',
       targetHandle: 'videos',
     },
     {
       id: 'e-vid2-stitch',
       source: 'videoGen-2',
-      target: 'stitch',
       sourceHandle: 'video',
+      target: 'stitch',
       targetHandle: 'videos',
     },
     {
       id: 'e-vid3-stitch',
       source: 'videoGen-3',
-      target: 'stitch',
       sourceHandle: 'video',
+      target: 'stitch',
       targetHandle: 'videos',
     },
 
@@ -266,8 +56,8 @@ export const CAM_PROFILE_PROMO_TEMPLATE: WorkflowTemplate = {
     {
       id: 'e-handle-tts',
       source: 'handle-prompt',
-      target: 'tts',
       sourceHandle: 'text',
+      target: 'tts',
       targetHandle: 'text',
     },
 
@@ -275,8 +65,8 @@ export const CAM_PROFILE_PROMO_TEMPLATE: WorkflowTemplate = {
     {
       id: 'e-stitch-subtitle',
       source: 'stitch',
-      target: 'subtitle',
       sourceHandle: 'video',
+      target: 'subtitle',
       targetHandle: 'video',
     },
 
@@ -284,8 +74,8 @@ export const CAM_PROFILE_PROMO_TEMPLATE: WorkflowTemplate = {
     {
       id: 'e-handle-subtitle',
       source: 'handle-prompt',
-      target: 'subtitle',
       sourceHandle: 'text',
+      target: 'subtitle',
       targetHandle: 'text',
     },
 
@@ -293,8 +83,8 @@ export const CAM_PROFILE_PROMO_TEMPLATE: WorkflowTemplate = {
     {
       id: 'e-subtitle-mix',
       source: 'subtitle',
-      target: 'voice-mix',
       sourceHandle: 'video',
+      target: 'voice-mix',
       targetHandle: 'video',
     },
 
@@ -302,8 +92,8 @@ export const CAM_PROFILE_PROMO_TEMPLATE: WorkflowTemplate = {
     {
       id: 'e-tts-mix',
       source: 'tts',
-      target: 'voice-mix',
       sourceHandle: 'audio',
+      target: 'voice-mix',
       targetHandle: 'audio',
     },
 
@@ -311,12 +101,222 @@ export const CAM_PROFILE_PROMO_TEMPLATE: WorkflowTemplate = {
     {
       id: 'e-mix-output',
       source: 'voice-mix',
-      target: 'output',
       sourceHandle: 'video',
+      target: 'output',
       targetHandle: 'video',
     },
   ],
-  edgeStyle: 'smoothstep',
-  createdAt: new Date().toISOString(),
+  name: 'Cam Profile Promo',
+  nodes: [
+    // Stage 1: Image Inputs — 3 model/streamer photos
+    {
+      data: {
+        dimensions: null,
+        filename: null,
+        image: null,
+        label: 'Photo 1',
+        source: 'upload',
+        status: 'idle',
+      },
+      id: 'image-1',
+      position: { x: 50, y: 100 },
+      type: 'imageInput',
+    },
+    {
+      data: {
+        dimensions: null,
+        filename: null,
+        image: null,
+        label: 'Photo 2',
+        source: 'upload',
+        status: 'idle',
+      },
+      id: 'image-2',
+      position: { x: 50, y: 300 },
+      type: 'imageInput',
+    },
+    {
+      data: {
+        dimensions: null,
+        filename: null,
+        image: null,
+        label: 'Photo 3',
+        source: 'upload',
+        status: 'idle',
+      },
+      id: 'image-3',
+      position: { x: 50, y: 500 },
+      type: 'imageInput',
+    },
+
+    // Stage 2: Video Generation — subtle cinematic motion from each photo
+    {
+      data: {
+        aspectRatio: '9:16',
+        duration: 5,
+        generateAudio: false,
+        inputImage: null,
+        inputPrompt: null,
+        jobId: null,
+        label: 'Animate Photo 1',
+        lastFrame: null,
+        model: 'veo-3.1',
+        negativePrompt: 'blurry, distorted, low quality',
+        outputVideo: null,
+        referenceImages: [],
+        resolution: '1080p',
+        status: 'idle',
+      },
+      id: 'videoGen-1',
+      position: { x: 400, y: 100 },
+      type: 'videoGen',
+    },
+    {
+      data: {
+        aspectRatio: '9:16',
+        duration: 5,
+        generateAudio: false,
+        inputImage: null,
+        inputPrompt: null,
+        jobId: null,
+        label: 'Animate Photo 2',
+        lastFrame: null,
+        model: 'veo-3.1',
+        negativePrompt: 'blurry, distorted, low quality',
+        outputVideo: null,
+        referenceImages: [],
+        resolution: '1080p',
+        status: 'idle',
+      },
+      id: 'videoGen-2',
+      position: { x: 400, y: 300 },
+      type: 'videoGen',
+    },
+    {
+      data: {
+        aspectRatio: '9:16',
+        duration: 5,
+        generateAudio: false,
+        inputImage: null,
+        inputPrompt: null,
+        jobId: null,
+        label: 'Animate Photo 3',
+        lastFrame: null,
+        model: 'veo-3.1',
+        negativePrompt: 'blurry, distorted, low quality',
+        outputVideo: null,
+        referenceImages: [],
+        resolution: '1080p',
+        status: 'idle',
+      },
+      id: 'videoGen-3',
+      position: { x: 400, y: 500 },
+      type: 'videoGen',
+    },
+
+    // Stage 3: Video Stitch — smooth crossfade
+    {
+      data: {
+        audioCodec: 'aac',
+        inputVideos: [],
+        label: 'Crossfade Stitch',
+        outputQuality: 'full',
+        outputVideo: null,
+        seamlessLoop: true,
+        status: 'idle',
+        transitionDuration: 0.8,
+        transitionType: 'crossfade',
+      },
+      id: 'stitch',
+      position: { x: 750, y: 300 },
+      type: 'videoStitch',
+    },
+
+    // Stage 4: Prompt — streamer name/handle for TTS
+    {
+      data: {
+        label: 'Handle & Schedule',
+        prompt:
+          "Hey, I'm @StarletStream — catch me live every Friday and Saturday night at 10 PM. Follow for exclusive content!",
+        status: 'idle',
+        variables: {},
+      },
+      id: 'handle-prompt',
+      position: { x: 50, y: 700 },
+      type: 'prompt',
+    },
+
+    // Stage 5: Text to Speech — intro voiceover
+    {
+      data: {
+        inputText: null,
+        jobId: null,
+        label: 'Intro Voiceover',
+        outputAudio: null,
+        provider: 'elevenlabs',
+        similarityBoost: 0.75,
+        speed: 1.0,
+        stability: 0.5,
+        status: 'idle',
+        voice: 'rachel',
+      },
+      id: 'tts',
+      position: { x: 400, y: 700 },
+      type: 'textToSpeech',
+    },
+
+    // Stage 6: Subtitle — handle/schedule overlay
+    {
+      data: {
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        fontColor: '#FF69B4',
+        fontFamily: 'Arial',
+        fontSize: 28,
+        inputText: null,
+        inputVideo: null,
+        jobId: null,
+        label: 'Handle Overlay',
+        outputVideo: null,
+        position: 'bottom',
+        status: 'idle',
+        style: 'modern',
+      },
+      id: 'subtitle',
+      position: { x: 1100, y: 200 },
+      type: 'subtitle',
+    },
+
+    // Stage 7: Voice Change — mix voiceover onto video
+    {
+      data: {
+        audioMixLevel: 0.8,
+        inputAudio: null,
+        inputVideo: null,
+        jobId: null,
+        label: 'Audio Mixer',
+        outputVideo: null,
+        preserveOriginalAudio: false,
+        status: 'idle',
+      },
+      id: 'voice-mix',
+      position: { x: 1100, y: 450 },
+      type: 'voiceChange',
+    },
+
+    // Output
+    {
+      data: {
+        inputMedia: null,
+        inputType: 'video',
+        label: 'Final Promo',
+        outputName: 'cam-profile-promo',
+        status: 'idle',
+      },
+      id: 'output',
+      position: { x: 1450, y: 350 },
+      type: 'download',
+    },
+  ],
   updatedAt: new Date().toISOString(),
+  version: 1,
 };

@@ -40,9 +40,9 @@ function AnnotationModalComponent() {
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const [canvasState, setCanvasState] = useState<CanvasState>({
-    scale: 1,
     offsetX: 0,
     offsetY: 0,
+    scale: 1,
   });
   const [imageLoaded, setImageLoaded] = useState(false);
   const [textInput, setTextInput] = useState('');
@@ -67,7 +67,7 @@ function AnnotationModalComponent() {
       const offsetX = (containerWidth - img.width * scale) / 2;
       const offsetY = (containerHeight - img.height * scale) / 2;
 
-      setCanvasState({ scale, offsetX, offsetY });
+      setCanvasState({ offsetX, offsetY, scale });
 
       const canvas = canvasRef.current;
       if (canvas) {
@@ -143,24 +143,24 @@ function AnnotationModalComponent() {
       }
 
       const baseShape = {
-        type: currentTool,
+        fillColor: toolOptions.fillColor,
         strokeColor: toolOptions.strokeColor,
         strokeWidth: toolOptions.strokeWidth,
-        fillColor: toolOptions.fillColor,
+        type: currentTool,
       };
 
       switch (currentTool) {
         case 'rectangle':
-          startDrawing({ ...baseShape, type: 'rectangle', x, y, width: 0, height: 0 });
+          startDrawing({ ...baseShape, height: 0, type: 'rectangle', width: 0, x, y });
           break;
         case 'circle':
-          startDrawing({ ...baseShape, type: 'circle', x, y, radius: 0 });
+          startDrawing({ ...baseShape, radius: 0, type: 'circle', x, y });
           break;
         case 'arrow':
-          startDrawing({ ...baseShape, type: 'arrow', points: [x, y, x, y] });
+          startDrawing({ ...baseShape, points: [x, y, x, y], type: 'arrow' });
           break;
         case 'freehand':
-          startDrawing({ ...baseShape, type: 'freehand', points: [x, y] });
+          startDrawing({ ...baseShape, points: [x, y], type: 'freehand' });
           break;
       }
     },
@@ -177,7 +177,7 @@ function AnnotationModalComponent() {
         case 'rectangle': {
           const startX = (drawingShape as { x: number }).x;
           const startY = (drawingShape as { y: number }).y;
-          updateDrawing({ width: x - startX, height: y - startY });
+          updateDrawing({ height: y - startY, width: x - startX });
           break;
         }
         case 'circle': {
@@ -212,15 +212,15 @@ function AnnotationModalComponent() {
     if (!textInput.trim() || !textPosition) return;
 
     const shape: AnnotationShape = {
+      fillColor: null,
+      fontSize: toolOptions.fontSize,
       id: `text-${Date.now()}`,
+      strokeColor: toolOptions.strokeColor,
+      strokeWidth: toolOptions.strokeWidth,
+      text: textInput,
       type: 'text',
       x: textPosition.x,
       y: textPosition.y,
-      text: textInput,
-      fontSize: toolOptions.fontSize,
-      strokeColor: toolOptions.strokeColor,
-      strokeWidth: toolOptions.strokeWidth,
-      fillColor: null,
     };
 
     useAnnotationStore.getState().addShape(shape);
@@ -336,8 +336,8 @@ function AnnotationModalComponent() {
                 }}
                 className="rounded border border-primary bg-black/50 px-2 py-1 text-white outline-none"
                 style={{
-                  fontSize: toolOptions.fontSize,
                   color: toolOptions.strokeColor,
+                  fontSize: toolOptions.fontSize,
                 }}
                 placeholder="Type text..."
               />

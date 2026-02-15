@@ -5,15 +5,15 @@ import { PROVIDER_INFO, useSettingsStore } from './settingsStore';
 const localStorageMock = (() => {
   let store: Record<string, string> = {};
   return {
-    getItem: (key: string) => store[key] ?? null,
-    setItem: (key: string, value: string) => {
-      store[key] = value;
+    clear: () => {
+      store = {};
     },
+    getItem: (key: string) => store[key] ?? null,
     removeItem: (key: string) => {
       delete store[key];
     },
-    clear: () => {
-      store = {};
+    setItem: (key: string, value: string) => {
+      store[key] = value;
     },
   };
 })();
@@ -36,12 +36,6 @@ describe('useSettingsStore', () => {
     localStorageMock.clear();
     // Reset store to initial state
     useSettingsStore.setState({
-      providers: {
-        replicate: { apiKey: null, enabled: true },
-        fal: { apiKey: null, enabled: false },
-        huggingface: { apiKey: null, enabled: false },
-        'genfeed-ai': { apiKey: null, enabled: true },
-      },
       defaults: {
         imageModel: 'nano-banana-pro',
         imageProvider: 'replicate',
@@ -49,6 +43,12 @@ describe('useSettingsStore', () => {
         videoProvider: 'replicate',
       },
       edgeStyle: 'default',
+      providers: {
+        fal: { apiKey: null, enabled: false },
+        'genfeed-ai': { apiKey: null, enabled: true },
+        huggingface: { apiKey: null, enabled: false },
+        replicate: { apiKey: null, enabled: true },
+      },
       recentModels: [],
     });
   });
@@ -246,8 +246,8 @@ describe('useSettingsStore', () => {
       const { addRecentModel } = useSettingsStore.getState();
 
       addRecentModel({
-        id: 'model-1',
         displayName: 'Test Model',
+        id: 'model-1',
         provider: 'replicate',
       });
 
@@ -262,8 +262,8 @@ describe('useSettingsStore', () => {
     it('should add new model at the front', () => {
       const { addRecentModel } = useSettingsStore.getState();
 
-      addRecentModel({ id: 'model-1', displayName: 'Model 1', provider: 'replicate' });
-      addRecentModel({ id: 'model-2', displayName: 'Model 2', provider: 'fal' });
+      addRecentModel({ displayName: 'Model 1', id: 'model-1', provider: 'replicate' });
+      addRecentModel({ displayName: 'Model 2', id: 'model-2', provider: 'fal' });
 
       const state = useSettingsStore.getState();
       expect(state.recentModels[0].id).toBe('model-2');
@@ -273,9 +273,9 @@ describe('useSettingsStore', () => {
     it('should move existing model to front if already present', () => {
       const { addRecentModel } = useSettingsStore.getState();
 
-      addRecentModel({ id: 'model-1', displayName: 'Model 1', provider: 'replicate' });
-      addRecentModel({ id: 'model-2', displayName: 'Model 2', provider: 'replicate' });
-      addRecentModel({ id: 'model-1', displayName: 'Model 1', provider: 'replicate' });
+      addRecentModel({ displayName: 'Model 1', id: 'model-1', provider: 'replicate' });
+      addRecentModel({ displayName: 'Model 2', id: 'model-2', provider: 'replicate' });
+      addRecentModel({ displayName: 'Model 1', id: 'model-1', provider: 'replicate' });
 
       const state = useSettingsStore.getState();
       expect(state.recentModels).toHaveLength(2);
@@ -288,8 +288,8 @@ describe('useSettingsStore', () => {
 
       for (let i = 0; i < 10; i++) {
         addRecentModel({
-          id: `model-${i}`,
           displayName: `Model ${i}`,
+          id: `model-${i}`,
           provider: 'replicate',
         });
       }
@@ -302,8 +302,8 @@ describe('useSettingsStore', () => {
     it('should differentiate models by provider', () => {
       const { addRecentModel } = useSettingsStore.getState();
 
-      addRecentModel({ id: 'same-id', displayName: 'Model', provider: 'replicate' });
-      addRecentModel({ id: 'same-id', displayName: 'Model', provider: 'fal' });
+      addRecentModel({ displayName: 'Model', id: 'same-id', provider: 'replicate' });
+      addRecentModel({ displayName: 'Model', id: 'same-id', provider: 'fal' });
 
       const state = useSettingsStore.getState();
       expect(state.recentModels).toHaveLength(2);
@@ -312,7 +312,7 @@ describe('useSettingsStore', () => {
     it('should persist to localStorage', () => {
       const { addRecentModel } = useSettingsStore.getState();
 
-      addRecentModel({ id: 'model-1', displayName: 'Test', provider: 'replicate' });
+      addRecentModel({ displayName: 'Test', id: 'model-1', provider: 'replicate' });
 
       const stored = JSON.parse(localStorageMock.getItem('genfeed-settings') ?? '{}');
       expect(stored.recentModels).toHaveLength(1);
@@ -370,10 +370,10 @@ describe('useSettingsStore', () => {
     it('should clear all provider API keys', () => {
       useSettingsStore.setState({
         providers: {
-          replicate: { apiKey: 'key1', enabled: true },
           fal: { apiKey: 'key2', enabled: true },
-          huggingface: { apiKey: 'key3', enabled: true },
           'genfeed-ai': { apiKey: null, enabled: true },
+          huggingface: { apiKey: 'key3', enabled: true },
+          replicate: { apiKey: 'key1', enabled: true },
         },
       });
 
@@ -389,10 +389,10 @@ describe('useSettingsStore', () => {
     it('should preserve enabled states', () => {
       useSettingsStore.setState({
         providers: {
-          replicate: { apiKey: 'key1', enabled: true },
           fal: { apiKey: 'key2', enabled: true },
-          huggingface: { apiKey: 'key3', enabled: false },
           'genfeed-ai': { apiKey: null, enabled: true },
+          huggingface: { apiKey: 'key3', enabled: false },
+          replicate: { apiKey: 'key1', enabled: true },
         },
       });
 
@@ -514,11 +514,6 @@ describe('useSettingsStore', () => {
       localStorageMock.setItem(
         'genfeed-settings',
         JSON.stringify({
-          providers: {
-            replicate: { apiKey: 'stored_key', enabled: true },
-            fal: { apiKey: null, enabled: false },
-            huggingface: { apiKey: null, enabled: false },
-          },
           defaults: {
             imageModel: 'stored-model',
             imageProvider: 'fal',
@@ -526,8 +521,13 @@ describe('useSettingsStore', () => {
             videoProvider: 'replicate',
           },
           edgeStyle: 'smoothstep',
+          providers: {
+            fal: { apiKey: null, enabled: false },
+            huggingface: { apiKey: null, enabled: false },
+            replicate: { apiKey: 'stored_key', enabled: true },
+          },
           recentModels: [
-            { id: 'recent-1', displayName: 'Recent', provider: 'replicate', timestamp: 123 },
+            { displayName: 'Recent', id: 'recent-1', provider: 'replicate', timestamp: 123 },
           ],
         })
       );

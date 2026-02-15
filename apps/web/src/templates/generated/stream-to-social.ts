@@ -1,54 +1,136 @@
 import type { WorkflowTemplate } from '@genfeedai/types';
 
 export const STREAM_TO_SOCIAL_TEMPLATE: WorkflowTemplate = {
-  version: 1,
-  name: 'Stream to Short-Form Content',
+  createdAt: new Date().toISOString(),
   description:
     'Transform a 1-hour stream into engaging short-form content: transcribe → extract hot takes → generate intro + trim highlights → stitch → export',
+  edgeStyle: 'smoothstep',
+  edges: [
+    // Video Input → Transcribe
+    {
+      id: 'e-input-transcribe',
+      source: 'video-input',
+      sourceHandle: 'video',
+      target: 'transcribe',
+      targetHandle: 'video',
+    },
+
+    // Transcribe → LLM Analysis
+    {
+      id: 'e-transcribe-llm',
+      source: 'transcribe',
+      sourceHandle: 'text',
+      target: 'llm-analysis',
+      targetHandle: 'prompt',
+    },
+
+    // LLM → Video Gen (for intro prompt)
+    {
+      id: 'e-llm-videogen',
+      source: 'llm-analysis',
+      sourceHandle: 'text',
+      target: 'video-gen-intro',
+      targetHandle: 'prompt',
+    },
+
+    // Video Input → Trim Segment 1
+    {
+      id: 'e-input-trim1',
+      source: 'video-input',
+      sourceHandle: 'video',
+      target: 'trim-segment-1',
+      targetHandle: 'video',
+    },
+
+    // Video Input → Trim Segment 2
+    {
+      id: 'e-input-trim2',
+      source: 'video-input',
+      sourceHandle: 'video',
+      target: 'trim-segment-2',
+      targetHandle: 'video',
+    },
+
+    // Video Gen Intro → Stitch
+    {
+      id: 'e-intro-stitch',
+      source: 'video-gen-intro',
+      sourceHandle: 'video',
+      target: 'stitch',
+      targetHandle: 'videos',
+    },
+
+    // Trim Segment 1 → Stitch
+    {
+      id: 'e-trim1-stitch',
+      source: 'trim-segment-1',
+      sourceHandle: 'video',
+      target: 'stitch',
+      targetHandle: 'videos',
+    },
+
+    // Trim Segment 2 → Stitch
+    {
+      id: 'e-trim2-stitch',
+      source: 'trim-segment-2',
+      sourceHandle: 'video',
+      target: 'stitch',
+      targetHandle: 'videos',
+    },
+
+    // Stitch → Output
+    {
+      id: 'e-stitch-output',
+      source: 'stitch',
+      sourceHandle: 'video',
+      target: 'output',
+      targetHandle: 'video',
+    },
+  ],
+  name: 'Stream to Short-Form Content',
   nodes: [
     // Stage 1: Video Input
     {
-      id: 'video-input',
-      type: 'videoInput',
-      position: { x: 50, y: 400 },
       data: {
+        dimensions: null,
+        duration: null,
+        filename: null,
         label: '1h Stream',
+        source: 'upload',
         status: 'idle',
         video: null,
-        filename: null,
-        duration: null,
-        dimensions: null,
-        source: 'upload',
       },
+      id: 'video-input',
+      position: { x: 50, y: 400 },
+      type: 'videoInput',
     },
 
     // Stage 2: Transcribe
     {
-      id: 'transcribe',
-      type: 'transcribe',
-      position: { x: 350, y: 400 },
       data: {
-        label: 'Transcribe Stream',
-        status: 'idle',
-        inputVideo: null,
         inputAudio: null,
-        outputText: null,
-        language: 'auto',
-        timestamps: true,
+        inputVideo: null,
         jobId: null,
+        label: 'Transcribe Stream',
+        language: 'auto',
+        outputText: null,
+        status: 'idle',
+        timestamps: true,
       },
+      id: 'transcribe',
+      position: { x: 350, y: 400 },
+      type: 'transcribe',
     },
 
     // Stage 3: LLM - Extract Hot Takes & Segment Ideas
     {
-      id: 'llm-analysis',
-      type: 'llm',
-      position: { x: 650, y: 400 },
       data: {
-        label: 'Hot Takes Extractor',
-        status: 'idle',
         inputPrompt: null,
+        jobId: null,
+        label: 'Hot Takes Extractor',
+        maxTokens: 2048,
         outputText: null,
+        status: 'idle',
         systemPrompt: `You are a content strategist for viral social media. Analyze this stream transcript and extract:
 
 1. **HOOK (for intro video):** A compelling 30-second hook that captures the stream's best moment
@@ -67,184 +149,102 @@ export const STREAM_TO_SOCIAL_TEMPLATE: WorkflowTemplate = {
 
 Focus on content that will hook viewers in the first 3 seconds.`,
         temperature: 0.7,
-        maxTokens: 2048,
         topP: 0.9,
-        jobId: null,
       },
+      id: 'llm-analysis',
+      position: { x: 650, y: 400 },
+      type: 'llm',
     },
 
     // Stage 4a: Video Gen - AI Intro (1 min)
     {
-      id: 'video-gen-intro',
-      type: 'videoGen',
-      position: { x: 1000, y: 200 },
       data: {
-        label: 'AI Intro (1 min)',
-        status: 'idle',
+        aspectRatio: '16:9',
+        duration: 8,
+        generateAudio: true,
         inputImage: null,
-        lastFrame: null,
-        referenceImages: [],
         inputPrompt: null,
+        jobId: null,
+        label: 'AI Intro (1 min)',
+        lastFrame: null,
+        model: 'veo-3.1-fast',
         negativePrompt: 'blurry, distorted, low quality, watermark',
         outputVideo: null,
-        model: 'veo-3.1-fast',
-        duration: 8,
-        aspectRatio: '16:9',
+        referenceImages: [],
         resolution: '1080p',
-        generateAudio: true,
-        jobId: null,
+        status: 'idle',
       },
+      id: 'video-gen-intro',
+      position: { x: 1000, y: 200 },
+      type: 'videoGen',
     },
 
     // Stage 4b: Video Trim - Segment 1 (3-4 min)
     {
-      id: 'trim-segment-1',
-      type: 'videoTrim',
-      position: { x: 1000, y: 400 },
       data: {
-        label: 'Highlight 1 (3-4 min)',
-        status: 'idle',
+        duration: null,
+        endTime: 540,
         inputVideo: null,
+        jobId: null,
+        label: 'Highlight 1 (3-4 min)',
         outputVideo: null,
         startTime: 300,
-        endTime: 540,
-        duration: null,
-        jobId: null,
+        status: 'idle',
       },
+      id: 'trim-segment-1',
+      position: { x: 1000, y: 400 },
+      type: 'videoTrim',
     },
 
     // Stage 4c: Video Trim - Segment 2 (4-5 min)
     {
-      id: 'trim-segment-2',
-      type: 'videoTrim',
-      position: { x: 1000, y: 600 },
       data: {
-        label: 'Highlight 2 (4-5 min)',
-        status: 'idle',
+        duration: null,
+        endTime: 2100,
         inputVideo: null,
+        jobId: null,
+        label: 'Highlight 2 (4-5 min)',
         outputVideo: null,
         startTime: 1800,
-        endTime: 2100,
-        duration: null,
-        jobId: null,
+        status: 'idle',
       },
+      id: 'trim-segment-2',
+      position: { x: 1000, y: 600 },
+      type: 'videoTrim',
     },
 
     // Stage 5: Video Stitch
     {
-      id: 'stitch',
-      type: 'videoStitch',
-      position: { x: 1350, y: 400 },
       data: {
-        label: 'Combine All',
-        status: 'idle',
-        inputVideos: [],
-        outputVideo: null,
-        transitionType: 'crossfade',
-        transitionDuration: 0.5,
-        seamlessLoop: false,
         audioCodec: 'aac',
+        inputVideos: [],
+        label: 'Combine All',
         outputQuality: 'full',
+        outputVideo: null,
+        seamlessLoop: false,
+        status: 'idle',
+        transitionDuration: 0.5,
+        transitionType: 'crossfade',
       },
+      id: 'stitch',
+      position: { x: 1350, y: 400 },
+      type: 'videoStitch',
     },
 
     // Stage 6: Final Output
     {
-      id: 'output',
-      type: 'download',
-      position: { x: 1700, y: 400 },
       data: {
-        label: 'Final Output',
-        status: 'idle',
         inputMedia: null,
         inputType: 'video',
+        label: 'Final Output',
         outputName: 'stream-highlights',
+        status: 'idle',
       },
+      id: 'output',
+      position: { x: 1700, y: 400 },
+      type: 'download',
     },
   ],
-  edges: [
-    // Video Input → Transcribe
-    {
-      id: 'e-input-transcribe',
-      source: 'video-input',
-      target: 'transcribe',
-      sourceHandle: 'video',
-      targetHandle: 'video',
-    },
-
-    // Transcribe → LLM Analysis
-    {
-      id: 'e-transcribe-llm',
-      source: 'transcribe',
-      target: 'llm-analysis',
-      sourceHandle: 'text',
-      targetHandle: 'prompt',
-    },
-
-    // LLM → Video Gen (for intro prompt)
-    {
-      id: 'e-llm-videogen',
-      source: 'llm-analysis',
-      target: 'video-gen-intro',
-      sourceHandle: 'text',
-      targetHandle: 'prompt',
-    },
-
-    // Video Input → Trim Segment 1
-    {
-      id: 'e-input-trim1',
-      source: 'video-input',
-      target: 'trim-segment-1',
-      sourceHandle: 'video',
-      targetHandle: 'video',
-    },
-
-    // Video Input → Trim Segment 2
-    {
-      id: 'e-input-trim2',
-      source: 'video-input',
-      target: 'trim-segment-2',
-      sourceHandle: 'video',
-      targetHandle: 'video',
-    },
-
-    // Video Gen Intro → Stitch
-    {
-      id: 'e-intro-stitch',
-      source: 'video-gen-intro',
-      target: 'stitch',
-      sourceHandle: 'video',
-      targetHandle: 'videos',
-    },
-
-    // Trim Segment 1 → Stitch
-    {
-      id: 'e-trim1-stitch',
-      source: 'trim-segment-1',
-      target: 'stitch',
-      sourceHandle: 'video',
-      targetHandle: 'videos',
-    },
-
-    // Trim Segment 2 → Stitch
-    {
-      id: 'e-trim2-stitch',
-      source: 'trim-segment-2',
-      target: 'stitch',
-      sourceHandle: 'video',
-      targetHandle: 'videos',
-    },
-
-    // Stitch → Output
-    {
-      id: 'e-stitch-output',
-      source: 'stitch',
-      target: 'output',
-      sourceHandle: 'video',
-      targetHandle: 'video',
-    },
-  ],
-  edgeStyle: 'smoothstep',
-  createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
+  version: 1,
 };

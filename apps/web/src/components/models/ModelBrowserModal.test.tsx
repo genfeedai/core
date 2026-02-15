@@ -13,13 +13,13 @@ const { mockAddRecentModel } = vi.hoisted(() => ({
 // useSettingsStore((s) => s.providers.replicate.apiKey) etc.
 vi.mock('@/store/settingsStore', () => {
   const state = {
-    recentModels: [{ id: 'flux-dev', displayName: 'FLUX.1-dev', provider: 'replicate' }],
     addRecentModel: mockAddRecentModel,
     providers: {
-      replicate: { apiKey: 'test-key' },
       fal: { apiKey: null },
       huggingface: { apiKey: null },
+      replicate: { apiKey: 'test-key' },
     },
+    recentModels: [{ displayName: 'FLUX.1-dev', id: 'flux-dev', provider: 'replicate' }],
   };
 
   return {
@@ -29,7 +29,7 @@ vi.mock('@/store/settingsStore', () => {
 
 // Mock logger to prevent console output in tests
 vi.mock('@/lib/logger', () => ({
-  logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
+  logger: { debug: vi.fn(), error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
 // Mock UI components
@@ -64,36 +64,36 @@ describe('ModelBrowserModal', () => {
 
   const mockModels: ProviderModel[] = [
     {
-      id: 'flux-dev',
-      displayName: 'FLUX.1-dev',
-      provider: 'replicate',
       capabilities: ['text-to-image'],
       description: 'High quality image generation',
+      displayName: 'FLUX.1-dev',
+      id: 'flux-dev',
       pricing: '$0.05/image',
+      provider: 'replicate',
     },
     {
-      id: 'stable-diffusion-xl',
-      displayName: 'Stable Diffusion XL',
-      provider: 'replicate',
       capabilities: ['text-to-image', 'image-to-image'],
       description: 'Fast image generation',
+      displayName: 'Stable Diffusion XL',
+      id: 'stable-diffusion-xl',
       pricing: '$0.02/image',
+      provider: 'replicate',
     },
     {
-      id: 'fal-flux',
-      displayName: 'FAL FLUX',
-      provider: 'fal',
       capabilities: ['text-to-image'],
+      displayName: 'FAL FLUX',
+      id: 'fal-flux',
+      provider: 'fal',
     },
   ];
 
   const mockFetchResponse = {
-    ok: true,
     json: () =>
       Promise.resolve({
-        models: mockModels,
         configuredProviders: ['replicate', 'fal', 'huggingface'],
+        models: mockModels,
       }),
+    ok: true,
   };
 
   beforeEach(() => {
@@ -240,8 +240,8 @@ describe('ModelBrowserModal', () => {
       if (modelCard) fireEvent.click(modelCard);
 
       expect(mockAddRecentModel).toHaveBeenCalledWith({
-        id: 'flux-dev',
         displayName: 'FLUX.1-dev',
+        id: 'flux-dev',
         provider: 'replicate',
       });
     });
@@ -303,8 +303,8 @@ describe('ModelBrowserModal', () => {
   describe('empty state', () => {
     it('should show empty state when no models found', async () => {
       global.fetch = vi.fn().mockResolvedValue({
+        json: () => Promise.resolve({ configuredProviders: [], models: [] }),
         ok: true,
-        json: () => Promise.resolve({ models: [], configuredProviders: [] }),
       }) as unknown as typeof fetch;
 
       render(<ModelBrowserModal {...defaultProps} />);
@@ -326,12 +326,12 @@ describe('ModelBrowserModal', () => {
 
     it('should use singular form for one model', async () => {
       global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
         json: () =>
           Promise.resolve({
-            models: [mockModels[0]],
             configuredProviders: ['replicate'],
+            models: [mockModels[0]],
           }),
+        ok: true,
       }) as unknown as typeof fetch;
 
       render(<ModelBrowserModal {...defaultProps} />);

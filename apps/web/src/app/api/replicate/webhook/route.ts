@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     const { id, status, output, error } = body;
 
     // Store the result
-    setWebhookResult(id, { status, output, error });
+    setWebhookResult(id, { error, output, status });
 
     return NextResponse.json({ received: true });
   } catch (error) {

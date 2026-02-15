@@ -51,9 +51,9 @@ function AIGeneratorPanelComponent() {
     abortControllerRef.current = controller;
 
     const userMessage: Message = {
+      content: input.trim(),
       id: `msg-${++messageId}`,
       role: 'user',
-      content: input.trim(),
       timestamp: new Date(),
     };
 
@@ -64,29 +64,29 @@ function AIGeneratorPanelComponent() {
 
     try {
       const conversationHistory = messages.map((m) => ({
-        role: m.role,
         content: m.content,
+        role: m.role,
       }));
 
       const response = await fetch('/api/ai/generate-workflow', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: userMessage.content,
           conversationHistory,
+          prompt: userMessage.content,
         }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
         signal: controller.signal,
       });
 
       const data = await response.json();
 
       const assistantMessage: Message = {
+        content: data.message || data.error || 'Failed to generate workflow',
+        error: !data.success,
         id: `msg-${++messageId}`,
         role: 'assistant',
-        content: data.message || data.error || 'Failed to generate workflow',
-        workflow: data.workflow,
         timestamp: new Date(),
-        error: !data.success,
+        workflow: data.workflow,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -96,11 +96,11 @@ function AIGeneratorPanelComponent() {
       if (controller.signal.aborted) return;
 
       const errorMessage: Message = {
+        content: error instanceof Error ? error.message : 'Failed to connect to AI service',
+        error: true,
         id: `msg-${++messageId}`,
         role: 'assistant',
-        content: error instanceof Error ? error.message : 'Failed to connect to AI service',
         timestamp: new Date(),
-        error: true,
       };
       setMessages((prev) => [...prev, errorMessage]);
       scrollToBottom();

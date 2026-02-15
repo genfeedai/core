@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, type TestingModule } from '@nestjs/testing';
-import { TemplateCategory } from '@genfeedai/types';
+import { WorkflowTemplateCategory } from '@genfeedai/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Template } from '@/schemas/template.schema';
 import { TemplatesService } from '@/services/templates.service';
@@ -19,9 +19,10 @@ describe('TemplatesService', () => {
     mockTemplate = createMockTemplate();
     return createConstructableMockModel(
       {
+        create: vi.fn().mockResolvedValue(mockTemplate),
         find: vi.fn().mockReturnValue({
-          sort: vi.fn().mockReturnThis(),
           exec: vi.fn().mockResolvedValue([mockTemplate]),
+          sort: vi.fn().mockReturnThis(),
         }),
         findOne: vi.fn().mockReturnValue({
           exec: vi.fn().mockResolvedValue(mockTemplate),
@@ -29,7 +30,6 @@ describe('TemplatesService', () => {
         findOneAndUpdate: vi.fn().mockReturnValue({
           exec: vi.fn().mockResolvedValue(mockTemplate),
         }),
-        create: vi.fn().mockResolvedValue(mockTemplate),
         updateOne: vi.fn().mockReturnValue({
           exec: vi.fn().mockResolvedValue({ modifiedCount: 1 }),
         }),
@@ -60,11 +60,11 @@ describe('TemplatesService', () => {
   describe('create', () => {
     it('should create a new template', async () => {
       const dto = {
-        name: 'Test Template',
+        category: WorkflowTemplateCategory.IMAGE,
         description: 'A test template',
-        category: TemplateCategory.IMAGE,
-        nodes: [],
         edges: [],
+        name: 'Test Template',
+        nodes: [],
       };
 
       const result = await service.create(dto);
@@ -74,7 +74,7 @@ describe('TemplatesService', () => {
     });
 
     it('should create template with default values', async () => {
-      const dto = { name: 'Minimal Template', category: TemplateCategory.IMAGE };
+      const dto = { category: WorkflowTemplateCategory.IMAGE, name: 'Minimal Template' };
 
       const result = await service.create(dto);
 
@@ -91,7 +91,7 @@ describe('TemplatesService', () => {
     });
 
     it('should filter by category', async () => {
-      const result = await service.findAll({ category: TemplateCategory.IMAGE });
+      const result = await service.findAll({ category: WorkflowTemplateCategory.IMAGE });
 
       expect(result).toHaveLength(1);
     });

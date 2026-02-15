@@ -12,26 +12,26 @@ vi.mock('@nestjs/bullmq', () => ({
     forRootAsync: vi.fn().mockReturnValue({ module: class {} }),
     registerQueue: vi.fn().mockReturnValue({ module: class {} }),
   },
+  InjectQueue: () => vi.fn(),
+  OnWorkerEvent: () => vi.fn(),
   Processor: () => vi.fn(),
   WorkerHost: class {},
-  OnWorkerEvent: () => vi.fn(),
-  InjectQueue: () => vi.fn(),
 }));
 
 // Mock bullmq directly as well
 vi.mock('bullmq', () => ({
   Queue: vi.fn().mockImplementation(() => ({
     add: vi.fn().mockResolvedValue({ id: 'mock-job-id' }),
+    close: vi.fn().mockResolvedValue(undefined),
     getJob: vi.fn().mockResolvedValue(null),
-    close: vi.fn().mockResolvedValue(undefined),
-  })),
-  Worker: vi.fn().mockImplementation(() => ({
-    on: vi.fn(),
-    close: vi.fn().mockResolvedValue(undefined),
   })),
   QueueEvents: vi.fn().mockImplementation(() => ({
-    on: vi.fn(),
     close: vi.fn().mockResolvedValue(undefined),
+    on: vi.fn(),
+  })),
+  Worker: vi.fn().mockImplementation(() => ({
+    close: vi.fn().mockResolvedValue(undefined),
+    on: vi.fn(),
   })),
 }));
 

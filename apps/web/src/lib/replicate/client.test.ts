@@ -6,9 +6,9 @@ import { calculateCost, MODELS, PRICING } from './client';
 vi.mock('replicate', () => ({
   default: vi.fn().mockImplementation(() => ({
     predictions: {
+      cancel: vi.fn(),
       create: vi.fn(),
       get: vi.fn(),
-      cancel: vi.fn(),
     },
     run: vi.fn(),
   })),

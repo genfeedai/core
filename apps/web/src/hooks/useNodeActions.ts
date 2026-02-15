@@ -39,18 +39,18 @@ function createPastePayload(
   // Create new nodes with remapped IDs and offset positions
   const newNodes: WorkflowNode[] = clipboardNodes.map((node) => ({
     ...node,
+    data: {
+      ...node.data,
+      error: undefined,
+      jobId: null,
+      status: 'idle',
+    } as WorkflowNodeData,
     id: idMap.get(node.id)!,
     position: {
       x: node.position.x - minX + offsetX,
       y: node.position.y - minY + offsetY,
     },
     selected: true,
-    data: {
-      ...node.data,
-      status: 'idle',
-      jobId: null,
-      error: undefined,
-    } as WorkflowNodeData,
   }));
 
   // Remap edges to use new node IDs
@@ -61,7 +61,7 @@ function createPastePayload(
     target: idMap.get(edge.target)!,
   }));
 
-  return { nodes: newNodes, edges: newEdges };
+  return { edges: newEdges, nodes: newNodes };
 }
 
 export function useNodeActions() {
@@ -90,7 +90,7 @@ export function useNodeActions() {
       const node = nodes.find((n) => n.id === nodeId);
       if (node) {
         // Copy the node and any edges between copied nodes (just one node here)
-        setClipboard({ nodes: [node], edges: [], isCut: false });
+        setClipboard({ edges: [], isCut: false, nodes: [node] });
       }
     },
     [nodes]
@@ -103,7 +103,7 @@ export function useNodeActions() {
       // Copy edges that connect nodes within the selection
       const edgesToCopy = edges.filter((e) => nodeSet.has(e.source) && nodeSet.has(e.target));
       if (nodesToCopy.length > 0) {
-        setClipboard({ nodes: nodesToCopy, edges: edgesToCopy, isCut: false });
+        setClipboard({ edges: edgesToCopy, isCut: false, nodes: nodesToCopy });
       }
     },
     [nodes, edges]
@@ -113,7 +113,7 @@ export function useNodeActions() {
     (nodeId: string) => {
       const node = nodes.find((n) => n.id === nodeId);
       if (node) {
-        setClipboard({ nodes: [node], edges: [], isCut: true });
+        setClipboard({ edges: [], isCut: true, nodes: [node] });
         removeNode(nodeId);
       }
     },
@@ -126,7 +126,7 @@ export function useNodeActions() {
       const nodesToCut = nodes.filter((n) => nodeSet.has(n.id));
       const edgesToCut = edges.filter((e) => nodeSet.has(e.source) && nodeSet.has(e.target));
       if (nodesToCut.length > 0) {
-        setClipboard({ nodes: nodesToCut, edges: edgesToCut, isCut: true });
+        setClipboard({ edges: edgesToCut, isCut: true, nodes: nodesToCut });
         for (const nodeId of nodeIds) {
           removeNode(nodeId);
         }
@@ -174,8 +174,8 @@ export function useNodeActions() {
       }
 
       return {
-        nodeIds: payload.nodes.map((n) => n.id),
         edgeIds: payload.edges.map((e) => e.id),
+        nodeIds: payload.nodes.map((n) => n.id),
       };
     },
     [clipboard]
@@ -203,15 +203,15 @@ export function useNodeActions() {
 
   return {
     clipboard,
+    copyMultipleNodes,
+    copyNode,
+    cutMultipleNodes,
+    cutNode,
+    deleteMultipleNodes,
     deleteNode,
     duplicate,
-    copyNode,
-    copyMultipleNodes,
-    cutNode,
-    cutMultipleNodes,
-    deleteMultipleNodes,
     duplicateMultipleNodes,
-    pasteNodes,
     getPasteData,
+    pasteNodes,
   };
 }

@@ -24,20 +24,20 @@ import { useWorkflowStore } from '@/store/workflowStore';
 
 describe('GenerateWorkflowModal', () => {
   const mockGeneratedWorkflow = {
-    name: 'Generated Workflow',
     description: 'An AI-generated workflow',
-    nodes: [
-      { id: 'node-1', type: 'prompt', position: { x: 0, y: 0 }, data: { label: 'Prompt' } },
-      { id: 'node-2', type: 'imageGen', position: { x: 300, y: 0 }, data: { label: 'Image Gen' } },
-    ],
     edges: [
       {
         id: 'edge-1',
         source: 'node-1',
-        target: 'node-2',
         sourceHandle: 'text',
+        target: 'node-2',
         targetHandle: 'prompt',
       },
+    ],
+    name: 'Generated Workflow',
+    nodes: [
+      { data: { label: 'Prompt' }, id: 'node-1', position: { x: 0, y: 0 }, type: 'prompt' },
+      { data: { label: 'Image Gen' }, id: 'node-2', position: { x: 300, y: 0 }, type: 'imageGen' },
     ],
   };
 
@@ -153,8 +153,8 @@ describe('GenerateWorkflowModal', () => {
   describe('workflow generation', () => {
     it('should call API on generate', async () => {
       vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
         json: () => Promise.resolve(mockGeneratedWorkflow),
+        ok: true,
       } as Response);
 
       render(<GenerateWorkflowModal />);
@@ -167,13 +167,13 @@ describe('GenerateWorkflowModal', () => {
 
       await waitFor(() => {
         expect(global.fetch).toHaveBeenCalledWith('/api/workflows/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            description: 'Test description',
             contentLevel: 'minimal',
+            description: 'Test description',
             model: 'meta/meta-llama-3.1-70b-instruct',
           }),
+          headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
         });
       });
     });
@@ -185,8 +185,8 @@ describe('GenerateWorkflowModal', () => {
             setTimeout(
               () =>
                 resolve({
-                  ok: true,
                   json: () => Promise.resolve(mockGeneratedWorkflow),
+                  ok: true,
                 } as Response),
               1000
             )
@@ -206,8 +206,8 @@ describe('GenerateWorkflowModal', () => {
 
     it('should display generated workflow preview', async () => {
       vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
         json: () => Promise.resolve(mockGeneratedWorkflow),
+        ok: true,
       } as Response);
 
       render(<GenerateWorkflowModal />);
@@ -226,8 +226,8 @@ describe('GenerateWorkflowModal', () => {
 
     it('should show apply button after generation', async () => {
       vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
         json: () => Promise.resolve(mockGeneratedWorkflow),
+        ok: true,
       } as Response);
 
       render(<GenerateWorkflowModal />);
@@ -247,8 +247,8 @@ describe('GenerateWorkflowModal', () => {
   describe('apply workflow', () => {
     it('should call loadWorkflow when applying', async () => {
       vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
         json: () => Promise.resolve(mockGeneratedWorkflow),
+        ok: true,
       } as Response);
 
       render(<GenerateWorkflowModal />);
@@ -268,17 +268,17 @@ describe('GenerateWorkflowModal', () => {
 
       expect(mockLoadWorkflow).toHaveBeenCalledWith(
         expect.objectContaining({
+          edges: mockGeneratedWorkflow.edges,
           name: 'Generated Workflow',
           nodes: mockGeneratedWorkflow.nodes,
-          edges: mockGeneratedWorkflow.edges,
         })
       );
     });
 
     it('should close modal after applying', async () => {
       vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: true,
         json: () => Promise.resolve(mockGeneratedWorkflow),
+        ok: true,
       } as Response);
 
       render(<GenerateWorkflowModal />);
@@ -303,8 +303,8 @@ describe('GenerateWorkflowModal', () => {
   describe('error handling', () => {
     it('should display error when API fails', async () => {
       vi.mocked(global.fetch).mockResolvedValueOnce({
-        ok: false,
         json: () => Promise.resolve({ message: 'Generation failed' }),
+        ok: false,
       } as Response);
 
       render(<GenerateWorkflowModal />);

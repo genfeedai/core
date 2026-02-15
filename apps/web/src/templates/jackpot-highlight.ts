@@ -1,35 +1,115 @@
 import type { WorkflowTemplate } from '@genfeedai/types';
 
 export const JACKPOT_HIGHLIGHT_TEMPLATE: WorkflowTemplate = {
-  version: 1,
-  name: 'Jackpot Highlight',
+  createdAt: new Date().toISOString(),
   description:
     'Big win celebration clip: generate hero visual from win details, animate with zoom/pan, overlay winner amount, add excitement voiceover',
+  edgeStyle: 'smoothstep',
+  edges: [
+    // Concept → LLM
+    {
+      id: 'e-concept-llm',
+      source: 'concept',
+      sourceHandle: 'text',
+      target: 'llm-scene',
+      targetHandle: 'prompt',
+    },
+
+    // LLM → Image
+    {
+      id: 'e-llm-img',
+      source: 'llm-scene',
+      sourceHandle: 'text',
+      target: 'imageGen',
+      targetHandle: 'prompt',
+    },
+
+    // Image → Video
+    {
+      id: 'e-img-vid',
+      source: 'imageGen',
+      sourceHandle: 'image',
+      target: 'videoGen',
+      targetHandle: 'image',
+    },
+
+    // LLM → Video (motion prompt)
+    {
+      id: 'e-llm-vid',
+      source: 'llm-scene',
+      sourceHandle: 'text',
+      target: 'videoGen',
+      targetHandle: 'prompt',
+    },
+
+    // Image → Annotation (for overlay editing)
+    {
+      id: 'e-img-annotation',
+      source: 'imageGen',
+      sourceHandle: 'image',
+      target: 'annotation',
+      targetHandle: 'image',
+    },
+
+    // LLM → TTS (celebration script)
+    {
+      id: 'e-llm-tts',
+      source: 'llm-scene',
+      sourceHandle: 'text',
+      target: 'tts',
+      targetHandle: 'text',
+    },
+
+    // Video + TTS → Voice Mix
+    {
+      id: 'e-vid-mix',
+      source: 'videoGen',
+      sourceHandle: 'video',
+      target: 'voice-mix',
+      targetHandle: 'video',
+    },
+    {
+      id: 'e-tts-mix',
+      source: 'tts',
+      sourceHandle: 'audio',
+      target: 'voice-mix',
+      targetHandle: 'audio',
+    },
+
+    // Voice Mix → Output
+    {
+      id: 'e-mix-output',
+      source: 'voice-mix',
+      sourceHandle: 'video',
+      target: 'output',
+      targetHandle: 'video',
+    },
+  ],
+  name: 'Jackpot Highlight',
   nodes: [
     // Stage 1: Win Details Input
     {
-      id: 'concept',
-      type: 'prompt',
-      position: { x: 50, y: 300 },
       data: {
         label: 'Win Details',
-        status: 'idle',
         prompt:
           '$250,000 JACKPOT on Mega Fortune slot — progressive jackpot hit, gold coins explosion, luxury lifestyle theme',
+        status: 'idle',
         variables: {},
       },
+      id: 'concept',
+      position: { x: 50, y: 300 },
+      type: 'prompt',
     },
 
     // Stage 2: LLM — visual scene + celebration script
     {
-      id: 'llm-scene',
-      type: 'llm',
-      position: { x: 350, y: 300 },
       data: {
-        label: 'Scene & Script Writer',
-        status: 'idle',
         inputPrompt: null,
+        jobId: null,
+        label: 'Scene & Script Writer',
+        maxTokens: 1024,
         outputText: null,
+        status: 'idle',
         systemPrompt: `You are a casino content creator specializing in jackpot celebration videos. Generate:
 
 1. A detailed hero image prompt for the winning moment:
@@ -46,200 +126,120 @@ Format: [VISUAL] detailed image prompt [/VISUAL]
 
 Format: [VOICE] voiceover script [/VOICE]`,
         temperature: 0.8,
-        maxTokens: 1024,
         topP: 0.9,
-        jobId: null,
       },
+      id: 'llm-scene',
+      position: { x: 350, y: 300 },
+      type: 'llm',
     },
 
     // Stage 3: Image Generation — hero visual
     {
-      id: 'imageGen',
-      type: 'imageGen',
-      position: { x: 700, y: 200 },
       data: {
-        label: 'Hero Visual',
-        status: 'idle',
+        aspectRatio: '16:9',
         inputImages: [],
         inputPrompt: null,
-        outputImage: null,
-        model: 'nano-banana-pro',
-        aspectRatio: '16:9',
-        resolution: '2K',
-        outputFormat: 'jpg',
         jobId: null,
+        label: 'Hero Visual',
+        model: 'nano-banana-pro',
+        outputFormat: 'jpg',
+        outputImage: null,
+        resolution: '2K',
+        status: 'idle',
       },
+      id: 'imageGen',
+      position: { x: 700, y: 200 },
+      type: 'imageGen',
     },
 
     // Stage 4: Video Generation — zoom/pan animation
     {
-      id: 'videoGen',
-      type: 'videoGen',
-      position: { x: 1050, y: 200 },
       data: {
-        label: 'Animated Scene',
-        status: 'idle',
+        aspectRatio: '16:9',
+        duration: 8,
+        generateAudio: false,
         inputImage: null,
-        lastFrame: null,
-        referenceImages: [],
         inputPrompt: null,
+        jobId: null,
+        label: 'Animated Scene',
+        lastFrame: null,
+        model: 'veo-3.1',
         negativePrompt: 'blurry, distorted, low quality',
         outputVideo: null,
-        model: 'veo-3.1',
-        duration: 8,
-        aspectRatio: '16:9',
+        referenceImages: [],
         resolution: '1080p',
-        generateAudio: false,
-        jobId: null,
+        status: 'idle',
       },
+      id: 'videoGen',
+      position: { x: 1050, y: 200 },
+      type: 'videoGen',
     },
 
     // Stage 5: Annotation — winner amount overlay
     {
-      id: 'annotation',
-      type: 'annotation',
-      position: { x: 1050, y: 450 },
       data: {
-        label: 'Amount Overlay',
-        status: 'idle',
-        inputImage: null,
-        outputImage: null,
         annotations: [],
         hasAnnotations: false,
+        inputImage: null,
+        label: 'Amount Overlay',
+        outputImage: null,
+        status: 'idle',
       },
+      id: 'annotation',
+      position: { x: 1050, y: 450 },
+      type: 'annotation',
     },
 
     // Stage 6: Text to Speech — excitement voiceover
     {
-      id: 'tts',
-      type: 'textToSpeech',
-      position: { x: 700, y: 500 },
       data: {
-        label: 'Excitement Voiceover',
-        status: 'idle',
         inputText: null,
+        jobId: null,
+        label: 'Excitement Voiceover',
         outputAudio: null,
         provider: 'elevenlabs',
-        voice: 'adam',
-        stability: 0.4,
         similarityBoost: 0.9,
         speed: 1.2,
-        jobId: null,
+        stability: 0.4,
+        status: 'idle',
+        voice: 'adam',
       },
+      id: 'tts',
+      position: { x: 700, y: 500 },
+      type: 'textToSpeech',
     },
 
     // Stage 7: Voice Change — mix voiceover onto video
     {
-      id: 'voice-mix',
-      type: 'voiceChange',
-      position: { x: 1400, y: 300 },
       data: {
-        label: 'Audio Mixer',
-        status: 'idle',
-        inputVideo: null,
+        audioMixLevel: 0.9,
         inputAudio: null,
+        inputVideo: null,
+        jobId: null,
+        label: 'Audio Mixer',
         outputVideo: null,
         preserveOriginalAudio: false,
-        audioMixLevel: 0.9,
-        jobId: null,
+        status: 'idle',
       },
+      id: 'voice-mix',
+      position: { x: 1400, y: 300 },
+      type: 'voiceChange',
     },
 
     // Output
     {
-      id: 'output',
-      type: 'download',
-      position: { x: 1750, y: 300 },
       data: {
-        label: 'Final Highlight',
-        status: 'idle',
         inputMedia: null,
         inputType: 'video',
+        label: 'Final Highlight',
         outputName: 'jackpot-highlight',
+        status: 'idle',
       },
+      id: 'output',
+      position: { x: 1750, y: 300 },
+      type: 'download',
     },
   ],
-  edges: [
-    // Concept → LLM
-    {
-      id: 'e-concept-llm',
-      source: 'concept',
-      target: 'llm-scene',
-      sourceHandle: 'text',
-      targetHandle: 'prompt',
-    },
-
-    // LLM → Image
-    {
-      id: 'e-llm-img',
-      source: 'llm-scene',
-      target: 'imageGen',
-      sourceHandle: 'text',
-      targetHandle: 'prompt',
-    },
-
-    // Image → Video
-    {
-      id: 'e-img-vid',
-      source: 'imageGen',
-      target: 'videoGen',
-      sourceHandle: 'image',
-      targetHandle: 'image',
-    },
-
-    // LLM → Video (motion prompt)
-    {
-      id: 'e-llm-vid',
-      source: 'llm-scene',
-      target: 'videoGen',
-      sourceHandle: 'text',
-      targetHandle: 'prompt',
-    },
-
-    // Image → Annotation (for overlay editing)
-    {
-      id: 'e-img-annotation',
-      source: 'imageGen',
-      target: 'annotation',
-      sourceHandle: 'image',
-      targetHandle: 'image',
-    },
-
-    // LLM → TTS (celebration script)
-    {
-      id: 'e-llm-tts',
-      source: 'llm-scene',
-      target: 'tts',
-      sourceHandle: 'text',
-      targetHandle: 'text',
-    },
-
-    // Video + TTS → Voice Mix
-    {
-      id: 'e-vid-mix',
-      source: 'videoGen',
-      target: 'voice-mix',
-      sourceHandle: 'video',
-      targetHandle: 'video',
-    },
-    {
-      id: 'e-tts-mix',
-      source: 'tts',
-      target: 'voice-mix',
-      sourceHandle: 'audio',
-      targetHandle: 'audio',
-    },
-
-    // Voice Mix → Output
-    {
-      id: 'e-mix-output',
-      source: 'voice-mix',
-      target: 'output',
-      sourceHandle: 'video',
-      targetHandle: 'video',
-    },
-  ],
-  edgeStyle: 'smoothstep',
-  createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
+  version: 1,
 };

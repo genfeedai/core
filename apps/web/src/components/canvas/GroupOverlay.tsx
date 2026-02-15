@@ -52,10 +52,10 @@ function calculateGroupBounds(
 
   const padding = 24;
   return {
+    height: maxY - minY + padding * 2 + HEADER_HEIGHT,
+    width: maxX - minX + padding * 2,
     x: minX - padding,
     y: minY - padding - HEADER_HEIGHT,
-    width: maxX - minX + padding * 2,
-    height: maxY - minY + padding * 2 + HEADER_HEIGHT,
   };
 }
 
@@ -80,10 +80,10 @@ function GroupBackground({ group, bounds }: GroupBackgroundProps) {
         group.isLocked && 'opacity-60'
       )}
       style={{
+        height: bounds.height,
         left: bounds.x,
         top: bounds.y,
         width: bounds.width,
-        height: bounds.height,
       }}
     />
   );
@@ -257,10 +257,10 @@ function GroupControls({ group, bounds, nodeMap, zoom }: GroupControlsProps) {
           group.isLocked && 'opacity-60'
         )}
         style={{
+          height: HEADER_HEIGHT,
           left: bounds.x,
           top: bounds.y,
           width: bounds.width,
-          height: HEADER_HEIGHT,
         }}
       >
         {/* Editable Name */}
@@ -392,7 +392,7 @@ function GroupBackgroundsPortalComponent() {
 
   return (
     <ViewportPortal>
-      <div style={{ position: 'absolute', top: 0, left: 0, zIndex: -1, pointerEvents: 'none' }}>
+      <div style={{ left: 0, pointerEvents: 'none', position: 'absolute', top: 0, zIndex: -1 }}>
         {groups.map((group) => {
           const bounds = groupBounds.get(group.id);
           if (!bounds) return null;
@@ -433,7 +433,7 @@ function GroupControlsOverlayComponent() {
 
   return (
     <ViewportPortal>
-      <div style={{ position: 'absolute', top: 0, left: 0, zIndex: 1000, pointerEvents: 'none' }}>
+      <div style={{ left: 0, pointerEvents: 'none', position: 'absolute', top: 0, zIndex: 1000 }}>
         {groups.map((group) => {
           const bounds = groupBounds.get(group.id);
           if (!bounds) return null;

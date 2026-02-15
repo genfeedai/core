@@ -9,14 +9,9 @@ import {
   WORKFLOW_EXPORT_VERSION,
   type WorkflowExport,
 } from '@/interfaces/workflow-export.interface';
+import type { WorkflowNode } from '@/interfaces/workflow.interface';
 import { Workflow, type WorkflowDocument } from '@/schemas/workflow.schema';
 import { WorkflowInterfaceService } from '@/services/workflow-interface.service';
-
-interface WorkflowNode {
-  id: string;
-  type: string;
-  data: Record<string, unknown>;
-}
 
 // Node types that can produce media outputs for thumbnails
 const MEDIA_OUTPUT_NODE_TYPES = new Set([
@@ -44,14 +39,14 @@ export class WorkflowsService {
     const isReusable = workflowInterface.inputs.length > 0 || workflowInterface.outputs.length > 0;
 
     const workflow = new this.workflowModel({
-      name: dto.name,
       description: dto.description ?? '',
-      nodes: dto.nodes ?? [],
-      edges: dto.edges ?? [],
       edgeStyle: dto.edgeStyle ?? 'smoothstep',
+      edges: dto.edges ?? [],
       groups: dto.groups ?? [],
       interface: workflowInterface,
       isReusable,
+      name: dto.name,
+      nodes: dto.nodes ?? [],
       thumbnail: dto.thumbnail ?? null,
       thumbnailNodeId: dto.thumbnailNodeId ?? null,
     });
@@ -132,7 +127,7 @@ export class WorkflowsService {
       if (data.status !== 'complete') continue;
 
       if (data.outputVideo && typeof data.outputVideo === 'string') {
-        return { url: data.outputVideo, nodeId: node.id };
+        return { nodeId: node.id, url: data.outputVideo };
       }
     }
 
@@ -144,7 +139,7 @@ export class WorkflowsService {
       if (data.status !== 'complete') continue;
 
       if (data.outputImage && typeof data.outputImage === 'string') {
-        return { url: data.outputImage, nodeId: node.id };
+        return { nodeId: node.id, url: data.outputImage };
       }
     }
 
@@ -190,14 +185,14 @@ export class WorkflowsService {
     const isReusable = workflowInterface.inputs.length > 0 || workflowInterface.outputs.length > 0;
 
     const duplicate = new this.workflowModel({
-      name: `${original.name} (copy)`,
       description: original.description,
-      nodes: original.nodes,
-      edges: original.edges,
       edgeStyle: original.edgeStyle,
+      edges: original.edges,
       groups: original.groups,
       interface: workflowInterface,
       isReusable,
+      name: `${original.name} (copy)`,
+      nodes: original.nodes,
       thumbnail: original.thumbnail,
       thumbnailNodeId: original.thumbnailNodeId,
     });
@@ -274,10 +269,10 @@ export class WorkflowsService {
       }
 
       return {
-        id: node.id,
-        type: node.type,
-        position: (node as unknown as { position: { x: number; y: number } }).position,
         data: cleanData,
+        id: node.id,
+        position: (node as unknown as { position: { x: number; y: number } }).position,
+        type: node.type,
       };
     });
 
@@ -293,8 +288,8 @@ export class WorkflowsService {
     ).map((edge) => ({
       id: edge.id,
       source: edge.source,
-      target: edge.target,
       sourceHandle: edge.sourceHandle,
+      target: edge.target,
       targetHandle: edge.targetHandle,
       type: edge.type,
     }));
@@ -309,29 +304,29 @@ export class WorkflowsService {
         collapsed?: boolean;
       }>
     ).map((group) => ({
+      collapsed: group.collapsed,
+      color: group.color,
       id: group.id,
+      isLocked: group.isLocked,
       name: group.name,
       nodeIds: group.nodeIds,
-      isLocked: group.isLocked,
-      color: group.color,
-      collapsed: group.collapsed,
     }));
 
     this.logger.log(`Exported workflow ${id}: ${workflow.name}`);
 
     return {
-      name: workflow.name,
       description: workflow.description ?? '',
-      version: WORKFLOW_EXPORT_VERSION,
-      nodes: exportNodes,
-      edges: exportEdges,
       edgeStyle: workflow.edgeStyle ?? 'smoothstep',
+      edges: exportEdges,
       groups: exportGroups,
       metadata: {
         exportedAt: new Date().toISOString(),
         exportedFrom: 'genfeed-core',
         originalId: id,
       },
+      name: workflow.name,
+      nodes: exportNodes,
+      version: WORKFLOW_EXPORT_VERSION,
     };
   }
 
@@ -351,11 +346,11 @@ export class WorkflowsService {
 
       return {
         ...node,
-        id: newId,
         data: {
           ...node.data,
           status: 'idle', // Reset status
         },
+        id: newId,
       };
     });
 
@@ -376,12 +371,12 @@ export class WorkflowsService {
 
     // Create the workflow
     const createDto: CreateWorkflowDto = {
-      name: dto.name,
       description: dto.description,
-      nodes: importedNodes,
-      edges: importedEdges,
       edgeStyle: dto.edgeStyle ?? 'smoothstep',
+      edges: importedEdges,
       groups: importedGroups,
+      name: dto.name,
+      nodes: importedNodes,
     };
 
     const workflow = await this.create(createDto);

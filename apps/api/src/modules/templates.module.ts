@@ -5,21 +5,21 @@ import { Template, TemplateSchema } from '@/schemas/template.schema';
 import { TemplatesService } from '@/services/templates.service';
 
 @Module({
+  controllers: [TemplatesController],
+  exports: [TemplatesService],
   imports: [
     MongooseModule.forFeatureAsync([
       {
         name: Template.name,
         useFactory: () => {
           const schema = TemplateSchema;
-          schema.index({ isDeleted: 1, category: 1 });
-          schema.index({ name: 'text', description: 'text' });
+          schema.index({ category: 1, isDeleted: 1 });
+          schema.index({ description: 'text', name: 'text' });
           return schema;
         },
       },
     ]),
   ],
-  controllers: [TemplatesController],
   providers: [TemplatesService],
-  exports: [TemplatesService],
 })
 export class TemplatesModule {}

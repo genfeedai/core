@@ -5,7 +5,7 @@ import { ImportWorkflowDto } from '@/dto/import-workflow.dto';
 import { QueryWorkflowDto } from '@/dto/query-workflow.dto';
 import { SetThumbnailDto } from '@/dto/set-thumbnail.dto';
 import type { UpdateWorkflowDto } from '@/dto/update-workflow.dto';
-import type { CostEstimate, WorkflowNodeForCost } from '@/interfaces/cost.interface';
+import type { CostBreakdown, WorkflowNodeForCost } from '@/interfaces/cost.interface';
 import type { WorkflowExport } from '@/interfaces/workflow-export.interface';
 import { CostCalculatorService } from '@/services/cost-calculator.service';
 import {
@@ -95,7 +95,7 @@ export class WorkflowsController {
   }
 
   @Get(':id/cost-estimate')
-  async getCostEstimate(@Param('id') id: string): Promise<CostEstimate> {
+  async getCostEstimate(@Param('id') id: string): Promise<CostBreakdown> {
     const workflow = await this.workflowsService.findOne(id);
     const nodes = workflow.nodes as WorkflowNodeForCost[];
     return this.costCalculatorService.calculateWorkflowEstimate(nodes);

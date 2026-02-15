@@ -15,20 +15,21 @@ import { WorkflowsModule } from '@/modules/workflows.module';
 import { AppService } from '@/services/app.service';
 
 @Module({
+  controllers: [AppController],
   imports: [
     // Configuration
     ConfigModule.forRoot({
-      isGlobal: true,
       envFilePath: ['.env.local', '.env'],
+      isGlobal: true,
     }),
 
     // MongoDB Connection
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
+      inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         uri: configService.getOrThrow<string>('MONGODB_URI'),
       }),
-      inject: [ConfigService],
     }),
 
     // Feature Modules
@@ -45,7 +46,6 @@ import { AppService } from '@/services/app.service';
     // Queue Management (BullMQ + Redis)
     QueueModule,
   ],
-  controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}

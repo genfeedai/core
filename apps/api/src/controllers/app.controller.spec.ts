@@ -5,17 +5,17 @@ describe('AppController', () => {
   let appController: AppController;
 
   const mockAppService = {
+    getDetailedHealth: vi.fn().mockResolvedValue({ status: 'healthy' }),
     getHello: vi.fn().mockReturnValue('Genfeed Core API'),
     getLiveness: vi
       .fn()
       .mockResolvedValue({ alive: true, timestamp: new Date().toISOString(), uptime: 0 }),
+    getMetrics: vi.fn().mockResolvedValue({ timestamp: new Date().toISOString() }),
     getReadiness: vi.fn().mockResolvedValue({
+      checks: { database: true, redis: true },
       ready: true,
       timestamp: new Date().toISOString(),
-      checks: { database: true, redis: true },
     }),
-    getDetailedHealth: vi.fn().mockResolvedValue({ status: 'healthy' }),
-    getMetrics: vi.fn().mockResolvedValue({ timestamp: new Date().toISOString() }),
   };
 
   beforeEach(() => {

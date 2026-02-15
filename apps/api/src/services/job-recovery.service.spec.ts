@@ -18,29 +18,29 @@ describe('JobRecoveryService', () => {
   const createStalledJob = (overrides = {}) => ({
     _id: new Types.ObjectId(),
     bullJobId: mockBullJobId,
-    queueName: QUEUE_NAMES.WORKFLOW_ORCHESTRATOR,
-    executionId: mockExecutionId,
-    nodeId: 'root',
-    status: JOB_STATUS.ACTIVE,
     data: { workflowId: mockWorkflowId },
+    executionId: mockExecutionId,
     movedToDlq: false,
+    nodeId: 'root',
+    queueName: QUEUE_NAMES.WORKFLOW_ORCHESTRATOR,
+    status: JOB_STATUS.ACTIVE,
     ...overrides,
   });
 
   const mockQueueJobModel = {
+    aggregate: vi.fn(),
+    countDocuments: vi.fn().mockResolvedValue(5),
     find: vi.fn(),
     findOne: vi.fn(),
     updateOne: vi.fn().mockResolvedValue({ modifiedCount: 1 }),
-    countDocuments: vi.fn().mockResolvedValue(5),
-    aggregate: vi.fn(),
   };
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
     mockQueueManager = {
-      enqueueWorkflow: vi.fn().mockResolvedValue('new-job-id'),
       enqueueNode: vi.fn().mockResolvedValue('new-node-job-id'),
+      enqueueWorkflow: vi.fn().mockResolvedValue('new-job-id'),
     } as unknown as QueueManagerService;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -94,14 +94,14 @@ describe('JobRecoveryService', () => {
 
     it('should recover node jobs', async () => {
       const stalledJob = createStalledJob({
-        queueName: QUEUE_NAMES.IMAGE_GENERATION,
-        nodeId: 'image-node-1',
         data: {
-          workflowId: mockWorkflowId,
-          nodeType: 'imageGen',
-          nodeData: { prompt: 'test' },
           dependsOn: ['node-0'],
+          nodeData: { prompt: 'test' },
+          nodeType: 'imageGen',
+          workflowId: mockWorkflowId,
         },
+        nodeId: 'image-node-1',
+        queueName: QUEUE_NAMES.IMAGE_GENERATION,
       });
       mockQueueJobModel.find.mockReturnValue({
         lean: vi.fn().mockResolvedValue([stalledJob]),
@@ -149,8 +149,8 @@ describe('JobRecoveryService', () => {
         expect.objectContaining({
           $push: {
             logs: expect.objectContaining({
-              message: 'Job recovered after stall detection',
               level: 'warn',
+              message: 'Job recovered after stall detection',
             }),
           },
         })
@@ -177,14 +177,14 @@ describe('JobRecoveryService', () => {
       await service.recoverStalledJobs();
 
       expect(mockQueueJobModel.find).toHaveBeenCalledWith({
-        status: { $in: [JOB_STATUS.ACTIVE, JOB_STATUS.PENDING] },
-        updatedAt: { $lt: expect.any(Date) },
         $or: [
           { lastHeartbeat: { $exists: false } },
           { lastHeartbeat: null },
           { lastHeartbeat: { $lt: expect.any(Date) } },
         ],
         movedToDlq: false,
+        status: { $in: [JOB_STATUS.ACTIVE, JOB_STATUS.PENDING] },
+        updatedAt: { $lt: expect.any(Date) },
       });
     });
   });
@@ -221,8 +221,8 @@ describe('JobRecoveryService', () => {
 
       expect(mockQueueJobModel.find).toHaveBeenCalledWith({
         executionId: expect.any(Types.ObjectId),
-        status: { $nin: [JOB_STATUS.COMPLETED, JOB_STATUS.FAILED] },
         movedToDlq: false,
+        status: { $nin: [JOB_STATUS.COMPLETED, JOB_STATUS.FAILED] },
       });
     });
   });
@@ -231,7 +231,6 @@ describe('JobRecoveryService', () => {
     it('should return aggregated job statistics', async () => {
       mockQueueJobModel.aggregate.mockResolvedValue([
         {
-          total: [{ count: 100 }],
           byStatus: [
             { _id: JOB_STATUS.PENDING, count: 10 },
             { _id: JOB_STATUS.ACTIVE, count: 5 },
@@ -240,41 +239,42 @@ describe('JobRecoveryService', () => {
             { _id: JOB_STATUS.RECOVERED, count: 2 },
           ],
           inDlq: [{ count: 3 }],
+          total: [{ count: 100 }],
         },
       ]);
 
       const result = await service.getJobStats();
 
       expect(result).toEqual({
-        total: 100,
-        pending: 10,
         active: 5,
         completed: 75,
         failed: 8,
-        recovered: 2,
         inDlq: 3,
+        pending: 10,
+        recovered: 2,
+        total: 100,
       });
     });
 
     it('should handle empty aggregation result', async () => {
       mockQueueJobModel.aggregate.mockResolvedValue([
         {
-          total: [],
           byStatus: [],
           inDlq: [],
+          total: [],
         },
       ]);
 
       const result = await service.getJobStats();
 
       expect(result).toEqual({
-        total: 0,
-        pending: 0,
         active: 0,
         completed: 0,
         failed: 0,
-        recovered: 0,
         inDlq: 0,
+        pending: 0,
+        recovered: 0,
+        total: 0,
       });
     });
   });
@@ -309,14 +309,14 @@ describe('JobRecoveryService', () => {
 
     it('should re-enqueue node jobs from DLQ', async () => {
       const dlqJob = createStalledJob({
-        movedToDlq: true,
-        queueName: QUEUE_NAMES.IMAGE_GENERATION,
-        nodeId: 'node-1',
         data: {
-          workflowId: mockWorkflowId,
-          nodeType: 'imageGen',
           nodeData: { prompt: 'test' },
+          nodeType: 'imageGen',
+          workflowId: mockWorkflowId,
         },
+        movedToDlq: true,
+        nodeId: 'node-1',
+        queueName: QUEUE_NAMES.IMAGE_GENERATION,
       });
       mockQueueJobModel.findOne.mockReturnValue({
         lean: vi.fn().mockResolvedValue(dlqJob),
@@ -341,8 +341,8 @@ describe('JobRecoveryService', () => {
         expect.objectContaining({
           $push: {
             logs: expect.objectContaining({
-              message: 'Job retried from DLQ',
               level: 'info',
+              message: 'Job retried from DLQ',
             }),
           },
         })
@@ -354,10 +354,10 @@ describe('JobRecoveryService', () => {
     it('should return jobs in DLQ with pagination', async () => {
       const dlqJobs = [createStalledJob({ movedToDlq: true })];
       mockQueueJobModel.find.mockReturnValue({
-        sort: vi.fn().mockReturnThis(),
-        skip: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockReturnThis(),
         exec: vi.fn().mockResolvedValue(dlqJobs),
+        limit: vi.fn().mockReturnThis(),
+        skip: vi.fn().mockReturnThis(),
+        sort: vi.fn().mockReturnThis(),
       });
 
       const result = await service.getDlqJobs(10, 0);
@@ -368,10 +368,10 @@ describe('JobRecoveryService', () => {
 
     it('should use default pagination values', async () => {
       mockQueueJobModel.find.mockReturnValue({
-        sort: vi.fn().mockReturnThis(),
-        skip: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockReturnThis(),
         exec: vi.fn().mockResolvedValue([]),
+        limit: vi.fn().mockReturnThis(),
+        skip: vi.fn().mockReturnThis(),
+        sort: vi.fn().mockReturnThis(),
       });
 
       await service.getDlqJobs();
@@ -383,10 +383,10 @@ describe('JobRecoveryService', () => {
 
     it('should sort DLQ jobs by createdAt descending', async () => {
       mockQueueJobModel.find.mockReturnValue({
-        sort: vi.fn().mockReturnThis(),
-        skip: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockReturnThis(),
         exec: vi.fn().mockResolvedValue([]),
+        limit: vi.fn().mockReturnThis(),
+        skip: vi.fn().mockReturnThis(),
+        sort: vi.fn().mockReturnThis(),
       });
 
       await service.getDlqJobs();

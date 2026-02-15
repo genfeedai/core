@@ -1,4 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
+import type {
+  ModelInputSchema,
+  ReplicateModelInput,
+  SchemaParams,
+} from '@/interfaces/execution-types.interface';
 
 /**
  * Canonical input field names used internally
@@ -40,29 +45,29 @@ interface FieldMapping {
 const VIDEO_FIELD_MAPPINGS: FieldMapping[] = [
   // Starting image
   {
-    canonical: 'image',
     alternatives: ['start_image', 'first_frame_image', 'first_frame', 'init_image', 'source_image'],
+    canonical: 'image',
   },
   // Ending image
   {
-    canonical: 'lastFrame',
     alternatives: ['end_image', 'last_frame', 'tail_image', 'final_frame', 'target_image'],
+    canonical: 'lastFrame',
   },
   // Reference images
   {
-    canonical: 'referenceImages',
     alternatives: ['reference_images', 'ref_images', 'style_images'],
+    canonical: 'referenceImages',
   },
   // Duration
-  { canonical: 'duration', alternatives: ['length', 'video_length', 'duration_seconds'] },
+  { alternatives: ['length', 'video_length', 'duration_seconds'], canonical: 'duration' },
   // Aspect ratio
-  { canonical: 'aspectRatio', alternatives: ['aspect_ratio', 'ratio'] },
+  { alternatives: ['aspect_ratio', 'ratio'], canonical: 'aspectRatio' },
   // Resolution
-  { canonical: 'resolution', alternatives: ['output_resolution', 'video_resolution'] },
+  { alternatives: ['output_resolution', 'video_resolution'], canonical: 'resolution' },
   // Audio generation
-  { canonical: 'generateAudio', alternatives: ['generate_audio', 'audio', 'with_audio', 'sound'] },
+  { alternatives: ['generate_audio', 'audio', 'with_audio', 'sound'], canonical: 'generateAudio' },
   // Negative prompt
-  { canonical: 'negativePrompt', alternatives: ['negative_prompt', 'negative', 'neg_prompt'] },
+  { alternatives: ['negative_prompt', 'negative', 'neg_prompt'], canonical: 'negativePrompt' },
 ];
 
 /**
@@ -71,7 +76,6 @@ const VIDEO_FIELD_MAPPINGS: FieldMapping[] = [
 const IMAGE_FIELD_MAPPINGS: FieldMapping[] = [
   // Input images
   {
-    canonical: 'inputImages',
     alternatives: [
       'input_image',
       'image_input',
@@ -80,13 +84,14 @@ const IMAGE_FIELD_MAPPINGS: FieldMapping[] = [
       'reference_images',
       'init_image',
     ],
+    canonical: 'inputImages',
   },
   // Aspect ratio
-  { canonical: 'aspectRatio', alternatives: ['aspect_ratio', 'ratio'] },
+  { alternatives: ['aspect_ratio', 'ratio'], canonical: 'aspectRatio' },
   // Resolution
-  { canonical: 'resolution', alternatives: ['output_resolution', 'image_resolution', 'size'] },
+  { alternatives: ['output_resolution', 'image_resolution', 'size'], canonical: 'resolution' },
   // Output format
-  { canonical: 'outputFormat', alternatives: ['output_format', 'format', 'image_format'] },
+  { alternatives: ['output_format', 'format', 'image_format'], canonical: 'outputFormat' },
 ];
 
 @Injectable()
@@ -98,11 +103,11 @@ export class SchemaMapperService {
    * based on the model's input schema
    */
   buildFieldMap(
-    inputSchema: Record<string, unknown> | undefined,
+    inputSchema: ModelInputSchema | undefined,
     fieldMappings: FieldMapping[]
   ): Map<string, string> {
     const fieldMap = new Map<string, string>();
-    const schemaProps = (inputSchema as { properties?: Record<string, unknown> })?.properties ?? {};
+    const schemaProps = inputSchema?.properties ?? {};
 
     for (const mapping of fieldMappings) {
       // Check if any alternative name exists in schema
@@ -137,12 +142,11 @@ export class SchemaMapperService {
   private isValidForSchema(
     value: unknown,
     fieldName: string,
-    inputSchema: Record<string, unknown> | undefined
+    inputSchema: ModelInputSchema | undefined
   ): boolean {
     if (!inputSchema) return true;
 
-    const schemaProps = (inputSchema as { properties?: Record<string, { enum?: unknown[] }> })
-      ?.properties;
+    const schemaProps = inputSchema.properties;
     if (!schemaProps) return true;
 
     const fieldSchema = schemaProps[fieldName];
@@ -169,12 +173,12 @@ export class SchemaMapperService {
    */
   mapVideoInput(
     input: CanonicalVideoInput,
-    inputSchema: Record<string, unknown> | undefined,
-    schemaParams?: Record<string, unknown>
-  ): Record<string, unknown> {
+    inputSchema: ModelInputSchema | undefined,
+    schemaParams?: SchemaParams
+  ): ReplicateModelInput {
     const fieldMap = this.buildFieldMap(inputSchema, VIDEO_FIELD_MAPPINGS);
-    const schemaProps = (inputSchema as { properties?: Record<string, unknown> })?.properties ?? {};
-    const result: Record<string, unknown> = {};
+    const schemaProps = inputSchema?.properties ?? {};
+    const result: ReplicateModelInput = {};
 
     // Start with schemaParams if provided (user-set values)
     if (schemaParams) {
@@ -257,13 +261,13 @@ export class SchemaMapperService {
    */
   mapImageInput(
     input: CanonicalImageInput,
-    inputSchema: Record<string, unknown> | undefined,
-    schemaParams?: Record<string, unknown>
-  ): Record<string, unknown> {
+    inputSchema: ModelInputSchema | undefined,
+    schemaParams?: SchemaParams
+  ): ReplicateModelInput {
     const fieldMap = this.buildFieldMap(inputSchema, IMAGE_FIELD_MAPPINGS);
     const schemaProps =
       (inputSchema as { properties?: Record<string, { type?: string }> })?.properties ?? {};
-    const result: Record<string, unknown> = {};
+    const result: ReplicateModelInput = {};
 
     // Start with schemaParams if provided
     if (schemaParams) {
@@ -316,7 +320,7 @@ export class SchemaMapperService {
    */
   getModelFieldName(
     canonicalName: string,
-    inputSchema: Record<string, unknown> | undefined,
+    inputSchema: ModelInputSchema | undefined,
     isVideo = true
   ): string | undefined {
     const mappings = isVideo ? VIDEO_FIELD_MAPPINGS : IMAGE_FIELD_MAPPINGS;

@@ -58,7 +58,7 @@ async function getFilesFromWorkflowOutput(workflowId: string): Promise<GalleryIt
 }
 
 function computeCounts(items: GalleryItem[]): GalleryResponse['counts'] {
-  const counts = { all: items.length, image: 0, video: 0, audio: 0 };
+  const counts = { all: items.length, audio: 0, image: 0, video: 0 };
   for (const item of items) {
     counts[item.type]++;
   }
@@ -82,12 +82,12 @@ export async function GET(request: NextRequest): Promise<NextResponse<GalleryRes
   } catch {
     // Data directory doesn't exist
     return NextResponse.json({
+      counts: { all: 0, audio: 0, image: 0, video: 0 },
       items: [],
-      total: 0,
       page: 1,
       pageSize,
+      total: 0,
       totalPages: 0,
-      counts: { all: 0, image: 0, video: 0, audio: 0 },
     });
   }
 
@@ -110,11 +110,11 @@ export async function GET(request: NextRequest): Promise<NextResponse<GalleryRes
   const items = filteredItems.slice(start, start + pageSize);
 
   return NextResponse.json({
+    counts,
     items,
-    total,
     page,
     pageSize,
+    total,
     totalPages,
-    counts,
   });
 }

@@ -67,9 +67,9 @@ export function useCommentNavigation(nodeId: string): CommentNavigation | null {
 
   return {
     currentIndex: currentIndex + 1, // 1-based for display
-    totalCount: nodesWithComments.length,
-    onPrevious,
     onNext,
+    onPrevious,
+    totalCount: nodesWithComments.length,
   };
 }
 
@@ -128,15 +128,15 @@ export function useHeaderCommentNavigation() {
   }, [setNavigationTarget]);
 
   return {
-    totalCount,
-    unviewedCount,
+    clearNavigation,
     currentIndex: currentIndex + 1, // 1-based for display
     currentNodeId: navigationTargetId,
-    hasComments: totalCount > 0,
     goToFirst,
-    goToPrevious,
     goToNext,
-    clearNavigation,
+    goToPrevious,
+    hasComments: totalCount > 0,
     nodesWithComments,
+    totalCount,
+    unviewedCount,
   };
 }

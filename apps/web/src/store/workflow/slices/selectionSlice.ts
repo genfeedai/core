@@ -9,10 +9,6 @@ export interface SelectionSlice {
 }
 
 export const createSelectionSlice: StateCreator<WorkflowStore, [], [], SelectionSlice> = (set) => ({
-  setSelectedNodeIds: (nodeIds) => {
-    set({ selectedNodeIds: nodeIds });
-  },
-
   addToSelection: (nodeId) => {
     set((state) => ({
       selectedNodeIds: state.selectedNodeIds.includes(nodeId)
@@ -21,13 +17,16 @@ export const createSelectionSlice: StateCreator<WorkflowStore, [], [], Selection
     }));
   },
 
+  clearSelection: () => {
+    set({ selectedNodeIds: [] });
+  },
+
   removeFromSelection: (nodeId) => {
     set((state) => ({
       selectedNodeIds: state.selectedNodeIds.filter((id) => id !== nodeId),
     }));
   },
-
-  clearSelection: () => {
-    set({ selectedNodeIds: [] });
+  setSelectedNodeIds: (nodeIds) => {
+    set({ selectedNodeIds: nodeIds });
   },
 });

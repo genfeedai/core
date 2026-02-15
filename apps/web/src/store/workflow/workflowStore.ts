@@ -33,19 +33,19 @@ import type { WorkflowStore } from './types';
 // createChatSlice return types are lost through the `as unknown` casts needed
 // to unify their signatures. The runtime correctly composes all slices.
 const storeCreator = ((...args: Parameters<StateCreator<WorkflowStore>>) => ({
+  edgeStyle: 'default',
+  edges: [],
+  groups: [],
+  isDirty: false,
+  isLoading: false,
+  isSaving: false,
+  navigationTargetId: null,
   // Initial state
   nodes: [],
-  edges: [],
-  edgeStyle: 'default',
-  workflowName: 'Untitled Workflow',
-  workflowId: null,
-  isDirty: false,
-  isSaving: false,
-  isLoading: false,
-  groups: [],
   selectedNodeIds: [],
   viewedCommentIds: new Set<string>(),
-  navigationTargetId: null,
+  workflowId: null,
+  workflowName: 'Untitled Workflow',
 
   // Compose slices
   ...createNodeSlice(...args),
@@ -60,15 +60,15 @@ const storeCreator = ((...args: Parameters<StateCreator<WorkflowStore>>) => ({
 
 export const useWorkflowStore = create<WorkflowStore>()(
   temporal(storeCreator, {
-    // Only track meaningful state (not UI flags like isDirty, isSaving, etc.)
-    partialize: (state) => ({
-      nodes: state.nodes,
-      edges: state.edges,
-      groups: state.groups,
-    }),
-    // Limit history to prevent memory issues
-    limit: 50,
     // Optimized equality check using shallow comparison instead of JSON.stringify
     equality: temporalStateEquals,
+    // Limit history to prevent memory issues
+    limit: 50,
+    // Only track meaningful state (not UI flags like isDirty, isSaving, etc.)
+    partialize: (state) => ({
+      edges: state.edges,
+      groups: state.groups,
+      nodes: state.nodes,
+    }),
   })
 );

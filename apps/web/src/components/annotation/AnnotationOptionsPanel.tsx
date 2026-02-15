@@ -55,7 +55,7 @@ export function AnnotationOptionsPanel({
             >
               <div
                 className="rounded-full bg-foreground"
-                style={{ width: width * 2, height: width * 2 }}
+                style={{ height: width * 2, width: width * 2 }}
               />
             </button>
           ))}

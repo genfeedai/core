@@ -71,10 +71,10 @@ describe('WorkflowsService', () => {
   describe('create', () => {
     it('should create a new workflow', async () => {
       const dto = {
-        name: 'Test Workflow',
         description: 'A test workflow',
-        nodes: [],
         edges: [],
+        name: 'Test Workflow',
+        nodes: [],
       };
 
       const result = await service.create(dto);

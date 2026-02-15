@@ -1,19 +1,23 @@
+import type { EdgeStyle, NodeGroup, WorkflowFile } from '@genfeedai/types';
+
 /**
- * Workflow export format for sharing workflows via JSON
- * Version field allows for future format migrations
+ * Workflow export format — structurally equivalent to WorkflowFile
+ * but uses looser node/edge types for portable JSON export.
  */
 export interface WorkflowExport {
   name: string;
   description: string;
-  version: string; // Export format version
+  version: number;
   nodes: WorkflowExportNode[];
   edges: WorkflowExportEdge[];
-  edgeStyle: string;
-  groups: WorkflowExportGroup[];
-  metadata: {
-    exportedAt: string;
-    exportedFrom: string;
-    originalId: string;
+  edgeStyle: EdgeStyle | string;
+  groups?: NodeGroup[];
+  createdAt?: string;
+  updatedAt?: string;
+  metadata?: {
+    exportedAt?: string;
+    exportedFrom?: string;
+    originalId?: string;
   };
 }
 
@@ -33,14 +37,13 @@ export interface WorkflowExportEdge {
   type?: string;
 }
 
-export interface WorkflowExportGroup {
-  id: string;
-  name: string;
-  nodeIds: string[];
-  isLocked: boolean;
-  color?: string;
-  collapsed?: boolean;
-}
-
 // Current export format version
-export const WORKFLOW_EXPORT_VERSION = '1.0.0';
+export const WORKFLOW_EXPORT_VERSION = 1;
+
+/**
+ * Assert that a WorkflowExport is assignable to WorkflowFile.
+ * This compile-time check ensures the two shapes stay aligned.
+ */
+type _AssertExportCompatible =
+  WorkflowExport extends Omit<WorkflowFile, 'nodes' | 'edges'> ? true : never;
+const _: _AssertExportCompatible = true;

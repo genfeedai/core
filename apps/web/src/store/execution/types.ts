@@ -133,9 +133,9 @@ export interface ExecutionStore
 // =============================================================================
 
 export const STATUS_MAP: Record<string, NodeStatus> = {
+  complete: 'complete',
+  error: 'error',
   pending: 'idle',
   processing: 'processing',
-  complete: 'complete',
   succeeded: 'complete',
-  error: 'error',
 };

@@ -99,18 +99,18 @@ export class OllamaService {
 
     try {
       const response = await fetch(`${this.baseUrl}/api/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model,
-          prompt: fullPrompt,
-          stream: false,
           options: {
             num_predict: input.maxTokens ?? 2048,
             temperature: input.temperature ?? 0.7,
             top_p: input.topP ?? 0.9,
           },
+          prompt: fullPrompt,
+          stream: false,
         }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
       });
 
       if (!response.ok) {
@@ -144,18 +144,18 @@ export class OllamaService {
     }
 
     const response = await fetch(`${this.baseUrl}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model,
-        prompt: fullPrompt,
-        stream: true,
         options: {
           num_predict: input.maxTokens ?? 2048,
           temperature: input.temperature ?? 0.7,
           top_p: input.topP ?? 0.9,
         },
+        prompt: fullPrompt,
+        stream: true,
       }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
     });
 
     if (!response.ok || !response.body) {

@@ -61,9 +61,9 @@ export function NodeSearch() {
 
       // Fit view to the selected node with animation
       reactFlow.fitView({
+        duration: 300,
         nodes: [node],
         padding: 0.5,
-        duration: 300,
       });
 
       // Close the search modal

@@ -1,33 +1,7 @@
-/**
- * Cost breakdown for a single item (node/prediction)
- */
-export interface CostBreakdownItem {
-  nodeId: string;
-  nodeType: string;
-  model: string;
-  unitPrice: number;
-  quantity: number;
-  subtotal: number;
-  duration?: number;
-  withAudio?: boolean;
-}
+import type { CostBreakdown, CostSummary, NodeCostEstimate } from '@genfeedai/types';
 
-/**
- * Cost estimate for a workflow before execution
- */
-export interface CostEstimate {
-  total: number;
-  breakdown: CostBreakdownItem[];
-}
-
-/**
- * Cost summary stored on an execution
- */
-export interface CostSummary {
-  estimated: number;
-  actual: number;
-  variance: number; // Percentage: (actual - estimated) / estimated * 100
-}
+// Re-export canonical types for local consumers
+export type { CostBreakdown, CostSummary, NodeCostEstimate };
 
 /**
  * Job cost breakdown stored on a job document

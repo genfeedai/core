@@ -27,103 +27,103 @@ const MODEL_METADATA: Record<
     useCases?: ModelUseCase[];
   }
 > = {
-  'google/nano-banana': {
-    capabilities: ['text-to-image'],
-    pricing: '$0.039/image',
-    displayName: 'Nano Banana',
-    useCases: ['general'],
+  'anthropic/claude-4.5-sonnet': {
+    capabilities: ['text-generation'],
+    displayName: 'Claude 4.5 Sonnet',
+    pricing: '$0.003/$0.015 per 1K tokens',
   },
-  'google/nano-banana-pro': {
-    capabilities: ['text-to-image', 'image-to-image'],
-    pricing: '$0.15-0.30/image',
-    displayName: 'Nano Banana Pro',
-    useCases: ['general', 'style-transfer', 'image-variation'],
-  },
-  'prunaai/z-image-turbo': {
+  'black-forest-labs/flux-1.1-pro': {
     capabilities: ['text-to-image'],
-    pricing: '$0.002/image',
-    displayName: 'Z-Image Turbo',
-    useCases: ['general'],
-  },
-  'black-forest-labs/flux-schnell': {
-    capabilities: ['text-to-image'],
-    pricing: '$0.003/image',
-    displayName: 'FLUX Schnell',
+    displayName: 'FLUX 1.1 Pro',
+    pricing: '$0.04/image',
     useCases: ['general'],
   },
   'black-forest-labs/flux-dev': {
     capabilities: ['text-to-image'],
-    pricing: '$0.025/image',
     displayName: 'FLUX Dev',
-    useCases: ['general'],
-  },
-  'black-forest-labs/flux-1.1-pro': {
-    capabilities: ['text-to-image'],
-    pricing: '$0.04/image',
-    displayName: 'FLUX 1.1 Pro',
+    pricing: '$0.025/image',
     useCases: ['general'],
   },
   'black-forest-labs/flux-kontext-dev': {
     capabilities: ['text-to-image', 'image-to-image'],
-    pricing: '$0.025/image',
     displayName: 'FLUX Kontext [dev]',
+    pricing: '$0.025/image',
     useCases: ['style-transfer', 'character-consistent', 'image-variation'],
   },
-  'google/veo-3.1-fast': {
-    capabilities: ['text-to-video', 'image-to-video'],
-    pricing: '$0.10-0.15/sec',
-    displayName: 'Veo 3.1 Fast',
+  'black-forest-labs/flux-schnell': {
+    capabilities: ['text-to-image'],
+    displayName: 'FLUX Schnell',
+    pricing: '$0.003/image',
     useCases: ['general'],
+  },
+  'google/nano-banana': {
+    capabilities: ['text-to-image'],
+    displayName: 'Nano Banana',
+    pricing: '$0.039/image',
+    useCases: ['general'],
+  },
+  'google/nano-banana-pro': {
+    capabilities: ['text-to-image', 'image-to-image'],
+    displayName: 'Nano Banana Pro',
+    pricing: '$0.15-0.30/image',
+    useCases: ['general', 'style-transfer', 'image-variation'],
   },
   'google/veo-3.1': {
     capabilities: ['text-to-video', 'image-to-video'],
-    pricing: '$0.20-0.40/sec',
     displayName: 'Veo 3.1',
+    pricing: '$0.20-0.40/sec',
+    useCases: ['general'],
+  },
+  'google/veo-3.1-fast': {
+    capabilities: ['text-to-video', 'image-to-video'],
+    displayName: 'Veo 3.1 Fast',
+    pricing: '$0.10-0.15/sec',
     useCases: ['general'],
   },
   'kwaivgi/kling-v2.5-turbo-pro': {
     capabilities: ['text-to-video', 'image-to-video'],
-    pricing: '$0.15/sec',
     displayName: 'Kling v2.5 Turbo Pro',
+    pricing: '$0.15/sec',
     useCases: ['general'],
   },
   'kwaivgi/kling-v2.6-motion-control': {
     capabilities: ['image-to-video'],
-    pricing: '$0.20/sec',
     displayName: 'Kling v2.6 Motion Control',
-    useCases: ['general'],
-  },
-  'minimax/video-01': {
-    capabilities: ['text-to-video', 'image-to-video'],
     pricing: '$0.20/sec',
-    displayName: 'MiniMax Video-01',
     useCases: ['general'],
   },
   'luma/ray': {
     capabilities: ['text-to-video', 'image-to-video'],
-    pricing: '$0.15/sec',
     displayName: 'Luma Ray',
+    pricing: '$0.15/sec',
     useCases: ['general'],
   },
   'meta/meta-llama-3.1-405b-instruct': {
     capabilities: ['text-generation'],
-    pricing: '$0.0032/1K tokens',
     displayName: 'Llama 3.1 405B Instruct',
+    pricing: '$0.0032/1K tokens',
   },
-  'anthropic/claude-4.5-sonnet': {
-    capabilities: ['text-generation'],
-    pricing: '$0.003/$0.015 per 1K tokens',
-    displayName: 'Claude 4.5 Sonnet',
+  'minimax/video-01': {
+    capabilities: ['text-to-video', 'image-to-video'],
+    displayName: 'MiniMax Video-01',
+    pricing: '$0.20/sec',
+    useCases: ['general'],
+  },
+  'prunaai/z-image-turbo': {
+    capabilities: ['text-to-image'],
+    displayName: 'Z-Image Turbo',
+    pricing: '$0.002/image',
+    useCases: ['general'],
   },
   'sync/lipsync-2': {
     capabilities: ['image-to-video'],
-    pricing: '$0.05/sec',
     displayName: 'Lipsync 2',
+    pricing: '$0.05/sec',
   },
   'sync/lipsync-2-pro': {
     capabilities: ['image-to-video'],
-    pricing: '$0.10/sec',
     displayName: 'Lipsync 2 Pro',
+    pricing: '$0.10/sec',
   },
 };
 
@@ -162,54 +162,54 @@ const REPLICATE_MODELS: ProviderModel[] = replicateSchemas
     const allUseCases = [...new Set([...explicitUseCases, ...schemaUseCases])];
 
     return {
-      id: schema.modelId,
-      displayName: meta.displayName || schema.name,
-      provider: 'replicate' as ProviderType,
       capabilities: meta.capabilities,
-      description: schema.description?.slice(0, 100) || '',
-      pricing: meta.pricing,
-      thumbnail: (schema as { coverImageUrl?: string }).coverImageUrl || undefined,
-      inputSchema: schema.inputSchema as Record<string, unknown> | undefined,
       componentSchemas: componentSchemas as Record<string, unknown> | undefined,
+      description: schema.description?.slice(0, 100) || '',
+      displayName: meta.displayName || schema.name,
+      id: schema.modelId,
+      inputSchema: schema.inputSchema as Record<string, unknown> | undefined,
+      pricing: meta.pricing,
+      provider: 'replicate' as ProviderType,
+      thumbnail: (schema as { coverImageUrl?: string }).coverImageUrl || undefined,
       useCases: allUseCases.length > 0 ? allUseCases : undefined,
     };
   });
 
 const FAL_MODELS: ProviderModel[] = [
   {
-    id: 'fal-ai/flux/schnell',
-    displayName: 'FLUX Schnell',
-    provider: 'fal',
     capabilities: ['text-to-image'],
     description: 'Fast image generation on fal.ai',
+    displayName: 'FLUX Schnell',
+    id: 'fal-ai/flux/schnell',
     pricing: '$0.003/image',
+    provider: 'fal',
   },
   {
-    id: 'fal-ai/flux-pro',
-    displayName: 'FLUX Pro',
-    provider: 'fal',
     capabilities: ['text-to-image'],
     description: 'Professional image generation on fal.ai',
+    displayName: 'FLUX Pro',
+    id: 'fal-ai/flux-pro',
     pricing: '$0.05/image',
+    provider: 'fal',
   },
   {
-    id: 'fal-ai/kling-video',
-    displayName: 'Kling Video',
-    provider: 'fal',
     capabilities: ['text-to-video', 'image-to-video'],
     description: 'High-quality video generation',
+    displayName: 'Kling Video',
+    id: 'fal-ai/kling-video',
     pricing: '$0.10/sec',
+    provider: 'fal',
   },
 ];
 
 const REPLICATE_LLM_MODELS: ProviderModel[] = [
   {
-    id: 'anthropic/claude-4.5-sonnet',
-    displayName: 'Claude 4.5 Sonnet',
-    provider: 'replicate',
     capabilities: ['text-generation'],
     description: 'Anthropic Claude 4.5 Sonnet — fast, intelligent text generation',
+    displayName: 'Claude 4.5 Sonnet',
+    id: 'anthropic/claude-4.5-sonnet',
     pricing: '$0.003/$0.015 per 1K tokens',
+    provider: 'replicate',
     useCases: ['general'],
   },
 ];
@@ -270,7 +270,7 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({
-    models: filteredModels,
     configuredProviders: Array.from(configuredProviders),
+    models: filteredModels,
   });
 }

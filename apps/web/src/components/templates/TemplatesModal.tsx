@@ -22,10 +22,10 @@ import { useWorkflowStore } from '@/store/workflowStore';
 type CategoryFilter = 'all' | 'simple' | 'advanced' | 'community';
 
 const CATEGORY_OPTIONS: { value: CategoryFilter; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'simple', label: 'Simple' },
-  { value: 'advanced', label: 'Advanced' },
-  { value: 'community', label: 'Community' },
+  { label: 'All', value: 'all' },
+  { label: 'Simple', value: 'simple' },
+  { label: 'Advanced', value: 'advanced' },
+  { label: 'Community', value: 'community' },
 ];
 
 interface TemplateWithMeta extends TemplateData {
@@ -255,17 +255,17 @@ function TemplatesModalComponent() {
       try {
         const now = new Date().toISOString();
         loadWorkflow({
-          version: 1,
-          name: template.name,
+          createdAt: now,
           description: template.description ?? '',
-          nodes: template.nodes,
-          edges: template.edges,
           edgeStyle: (template.edgeStyle === 'bezier'
             ? 'default'
             : (template.edgeStyle ?? 'default')) as EdgeStyle,
+          edges: template.edges,
           groups: [],
-          createdAt: now,
+          name: template.name,
+          nodes: template.nodes,
           updatedAt: now,
+          version: 1,
         });
 
         const savedWorkflow = await saveWorkflow();

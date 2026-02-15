@@ -1,6 +1,7 @@
 import { OnWorkerEvent, Processor } from '@nestjs/bullmq';
 import { forwardRef, Inject, Logger, Optional } from '@nestjs/common';
 import type { Job } from 'bullmq';
+import type { NodeOutput } from '@/interfaces/execution-types.interface';
 import type { JobResult, LLMJobData } from '@/interfaces/job-data.interface';
 import { BaseProcessor } from '@/processors/base.processor';
 import { JOB_STATUS, QUEUE_CONCURRENCY, QUEUE_NAMES } from '@/queue/queue.constants';
@@ -38,7 +39,7 @@ export class LLMProcessor extends BaseProcessor<LLMJobData> {
     try {
       await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.ACTIVE);
       await this.executionsService.updateNodeResult(executionId, nodeId, 'processing');
-      await job.updateProgress({ percent: 20, message: 'Starting LLM generation' });
+      await job.updateProgress({ message: 'Starting LLM generation', percent: 20 });
       await this.queueManager.addJobLog(job.id as string, 'Starting LLM generation');
 
       const resolvedPrompt = nodeData.inputPrompt ?? nodeData.prompt;
@@ -53,38 +54,38 @@ export class LLMProcessor extends BaseProcessor<LLMJobData> {
       if (provider === 'ollama' && this.ollamaService?.isEnabled()) {
         this.logger.log(`Using Ollama provider with model: ${nodeData.ollamaModel ?? 'default'}`);
         text = await this.ollamaService.generateText({
+          maxTokens: nodeData.maxTokens,
+          model: nodeData.ollamaModel,
           prompt: resolvedPrompt,
           systemPrompt: nodeData.systemPrompt,
-          model: nodeData.ollamaModel,
-          maxTokens: nodeData.maxTokens,
           temperature: nodeData.temperature,
           topP: nodeData.topP,
         });
       } else {
         text = await this.replicateService.generateText({
-          prompt: resolvedPrompt,
-          systemPrompt: nodeData.systemPrompt,
           maxTokens: nodeData.maxTokens,
+          prompt: resolvedPrompt,
+          schemaParams: nodeData.schemaParams,
+          selectedModel: nodeData.selectedModel,
+          systemPrompt: nodeData.systemPrompt,
           temperature: nodeData.temperature,
           topP: nodeData.topP,
-          selectedModel: nodeData.selectedModel,
-          schemaParams: nodeData.schemaParams,
         });
       }
 
-      await job.updateProgress({ percent: 90, message: 'Text generated' });
+      await job.updateProgress({ message: 'Text generated', percent: 90 });
 
       const result: JobResult = {
-        success: true,
         output: { text },
+        success: true,
       };
 
       await this.executionsService.updateNodeResult(executionId, nodeId, 'complete', { text });
       await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.COMPLETED, {
-        result: result as unknown as Record<string, unknown>,
+        result: result as unknown as NodeOutput,
       });
 
-      await job.updateProgress({ percent: 100, message: 'Completed' });
+      await job.updateProgress({ message: 'Completed', percent: 100 });
       await this.queueManager.addJobLog(job.id as string, 'LLM generation completed');
 
       await this.queueManager.continueExecution(executionId, job.data.workflowId);

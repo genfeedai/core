@@ -25,10 +25,10 @@ interface Rect {
  */
 function getNodeRect(node: Node): Rect {
   return {
+    height: node.measured?.height ?? DEFAULT_NODE_HEIGHT,
+    width: node.measured?.width ?? DEFAULT_NODE_WIDTH,
     x: node.position.x,
     y: node.position.y,
-    width: node.measured?.width ?? DEFAULT_NODE_WIDTH,
-    height: node.measured?.height ?? DEFAULT_NODE_HEIGHT,
   };
 }
 
@@ -107,9 +107,9 @@ function reorderByHandlePosition(nodes: Node[], edges: Edge[]): Node[] {
 
       const handleIndex = getInputHandleIndex(targetNode.type as string, edge.targetHandle ?? '');
       sourceInfos.push({
-        nodeId: edge.source,
-        handleIndex,
         currentY: sourceNode.position.y,
+        handleIndex,
+        nodeId: edge.source,
       });
     }
 
@@ -211,20 +211,20 @@ export function getLayoutedNodes(
   const graph = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
 
   graph.setGraph({
-    rankdir: direction,
-    nodesep: nodeSpacing,
-    ranksep: rankSpacing,
+    acyclicer: 'greedy',
     marginx: 50,
     marginy: 50,
+    nodesep: nodeSpacing,
+    rankdir: direction,
     ranker: 'network-simplex',
-    acyclicer: 'greedy',
+    ranksep: rankSpacing,
   });
 
   // Add nodes with their actual measured dimensions
   for (const node of nodes) {
     const width = node.measured?.width ?? DEFAULT_NODE_WIDTH;
     const height = node.measured?.height ?? DEFAULT_NODE_HEIGHT;
-    graph.setNode(node.id, { width, height });
+    graph.setNode(node.id, { height, width });
   }
 
   // Add edges

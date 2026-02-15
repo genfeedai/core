@@ -8,22 +8,22 @@ import { WorkflowInterfaceService } from '@/services/workflow-interface.service'
 import { WorkflowsService } from '@/services/workflows.service';
 
 @Module({
+  controllers: [WorkflowsController],
+  exports: [WorkflowsService, WorkflowInterfaceService],
   imports: [
     MongooseModule.forFeatureAsync([
       {
         name: Workflow.name,
         useFactory: () => {
           const schema = WorkflowSchema;
-          schema.index({ isReusable: 1, isDeleted: 1 });
-          schema.index({ name: 'text', description: 'text' });
+          schema.index({ isDeleted: 1, isReusable: 1 });
+          schema.index({ description: 'text', name: 'text' });
           return schema;
         },
       },
     ]),
     CostModule,
   ],
-  controllers: [WorkflowsController],
   providers: [WorkflowsService, WorkflowGeneratorService, WorkflowInterfaceService],
-  exports: [WorkflowsService, WorkflowInterfaceService],
 })
 export class WorkflowsModule {}

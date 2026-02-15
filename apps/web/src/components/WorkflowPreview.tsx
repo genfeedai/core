@@ -20,10 +20,10 @@ function PreviewNodeComponent({ data }: PreviewNodeProps) {
     <div
       className="rounded"
       style={{
-        width: 60,
-        height: 24,
         backgroundColor: color,
+        height: 24,
         opacity: 0.9,
+        width: 60,
       }}
     />
   );
@@ -92,11 +92,11 @@ function WorkflowPreviewInner({ nodes, edges }: WorkflowPreviewProps) {
 
       return {
         ...node,
+        data: { ...node.data, nodeType: node.type as NodeType },
         position: {
           x: depth * (NODE_WIDTH + H_GAP) + 10,
           y: indexInGroup * (NODE_HEIGHT + V_GAP) + 10,
         },
-        data: { ...node.data, nodeType: node.type as NodeType },
       };
     });
   }, [nodes, edges]);
@@ -125,7 +125,7 @@ function WorkflowPreviewInner({ nodes, edges }: WorkflowPreviewProps) {
         edges={previewEdges}
         nodeTypes={previewNodeTypes}
         fitView
-        fitViewOptions={{ padding: 0.2, minZoom: 0.3, maxZoom: 2 }}
+        fitViewOptions={{ maxZoom: 2, minZoom: 0.3, padding: 0.2 }}
         nodesDraggable={false}
         nodesConnectable={false}
         nodesFocusable={false}
@@ -137,7 +137,7 @@ function WorkflowPreviewInner({ nodes, edges }: WorkflowPreviewProps) {
         zoomOnPinch={false}
         preventScrolling={false}
         proOptions={{ hideAttribution: true }}
-        style={{ background: 'transparent', width: '100%', height: '100%' }}
+        style={{ background: 'transparent', height: '100%', width: '100%' }}
       />
     </div>
   );

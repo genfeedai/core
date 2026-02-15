@@ -5,22 +5,22 @@ import { Prompt, PromptSchema } from '@/schemas/prompt.schema';
 import { PromptsService } from '@/services/prompts.service';
 
 @Module({
+  controllers: [PromptsController],
+  exports: [PromptsService],
   imports: [
     MongooseModule.forFeatureAsync([
       {
         name: Prompt.name,
         useFactory: () => {
           const schema = PromptSchema;
-          schema.index({ isDeleted: 1, category: 1 });
+          schema.index({ category: 1, isDeleted: 1 });
           schema.index({ isFeatured: 1, useCount: -1 });
-          schema.index({ name: 'text', description: 'text', promptText: 'text' });
+          schema.index({ description: 'text', name: 'text', promptText: 'text' });
           return schema;
         },
       },
     ]),
   ],
-  controllers: [PromptsController],
   providers: [PromptsService],
-  exports: [PromptsService],
 })
 export class PromptsModule {}

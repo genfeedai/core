@@ -17,10 +17,10 @@ import {
 
 function makeNode(id: string, type: string, data: Record<string, unknown> = {}): WorkflowNode {
   return {
-    id,
-    type: type as NodeType,
-    position: { x: 0, y: 0 },
     data: { label: type, status: 'idle', ...data } as WorkflowNodeData,
+    id,
+    position: { x: 0, y: 0 },
+    type: type as NodeType,
   };
 }
 
@@ -44,14 +44,14 @@ describe('getNodeOutput', () => {
 
   it('returns outputImages[0] even when outputImage is also set', () => {
     const node = makeNode('1', 'imageGen', {
-      outputImages: ['arr.png'],
       outputImage: 'single.png',
+      outputImages: ['arr.png'],
     });
     expect(getNodeOutput(node)).toBe('arr.png');
   });
 
   it('returns outputImage when outputImages is empty', () => {
-    const node = makeNode('1', 'imageGen', { outputImages: [], outputImage: 'single.png' });
+    const node = makeNode('1', 'imageGen', { outputImage: 'single.png', outputImages: [] });
     expect(getNodeOutput(node)).toBe('single.png');
   });
 
@@ -131,8 +131,8 @@ describe('mapOutputToInput', () => {
   it('maps image → upscale with inputType', () => {
     expect(mapOutputToInput('img.png', 'imageGen', 'upscale')).toEqual({
       inputImage: 'img.png',
-      inputVideo: null,
       inputType: 'image',
+      inputVideo: null,
     });
   });
 
@@ -148,17 +148,17 @@ describe('mapOutputToInput', () => {
 
   it('maps video → download with inputType video', () => {
     expect(mapOutputToInput('vid.mp4', 'videoGen', 'download')).toEqual({
-      inputVideo: 'vid.mp4',
       inputImage: null,
       inputType: 'video',
+      inputVideo: 'vid.mp4',
     });
   });
 
   it('maps image → download with inputType image', () => {
     expect(mapOutputToInput('img.png', 'imageGen', 'download')).toEqual({
       inputImage: 'img.png',
-      inputVideo: null,
       inputType: 'image',
+      inputVideo: null,
     });
   });
 
@@ -319,8 +319,8 @@ describe('computeDownstreamUpdates', () => {
     // img1 has outputImage so it should propagate to upscale1
     expect(updates.get('upscale1')).toEqual({
       inputImage: 'existing.png',
-      inputVideo: null,
       inputType: 'image',
+      inputVideo: null,
     });
   });
 
@@ -485,8 +485,8 @@ describe('integration: full propagation pipeline', () => {
     expect(updates.get('ig1')).toEqual({ inputPrompt: 'cat' });
     expect(updates.get('up1')).toEqual({
       inputImage: 'cat.png',
-      inputVideo: null,
       inputType: 'image',
+      inputVideo: null,
     });
   });
 

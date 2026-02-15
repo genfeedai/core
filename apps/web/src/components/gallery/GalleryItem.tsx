@@ -11,15 +11,15 @@ interface GalleryItemProps {
 }
 
 const TYPE_ICONS = {
+  audio: Music,
   image: ImageIcon,
   video: Film,
-  audio: Music,
 };
 
 const TYPE_BADGES = {
+  audio: 'AUD',
   image: 'IMG',
   video: 'VID',
-  audio: 'AUD',
 };
 
 export const GalleryItem = memo(function GalleryItem({ item, onSelect }: GalleryItemProps) {

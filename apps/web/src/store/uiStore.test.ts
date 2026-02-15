@@ -6,12 +6,12 @@ describe('useUIStore', () => {
     vi.useFakeTimers();
     // Reset store to initial state
     useUIStore.setState({
-      showPalette: true,
-      showMinimap: true,
-      selectedNodeId: null,
-      selectedEdgeId: null,
       activeModal: null,
       notifications: [],
+      selectedEdgeId: null,
+      selectedNodeId: null,
+      showMinimap: true,
+      showPalette: true,
     });
   });
 
@@ -171,9 +171,9 @@ describe('useUIStore', () => {
       const { addNotification } = useUIStore.getState();
 
       addNotification({
-        type: 'success',
-        title: 'Test notification',
         message: 'This is a test',
+        title: 'Test notification',
+        type: 'success',
       });
 
       const notifications = useUIStore.getState().notifications;
@@ -187,9 +187,9 @@ describe('useUIStore', () => {
     it('should add multiple notifications', () => {
       const { addNotification } = useUIStore.getState();
 
-      addNotification({ type: 'success', title: 'First' });
-      addNotification({ type: 'error', title: 'Second' });
-      addNotification({ type: 'warning', title: 'Third' });
+      addNotification({ title: 'First', type: 'success' });
+      addNotification({ title: 'Second', type: 'error' });
+      addNotification({ title: 'Third', type: 'warning' });
 
       const notifications = useUIStore.getState().notifications;
       expect(notifications).toHaveLength(3);
@@ -198,7 +198,7 @@ describe('useUIStore', () => {
     it('should auto-remove notification after default duration', async () => {
       const { addNotification } = useUIStore.getState();
 
-      addNotification({ type: 'info', title: 'Auto-remove test' });
+      addNotification({ title: 'Auto-remove test', type: 'info' });
 
       expect(useUIStore.getState().notifications).toHaveLength(1);
 
@@ -212,9 +212,9 @@ describe('useUIStore', () => {
       const { addNotification } = useUIStore.getState();
 
       addNotification({
-        type: 'info',
-        title: 'Custom duration',
         duration: 2000,
+        title: 'Custom duration',
+        type: 'info',
       });
 
       expect(useUIStore.getState().notifications).toHaveLength(1);
@@ -230,9 +230,9 @@ describe('useUIStore', () => {
       const { addNotification } = useUIStore.getState();
 
       addNotification({
-        type: 'info',
-        title: 'Persistent',
         duration: 0,
+        title: 'Persistent',
+        type: 'info',
       });
 
       vi.advanceTimersByTime(10000);
@@ -245,9 +245,9 @@ describe('useUIStore', () => {
     it('should remove a specific notification', () => {
       useUIStore.setState({
         notifications: [
-          { id: 'notification-1', type: 'success', title: 'First' },
-          { id: 'notification-2', type: 'error', title: 'Second' },
-          { id: 'notification-3', type: 'warning', title: 'Third' },
+          { id: 'notification-1', title: 'First', type: 'success' },
+          { id: 'notification-2', title: 'Second', type: 'error' },
+          { id: 'notification-3', title: 'Third', type: 'warning' },
         ],
       });
 
@@ -261,7 +261,7 @@ describe('useUIStore', () => {
 
     it('should do nothing for non-existent notification', () => {
       useUIStore.setState({
-        notifications: [{ id: 'notification-1', type: 'success', title: 'First' }],
+        notifications: [{ id: 'notification-1', title: 'First', type: 'success' }],
       });
 
       const { removeNotification } = useUIStore.getState();

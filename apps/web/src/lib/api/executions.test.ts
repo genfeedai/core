@@ -6,33 +6,33 @@ import { executionsApi } from './executions';
 // Mock the apiClient
 vi.mock('./client', () => ({
   apiClient: {
+    delete: vi.fn(),
     get: vi.fn(),
     post: vi.fn(),
     put: vi.fn(),
-    delete: vi.fn(),
   },
 }));
 
 describe('executionsApi', () => {
   const mockExecution: ExecutionData = {
     _id: 'exec-123',
-    workflowId: 'workflow-456',
+    createdAt: '2026-01-15T00:00:00.000Z',
+    nodeResults: [],
     status: 'pending',
     totalCost: 0,
-    nodeResults: [],
-    createdAt: '2026-01-15T00:00:00.000Z',
     updatedAt: '2026-01-15T00:00:00.000Z',
+    workflowId: 'workflow-456',
   };
 
   const mockJob: JobData = {
     _id: 'job-789',
+    cost: 0,
+    createdAt: '2026-01-15T00:00:00.000Z',
     executionId: 'exec-123',
     nodeId: 'node-1',
     predictionId: 'pred-abc',
-    status: 'pending',
     progress: 0,
-    cost: 0,
-    createdAt: '2026-01-15T00:00:00.000Z',
+    status: 'pending',
     updatedAt: '2026-01-15T00:00:00.000Z',
   };
 

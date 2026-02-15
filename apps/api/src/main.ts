@@ -10,8 +10,8 @@ if (process.env.SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV || 'development',
-    tracesSampleRate: 1.0,
     release: `genfeed-core-api@${process.env.VERSION || '1.0.0'}`,
+    tracesSampleRate: 1.0,
   });
 }
 
@@ -21,7 +21,7 @@ async function bootstrap() {
   // Increase body parser limit for base64 image payloads
   // Base64 adds ~33% overhead, so 50mb supports ~37mb of raw image data
   app.useBodyParser('json', { limit: '50mb' });
-  app.useBodyParser('urlencoded', { limit: '50mb', extended: true });
+  app.useBodyParser('urlencoded', { extended: true, limit: '50mb' });
   const logger = new Logger('Bootstrap');
 
   const configService = app.get(ConfigService);
@@ -30,17 +30,17 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: corsOrigin,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    origin: corsOrigin,
   });
 
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,
-      transform: true,
       forbidNonWhitelisted: true,
+      transform: true,
+      whitelist: true,
     })
   );
 

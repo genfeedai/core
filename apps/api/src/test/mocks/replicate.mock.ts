@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 // Mock Replicate SDK responses
 export const mockReplicateClient = {
   predictions: {
+    cancel: vi.fn().mockResolvedValue({ status: 'canceled' }),
     create: vi.fn().mockResolvedValue({
       id: 'mock-prediction-id',
       status: 'starting',
@@ -10,10 +11,9 @@ export const mockReplicateClient = {
     }),
     get: vi.fn().mockResolvedValue({
       id: 'mock-prediction-id',
-      status: 'succeeded',
       output: ['https://replicate.delivery/mock-output.png'],
+      status: 'succeeded',
     }),
-    cancel: vi.fn().mockResolvedValue({ status: 'canceled' }),
   },
   run: vi.fn().mockResolvedValue(['Generated text response from mock LLM']),
 };
@@ -21,23 +21,23 @@ export const mockReplicateClient = {
 // Mock responses per model type
 export const mockImageGenResponse = {
   id: 'img-prediction-123',
-  status: 'succeeded',
-  output: ['https://replicate.delivery/mock-image.png'],
   metrics: { predict_time: 2.5 },
+  output: ['https://replicate.delivery/mock-image.png'],
+  status: 'succeeded',
 };
 
 export const mockVideoGenResponse = {
   id: 'vid-prediction-456',
-  status: 'succeeded',
-  output: 'https://replicate.delivery/mock-video.mp4',
   metrics: { predict_time: 15.2 },
+  output: 'https://replicate.delivery/mock-video.mp4',
+  status: 'succeeded',
 };
 
 export const mockLLMResponse = {
   id: 'llm-prediction-789',
-  status: 'succeeded',
-  output: ['Generated text response from mock LLM'],
   metrics: { input_token_count: 50, output_token_count: 100 },
+  output: ['Generated text response from mock LLM'],
+  status: 'succeeded',
 };
 
 // Mock prediction creation response
@@ -50,15 +50,15 @@ export const mockPredictionCreated = {
 // Mock prediction status response
 export const mockPredictionSucceeded = {
   id: 'mock-prediction-id',
-  status: 'succeeded',
-  output: ['https://replicate.delivery/mock-output.png'],
   metrics: { predict_time: 5.0 },
+  output: ['https://replicate.delivery/mock-output.png'],
+  status: 'succeeded',
 };
 
 export const mockPredictionFailed = {
+  error: 'Mock error: Model failed to generate output',
   id: 'mock-prediction-id',
   status: 'failed',
-  error: 'Mock error: Model failed to generate output',
 };
 
 export const mockPredictionCanceled = {

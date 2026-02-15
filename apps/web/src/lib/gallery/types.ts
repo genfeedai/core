@@ -24,17 +24,17 @@ export const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.mov'] as const;
 export const AUDIO_EXTENSIONS = ['.mp3', '.wav', '.ogg', '.m4a', '.aac'] as const;
 
 export const MIME_TYPES: Record<string, string> = {
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.png': 'image/png',
+  '.aac': 'audio/aac',
   '.gif': 'image/gif',
-  '.webp': 'image/webp',
-  '.mp4': 'video/mp4',
-  '.webm': 'video/webm',
+  '.jpeg': 'image/jpeg',
+  '.jpg': 'image/jpeg',
+  '.m4a': 'audio/mp4',
   '.mov': 'video/quicktime',
   '.mp3': 'audio/mpeg',
-  '.wav': 'audio/wav',
+  '.mp4': 'video/mp4',
   '.ogg': 'audio/ogg',
-  '.m4a': 'audio/mp4',
-  '.aac': 'audio/aac',
+  '.png': 'image/png',
+  '.wav': 'audio/wav',
+  '.webm': 'video/webm',
+  '.webp': 'image/webp',
 };

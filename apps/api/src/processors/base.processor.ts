@@ -1,6 +1,7 @@
 import { WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
+import type { NodeOutput } from '@/interfaces/execution-types.interface';
 import type { NodeJobData } from '@/interfaces/job-data.interface';
 import { JOB_STATUS, type QueueName } from '@/queue/queue.constants';
 import type { ExecutionsService } from '@/services/executions.service';
@@ -55,8 +56,8 @@ export abstract class BaseProcessor<T extends NodeJobData> extends WorkerHost {
     }
 
     await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.FAILED, {
-      error: errorMessage,
       attemptsMade: job.attemptsMade,
+      error: errorMessage,
     });
 
     await this.executionsService.updateNodeResult(
@@ -107,7 +108,7 @@ export abstract class BaseProcessor<T extends NodeJobData> extends WorkerHost {
     percent: number,
     message: string
   ): Promise<void> {
-    await job.updateProgress({ percent, message });
+    await job.updateProgress({ message, percent });
     await this.queueManager.addJobLog(job.id as string, message);
   }
 
@@ -132,7 +133,7 @@ export abstract class BaseProcessor<T extends NodeJobData> extends WorkerHost {
     if (typeof output === 'string') {
       url = output;
       allUrls.push(output);
-      return { url, type, allUrls };
+      return { allUrls, type, url };
     }
 
     // 2. Array of URLs (most common from Replicate)
@@ -143,31 +144,31 @@ export abstract class BaseProcessor<T extends NodeJobData> extends WorkerHost {
           allUrls.push(item);
         }
       }
-      return { url, type, allUrls };
+      return { allUrls, type, url };
     }
 
     // 3-5. Object with known fields
     if (output && typeof output === 'object' && !Array.isArray(output)) {
-      const outputObj = output as Record<string, unknown>;
+      const outputObj = output as NodeOutput;
 
       if (typeof outputObj.video === 'string') {
         url = outputObj.video;
         type = 'video';
         allUrls.push(url);
-        return { url, type, allUrls };
+        return { allUrls, type, url };
       }
 
       if (typeof outputObj.image === 'string') {
         url = outputObj.image;
         type = 'image';
         allUrls.push(url);
-        return { url, type, allUrls };
+        return { allUrls, type, url };
       }
 
       if (typeof outputObj.output === 'string') {
         url = outputObj.output;
         allUrls.push(url);
-        return { url, type, allUrls };
+        return { allUrls, type, url };
       }
     }
 
@@ -179,7 +180,7 @@ export abstract class BaseProcessor<T extends NodeJobData> extends WorkerHost {
       allUrls.push(url);
     }
 
-    return { url, type, allUrls };
+    return { allUrls, type, url };
   }
 
   /**
@@ -192,7 +193,7 @@ export abstract class BaseProcessor<T extends NodeJobData> extends WorkerHost {
     nodeId: string,
     outputType: 'image' | 'video',
     predictionId?: string
-  ): Promise<Record<string, unknown>> {
+  ): Promise<NodeOutput> {
     const extracted = this.extractOutputUrl(output, outputType);
     const svc = this.filesService;
 
@@ -207,10 +208,10 @@ export abstract class BaseProcessor<T extends NodeJobData> extends WorkerHost {
         );
         return {
           image: savedFiles[0].url,
-          localPath: savedFiles[0].path,
-          images: savedFiles.map((f) => f.url),
-          localPaths: savedFiles.map((f) => f.path),
           imageCount: savedFiles.length,
+          images: savedFiles.map((f) => f.url),
+          localPath: savedFiles[0].path,
+          localPaths: savedFiles.map((f) => f.path),
         };
       } catch (saveError) {
         const errorMsg = (saveError as Error).message;
@@ -219,8 +220,8 @@ export abstract class BaseProcessor<T extends NodeJobData> extends WorkerHost {
         );
         return {
           image: extracted.allUrls[0],
-          images: extracted.allUrls,
           imageCount: extracted.allUrls.length,
+          images: extracted.allUrls,
           saveError: errorMsg,
         };
       }
@@ -237,7 +238,7 @@ export abstract class BaseProcessor<T extends NodeJobData> extends WorkerHost {
         );
 
         // Build base result with saved URL
-        const baseResult: Record<string, unknown> = {
+        const baseResult: NodeOutput = {
           [extracted.type]: saved.url,
           localPath: saved.path,
         };
@@ -250,7 +251,7 @@ export abstract class BaseProcessor<T extends NodeJobData> extends WorkerHost {
 
         // Preserve extra fields from object outputs
         if (output && typeof output === 'object' && !Array.isArray(output)) {
-          const outputObj = output as Record<string, unknown>;
+          const outputObj = output as NodeOutput;
           for (const [key, value] of Object.entries(outputObj)) {
             if (!(key in baseResult)) {
               baseResult[key] = value;
@@ -268,7 +269,7 @@ export abstract class BaseProcessor<T extends NodeJobData> extends WorkerHost {
         );
 
         // Fall back to remote URL
-        const fallback: Record<string, unknown> = {
+        const fallback: NodeOutput = {
           [extracted.type]: extracted.url,
           saveError: errorMsg,
         };
@@ -279,7 +280,7 @@ export abstract class BaseProcessor<T extends NodeJobData> extends WorkerHost {
 
         // Preserve extra fields from object outputs
         if (output && typeof output === 'object' && !Array.isArray(output)) {
-          const outputObj = output as Record<string, unknown>;
+          const outputObj = output as NodeOutput;
           for (const [key, value] of Object.entries(outputObj)) {
             if (!(key in fallback)) {
               fallback[key] = value;
@@ -293,7 +294,7 @@ export abstract class BaseProcessor<T extends NodeJobData> extends WorkerHost {
 
     // No URL found or no filesService - pass through as-is
     if (extracted.url) {
-      const result: Record<string, unknown> = { [extracted.type]: extracted.url };
+      const result: NodeOutput = { [extracted.type]: extracted.url };
       if (outputType === 'image') {
         result.images = [extracted.url];
       }
@@ -302,7 +303,7 @@ export abstract class BaseProcessor<T extends NodeJobData> extends WorkerHost {
 
     // Completely unknown format - pass through
     if (output && typeof output === 'object') {
-      return output as Record<string, unknown>;
+      return output as NodeOutput;
     }
 
     return { output };
@@ -324,11 +325,7 @@ export abstract class BaseProcessor<T extends NodeJobData> extends WorkerHost {
   /**
    * Standard job completion sequence: update status to COMPLETED, log completion, continue execution
    */
-  protected async completeJob(
-    job: Job<T>,
-    result: Record<string, unknown>,
-    message: string
-  ): Promise<void> {
+  protected async completeJob(job: Job<T>, result: NodeOutput, message: string): Promise<void> {
     await this.queueManager.updateJobStatus(job.id as string, JOB_STATUS.COMPLETED, { result });
     await this.queueManager.addJobLog(job.id as string, message);
     await this.queueManager.continueExecution(job.data.executionId, job.data.workflowId);

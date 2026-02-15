@@ -7,13 +7,15 @@ import { Job, JobSchema } from '@/schemas/job.schema';
 import { ExecutionsService } from '@/services/executions.service';
 
 @Module({
+  controllers: [ExecutionsController],
+  exports: [ExecutionsService],
   imports: [
     MongooseModule.forFeatureAsync([
       {
         name: Execution.name,
         useFactory: () => {
           const schema = ExecutionSchema;
-          schema.index({ workflowId: 1, isDeleted: 1 });
+          schema.index({ isDeleted: 1, workflowId: 1 });
           schema.index({ createdAt: -1 });
           return schema;
         },
@@ -29,8 +31,6 @@ import { ExecutionsService } from '@/services/executions.service';
     ]),
     forwardRef(() => QueueModule),
   ],
-  controllers: [ExecutionsController],
   providers: [ExecutionsService],
-  exports: [ExecutionsService],
 })
 export class ExecutionsModule {}

@@ -51,7 +51,7 @@ describe('cn', () => {
   });
 
   it('should handle object input', () => {
-    const result = cn({ foo: true, bar: false, baz: true });
+    const result = cn({ bar: false, baz: true, foo: true });
     expect(result).toBe('foo baz');
   });
 

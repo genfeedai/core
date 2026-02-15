@@ -18,12 +18,12 @@ function PauseEdgeComponent({
   data,
 }: EdgeProps) {
   const [edgePath, labelX, labelY] = getBezierPath({
+    sourcePosition,
     sourceX,
     sourceY,
-    sourcePosition,
+    targetPosition,
     targetX,
     targetY,
-    targetPosition,
   });
 
   const hasPause = data?.hasPause === true;
@@ -36,8 +36,8 @@ function PauseEdgeComponent({
         style={{
           ...style,
           ...(hasPause && {
-            strokeDasharray: '5 5',
             stroke: '#f59e0b',
+            strokeDasharray: '5 5',
           }),
         }}
       />

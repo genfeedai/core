@@ -1,5 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, type HydratedDocument, Types } from 'mongoose';
+import type { NodeOutput } from '@/interfaces/execution-types.interface';
+import type { NodeJobData, WorkflowJobData } from '@/interfaces/job-data.interface';
 import { JOB_STATUS, QUEUE_NAMES } from '@/queue/queue.constants';
 
 export type QueueJobDocument = HydratedDocument<QueueJob>;
@@ -12,36 +14,36 @@ class JobLog {
   @Prop({ required: true })
   message: string;
 
-  @Prop({ required: true, enum: ['info', 'warn', 'error', 'debug'] })
+  @Prop({ enum: ['info', 'warn', 'error', 'debug'], required: true })
   level: string;
 }
 
-@Schema({ timestamps: true, collection: 'queue_jobs' })
+@Schema({ collection: 'queue_jobs', timestamps: true })
 export class QueueJob extends Document {
-  @Prop({ required: true, index: true })
+  @Prop({ index: true, required: true })
   bullJobId: string;
 
-  @Prop({ required: true, enum: Object.values(QUEUE_NAMES) })
+  @Prop({ enum: Object.values(QUEUE_NAMES), required: true })
   queueName: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Execution', required: true })
+  @Prop({ ref: 'Execution', required: true, type: Types.ObjectId })
   executionId: Types.ObjectId;
 
   @Prop({ required: true })
   nodeId: string;
 
   @Prop({
-    required: true,
-    enum: Object.values(JOB_STATUS),
     default: JOB_STATUS.PENDING,
+    enum: Object.values(JOB_STATUS),
+    required: true,
   })
   status: string;
 
-  @Prop({ type: Object, required: true })
-  data: Record<string, unknown>;
+  @Prop({ required: true, type: Object })
+  data: NodeJobData | WorkflowJobData;
 
   @Prop({ type: Object })
-  result?: Record<string, unknown>;
+  result?: NodeOutput;
 
   @Prop()
   error?: string;
@@ -58,7 +60,7 @@ export class QueueJob extends Document {
   @Prop()
   failedReason?: string;
 
-  @Prop({ type: [Object], default: [] })
+  @Prop({ default: [], type: [Object] })
   logs: JobLog[];
 
   @Prop({ default: false })

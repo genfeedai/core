@@ -22,11 +22,11 @@ interface InputGroupFieldProps {
 }
 
 const WIDTH_CLASSES: Record<FieldWidth, string> = {
+  auto: 'w-auto',
   full: 'w-full',
   half: 'w-1/2',
-  third: 'w-1/3',
   quarter: 'w-1/4',
-  auto: 'w-auto',
+  third: 'w-1/3',
 };
 
 function InputGroupFieldComponent({

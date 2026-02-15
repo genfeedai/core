@@ -14,33 +14,33 @@ const mockCreateGroup = vi.fn();
 
 vi.mock('@/store/contextMenuStore', () => ({
   useContextMenuStore: vi.fn(() => ({
+    close: mockClose,
     isOpen: false,
-    position: { x: 100, y: 100 },
     menuType: null,
-    targetId: null,
-    targetIds: null,
-    openNodeMenu: mockOpenNodeMenu,
     openEdgeMenu: mockOpenEdgeMenu,
+    openNodeMenu: mockOpenNodeMenu,
     openPaneMenu: mockOpenPaneMenu,
     openSelectionMenu: mockOpenSelectionMenu,
-    close: mockClose,
+    position: { x: 100, y: 100 },
+    targetId: null,
+    targetIds: null,
   })),
 }));
 
 vi.mock('@/store/workflowStore', () => {
   const store = (selector?: (state: unknown) => unknown) => {
     const state = {
+      addNodesAndEdges: vi.fn(),
+      createGroup: mockCreateGroup,
       nodes: [
-        { id: 'node-1', type: 'imageGen', data: { locked: false }, position: { x: 0, y: 0 } },
-        { id: 'node-2', type: 'llm', data: { locked: true }, position: { x: 100, y: 0 } },
+        { data: { locked: false }, id: 'node-1', position: { x: 0, y: 0 }, type: 'imageGen' },
+        { data: { locked: true }, id: 'node-2', position: { x: 100, y: 0 }, type: 'llm' },
       ],
       removeEdge: mockRemoveEdge,
-      toggleNodeLock: mockToggleNodeLock,
-      createGroup: mockCreateGroup,
-      workflowId: 'workflow-1',
-      addNodesAndEdges: vi.fn(),
       setSelectedNodeIds: vi.fn(),
+      toggleNodeLock: mockToggleNodeLock,
       updateNodeData: vi.fn(),
+      workflowId: 'workflow-1',
     };
     return selector ? selector(state) : state;
   };
@@ -49,23 +49,23 @@ vi.mock('@/store/workflowStore', () => {
 
 vi.mock('@xyflow/react', () => ({
   useReactFlow: () => ({
-    setNodes: vi.fn(),
-    setEdges: vi.fn(),
-    getNodes: vi.fn(() => []),
-    getEdges: vi.fn(() => []),
     fitView: vi.fn(),
+    getEdges: vi.fn(() => []),
+    getNodes: vi.fn(() => []),
     screenToFlowPosition: vi.fn((pos: { x: number; y: number }) => pos),
+    setEdges: vi.fn(),
+    setNodes: vi.fn(),
   }),
 }));
 
 vi.mock('./useNodeActions', () => ({
   useNodeActions: () => ({
     clipboard: null,
-    deleteNode: vi.fn(),
-    duplicate: vi.fn(),
     copyNode: vi.fn(),
     cutNode: vi.fn(),
     deleteMultipleNodes: vi.fn(),
+    deleteNode: vi.fn(),
+    duplicate: vi.fn(),
     duplicateMultipleNodes: vi.fn(),
     getPasteData: vi.fn(() => null),
   }),
@@ -74,9 +74,9 @@ vi.mock('./useNodeActions', () => ({
 vi.mock('./usePaneActions', () => ({
   usePaneActions: () => ({
     addNodeAtPosition: vi.fn(),
-    selectAll: vi.fn(),
-    fitView: vi.fn(),
     autoLayout: vi.fn(),
+    fitView: vi.fn(),
+    selectAll: vi.fn(),
   }),
 }));
 
@@ -87,12 +87,12 @@ vi.mock('@/lib/api', () => ({
 }));
 
 vi.mock('@/lib/logger', () => ({
-  logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
+  logger: { debug: vi.fn(), error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
 vi.mock('@/components/context-menu/menus', () => ({
-  getNodeMenuItems: vi.fn(() => [{ id: 'node-menu-item', label: 'Node Action' }]),
   getEdgeMenuItems: vi.fn(() => [{ id: 'edge-menu-item', label: 'Edge Action' }]),
+  getNodeMenuItems: vi.fn(() => [{ id: 'node-menu-item', label: 'Node Action' }]),
   getPaneMenuItems: vi.fn(() => [{ id: 'pane-menu-item', label: 'Pane Action' }]),
   getSelectionMenuItems: vi.fn(() => [{ id: 'selection-menu-item', label: 'Selection Action' }]),
 }));
@@ -144,16 +144,16 @@ describe('useContextMenu', () => {
 
     it('should return node menu items when menuType is node', () => {
       mockedUseContextMenuStore.mockReturnValue({
+        close: mockClose,
         isOpen: true,
-        position: { x: 100, y: 100 },
         menuType: 'node',
-        targetId: 'node-1',
-        targetIds: null,
-        openNodeMenu: mockOpenNodeMenu,
         openEdgeMenu: mockOpenEdgeMenu,
+        openNodeMenu: mockOpenNodeMenu,
         openPaneMenu: mockOpenPaneMenu,
         openSelectionMenu: mockOpenSelectionMenu,
-        close: mockClose,
+        position: { x: 100, y: 100 },
+        targetId: 'node-1',
+        targetIds: null,
       });
 
       const { result } = renderHook(() => useContextMenu());
@@ -165,16 +165,16 @@ describe('useContextMenu', () => {
 
     it('should return edge menu items when menuType is edge', () => {
       mockedUseContextMenuStore.mockReturnValue({
+        close: mockClose,
         isOpen: true,
-        position: { x: 100, y: 100 },
         menuType: 'edge',
-        targetId: 'edge-1',
-        targetIds: null,
-        openNodeMenu: mockOpenNodeMenu,
         openEdgeMenu: mockOpenEdgeMenu,
+        openNodeMenu: mockOpenNodeMenu,
         openPaneMenu: mockOpenPaneMenu,
         openSelectionMenu: mockOpenSelectionMenu,
-        close: mockClose,
+        position: { x: 100, y: 100 },
+        targetId: 'edge-1',
+        targetIds: null,
       });
 
       const { result } = renderHook(() => useContextMenu());
@@ -185,16 +185,16 @@ describe('useContextMenu', () => {
 
     it('should return pane menu items when menuType is pane', () => {
       mockedUseContextMenuStore.mockReturnValue({
+        close: mockClose,
         isOpen: true,
-        position: { x: 200, y: 300 },
         menuType: 'pane',
-        targetId: null,
-        targetIds: null,
-        openNodeMenu: mockOpenNodeMenu,
         openEdgeMenu: mockOpenEdgeMenu,
+        openNodeMenu: mockOpenNodeMenu,
         openPaneMenu: mockOpenPaneMenu,
         openSelectionMenu: mockOpenSelectionMenu,
-        close: mockClose,
+        position: { x: 200, y: 300 },
+        targetId: null,
+        targetIds: null,
       });
 
       const { result } = renderHook(() => useContextMenu());
@@ -205,16 +205,16 @@ describe('useContextMenu', () => {
 
     it('should return selection menu items when menuType is selection', () => {
       mockedUseContextMenuStore.mockReturnValue({
+        close: mockClose,
         isOpen: true,
-        position: { x: 100, y: 100 },
         menuType: 'selection',
-        targetId: null,
-        targetIds: ['node-1', 'node-2'],
-        openNodeMenu: mockOpenNodeMenu,
         openEdgeMenu: mockOpenEdgeMenu,
+        openNodeMenu: mockOpenNodeMenu,
         openPaneMenu: mockOpenPaneMenu,
         openSelectionMenu: mockOpenSelectionMenu,
-        close: mockClose,
+        position: { x: 100, y: 100 },
+        targetId: null,
+        targetIds: ['node-1', 'node-2'],
       });
 
       const { result } = renderHook(() => useContextMenu());
@@ -225,16 +225,16 @@ describe('useContextMenu', () => {
 
     it('should return empty array for node menu without targetId', () => {
       mockedUseContextMenuStore.mockReturnValue({
+        close: mockClose,
         isOpen: true,
-        position: { x: 100, y: 100 },
         menuType: 'node',
-        targetId: null,
-        targetIds: null,
-        openNodeMenu: mockOpenNodeMenu,
         openEdgeMenu: mockOpenEdgeMenu,
+        openNodeMenu: mockOpenNodeMenu,
         openPaneMenu: mockOpenPaneMenu,
         openSelectionMenu: mockOpenSelectionMenu,
-        close: mockClose,
+        position: { x: 100, y: 100 },
+        targetId: null,
+        targetIds: null,
       });
 
       const { result } = renderHook(() => useContextMenu());
@@ -244,16 +244,16 @@ describe('useContextMenu', () => {
 
     it('should return empty array for selection menu without targetIds', () => {
       mockedUseContextMenuStore.mockReturnValue({
+        close: mockClose,
         isOpen: true,
-        position: { x: 100, y: 100 },
         menuType: 'selection',
-        targetId: null,
-        targetIds: [],
-        openNodeMenu: mockOpenNodeMenu,
         openEdgeMenu: mockOpenEdgeMenu,
+        openNodeMenu: mockOpenNodeMenu,
         openPaneMenu: mockOpenPaneMenu,
         openSelectionMenu: mockOpenSelectionMenu,
-        close: mockClose,
+        position: { x: 100, y: 100 },
+        targetId: null,
+        targetIds: [],
       });
 
       const { result } = renderHook(() => useContextMenu());

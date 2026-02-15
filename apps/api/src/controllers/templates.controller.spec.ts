@@ -1,4 +1,4 @@
-import { TemplateCategory } from '@genfeedai/types';
+import { WorkflowTemplateCategory } from '@genfeedai/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TemplatesController } from '@/controllers/templates.controller';
 import type { TemplatesService } from '@/services/templates.service';
@@ -7,24 +7,24 @@ describe('TemplatesController', () => {
   let controller: TemplatesController;
 
   const mockTemplate = {
-    id: 'template-1',
-    name: 'Test Template',
-    description: 'A test template',
-    category: TemplateCategory.IMAGE,
-    promptText: 'Generate a beautiful {{subject}}',
-    variables: [{ name: 'subject', description: 'The subject to generate' }],
-    isSystem: false,
+    category: WorkflowTemplateCategory.IMAGE,
     createdAt: new Date(),
+    description: 'A test template',
+    id: 'template-1',
+    isSystem: false,
+    name: 'Test Template',
+    promptText: 'Generate a beautiful {{subject}}',
     updatedAt: new Date(),
+    variables: [{ description: 'The subject to generate', name: 'subject' }],
   };
 
   const mockService = {
     create: vi.fn().mockResolvedValue(mockTemplate),
     findAll: vi.fn().mockResolvedValue([mockTemplate]),
     findOne: vi.fn().mockResolvedValue(mockTemplate),
-    update: vi.fn().mockResolvedValue(mockTemplate),
     remove: vi.fn().mockResolvedValue(mockTemplate),
     seedSystemTemplates: vi.fn().mockResolvedValue(undefined),
+    update: vi.fn().mockResolvedValue(mockTemplate),
   };
 
   beforeEach(() => {
@@ -37,9 +37,9 @@ describe('TemplatesController', () => {
   describe('create', () => {
     it('should create a new template', async () => {
       const createDto = {
+        category: WorkflowTemplateCategory.IMAGE,
         name: 'Test Template',
         promptText: 'Generate a beautiful {{subject}}',
-        category: TemplateCategory.IMAGE,
       };
 
       const result = await controller.create(createDto);
@@ -58,10 +58,10 @@ describe('TemplatesController', () => {
     });
 
     it('should filter by category when provided', async () => {
-      await controller.findAll(TemplateCategory.IMAGE);
+      await controller.findAll(WorkflowTemplateCategory.IMAGE);
 
       expect(mockService.findAll).toHaveBeenCalledWith({
-        category: TemplateCategory.IMAGE,
+        category: WorkflowTemplateCategory.IMAGE,
         search: undefined,
       });
     });

@@ -64,10 +64,10 @@ export function applyEditOperations(
         } as WorkflowNodeData;
 
         const newNode: WorkflowNode = {
-          id: nodeId,
-          type: operation.nodeType,
-          position,
           data: nodeData,
+          id: nodeId,
+          position,
+          type: operation.nodeType,
         };
 
         nodes.push(newNode);
@@ -129,8 +129,8 @@ export function applyEditOperations(
         const newEdge: WorkflowEdge = {
           id: edgeId,
           source: operation.source,
-          target: operation.target,
           sourceHandle: operation.sourceHandle,
+          target: operation.target,
           targetHandle: operation.targetHandle,
         };
 
@@ -154,9 +154,9 @@ export function applyEditOperations(
   }
 
   return {
-    nodes,
-    edges,
     applied,
+    edges,
+    nodes,
     skipped,
   };
 }

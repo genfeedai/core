@@ -36,24 +36,24 @@ function InputGroupRowComponent<T = Record<string, unknown>>({
 
   if (onDuplicate) {
     defaultActions.push({
-      id: `duplicate-${index}`,
-      type: 'duplicate',
       category: 'crud',
-      label: 'Duplicate',
       icon: <Copy className="w-full h-full" />,
+      id: `duplicate-${index}`,
+      label: 'Duplicate',
       onClick: onDuplicate,
+      type: 'duplicate',
     });
   }
 
   if (onDelete) {
     defaultActions.push({
-      id: `delete-${index}`,
-      type: 'delete',
       category: 'crud',
-      label: 'Delete',
-      icon: <Trash2 className="w-full h-full" />,
       danger: true,
+      icon: <Trash2 className="w-full h-full" />,
+      id: `delete-${index}`,
+      label: 'Delete',
       onClick: onDelete,
+      type: 'delete',
     });
   }
 
