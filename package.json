@@ -33,7 +33,7 @@
     "build:web": "bun run --filter @genfeedai/web build",
     "check": "biome check .",
     "check:fix": "biome check --write .",
-    "deps:update": "bunx npm-check-updates -u && bun install",
+    "deps:update": "bunx npm-check-updates -u --deep && bun install",
     "dev": "turbo dev --filter=@genfeedai/api --filter=@genfeedai/web",
     "dev:api": "bun run --filter @genfeedai/api start:dev",
     "dev:web": "bun run --filter @genfeedai/web dev",
