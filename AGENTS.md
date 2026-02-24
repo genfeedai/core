@@ -1,6 +1,6 @@
-# Genfeed
+# Genfeed Core (OSS)
 
-This file provides entry points for AI agents.
+Open-source node-based AI workflow editor. React Flow canvas, 36 node types (image/video/audio/text), BullMQ queue processing, MongoDB + NestJS API.
 
 ## Documentation
 
@@ -12,4 +12,4 @@ All documentation is in `.agents/`:
 
 ## Quick Start
 
-Read `.agents/SYSTEM/ai/SESSION-QUICK-START.md` before starting work.
+Read `.agents/SYSTEM/ai/SESSION-QUICK-START.md` before starting work. Key entry point for node types: `packages/types/src/nodes.ts`.

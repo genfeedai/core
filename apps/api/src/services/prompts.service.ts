@@ -98,7 +98,7 @@ export class PromptsService implements OnModuleInit {
 
   async update(id: string, dto: Partial<CreatePromptDto>): Promise<PromptDocument> {
     const item = await this.promptModel
-      .findOneAndUpdate({ _id: id, isDeleted: false }, { $set: dto }, { new: true })
+      .findOneAndUpdate({ _id: id, isDeleted: false }, { $set: dto }, { returnDocument: 'after' })
       .exec();
     if (!item) {
       throw new NotFoundException(`Prompt library item ${id} not found`);
@@ -108,7 +108,11 @@ export class PromptsService implements OnModuleInit {
 
   async remove(id: string): Promise<PromptDocument> {
     const item = await this.promptModel
-      .findOneAndUpdate({ _id: id, isDeleted: false }, { $set: { isDeleted: true } }, { new: true })
+      .findOneAndUpdate(
+        { _id: id, isDeleted: false },
+        { $set: { isDeleted: true } },
+        { returnDocument: 'after' }
+      )
       .exec();
     if (!item) {
       throw new NotFoundException(`Prompt library item ${id} not found`);
@@ -118,7 +122,11 @@ export class PromptsService implements OnModuleInit {
 
   async incrementUseCount(id: string): Promise<PromptDocument> {
     const item = await this.promptModel
-      .findOneAndUpdate({ _id: id, isDeleted: false }, { $inc: { useCount: 1 } }, { new: true })
+      .findOneAndUpdate(
+        { _id: id, isDeleted: false },
+        { $inc: { useCount: 1 } },
+        { returnDocument: 'after' }
+      )
       .exec();
     if (!item) {
       throw new NotFoundException(`Prompt library item ${id} not found`);

@@ -1,68 +1,21 @@
-# Coding Rules - Genfeed
+# Coding Rules - Genfeed (Extended)
 
-**Purpose:** Coding standards and patterns for this project.
-**Last Updated:** 2026-01-20
-
----
-
-## General Principles
-
-1. **Follow existing patterns** - Search for 3+ similar implementations before writing new code
-2. **Quality over speed** - Think through implementations before coding
-3. **No `any` types** - Use proper TypeScript types
-4. **No `console.log`** - Use a logging service
+**Purpose:** Extended coding standards beyond what `CLAUDE.md` covers.
+For core rules and architecture patterns, see `CLAUDE.md`. This file covers naming conventions, detailed patterns, testing, and documentation standards.
+**Last Updated:** 2026-02-24
 
 ---
 
-## File Organization
-
-### Naming Conventions
+## Naming Conventions
 
 - **Directories:** lowercase with hyphens (`user-settings/`)
 - **Files:** kebab-case (`user-service.ts`)
 - **Components:** PascalCase (`UserProfile.tsx`)
 - **Interfaces:** PascalCase with `I` prefix (`IUserProfile`)
 
-### Import Order
-
-1. External packages
-2. Internal packages/aliases
-3. Relative imports
-4. Types/interfaces
-
-```typescript
-// External
-import { useState } from 'react';
-
-// Internal aliases
-import { Button } from '@components/ui';
-import { UserService } from '@services/user';
-
-// Relative
-import { helpers } from './utils';
-
-// Types
-import type { IUser } from '@interfaces/user';
-```
-
 ---
 
-## TypeScript
-
-### Do
-
-- Use strict mode
-- Define return types for functions
-- Use path aliases (`@components/`, `@services/`)
-- Export types from dedicated files
-
-### Don't
-
-- Use `any` type
-- Use relative imports for shared code
-- Ignore TypeScript errors
-
-### Interface Placement
+## Interface Placement
 
 | Scope | Location |
 |-------|----------|
@@ -70,7 +23,7 @@ import type { IUser } from '@interfaces/user';
 | Shared across API files | `apps/api/src/interfaces/` |
 | Shared across packages | `packages/types/src/` |
 
-**Examples of acceptable inline interfaces:**
+**Acceptable inline interfaces:**
 - Query params only used in one controller
 - Internal processor state types
 - Helper function arguments
@@ -82,7 +35,7 @@ import type { IUser } from '@interfaces/user';
 
 ---
 
-## Error Handling
+## Error Handling Pattern
 
 ```typescript
 try {
@@ -108,7 +61,7 @@ try {
 
 ---
 
-## Git
+## Git Conventions
 
 ### Commit Messages
 
@@ -139,9 +92,7 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
 ---
 
-## Project-Specific Rules
-
-### MongoDB Queries
+## MongoDB Query Pattern
 
 All queries MUST include organization scoping and soft-delete filtering:
 
@@ -156,72 +107,9 @@ await this.workflowModel.find({
 await this.workflowModel.find({ name: 'my-workflow' });
 ```
 
-### Frontend Async Operations
+---
 
-All async operations in React effects MUST use AbortController:
-
-```typescript
-useEffect(() => {
-  const controller = new AbortController();
-
-  fetchWorkflows({ signal: controller.signal })
-    .then(setWorkflows)
-    .catch((err) => {
-      if (!controller.signal.aborted) {
-        setError(err);
-      }
-    });
-
-  return () => controller.abort();
-}, []);
-```
-
-### Serializers
-
-Serializers belong in `packages/`, NOT in API services:
-
-| Correct | Wrong |
-|---------|-------|
-| `packages/serializers/` | `apps/api/src/serializers/` |
-
-### Database Indexes
-
-Compound indexes go in module `useFactory`, NOT in schema files:
-
-```typescript
-// In module file
-MongooseModule.forFeatureAsync([{
-  name: Workflow.name,
-  useFactory: () => {
-    const schema = WorkflowSchema;
-    schema.index({ organization: 1, createdAt: -1 });
-    return schema;
-  }
-}])
-```
-
-### Node System
-
-- **36 node types** defined in `packages/types/src/nodes.ts`
-- **Handle types are strict** - only same-type connections allowed:
-  - `image` → `image`
-  - `text` → `text`
-  - `video` → `video`
-  - `audio` → `audio`
-
-### Queue Architecture
-
-5 BullMQ queues for job processing:
-
-| Queue | Purpose |
-|-------|---------|
-| `workflow-orchestrator` | Workflow execution coordination |
-| `image-generation` | Image AI operations |
-| `video-generation` | Video AI operations |
-| `llm-generation` | Text/LLM operations |
-| `processing` | General processing tasks |
-
-### Cost Calculation
+## Cost Calculation
 
 All pricing logic lives in `packages/core/src/pricing.ts`. Update this file when adding new AI providers or models.
 

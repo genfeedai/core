@@ -1,8 +1,9 @@
 # CRITICAL: Never Do This
 
 **Purpose:** Quick reference for violations that break builds, lose data, or violate architecture.
+For positive coding standards, see `CLAUDE.md`. This file covers violations only.
 **Read this FIRST before making ANY changes.**
-**Last Updated:** 2026-01-14
+**Last Updated:** 2026-02-24
 
 ---
 
@@ -18,13 +19,7 @@ These files MUST exist at project root:
 
 ### Never Create Root-Level .md Files
 
-Only these 4 `.md` files allowed at project root:
-1. `AGENTS.md`
-2. `CLAUDE.md`
-3. `CODEX.md`
-4. `README.md`
-
-Everything else goes in `.agents/`.
+Only these 4 `.md` files allowed at project root (listed above). Everything else goes in `.agents/`.
 
 ---
 
@@ -32,18 +27,18 @@ Everything else goes in `.agents/`.
 
 ### One File Per Day
 
-**Correct:**
+**CORRECT:**
 ```
 .agents/SESSIONS/2025-01-15.md
 ```
 
-**Wrong:**
+**WRONG:**
 ```
-.agents/SESSIONS/2025-01-15-feature.md  ❌
-.agents/SESSIONS/FEATURE-2025-01-15.md  ❌
+.agents/SESSIONS/2025-01-15-feature.md
+.agents/SESSIONS/FEATURE-2025-01-15.md
 ```
 
-Multiple sessions same day → Same file, Session 1, Session 2, etc.
+Multiple sessions same day -> Same file, Session 1, Session 2, etc.
 
 ---
 
@@ -64,143 +59,48 @@ Multiple sessions same day → Same file, Session 1, Session 2, etc.
 
 ## Coding
 
-### Never Use `any` Type
-
-```typescript
-// Wrong
-function process(data: any) { }
-
-// Correct
-function process(data: UserData) { }
-```
-
-### Never Skip Error Handling
-
-```typescript
-// Wrong
-const result = await operation();
-
-// Correct
-try {
-  const result = await operation();
-} catch (error) {
-  logger.error('Operation failed', error);
-  throw error;
-}
-```
-
-### Never Use console.log
-
-Use a logging service instead.
+- **NEVER use `any` type** -- see `CLAUDE.md` Critical Rules #1
+- **NEVER skip error handling** on async operations -- wrap in try/catch with logger
+- **NEVER use `console.log`** -- see `CLAUDE.md` Critical Rules #2
+- **NEVER skip AbortController cleanup in React effects** -- see `CLAUDE.md` Architecture Patterns
+- **NEVER put serializers in API services** -- see `CLAUDE.md` Architecture Patterns
+- **NEVER add compound indexes in schema files** -- use module `useFactory`, see `CLAUDE.md`
 
 ---
 
-## Project-Specific Rules
+## Project-Specific Violations
 
 ### Soft Deletes
 
-**NEVER use `deletedAt`** - use `isDeleted: boolean`:
-
-```typescript
-// Wrong
-{ deletedAt: Date | null }
-
-// Correct
-{ isDeleted: boolean }
-```
-
-### Serializer Location
-
-**NEVER put serializers in API services** - they belong in `packages/`:
-
-```
-❌ apps/api/src/serializers/workflow.serializer.ts
-✅ packages/serializers/src/workflow.serializer.ts
-```
-
-### Database Indexes
-
-**NEVER add compound indexes in schema files** - use module `useFactory`:
-
-```typescript
-// ❌ Wrong - in schema file
-@Schema()
-export class Workflow {
-  // indexes defined here
-}
-
-// ✅ Correct - in module useFactory
-MongooseModule.forFeatureAsync([{
-  name: Workflow.name,
-  useFactory: () => {
-    const schema = WorkflowSchema;
-    schema.index({ organization: 1, createdAt: -1 });
-    return schema;
-  }
-}])
-```
+**NEVER use `deletedAt`** -- use `isDeleted: boolean`. See `CLAUDE.md` Critical Rules #4.
 
 ### Node Types
 
-**NEVER create new node types without updating `packages/types/src/nodes.ts`**
-
+**NEVER create new node types without updating `packages/types/src/nodes.ts`.**
 All 36 node types must be defined there. Adding a node elsewhere causes type mismatches.
-
-### React Effects
-
-**NEVER skip AbortController cleanup in React effects**:
-
-```typescript
-// ❌ Wrong - no cleanup
-useEffect(() => {
-  fetchData();
-}, []);
-
-// ✅ Correct - with AbortController
-useEffect(() => {
-  const controller = new AbortController();
-  fetchData({ signal: controller.signal });
-  return () => controller.abort();
-}, []);
-```
 
 ### Handle Type Connections
 
-**NEVER connect incompatible handle types**:
+**NEVER connect incompatible handle types:**
 
-```
-❌ image → text
-❌ video → audio
-❌ text → image
-
-✅ image → image
-✅ text → text
-✅ video → video
-✅ audio → audio
-```
+WRONG: image -> text, video -> audio, text -> image
+CORRECT: image -> image, text -> text, video -> video, audio -> audio
 
 ### Local Builds
 
-**NEVER run `bun run build` locally** - it attempts to build all 12 apps and crashes. Use CI/CD only.
+**NEVER run `bun run build` locally** -- it attempts to build all 12 apps and crashes. Use CI/CD only.
 
 ```bash
-# ❌ Never run locally
+# WRONG - never run locally
 bun run build
 
-# ✅ Build single app if needed
+# CORRECT - build single app if needed
 bun run build:studio
 ```
 
 ### API Keys
 
-**NEVER commit API keys** to the repository:
-
-- Replicate API Token
-- ElevenLabs API Key
-- fal.ai Key
-- Any other provider secrets
-
-These belong in `.env` files (which are gitignored).
+**NEVER commit API keys** to the repository (Replicate, ElevenLabs, fal.ai, etc.). These belong in `.env` files (which are gitignored).
 
 ---
 
@@ -209,7 +109,7 @@ These belong in `.env` files (which are gitignored).
 Before writing ANY code:
 
 - [ ] Read this file
-- [ ] Check `../RULES.md` for patterns
+- [ ] Check `CLAUDE.md` for patterns
 - [ ] Search for similar implementations
 - [ ] Understand existing code before modifying
 
@@ -217,10 +117,10 @@ Before writing ANY code:
 
 ## If You Violate These Rules
 
-1. **Acknowledge** - Don't hide it
-2. **Fix properly** - No workarounds
-3. **Document** - Add to session file
-4. **Learn** - Update this file if needed
+1. **Acknowledge** -- Don't hide it
+2. **Fix properly** -- No workarounds
+3. **Document** -- Add to session file
+4. **Learn** -- Update this file if needed
 
 ---
 

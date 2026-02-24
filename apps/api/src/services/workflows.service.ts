@@ -88,9 +88,12 @@ export class WorkflowsService {
       updates.interface = workflowInterface;
       updates.isReusable = isReusable;
 
-      this.logger.log(
-        `Workflow ${id} interface updated: ${workflowInterface.inputs.length} inputs, ${workflowInterface.outputs.length} outputs`
-      );
+      // Only log when interface has actual inputs/outputs (skip noise from auto-save)
+      if (isReusable) {
+        this.logger.log(
+          `Workflow ${id} interface updated: ${workflowInterface.inputs.length} inputs, ${workflowInterface.outputs.length} outputs`
+        );
+      }
 
       // Auto-select thumbnail if not set and nodes have media outputs
       const existingWorkflow = await this.workflowModel.findOne({ _id: id, isDeleted: false });
@@ -107,7 +110,11 @@ export class WorkflowsService {
     }
 
     const workflow = await this.workflowModel
-      .findOneAndUpdate({ _id: id, isDeleted: false }, { $set: updates }, { new: true })
+      .findOneAndUpdate(
+        { _id: id, isDeleted: false },
+        { $set: updates },
+        { returnDocument: 'after' }
+      )
       .exec();
     if (!workflow) {
       throw new NotFoundException(`Workflow ${id} not found`);
@@ -155,7 +162,7 @@ export class WorkflowsService {
       .findOneAndUpdate(
         { _id: id, isDeleted: false },
         { $set: { thumbnail: thumbnailUrl, thumbnailNodeId: nodeId } },
-        { new: true }
+        { returnDocument: 'after' }
       )
       .exec();
 
@@ -169,7 +176,11 @@ export class WorkflowsService {
 
   async remove(id: string): Promise<WorkflowDocument> {
     const workflow = await this.workflowModel
-      .findOneAndUpdate({ _id: id, isDeleted: false }, { $set: { isDeleted: true } }, { new: true })
+      .findOneAndUpdate(
+        { _id: id, isDeleted: false },
+        { $set: { isDeleted: true } },
+        { returnDocument: 'after' }
+      )
       .exec();
     if (!workflow) {
       throw new NotFoundException(`Workflow ${id} not found`);

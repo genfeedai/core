@@ -1,7 +1,7 @@
 @use "tailwindcss";
 
 @source "../**/*.{ts,tsx}";
-@source "../../../../packages/workflow-ui/src/**/*.{ts,tsx}";
+@source "../../node_modules/@genfeedai/workflow-ui/dist/**/*.mjs";
 
 // Design tokens
 :root {

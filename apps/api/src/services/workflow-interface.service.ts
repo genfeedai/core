@@ -91,7 +91,7 @@ export class WorkflowInterfaceService {
             isReusable,
           },
         },
-        { new: true }
+        { returnDocument: 'after' }
       )
       .exec();
 

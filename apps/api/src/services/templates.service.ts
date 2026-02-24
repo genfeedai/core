@@ -78,7 +78,7 @@ export class TemplatesService implements OnModuleInit {
 
   async update(id: string, dto: Partial<CreateTemplateDto>): Promise<TemplateDocument> {
     const template = await this.templateModel
-      .findOneAndUpdate({ _id: id, isDeleted: false }, { $set: dto }, { new: true })
+      .findOneAndUpdate({ _id: id, isDeleted: false }, { $set: dto }, { returnDocument: 'after' })
       .exec();
     if (!template) {
       throw new NotFoundException(`Template ${id} not found`);
@@ -88,7 +88,11 @@ export class TemplatesService implements OnModuleInit {
 
   async remove(id: string): Promise<TemplateDocument> {
     const template = await this.templateModel
-      .findOneAndUpdate({ _id: id, isDeleted: false }, { $set: { isDeleted: true } }, { new: true })
+      .findOneAndUpdate(
+        { _id: id, isDeleted: false },
+        { $set: { isDeleted: true } },
+        { returnDocument: 'after' }
+      )
       .exec();
     if (!template) {
       throw new NotFoundException(`Template ${id} not found`);

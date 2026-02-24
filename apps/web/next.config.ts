@@ -1,6 +1,7 @@
 import { withSentryConfig } from '@sentry/nextjs';
-import type { NextConfig } from 'next';
+import fs from 'node:fs';
 import path from 'node:path';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   images: {
@@ -18,7 +19,7 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname, '../../'),
   reactStrictMode: true,
   turbopack: {},
-  webpack: (config) => {
+  webpack: (config, { webpack }) => {
     // Configure sass-loader to use modern compiler and handle CSS imports
     const rules = config.module.rules;
     const scssRule = rules.find(
@@ -79,20 +80,38 @@ const nextConfig: NextConfig = {
     }
 
     // Resolve CSS packages properly for SASS imports
-    // Redirect workflow-ui store imports to app stores so they share the same
-    // Zustand instances (workflow-ui stubs vs app's real API-backed stores).
-    const wuiStores = path.resolve(__dirname, '../../packages/workflow-ui/src/stores');
-    const appStores = path.resolve(__dirname, 'src/store');
     config.resolve.alias = {
       ...config.resolve.alias,
       // Map tw-animate-css to its CSS file directly (bypasses style export condition)
       'tw-animate-css': path.join(__dirname, 'node_modules/tw-animate-css/dist/tw-animate.css'),
-      // Unify workflow-ui stores with app stores (single Zustand instance)
-      [path.join(wuiStores, 'workflowStore')]: path.join(appStores, 'workflowStore'),
-      [path.join(wuiStores, 'executionStore')]: path.join(appStores, 'executionStore'),
-      [path.join(wuiStores, 'settingsStore')]: path.join(appStores, 'settingsStore'),
-      [path.join(wuiStores, 'promptLibraryStore')]: path.join(appStores, 'promptLibraryStore'),
     };
+
+    // Replace the npm package's workflowStore chunk with the app's store
+    // so both the app and workflow-ui share a single Zustand instance.
+    const wuiStoresPath = path.join(
+      __dirname,
+      'node_modules/@genfeedai/workflow-ui/dist/stores.mjs'
+    );
+    const storesContent = fs.readFileSync(wuiStoresPath, 'utf8');
+    const workflowChunkMatch = storesContent.match(/useWorkflowStore.*?from\s+'\.\/([^']+)'/);
+
+    if (workflowChunkMatch?.[1]) {
+      const workflowChunk = workflowChunkMatch[1];
+      const shimPath = path.resolve(__dirname, 'src/store/shims/workflowStoreChunk.ts');
+      config.plugins.push(
+        new webpack.NormalModuleReplacementPlugin(
+          new RegExp(workflowChunk.replace(/\./g, '\\.')),
+          (resource: { request: string; createData?: { resource: string } }) => {
+            // Only replace imports coming from the workflow-ui package
+            if (resource.request?.includes(workflowChunk)) {
+              resource.request = shimPath;
+            } else if (resource.createData?.resource?.includes(workflowChunk)) {
+              resource.createData.resource = shimPath;
+            }
+          }
+        )
+      );
+    }
 
     // Add resolve extensions for CSS imports
     config.resolve.extensions = [...(config.resolve.extensions || []), '.css'];

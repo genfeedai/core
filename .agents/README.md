@@ -38,7 +38,7 @@ This is the `.agents/` folder containing AI agent documentation, session trackin
 
 1. Read `SYSTEM/ai/SESSION-QUICK-START.md`
 2. Check `SYSTEM/critical/CRITICAL-NEVER-DO.md`
-3. Read today's session file (if exists): `SESSIONS/2026-01-14.md`
+3. Read today's session file (if exists): `SESSIONS/YYYY-MM-DD.md`
 
 ### During Work
 
@@ -64,4 +64,4 @@ Not specified
 
 ---
 
-**Last Updated:** 2026-01-14
+**Last Updated:** 2026-02-24

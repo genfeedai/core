@@ -105,7 +105,11 @@ export class ExecutionsService {
     if (status === 'completed' || status === 'failed') updates.completedAt = new Date();
 
     const execution = await this.executionModel
-      .findOneAndUpdate({ _id: id, isDeleted: false }, { $set: updates }, { new: true })
+      .findOneAndUpdate(
+        { _id: id, isDeleted: false },
+        { $set: updates },
+        { returnDocument: 'after' }
+      )
       .exec();
     if (!execution) {
       throw new NotFoundException(`Execution ${id} not found`);
@@ -145,7 +149,7 @@ export class ExecutionsService {
       .findOneAndUpdate(
         { _id: executionId, 'nodeResults.nodeId': nodeId },
         { $set: { 'nodeResults.$': nodeResult } },
-        { new: true }
+        { returnDocument: 'after' }
       )
       .exec();
 
@@ -153,7 +157,11 @@ export class ExecutionsService {
 
     // Node result doesn't exist, push new one
     const newExecution = await this.executionModel
-      .findOneAndUpdate({ _id: executionId }, { $push: { nodeResults: nodeResult } }, { new: true })
+      .findOneAndUpdate(
+        { _id: executionId },
+        { $push: { nodeResults: nodeResult } },
+        { returnDocument: 'after' }
+      )
       .exec();
 
     if (!newExecution) {
@@ -286,7 +294,7 @@ export class ExecutionsService {
     }
   ): Promise<Job> {
     const job = await this.jobModel
-      .findOneAndUpdate({ predictionId }, { $set: updates }, { new: true })
+      .findOneAndUpdate({ predictionId }, { $set: updates }, { returnDocument: 'after' })
       .exec();
     if (!job) {
       throw new NotFoundException(`Job with predictionId ${predictionId} not found`);
