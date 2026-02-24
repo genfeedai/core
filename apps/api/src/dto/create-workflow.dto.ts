@@ -100,6 +100,11 @@ export class CreateWorkflowDto {
   groups?: NodeGroupDto[];
 
   @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
+
+  @IsOptional()
   @IsString()
   thumbnail?: string;
 

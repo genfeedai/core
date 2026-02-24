@@ -39,6 +39,7 @@ export interface PersistenceSlice {
   duplicateWorkflowApi: (id: string, signal?: AbortSignal) => Promise<WorkflowData>;
   createNewWorkflow: (signal?: AbortSignal) => Promise<string>;
   setWorkflowName: (name: string) => void;
+  setWorkflowTags: (tags: string[]) => void;
   getNodeById: (id: string) => WorkflowNode | undefined;
   getConnectedInputs: (nodeId: string) => Map<string, string | string[]>;
   getConnectedNodeIds: (nodeIds: string[]) => string[];
@@ -63,6 +64,7 @@ export const createPersistenceSlice: StateCreator<WorkflowStore, [], [], Persist
       selectedNodeIds: [],
       workflowId: null,
       workflowName: 'Untitled Workflow',
+      workflowTags: [],
     });
   },
 
@@ -104,6 +106,7 @@ export const createPersistenceSlice: StateCreator<WorkflowStore, [], [], Persist
         nodes: [],
         workflowId: null,
         workflowName: 'Untitled Workflow',
+        workflowTags: [],
       });
     }
   },
@@ -273,6 +276,7 @@ export const createPersistenceSlice: StateCreator<WorkflowStore, [], [], Persist
         nodes,
         workflowId: workflow._id,
         workflowName: workflow.name,
+        workflowTags: workflow.tags ?? [],
       });
 
       const estimatedCost = calculateWorkflowCost(nodes);
@@ -298,7 +302,7 @@ export const createPersistenceSlice: StateCreator<WorkflowStore, [], [], Persist
   },
 
   saveWorkflow: async (signal) => {
-    const { nodes, edges, edgeStyle, workflowName, workflowId, groups } = get();
+    const { nodes, edges, edgeStyle, workflowName, workflowTags, workflowId, groups } = get();
     set({ isSaving: true });
 
     try {
@@ -307,12 +311,12 @@ export const createPersistenceSlice: StateCreator<WorkflowStore, [], [], Persist
       if (workflowId) {
         workflow = await workflowsApi.update(
           workflowId,
-          { edgeStyle, edges, groups, name: workflowName, nodes },
+          { edgeStyle, edges, groups, name: workflowName, nodes, tags: workflowTags },
           signal
         );
       } else {
         workflow = await workflowsApi.create(
-          { edgeStyle, edges, groups, name: workflowName, nodes },
+          { edgeStyle, edges, groups, name: workflowName, nodes, tags: workflowTags },
           signal
         );
       }
@@ -340,6 +344,10 @@ export const createPersistenceSlice: StateCreator<WorkflowStore, [], [], Persist
 
   setWorkflowName: (name) => {
     set({ isDirty: true, workflowName: name });
+  },
+
+  setWorkflowTags: (tags) => {
+    set({ isDirty: true, workflowTags: tags });
   },
 
   validateWorkflow: () => {

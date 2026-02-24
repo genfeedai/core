@@ -46,6 +46,7 @@ const storeCreator = ((...args: Parameters<StateCreator<WorkflowStore>>) => ({
   viewedCommentIds: new Set<string>(),
   workflowId: null,
   workflowName: 'Untitled Workflow',
+  workflowTags: [],
 
   // Compose slices
   ...createNodeSlice(...args),

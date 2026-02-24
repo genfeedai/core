@@ -35,6 +35,7 @@ import { useExecutionStore } from '@/store/executionStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useUIStore } from '@genfeedai/workflow-ui/stores';
 import { useWorkflowStore } from '@/store/workflowStore';
+import { TagEditor } from '@/components/workflow/TagEditor';
 import { CommentNavigator } from './CommentNavigator';
 import { SaveAsDialog } from './SaveAsDialog';
 import { SaveIndicator } from './SaveIndicator';
@@ -74,7 +75,7 @@ function isValidWorkflow(data: unknown): data is WorkflowFile {
 
 export function Toolbar() {
   const router = useRouter();
-  const { exportWorkflow, workflowId, workflowName, duplicateWorkflowApi, nodes } =
+  const { exportWorkflow, workflowId, workflowName, workflowTags, setWorkflowTags, duplicateWorkflowApi, nodes } =
     useWorkflowStore();
   const { getNodes } = useReactFlow();
   const { undo, redo } = useWorkflowStore.temporal.getState();
@@ -353,6 +354,9 @@ export function Toolbar() {
 
         {/* Workflow Switcher */}
         <WorkflowSwitcher />
+
+        {/* Tags */}
+        <TagEditor tags={workflowTags} onChange={setWorkflowTags} />
 
         {/* Divider */}
         <div className="h-8 w-px bg-border" />

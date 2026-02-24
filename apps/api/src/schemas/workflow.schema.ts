@@ -137,6 +137,9 @@ export class Workflow extends Document {
   @Prop({ default: false, index: true })
   isDeleted: boolean;
 
+  @Prop({ default: [], index: true, type: [String] })
+  tags: string[];
+
   // Composition: computed interface from WorkflowInput/WorkflowOutput boundary nodes
   @Prop({ default: { inputs: [], outputs: [] }, type: Object })
   interface: WorkflowInterfaceSchema;

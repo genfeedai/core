@@ -16,6 +16,7 @@ export interface WorkflowData {
   edges: WorkflowEdge[];
   edgeStyle: string;
   groups?: NodeGroup[];
+  tags?: string[];
   thumbnail?: string | null;
   thumbnailNodeId?: string | null;
   createdAt: string;
@@ -29,6 +30,7 @@ export interface CreateWorkflowInput {
   edges: WorkflowEdge[];
   edgeStyle?: string;
   groups?: NodeGroup[];
+  tags?: string[];
 }
 
 export interface UpdateWorkflowInput {
@@ -38,6 +40,7 @@ export interface UpdateWorkflowInput {
   edges?: WorkflowEdge[];
   edgeStyle?: string;
   groups?: NodeGroup[];
+  tags?: string[];
 }
 
 export const workflowsApi = {
@@ -83,10 +86,24 @@ export const workflowsApi = {
   export: (id: string, signal?: AbortSignal): Promise<WorkflowExport> =>
     apiClient.get<WorkflowExport>(`/workflows/${id}/export`, { signal }),
   /**
-   * Get all workflows
+   * Get all workflows, optionally filtered by search and tag
    */
-  getAll: (signal?: AbortSignal): Promise<WorkflowData[]> =>
-    apiClient.get<WorkflowData[]>('/workflows', { signal }),
+  getAll: (
+    params?: { search?: string; tag?: string },
+    signal?: AbortSignal
+  ): Promise<WorkflowData[]> => {
+    const searchParams = new URLSearchParams();
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.tag) searchParams.set('tag', params.tag);
+    const qs = searchParams.toString();
+    return apiClient.get<WorkflowData[]>(`/workflows${qs ? `?${qs}` : ''}`, { signal });
+  },
+
+  /**
+   * Get all unique tags
+   */
+  getAllTags: (signal?: AbortSignal): Promise<string[]> =>
+    apiClient.get<string[]>('/workflows/tags', { signal }),
 
   /**
    * Get a single workflow by ID

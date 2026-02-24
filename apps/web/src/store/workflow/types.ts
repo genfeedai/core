@@ -22,6 +22,7 @@ export interface WorkflowState {
   edges: WorkflowEdge[];
   edgeStyle: EdgeStyle;
   workflowName: string;
+  workflowTags: string[];
   workflowId: string | null;
   isDirty: boolean;
   isSaving: boolean;
@@ -101,6 +102,7 @@ export interface ApiActions {
   duplicateWorkflowApi: (id: string, signal?: AbortSignal) => Promise<WorkflowData>;
   createNewWorkflow: (signal?: AbortSignal) => Promise<string>;
   setWorkflowName: (name: string) => void;
+  setWorkflowTags: (tags: string[]) => void;
 }
 
 export interface HelperActions {

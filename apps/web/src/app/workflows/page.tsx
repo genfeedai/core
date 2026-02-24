@@ -7,15 +7,19 @@ import {
   Images,
   MoreHorizontal,
   Plus,
+  Search,
+  Tag,
   Trash2,
   Workflow,
+  X,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { WorkflowPreview } from '@/components/WorkflowPreview';
 import type { WorkflowData } from '@/lib/api';
+import { workflowsApi } from '@/lib/api';
 import { useWorkflowStore } from '@/store/workflowStore';
 
 function formatRelativeTime(date: Date): string {
@@ -90,6 +94,26 @@ function WorkflowCard({ workflow, onDelete, onDuplicate }: WorkflowCardProps) {
         <span>{workflow.nodes?.length ?? 0} nodes</span>
       </div>
 
+      {/* Tags */}
+      {workflow.tags && workflow.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {workflow.tags.slice(0, 3).map((tag) => (
+            <span
+              key={tag}
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-[var(--secondary)] text-[var(--muted-foreground)]"
+            >
+              <Tag className="w-2.5 h-2.5" />
+              {tag}
+            </span>
+          ))}
+          {workflow.tags.length > 3 && (
+            <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] text-[var(--muted-foreground)]">
+              +{workflow.tags.length - 3}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Menu button */}
       <button
         onClick={(e) => {
@@ -140,18 +164,22 @@ function WorkflowCard({ workflow, onDelete, onDuplicate }: WorkflowCardProps) {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { listWorkflows, deleteWorkflow, duplicateWorkflowApi } = useWorkflowStore();
+  const { deleteWorkflow, duplicateWorkflowApi } = useWorkflowStore();
 
   const [workflows, setWorkflows] = useState<WorkflowData[]>([]);
+  const [allTags, setAllTags] = useState<string[]>([]);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasFetched, setHasFetched] = useState(false);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const fetchWorkflows = useCallback(
-    async (signal?: AbortSignal) => {
+    async (params?: { search?: string; tag?: string }, signal?: AbortSignal) => {
       try {
-        const data = await listWorkflows(signal);
-        // Sort by most recently updated
+        setIsLoading(true);
+        const data = await workflowsApi.getAll(params, signal);
         data.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
         setWorkflows(data);
         setHasFetched(true);
@@ -162,14 +190,41 @@ export default function DashboardPage() {
         setIsLoading(false);
       }
     },
-    [listWorkflows]
+    []
   );
+
+  const fetchTags = useCallback(async (signal?: AbortSignal) => {
+    try {
+      const tags = await workflowsApi.getAllTags(signal);
+      setAllTags(tags);
+    } catch {
+      // Tags are non-critical, silently fail
+    }
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchWorkflows(controller.signal);
+    fetchWorkflows(undefined, controller.signal);
+    fetchTags(controller.signal);
     return () => controller.abort();
-  }, [fetchWorkflows]);
+  }, [fetchWorkflows, fetchTags]);
+
+  // Refetch when filters change
+  useEffect(() => {
+    const controller = new AbortController();
+    const params: { search?: string; tag?: string } = {};
+    if (searchQuery) params.search = searchQuery;
+    if (selectedTag) params.tag = selectedTag;
+    fetchWorkflows(params, controller.signal);
+    return () => controller.abort();
+  }, [searchQuery, selectedTag, fetchWorkflows]);
+
+  const handleSearchChange = useCallback((value: string) => {
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => {
+      setSearchQuery(value);
+    }, 300);
+  }, []);
 
   const handleDelete = useCallback(
     async (id: string) => {
@@ -235,7 +290,53 @@ export default function DashboardPage() {
 
       {/* Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
-        <h2 className="text-lg font-semibold text-[var(--foreground)] mb-6">Your Workflows</h2>
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-[var(--foreground)]">Your Workflows</h2>
+          </div>
+
+          {/* Search & Filter Bar */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="relative flex-1 min-w-[200px] max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
+              <input
+                type="text"
+                placeholder="Search workflows..."
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 bg-[var(--secondary)] border border-[var(--border)] rounded-lg text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-1 focus:ring-white/20"
+              />
+            </div>
+
+            {/* Tag filters */}
+            {allTags.length > 0 && (
+              <div className="flex items-center gap-2 flex-wrap">
+                {selectedTag && (
+                  <button
+                    onClick={() => setSelectedTag(null)}
+                    className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-white text-black font-medium hover:bg-white/90 transition"
+                  >
+                    <Tag className="w-3 h-3" />
+                    {selectedTag}
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+                {allTags
+                  .filter((t) => t !== selectedTag)
+                  .slice(0, 8)
+                  .map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => setSelectedTag(tag)}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-[var(--secondary)] text-[var(--muted-foreground)] hover:bg-[var(--secondary)]/80 hover:text-[var(--foreground)] transition"
+                    >
+                      <Tag className="w-3 h-3" />
+                      {tag}
+                    </button>
+                  ))}
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Loading state */}
         {isLoading && (

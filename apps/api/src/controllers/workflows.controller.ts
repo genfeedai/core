@@ -36,6 +36,14 @@ export class WorkflowsController {
   // Otherwise NestJS treats 'referencable' as an :id value
 
   /**
+   * Get all unique tags across workflows
+   */
+  @Get('tags')
+  getAllTags() {
+    return this.workflowsService.getAllTags();
+  }
+
+  /**
    * Get workflows that can be referenced as subworkflows (have defined interface)
    */
   @Get('referencable')

@@ -48,6 +48,7 @@ export class WorkflowsService {
       isReusable,
       name: dto.name,
       nodes: dto.nodes ?? [],
+      tags: dto.tags ?? [],
       thumbnail: dto.thumbnail ?? null,
       thumbnailNodeId: dto.thumbnailNodeId ?? null,
     });
@@ -55,16 +56,36 @@ export class WorkflowsService {
   }
 
   async findAll(query?: QueryWorkflowDto): Promise<WorkflowDocument[]> {
+    const filter: Record<string, unknown> = { isDeleted: false };
+
+    if (query?.tag) {
+      filter.tags = query.tag;
+    }
+
+    if (query?.search) {
+      filter.name = { $regex: query.search, $options: 'i' };
+    }
+
     return this.workflowModel
-      .find({ isDeleted: false })
+      .find(filter)
       .select(
-        'name thumbnail thumbnailNodeId updatedAt createdAt nodes.id nodes.type nodes.position edges.id edges.source edges.target'
+        'name tags thumbnail thumbnailNodeId updatedAt createdAt nodes.id nodes.type nodes.position edges.id edges.source edges.target'
       )
       .sort({ updatedAt: -1 })
       .skip(query?.offset ?? 0)
       .limit(query?.limit ?? 20)
       .lean()
       .exec();
+  }
+
+  /**
+   * Get all unique tags across all workflows
+   */
+  async getAllTags(): Promise<string[]> {
+    const result = await this.workflowModel
+      .distinct('tags', { isDeleted: false })
+      .exec();
+    return (result as string[]).sort();
   }
 
   async findOne(id: string): Promise<WorkflowDocument> {
@@ -194,6 +215,7 @@ export class WorkflowsService {
       isReusable,
       name: `${original.name} (copy)`,
       nodes: original.nodes,
+      tags: (original as unknown as { tags?: string[] }).tags ?? [],
       thumbnail: original.thumbnail,
       thumbnailNodeId: original.thumbnailNodeId,
     });

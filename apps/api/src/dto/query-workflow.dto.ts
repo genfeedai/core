@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsNumber, IsOptional, Max, Min } from 'class-validator';
+import { IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class QueryWorkflowDto {
   @IsOptional()
@@ -14,4 +14,12 @@ export class QueryWorkflowDto {
   @IsNumber()
   @Min(0)
   offset?: number = 0;
+
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @IsOptional()
+  @IsString()
+  tag?: string;
 }
