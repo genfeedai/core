@@ -214,7 +214,10 @@ export function CommandPalette() {
       {/* Palette */}
       <div className="relative w-full max-w-lg overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
         {/* Search input */}
-        <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+        <div
+          data-command-palette
+          className="flex items-center gap-3 border-b border-border px-4 py-3"
+        >
           <svg
             className="h-4 w-4 shrink-0 text-muted-foreground"
             fill="none"

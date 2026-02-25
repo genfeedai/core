@@ -1,4 +1,5 @@
 import type { NodeType } from '@genfeedai/types';
+import Fuse from 'fuse.js';
 import type { LucideIcon } from 'lucide-react';
 import {
   FileText,
@@ -167,16 +168,31 @@ export const CATEGORY_LABELS: Record<CommandCategory, string> = {
 
 export const CATEGORY_ORDER: CommandCategory[] = ['recent', 'actions', 'nodes', 'navigation'];
 
+// Fuse.js instance for fuzzy search (lazy-initialized)
+let fuseInstance: Fuse<Command> | null = null;
+let fuseCommands: Command[] | null = null;
+
+function getFuse(commands: Command[]): Fuse<Command> {
+  if (fuseInstance && fuseCommands === commands) return fuseInstance;
+  fuseInstance = new Fuse(commands, {
+    ignoreLocation: true,
+    includeScore: true,
+    keys: [
+      { name: 'label', weight: 2 },
+      { name: 'keywords', weight: 1 },
+    ],
+    minMatchCharLength: 1,
+    threshold: 0.4,
+  });
+  fuseCommands = commands;
+  return fuseInstance;
+}
+
 export function filterCommands(commands: Command[], query: string): Command[] {
   if (!query.trim()) return commands;
 
-  const lowerQuery = query.toLowerCase();
-
-  return commands.filter((cmd) => {
-    const labelMatch = cmd.label.toLowerCase().includes(lowerQuery);
-    const keywordMatch = cmd.keywords?.some((kw) => kw.toLowerCase().includes(lowerQuery));
-    return labelMatch || keywordMatch;
-  });
+  const fuse = getFuse(commands);
+  return fuse.search(query).map((result) => result.item);
 }
 
 export function groupCommandsByCategory(
