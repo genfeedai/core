@@ -90,6 +90,12 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 - Keep README up to date
 - Document architectural decisions in `SYSTEM/architecture/DECISIONS.md`
 
+## Tracking Policy (GitHub-Only)
+
+- GitHub Issues are the only source of truth for active tasks.
+- Do not create or maintain local markdown trackers for tasks/requirements in this repo.
+- Do not keep local task/PRD archives in this repository.
+
 ---
 
 ## MongoDB Query Pattern

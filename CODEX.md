@@ -18,5 +18,5 @@ Codex-specific entry point. Node-based AI workflow editor with React Flow canvas
 
 - `.agents/README.md` - Start here
 - `.agents/SYSTEM/` - Architecture and rules
-- `.agents/TASKS/` - Current tasks
+- GitHub Issues - Canonical task and requirements tracking
 - `CLAUDE.md` - Full reference

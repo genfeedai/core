@@ -21,9 +21,6 @@ This is the `.agents/` folder containing AI agent documentation, session trackin
 │   ├── architecture/            # ADRs and project map
 │   ├── critical/                # Critical rules (NEVER DO)
 │   └── quality/                 # Security and quality
-├── TASKS/
-│   ├── README.md                # Task management guide
-│   └── INBOX.md                 # Quick task capture
 ├── SESSIONS/
 │   ├── README.md                # Session format guide
 │   └── TEMPLATE.md              # Session file template
@@ -43,7 +40,7 @@ This is the `.agents/` folder containing AI agent documentation, session trackin
 ### During Work
 
 - Follow patterns in `SYSTEM/RULES.md`
-- Track tasks in `TASKS/`
+- Track tasks/requirements in GitHub issues only
 - Document decisions
 
 ### After Work

@@ -7,7 +7,7 @@ Open-source node-based AI workflow editor. React Flow canvas, 36 node types (ima
 All documentation is in `.agents/`:
 - `.agents/README.md` - Navigation hub
 - `.agents/SYSTEM/RULES.md` - Coding standards
-- `.agents/TASKS/` - Task tracking
+- GitHub Issues - Task and requirements tracking
 - `.agents/SESSIONS/` - Session history
 
 ## Quick Start
