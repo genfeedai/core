@@ -1,6 +1,6 @@
 import type { ProviderModel } from '@genfeedai/types';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ModelBrowserModal } from './ModelBrowserModal';
 
 const { mockAddRecentModel } = vi.hoisted(() => ({
@@ -56,6 +56,7 @@ vi.mock('@/components/ui/input', () => ({
 }));
 
 describe('ModelBrowserModal', () => {
+  const originalFetch = global.fetch;
   const defaultProps = {
     isOpen: true,
     onClose: vi.fn(),
@@ -99,6 +100,10 @@ describe('ModelBrowserModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = vi.fn().mockResolvedValue(mockFetchResponse) as unknown as typeof fetch;
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
   });
 
   describe('rendering', () => {
@@ -159,16 +164,21 @@ describe('ModelBrowserModal', () => {
     });
 
     it('should show loading spinner during fetch', async () => {
-      // Use a fetch that never resolves so isLoading stays true
-      global.fetch = vi
-        .fn()
-        .mockImplementation(() => new Promise(() => {})) as unknown as typeof fetch;
+      let resolveFetch: ((value: Response) => void) | undefined;
+      global.fetch = vi.fn().mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveFetch = resolve;
+          })
+      ) as unknown as typeof fetch;
 
       render(<ModelBrowserModal {...defaultProps} />);
 
       await waitFor(() => {
         expect(document.querySelector('.animate-spin')).toBeInTheDocument();
       });
+
+      resolveFetch?.(mockFetchResponse as Response);
     });
   });
 

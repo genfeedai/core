@@ -23,11 +23,9 @@ export function createConstructableMockModel<T>(
   baseMethods: Partial<MockModelMethods>,
   instanceFactory: () => T
 ): MockModel {
-  const mockModel = vi
-    .fn(function constructableMockModel() {
-      return instanceFactory();
-    })
-    .mockName('constructableMockModel') as MockModel;
+  const mockModel = vi.fn().mockImplementation(function mockModelConstructor(this: unknown) {
+    return instanceFactory();
+  }) as MockModel;
   Object.assign(mockModel, baseMethods);
   return mockModel;
 }

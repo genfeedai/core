@@ -4,7 +4,7 @@ import { calculateCost, MODELS, PRICING } from './client';
 // Mock Replicate client - we only test the constants and calculateCost function
 // The API functions are integration tests that require mocking Replicate SDK
 vi.mock('replicate', () => ({
-  default: vi.fn(function MockReplicate() {
+  default: vi.fn().mockImplementation(function replicateConstructor(this: unknown) {
     return {
       predictions: {
         cancel: vi.fn(),

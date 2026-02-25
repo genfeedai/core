@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GenerateWorkflowModal } from './GenerateWorkflowModal';
 
 const mockToggleAIGenerator = vi.fn();
@@ -23,6 +23,7 @@ import { useUIStore } from '@genfeedai/workflow-ui/stores';
 import { useWorkflowStore } from '@/store/workflowStore';
 
 describe('GenerateWorkflowModal', () => {
+  const originalFetch = global.fetch;
   const mockGeneratedWorkflow = {
     description: 'An AI-generated workflow',
     edges: [
@@ -54,6 +55,10 @@ describe('GenerateWorkflowModal', () => {
     vi.mocked(useWorkflowStore).mockReturnValue({
       loadWorkflow: mockLoadWorkflow,
     } as ReturnType<typeof useWorkflowStore>);
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
   });
 
   describe('rendering', () => {
@@ -179,18 +184,12 @@ describe('GenerateWorkflowModal', () => {
     });
 
     it('should show loading state during generation', async () => {
+      let resolveRequest: ((value: Response) => void) | undefined;
       vi.mocked(global.fetch).mockImplementation(
         () =>
-          new Promise((resolve) =>
-            setTimeout(
-              () =>
-                resolve({
-                  json: () => Promise.resolve(mockGeneratedWorkflow),
-                  ok: true,
-                } as Response),
-              1000
-            )
-          )
+          new Promise((resolve) => {
+            resolveRequest = resolve;
+          })
       );
 
       render(<GenerateWorkflowModal />);
@@ -202,6 +201,15 @@ describe('GenerateWorkflowModal', () => {
       if (generateButton) fireEvent.click(generateButton);
 
       expect(screen.getByText('Generating...')).toBeInTheDocument();
+
+      resolveRequest?.({
+        json: () => Promise.resolve(mockGeneratedWorkflow),
+        ok: true,
+      } as Response);
+
+      await waitFor(() => {
+        expect(screen.getByText('Apply to Canvas')).toBeInTheDocument();
+      });
     });
 
     it('should display generated workflow preview', async () => {

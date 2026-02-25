@@ -8,8 +8,8 @@ describe('getImageDimensions', () => {
     mockImage = {};
     vi.stubGlobal(
       'Image',
-      vi.fn(function MockImage(this: Record<string, unknown>) {
-        mockImage = this;
+      vi.fn().mockImplementation(function imageConstructor(this: unknown) {
+        return mockImage;
       })
     );
   });
@@ -36,12 +36,13 @@ describe('getImageDimensions', () => {
 
 describe('getVideoMetadata', () => {
   let mockVideo: Record<string, unknown>;
+  const originalCreateElement = document.createElement.bind(document);
 
   beforeEach(() => {
     mockVideo = {};
     vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
       if (tag === 'video') return mockVideo as unknown as HTMLVideoElement;
-      return document.createElement(tag);
+      return originalCreateElement(tag);
     });
   });
 

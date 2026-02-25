@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppService } from '@/services/app.service';
 
 vi.mock('bullmq', () => ({
-  Queue: vi.fn(function MockQueue() {
+  Queue: vi.fn().mockImplementation(function queueConstructor(this: unknown) {
     return {
       getActiveCount: vi.fn().mockResolvedValue(0),
       getCompletedCount: vi.fn().mockResolvedValue(0),

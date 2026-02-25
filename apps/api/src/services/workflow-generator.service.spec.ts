@@ -4,13 +4,12 @@ import { WorkflowGeneratorService } from '@/services/workflow-generator.service'
 
 // Mock Replicate
 vi.mock('replicate', () => {
-  function MockReplicate() {
-    return {
-      run: vi.fn(),
-    };
-  }
   return {
-    default: vi.fn(MockReplicate),
+    default: vi.fn().mockImplementation(function replicateConstructor(this: unknown) {
+      return {
+        run: vi.fn(),
+      };
+    }),
   };
 });
 
@@ -24,11 +23,13 @@ describe('WorkflowGeneratorService', () => {
 
     // Mock Replicate constructor to capture the run function
     const Replicate = (await import('replicate')).default;
-    (Replicate as unknown as ReturnType<typeof vi.fn>).mockImplementation(function MockReplicate() {
-      return {
-        run: mockReplicateRun,
-      };
-    });
+    (Replicate as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      function replicateConstructor(this: unknown) {
+        return {
+          run: mockReplicateRun,
+        };
+      }
+    );
 
     mockConfigService = {
       get: vi.fn().mockReturnValue('test-api-token'),
