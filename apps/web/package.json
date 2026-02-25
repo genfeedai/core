@@ -63,9 +63,9 @@
     "dev:turbo": "next dev --turbopack --port 3000",
     "lint": "biome check --fix .",
     "start": "next start",
-    "test": "NODE_OPTIONS='--localstorage-file=.vitest-localstorage.json' vitest run",
-    "test:coverage": "NODE_OPTIONS='--localstorage-file=.vitest-localstorage.json' vitest run --coverage",
-    "test:watch": "NODE_OPTIONS='--localstorage-file=.vitest-localstorage.json' vitest"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest"
   },
   "version": "0.1.0"
 }

@@ -88,10 +88,15 @@ const nextConfig: NextConfig = {
 
     // Replace the npm package's workflowStore chunk with the app's store
     // so both the app and workflow-ui share a single Zustand instance.
-    const wuiStoresPath = path.join(
-      __dirname,
-      'node_modules/@genfeedai/workflow-ui/dist/stores.mjs'
-    );
+    const wuiStoresPath = [
+      path.join(__dirname, 'node_modules/@genfeedai/workflow-ui/dist/stores.mjs'),
+      path.join(__dirname, '../../node_modules/@genfeedai/workflow-ui/dist/stores.mjs'),
+    ].find((p) => fs.existsSync(p));
+    if (!wuiStoresPath) {
+      throw new Error(
+        'Could not find @genfeedai/workflow-ui/dist/stores.mjs — ensure the package is installed'
+      );
+    }
     const storesContent = fs.readFileSync(wuiStoresPath, 'utf8');
     const workflowChunkMatch = storesContent.match(/useWorkflowStore.*?from\s+'\.\/([^']+)'/);
 

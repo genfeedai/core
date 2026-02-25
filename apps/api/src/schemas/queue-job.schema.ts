@@ -20,7 +20,7 @@ class JobLog {
 
 @Schema({ collection: 'queue_jobs', timestamps: true })
 export class QueueJob extends Document {
-  @Prop({ index: true, required: true })
+  @Prop({ required: true })
   bullJobId: string;
 
   @Prop({ enum: Object.values(QUEUE_NAMES), required: true })
