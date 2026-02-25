@@ -92,8 +92,9 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
 ## Tracking Policy (GitHub-Only)
 
-- GitHub Issues are the only source of truth for active tasks.
-- Do not create or maintain local markdown trackers for tasks/requirements in this repo.
+- GitHub Issues are the only active source of truth for tasks and PRDs.
+- Do not create or maintain local task files under `.agents/TASKS/` (except `README.md`).
+- Do not create or maintain local PRD files under `.agents/PRDS/` (except `README.md`).
 - Do not keep local task/PRD archives in this repository.
 
 ---
