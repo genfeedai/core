@@ -24,7 +24,9 @@ export function createConstructableMockModel<T>(
   instanceFactory: () => T
 ): MockModel {
   // Must use regular function (not arrow) so vi.fn() mock is constructable with `new`
-  const mockModel = vi.fn().mockImplementation(() => instanceFactory()) as MockModel;
+  const mockModel = vi.fn().mockImplementation(function () {
+    return instanceFactory();
+  }) as MockModel;
   Object.assign(mockModel, baseMethods);
   return mockModel;
 }

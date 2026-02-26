@@ -53,7 +53,8 @@
       },
       "complexity": {
         "noForEach": "off",
-        "noStaticOnlyClass": "off"
+        "noStaticOnlyClass": "off",
+        "useArrowFunction": "off"
       },
       "correctness": {
         "noUnusedFunctionParameters": "off"
