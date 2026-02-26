@@ -20,25 +20,33 @@ vi.mock('@nestjs/bullmq', () => ({
 
 // Mock bullmq directly as well
 vi.mock('bullmq', () => ({
-  Queue: vi.fn().mockImplementation(() => ({
-    add: vi.fn().mockResolvedValue({ id: 'mock-job-id' }),
-    close: vi.fn().mockResolvedValue(undefined),
-    getJob: vi.fn().mockResolvedValue(null),
-  })),
-  QueueEvents: vi.fn().mockImplementation(() => ({
-    close: vi.fn().mockResolvedValue(undefined),
-    on: vi.fn(),
-  })),
-  Worker: vi.fn().mockImplementation(() => ({
-    close: vi.fn().mockResolvedValue(undefined),
-    on: vi.fn(),
-  })),
+  Queue: vi.fn().mockImplementation(function () {
+    return {
+      add: vi.fn().mockResolvedValue({ id: 'mock-job-id' }),
+      close: vi.fn().mockResolvedValue(undefined),
+      getJob: vi.fn().mockResolvedValue(null),
+    };
+  }),
+  QueueEvents: vi.fn().mockImplementation(function () {
+    return {
+      close: vi.fn().mockResolvedValue(undefined),
+      on: vi.fn(),
+    };
+  }),
+  Worker: vi.fn().mockImplementation(function () {
+    return {
+      close: vi.fn().mockResolvedValue(undefined),
+      on: vi.fn(),
+    };
+  }),
 }));
 
 // Mock Replicate SDK globally - must return the shared mock instance
 vi.mock('replicate', () => {
   return {
-    default: vi.fn().mockImplementation(() => mockReplicateClient),
+    default: vi.fn().mockImplementation(function () {
+      return mockReplicateClient;
+    }),
   };
 });
 
