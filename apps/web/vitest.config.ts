@@ -28,6 +28,9 @@ export default defineConfig({
         statements: 20,
       },
     },
+    env: {
+      NODE_ENV: 'test',
+    },
     environment: 'jsdom',
     globals: true,
     include: ['src/**/*.test.{ts,tsx}'],
