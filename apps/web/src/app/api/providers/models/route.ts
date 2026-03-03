@@ -62,6 +62,12 @@ const MODEL_METADATA: Record<
     pricing: '$0.039/image',
     useCases: ['general'],
   },
+  'google/nano-banana-2': {
+    capabilities: ['text-to-image', 'image-to-image'],
+    displayName: 'Nano Banana 2',
+    pricing: '$0.039/image',
+    useCases: ['general', 'style-transfer', 'image-variation'],
+  },
   'google/nano-banana-pro': {
     capabilities: ['text-to-image', 'image-to-image'],
     displayName: 'Nano Banana Pro',

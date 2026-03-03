@@ -30,6 +30,7 @@ export const MODELS = {
   lumaReframeVideo: 'luma/reframe-video',
   // Image generation
   nanoBanana: 'google/nano-banana',
+  nanoBanana2: 'google/nano-banana-2',
   nanoBananaPro: 'google/nano-banana-pro',
   omniHuman: 'bytedance/omni-human',
   pixverseLipSync: 'pixverse/lipsync',

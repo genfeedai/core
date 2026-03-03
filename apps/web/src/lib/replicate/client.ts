@@ -15,6 +15,7 @@ export const MODELS = {
   lipsync2Pro: 'sync/lipsync-2-pro',
   llama: 'meta/meta-llama-3.1-405b-instruct',
   nanoBanana: 'google/nano-banana',
+  nanoBanana2: 'google/nano-banana-2',
   nanoBananaPro: 'google/nano-banana-pro',
   pixverseLipsync: 'pixverse/lipsync',
   veo: 'google/veo-3.1',
@@ -25,6 +26,7 @@ export const MODELS = {
 export const PRICING = {
   llama: 0.0001, // per 1K tokens
   'nano-banana': 0.039, // per image
+  'nano-banana-2': 0.039, // per image
   'nano-banana-pro': {
     '1K': 0.15,
     '2K': 0.2,

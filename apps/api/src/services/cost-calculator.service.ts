@@ -114,7 +114,7 @@ export class CostCalculatorService {
    */
   calculateImageCost(model: string, resolution?: string): number {
     // nano-banana (flat rate)
-    if (model === 'nano-banana' || model === 'imagen-4-fast') {
+    if (model === 'nano-banana' || model === 'nano-banana-2' || model === 'imagen-4-fast') {
       return PRICING['nano-banana'];
     }
 
@@ -145,7 +145,13 @@ export class CostCalculatorService {
    * Check if model is an image model
    */
   private isImageModel(model: string): model is ImageModel {
-    return ['nano-banana', 'nano-banana-pro', 'imagen-4-fast', 'imagen-4'].includes(model);
+    return [
+      'nano-banana',
+      'nano-banana-2',
+      'nano-banana-pro',
+      'imagen-4-fast',
+      'imagen-4',
+    ].includes(model);
   }
 
   /**
@@ -316,7 +322,7 @@ export class CostCalculatorService {
     }
 
     // Image models - flat rate
-    if (model === 'nano-banana' || model === 'imagen-4-fast') {
+    if (model === 'nano-banana' || model === 'nano-banana-2' || model === 'imagen-4-fast') {
       return PRICING['nano-banana'];
     }
 
