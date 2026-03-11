@@ -36,6 +36,7 @@ This is the `.agents/` folder containing AI agent documentation, session trackin
 1. Read `SYSTEM/ai/SESSION-QUICK-START.md`
 2. Check `SYSTEM/critical/CRITICAL-NEVER-DO.md`
 3. Read today's session file (if exists): `SESSIONS/YYYY-MM-DD.md`
+4. For Core/Cloud scope questions, read `SYSTEM/architecture/ADR-PLG-BOUNDARY-OSS-CLOUD.md`
 
 ### During Work
 

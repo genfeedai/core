@@ -134,6 +134,19 @@ flowchart LR
     LP --> O
 ```
 
+## Product Boundary
+
+Genfeed uses a hybrid OSS + SaaS model:
+
+- `core` stays fully usable for workflow building plus self-hosted/BYOK execution.
+- `cloud` delivers managed automation, publishing, scheduling, analytics, and team operations.
+
+Boundary references:
+
+- Canonical engineering ADR mirror: `.agents/SYSTEM/architecture/ADR-PLG-BOUNDARY-OSS-CLOUD.md`
+- Cloud source ADR: `../cloud/.agents/SYSTEM/architecture/ADR-PLG-BOUNDARY-OSS-CLOUD.md`
+- Public canonical page: https://docs.genfeed.ai/product/core-cloud-boundary
+
 ## Node Types
 
 | Category | Nodes |
