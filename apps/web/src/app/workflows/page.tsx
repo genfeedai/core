@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { WorkflowPreview } from '@/components/WorkflowPreview';
+import { CoreAppShell } from '@/components/navigation/CoreAppShell';
 import type { WorkflowData } from '@/lib/api';
 import { workflowsApi } from '@/lib/api';
 import { useWorkflowStore } from '@/store/workflowStore';
@@ -252,161 +253,165 @@ export default function DashboardPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[var(--background)]">
-      {/* Header */}
-      <header className="border-b border-[var(--border)] bg-[var(--card)]">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Image
-              src="https://cdn.genfeed.ai/assets/branding/logo-white.png"
-              alt="Genfeed"
-              width={32}
-              height={32}
-              className="h-8 w-auto"
-              unoptimized
-            />
-            <h1 className="text-xl font-semibold text-[var(--foreground)]">Genfeed</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/gallery"
-              className="flex items-center gap-2 px-4 py-2 bg-[var(--secondary)] text-[var(--foreground)] rounded-lg text-sm font-medium hover:bg-[var(--secondary)]/80 transition"
-            >
-              <Images className="w-4 h-4" />
-              Gallery
-            </Link>
-            <a
-              href="https://marketplace.genfeed.ai"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 bg-[var(--secondary)] text-[var(--foreground)] rounded-lg text-sm font-medium hover:bg-[var(--secondary)]/80 transition"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Marketplace
-            </a>
-          </div>
-        </div>
-      </header>
-
-      {/* Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex flex-col gap-4 mb-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-[var(--foreground)]">Your Workflows</h2>
-          </div>
-
-          {/* Search & Filter Bar */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="relative flex-1 min-w-[200px] max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
-              <input
-                type="text"
-                placeholder="Search workflows..."
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-[var(--secondary)] border border-[var(--border)] rounded-lg text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-1 focus:ring-white/20"
+    <CoreAppShell currentApp="workflows" title="Workflows">
+      <div className="min-h-screen bg-[var(--background)]">
+        {/* Header */}
+        <header className="border-b border-[var(--border)] bg-[var(--card)]">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Image
+                src="https://cdn.genfeed.ai/assets/branding/logo-white.png"
+                alt="Genfeed"
+                width={32}
+                height={32}
+                className="h-8 w-auto"
+                unoptimized
               />
+              <h1 className="text-xl font-semibold text-[var(--foreground)]">Genfeed</h1>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/gallery"
+                className="flex items-center gap-2 px-4 py-2 bg-[var(--secondary)] text-[var(--foreground)] rounded-lg text-sm font-medium hover:bg-[var(--secondary)]/80 transition"
+              >
+                <Images className="w-4 h-4" />
+                Gallery
+              </Link>
+              <a
+                href="https://marketplace.genfeed.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 bg-[var(--secondary)] text-[var(--foreground)] rounded-lg text-sm font-medium hover:bg-[var(--secondary)]/80 transition"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Marketplace
+              </a>
+            </div>
+          </div>
+        </header>
+
+        {/* Content */}
+        <main className="max-w-7xl mx-auto px-6 py-8">
+          <div className="flex flex-col gap-4 mb-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-[var(--foreground)]">Your Workflows</h2>
             </div>
 
-            {/* Tag filters */}
-            {allTags.length > 0 && (
-              <div className="flex items-center gap-2 flex-wrap">
-                {selectedTag && (
-                  <button
-                    onClick={() => setSelectedTag(null)}
-                    className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-white text-black font-medium hover:bg-white/90 transition"
-                  >
-                    <Tag className="w-3 h-3" />
-                    {selectedTag}
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-                {allTags
-                  .filter((t) => t !== selectedTag)
-                  .slice(0, 8)
-                  .map((tag) => (
+            {/* Search & Filter Bar */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="relative flex-1 min-w-[200px] max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]" />
+                <input
+                  type="text"
+                  placeholder="Search workflows..."
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 bg-[var(--secondary)] border border-[var(--border)] rounded-lg text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-1 focus:ring-white/20"
+                />
+              </div>
+
+              {/* Tag filters */}
+              {allTags.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  {selectedTag && (
                     <button
-                      key={tag}
-                      onClick={() => setSelectedTag(tag)}
-                      className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-[var(--secondary)] text-[var(--muted-foreground)] hover:bg-[var(--secondary)]/80 hover:text-[var(--foreground)] transition"
+                      onClick={() => setSelectedTag(null)}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-white text-black font-medium hover:bg-white/90 transition"
                     >
                       <Tag className="w-3 h-3" />
-                      {tag}
+                      {selectedTag}
+                      <X className="w-3 h-3" />
                     </button>
-                  ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Loading state */}
-        {isLoading && (
-          <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-[var(--muted-foreground)]">Loading workflows...</p>
-          </div>
-        )}
-
-        {/* Error state */}
-        {error && (
-          <div className="text-center py-20">
-            <p className="text-red-500 mb-4">{error}</p>
-            <button
-              onClick={() => fetchWorkflows()}
-              className="px-4 py-2 bg-[var(--secondary)] text-[var(--foreground)] rounded-lg hover:opacity-90 transition"
-            >
-              Try Again
-            </button>
-          </div>
-        )}
-
-        {/* Empty state */}
-        {!isLoading && !error && hasFetched && workflows.length === 0 && (
-          <div className="text-center py-20">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--secondary)] flex items-center justify-center">
-              <Workflow className="w-8 h-8 text-[var(--muted-foreground)]" />
-            </div>
-            <h3 className="text-lg font-medium text-[var(--foreground)] mb-2">No workflows yet</h3>
-            <p className="text-[var(--muted-foreground)] mb-6">
-              Create your first AI content workflow to get started
-            </p>
-            <Link
-              href="/workflows/new"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-white/90 transition"
-            >
-              <Plus className="w-4 h-4" />
-              Create Workflow
-            </Link>
-          </div>
-        )}
-
-        {/* Workflow grid */}
-        {!isLoading && !error && workflows.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 [&:hover>*]:opacity-60 [&:hover>*:hover]:opacity-100">
-            {/* New workflow card */}
-            <Link
-              href="/workflows/new"
-              className="group flex items-center justify-center bg-[var(--card)] border-2 border-dashed border-[var(--border)] rounded-lg p-4 hover:border-white hover:bg-[var(--secondary)] transition-all duration-200"
-            >
-              <div className="flex flex-col items-center gap-3 py-8">
-                <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 group-hover:scale-110 transition-all duration-300">
-                  <Plus className="w-7 h-7 text-white" />
+                  )}
+                  {allTags
+                    .filter((t) => t !== selectedTag)
+                    .slice(0, 8)
+                    .map((tag) => (
+                      <button
+                        key={tag}
+                        onClick={() => setSelectedTag(tag)}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-[var(--secondary)] text-[var(--muted-foreground)] hover:bg-[var(--secondary)]/80 hover:text-[var(--foreground)] transition"
+                      >
+                        <Tag className="w-3 h-3" />
+                        {tag}
+                      </button>
+                    ))}
                 </div>
-                <span className="text-sm font-medium text-[var(--foreground)]">New Workflow</span>
-              </div>
-            </Link>
-
-            {/* Existing workflows */}
-            {workflows.map((workflow) => (
-              <WorkflowCard
-                key={workflow._id}
-                workflow={workflow}
-                onDelete={handleDelete}
-                onDuplicate={handleDuplicate}
-              />
-            ))}
+              )}
+            </div>
           </div>
-        )}
-      </main>
-    </div>
+
+          {/* Loading state */}
+          {isLoading && (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm text-[var(--muted-foreground)]">Loading workflows...</p>
+            </div>
+          )}
+
+          {/* Error state */}
+          {error && (
+            <div className="text-center py-20">
+              <p className="text-red-500 mb-4">{error}</p>
+              <button
+                onClick={() => fetchWorkflows()}
+                className="px-4 py-2 bg-[var(--secondary)] text-[var(--foreground)] rounded-lg hover:opacity-90 transition"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!isLoading && !error && hasFetched && workflows.length === 0 && (
+            <div className="text-center py-20">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--secondary)] flex items-center justify-center">
+                <Workflow className="w-8 h-8 text-[var(--muted-foreground)]" />
+              </div>
+              <h3 className="text-lg font-medium text-[var(--foreground)] mb-2">
+                No workflows yet
+              </h3>
+              <p className="text-[var(--muted-foreground)] mb-6">
+                Create your first AI content workflow to get started
+              </p>
+              <Link
+                href="/workflows/new"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-white/90 transition"
+              >
+                <Plus className="w-4 h-4" />
+                Create Workflow
+              </Link>
+            </div>
+          )}
+
+          {/* Workflow grid */}
+          {!isLoading && !error && workflows.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 [&:hover>*]:opacity-60 [&:hover>*:hover]:opacity-100">
+              {/* New workflow card */}
+              <Link
+                href="/workflows/new"
+                className="group flex items-center justify-center bg-[var(--card)] border-2 border-dashed border-[var(--border)] rounded-lg p-4 hover:border-white hover:bg-[var(--secondary)] transition-all duration-200"
+              >
+                <div className="flex flex-col items-center gap-3 py-8">
+                  <div className="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 group-hover:scale-110 transition-all duration-300">
+                    <Plus className="w-7 h-7 text-white" />
+                  </div>
+                  <span className="text-sm font-medium text-[var(--foreground)]">New Workflow</span>
+                </div>
+              </Link>
+
+              {/* Existing workflows */}
+              {workflows.map((workflow) => (
+                <WorkflowCard
+                  key={workflow._id}
+                  workflow={workflow}
+                  onDelete={handleDelete}
+                  onDuplicate={handleDuplicate}
+                />
+              ))}
+            </div>
+          )}
+        </main>
+      </div>
+    </CoreAppShell>
   );
 }

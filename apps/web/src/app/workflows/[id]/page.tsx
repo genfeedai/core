@@ -9,6 +9,7 @@ import { WorkflowCanvas } from '@genfeedai/workflow-ui/canvas';
 import { DebugPanel, NodePalette } from '@genfeedai/workflow-ui/panels';
 import { WorkflowUIProvider } from '@genfeedai/workflow-ui/provider';
 import type { WorkflowUIConfig } from '@genfeedai/workflow-ui/provider';
+import { CoreAppShell } from '@/components/navigation/CoreAppShell';
 import { BottomBar, Toolbar } from '@/components/toolbar';
 import { CommandPalette } from '@/components/command-palette';
 import { ModelBrowserModal } from '@/components/models/ModelBrowserModal';
@@ -160,82 +161,88 @@ export default function WorkflowEditorPage() {
   const isWorkflowNotLoaded = workflowId !== 'new' && workflowId !== currentWorkflowId;
   if (isLoading || (workflowId === 'new' && !currentWorkflowId) || isWorkflowNotLoaded) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-[var(--background)]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          <p className="text-[var(--muted-foreground)]">
-            {workflowId === 'new' ? 'Creating workflow...' : 'Loading workflow...'}
-          </p>
+      <CoreAppShell currentApp="workflows" title="Workflow Editor">
+        <div className="flex min-h-[calc(100vh-73px)] w-full items-center justify-center bg-[var(--background)]">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <p className="text-[var(--muted-foreground)]">
+              {workflowId === 'new' ? 'Creating workflow...' : 'Loading workflow...'}
+            </p>
+          </div>
         </div>
-      </div>
+      </CoreAppShell>
     );
   }
 
   // Error state
   if (error) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-[var(--background)]">
-        <div className="flex flex-col items-center gap-4 text-center max-w-md">
-          <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
-            <span className="text-red-500 text-2xl">!</span>
-          </div>
-          <h2 className="text-lg font-semibold text-[var(--foreground)]">
-            Failed to load workflow
-          </h2>
-          <p className="text-[var(--muted-foreground)]">{error}</p>
-          <div className="flex gap-3">
-            <button
-              onClick={() => router.push('/workflows')}
-              className="px-4 py-2 text-sm bg-[var(--secondary)] text-[var(--foreground)] rounded-lg hover:opacity-90 transition"
-            >
-              Go to Dashboard
-            </button>
-            <button
-              onClick={() => router.push('/workflows/new')}
-              className="px-4 py-2 text-sm bg-white text-black rounded-lg hover:bg-white/90 transition"
-            >
-              Create New Workflow
-            </button>
+      <CoreAppShell currentApp="workflows" title="Workflow Editor">
+        <div className="flex min-h-[calc(100vh-73px)] w-full items-center justify-center bg-[var(--background)]">
+          <div className="flex flex-col items-center gap-4 text-center max-w-md">
+            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
+              <span className="text-red-500 text-2xl">!</span>
+            </div>
+            <h2 className="text-lg font-semibold text-[var(--foreground)]">
+              Failed to load workflow
+            </h2>
+            <p className="text-[var(--muted-foreground)]">{error}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => router.push('/workflows')}
+                className="px-4 py-2 text-sm bg-[var(--secondary)] text-[var(--foreground)] rounded-lg hover:opacity-90 transition"
+              >
+                Go to Dashboard
+              </button>
+              <button
+                onClick={() => router.push('/workflows/new')}
+                className="px-4 py-2 text-sm bg-white text-black rounded-lg hover:bg-white/90 transition"
+              >
+                Create New Workflow
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </CoreAppShell>
     );
   }
 
   return (
-    <WorkflowUIProvider config={workflowUIConfig}>
-      <ReactFlowProvider>
-        <main className="h-screen w-screen flex flex-col overflow-hidden bg-[var(--background)]">
-          <Toolbar />
-          <div className="flex-1 flex overflow-hidden">
-            {/* Node Palette with slide animation */}
-            <div
-              className={`transition-all duration-300 ease-in-out ${
-                showPalette ? 'w-64 opacity-100' : 'w-0 opacity-0'
-              } overflow-hidden`}
-            >
-              <NodePalette />
+    <CoreAppShell currentApp="workflows" title="Workflow Editor">
+      <WorkflowUIProvider config={workflowUIConfig}>
+        <ReactFlowProvider>
+          <main className="flex h-[calc(100vh-73px)] w-full flex-col overflow-hidden bg-[var(--background)]">
+            <Toolbar />
+            <div className="flex flex-1 overflow-hidden">
+              {/* Node Palette with slide animation */}
+              <div
+                className={`transition-all duration-300 ease-in-out ${
+                  showPalette ? 'w-64 opacity-100' : 'w-0 opacity-0'
+                } overflow-hidden`}
+              >
+                <NodePalette />
+              </div>
+              <div className="flex-1 relative">
+                <WorkflowCanvas />
+              </div>
+              {showAIGenerator && <AIGeneratorPanel />}
+              {debugMode && showDebugPanel && <DebugPanel />}
             </div>
-            <div className="flex-1 relative">
-              <WorkflowCanvas />
-            </div>
-            {showAIGenerator && <AIGeneratorPanel />}
-            {debugMode && showDebugPanel && <DebugPanel />}
-          </div>
-          <BottomBar />
-        </main>
-        <PromptLibraryModal />
-        {/* Render CreatePromptModal independently when library modal is closed (e.g., saving from PromptNode) */}
-        {isCreatePromptModalOpen && activeModal !== 'promptLibrary' && <CreatePromptModal />}
-        <PromptEditorModal />
-        <SettingsModal />
-        <AnnotationModal />
-        <GenerateWorkflowModal />
-        <TemplatesModal />
-        <CostModal />
-        <CommandPalette />
-        {activeModal === 'welcome' && <WelcomeModal />}
-      </ReactFlowProvider>
-    </WorkflowUIProvider>
+            <BottomBar />
+          </main>
+          <PromptLibraryModal />
+          {/* Render CreatePromptModal independently when library modal is closed (e.g., saving from PromptNode) */}
+          {isCreatePromptModalOpen && activeModal !== 'promptLibrary' && <CreatePromptModal />}
+          <PromptEditorModal />
+          <SettingsModal />
+          <AnnotationModal />
+          <GenerateWorkflowModal />
+          <TemplatesModal />
+          <CostModal />
+          <CommandPalette />
+          {activeModal === 'welcome' && <WelcomeModal />}
+        </ReactFlowProvider>
+      </WorkflowUIProvider>
+    </CoreAppShell>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Download, Music, Trash2, X } from 'lucide-react';
+import Link from 'next/link';
+import { ChevronLeft, ChevronRight, Download, Music, Pencil, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 import type { GalleryItem } from '@/lib/gallery/types';
 
@@ -57,6 +58,14 @@ export function LightboxModal({ item, onClose, onPrev, onNext, onDelete }: Light
       <div className="fixed inset-4 z-50 flex items-center justify-center pointer-events-none">
         {/* Top buttons */}
         <div className="absolute top-0 right-0 flex items-center gap-2 pointer-events-auto">
+          {(item.type === 'image' || item.type === 'video') && (
+            <Link
+              href={`/editor?asset=${encodeURIComponent(item.path)}`}
+              className="p-2 rounded-lg bg-[var(--card)] border border-[var(--border)] hover:bg-[var(--secondary)] transition"
+            >
+              <Pencil className="w-5 h-5 text-[var(--foreground)]" />
+            </Link>
+          )}
           {onDelete && (
             <button
               onClick={handleDelete}
