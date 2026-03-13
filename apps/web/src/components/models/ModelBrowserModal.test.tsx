@@ -1,5 +1,5 @@
 import type { ProviderModel } from '@genfeedai/types';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ModelBrowserModal } from './ModelBrowserModal';
 
@@ -178,7 +178,13 @@ describe('ModelBrowserModal', () => {
         expect(document.querySelector('.animate-spin')).toBeInTheDocument();
       });
 
-      resolveFetch?.(mockFetchResponse as Response);
+      await act(async () => {
+        resolveFetch?.(mockFetchResponse as Response);
+      });
+
+      await waitFor(() => {
+        expect(document.querySelector('.animate-spin')).not.toBeInTheDocument();
+      });
     });
   });
 
